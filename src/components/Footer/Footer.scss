@@ -1,0 +1,55 @@
+// src/components/Footer/Footer.scss
+.footer-container {
+  background: $bg-dark;
+  color: $text-white;
+  padding: $spacing-xl 0;
+  margin-top: auto; // Push to bottom
+
+  .footer-content {
+    max-width: $max-width;
+    margin: 0 auto;
+    padding: 0 $spacing-md;
+    @include flex-between;
+    gap: $spacing-xl;
+
+    @include tablet {
+      flex-direction: column;
+      text-align: center;
+    }
+  }
+
+  .footer-left {
+    .footer-logo {
+      font-size: $font-size-xl;
+      font-weight: $font-weight-bold;
+      color: $primary;
+      margin-bottom: $spacing-sm;
+    }
+
+    p {
+      font-size: $font-size-sm;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: $spacing-xs;
+
+      i {
+        width: 20px;
+        color: $primary;
+        margin-right: $spacing-xs;
+      }
+    }
+  }
+
+  .footer-right {
+    text-align: right;
+
+    @include tablet {
+      text-align: center;
+    }
+
+    p {
+      font-size: $font-size-sm;
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: $spacing-xs;
+    }
+  }
+}

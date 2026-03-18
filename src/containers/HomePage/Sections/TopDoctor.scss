@@ -1,0 +1,78 @@
+// src/containers/HomePage/Sections/TopDoctor.scss
+.section-top-doctor {
+  padding: $spacing-xxl 0;
+  background: $bg-light;
+
+  .section-content {
+    max-width: $max-width;
+    margin: 0 auto;
+    padding: 0 $spacing-md;
+  }
+
+  .section-header {
+    @include flex-between;
+    margin-bottom: $spacing-lg;
+
+    .see-more-btn {
+      padding: 6px 16px;
+      font-size: $font-size-sm;
+      color: $primary;
+      border: 1px solid $primary;
+      border-radius: $radius-lg;
+      background: transparent;
+      transition: all $transition-fast;
+
+      &:hover {
+        background: $primary;
+        color: $text-white;
+      }
+    }
+  }
+
+  .doctor-card {
+    padding: 0 $spacing-sm;
+    cursor: pointer;
+    outline: none;
+    text-align: center;
+
+    .card-avatar {
+      @include flex-center;
+      margin-bottom: $spacing-sm;
+
+      img {
+        width: 120px;
+        height: 120px;
+        border-radius: $radius-round;
+        object-fit: cover;
+        border: 3px solid $primary-light;
+        transition: border-color $transition-fast;
+      }
+    }
+
+    .card-info {
+      .doctor-name {
+        font-size: $font-size-base;
+        font-weight: $font-weight-medium;
+        color: $text-primary;
+        @include text-ellipsis(2);
+        min-height: 42px;
+      }
+
+      .doctor-specialty {
+        font-size: $font-size-sm;
+        color: $text-light;
+        margin-top: $spacing-xs;
+        @include text-ellipsis(1);
+      }
+    }
+
+    &:hover {
+      .card-avatar img {
+        border-color: $primary;
+      }
+      .doctor-name {
+        color: $primary;
+      }
+    }
+  }
+}

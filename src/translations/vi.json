@@ -1,0 +1,63 @@
+{
+  "header.specialty": "Chuyên khoa",
+  "header.find-doctor": "Tìm bác sĩ",
+  "header.health-facility": "Cơ sở y tế",
+  "header.doctor": "Bác sĩ",
+  "header.fee": "Phí khám",
+
+  "banner.title-line1": "NỀN TẢNG Y TẾ",
+  "banner.title-line2": "CHĂM SÓC SỨC KHỎE TOÀN DIỆN",
+  "banner.search-placeholder": "Tìm kiếm bác sĩ, chuyên khoa, phòng khám...",
+
+  "homepage.specialty-popular": "Chuyên khoa phổ biến",
+  "homepage.see-more": "Xem thêm",
+  "homepage.outstanding-doctor": "Bác sĩ nổi bật",
+  "homepage.medical-facility": "Cơ sở y tế nổi bật",
+
+  "login.title": "Đăng nhập",
+  "login.email": "Email",
+  "login.password": "Mật khẩu",
+  "login.login-btn": "Đăng nhập",
+  "login.forgot-password": "Quên mật khẩu?",
+  "login.email-placeholder": "Nhập email của bạn",
+  "login.password-placeholder": "Nhập mật khẩu",
+
+  "menu.admin.manage-user": "Quản lý người dùng",
+  "menu.admin.manage-doctor": "Quản lý bác sĩ",
+  "menu.admin.manage-schedule": "Quản lý lịch khám bác sĩ",
+  "menu.admin.manage-specialty": "Quản lý chuyên khoa",
+  "menu.admin.manage-clinic": "Quản lý phòng khám",
+
+  "menu.doctor.manage-patient": "Quản lý lịch hẹn bệnh nhân",
+
+  "common.welcome": "Xin chào, ",
+  "common.logout": "Đăng xuất",
+  "common.login": "Đăng nhập",
+  "common.go-to-dashboard": "Đi đến Dashboard",
+  "common.loading": "Đang tải...",
+  "common.save": "Lưu",
+  "common.cancel": "Hủy",
+  "common.confirm": "Xác nhận",
+  "common.delete": "Xóa",
+  "common.edit": "Sửa",
+  "common.create": "Tạo mới",
+  "common.search": "Tìm kiếm",
+  "common.no-data": "Không có dữ liệu",
+  "common.close": "Đóng",
+
+  "doctor.price": "GIÁ KHÁM",
+  "doctor.insurance": "BẢO HIỂM ÁP DỤNG",
+  "doctor.see-detail": "Xem chi tiết",
+  "doctor.choose-schedule": "LỊCH KHÁM",
+  "doctor.choose-date": "Chọn ngày",
+
+  "booking.title": "Đặt lịch khám",
+  "booking.fullname": "Họ và tên",
+  "booking.phone": "Số điện thoại",
+  "booking.email": "Email",
+  "booking.reason": "Lý do khám",
+  "booking.birthday": "Ngày sinh",
+  "booking.gender": "Giới tính",
+  "booking.address": "Địa chỉ",
+  "booking.confirm-btn": "Xác nhận đặt lịch"
+}

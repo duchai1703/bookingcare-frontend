@@ -1,0 +1,62 @@
+// src/containers/HomePage/Sections/Specialty.scss
+.section-specialty {
+  padding: $spacing-xxl 0;
+  background: $bg-light;
+
+  .section-content {
+    max-width: $max-width;
+    margin: 0 auto;
+    padding: 0 $spacing-md;
+  }
+
+  .section-header {
+    @include flex-between;
+    margin-bottom: $spacing-lg;
+
+    .see-more-btn {
+      padding: 6px 16px;
+      font-size: $font-size-sm;
+      color: $primary;
+      border: 1px solid $primary;
+      border-radius: $radius-lg;
+      background: transparent;
+      transition: all $transition-fast;
+
+      &:hover {
+        background: $primary;
+        color: $text-white;
+      }
+    }
+  }
+
+  .specialty-card {
+    padding: 0 $spacing-sm;
+    cursor: pointer;
+    outline: none;
+
+    .card-image {
+      width: 100%;
+      height: 150px;
+      background-color: $bg-light;
+      background-size: cover;
+      background-position: center;
+      border-radius: $radius-md $radius-md 0 0;
+    }
+
+    .card-name {
+      padding: $spacing-sm;
+      font-size: $font-size-base;
+      font-weight: $font-weight-medium;
+      text-align: center;
+      background: $bg-white;
+      border-radius: 0 0 $radius-md $radius-md;
+      @include text-ellipsis(1);
+    }
+
+    &:hover {
+      .card-name {
+        color: $primary;
+      }
+    }
+  }
+}

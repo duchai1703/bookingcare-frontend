@@ -1,0 +1,63 @@
+{
+  "header.specialty": "Specialty",
+  "header.find-doctor": "Find Doctor",
+  "header.health-facility": "Health Facility",
+  "header.doctor": "Doctor",
+  "header.fee": "Examination Fee",
+
+  "banner.title-line1": "MEDICAL PLATFORM",
+  "banner.title-line2": "COMPREHENSIVE HEALTH CARE",
+  "banner.search-placeholder": "Search for doctors, specialties, clinics...",
+
+  "homepage.specialty-popular": "Popular Specialties",
+  "homepage.see-more": "See more",
+  "homepage.outstanding-doctor": "Outstanding Doctors",
+  "homepage.medical-facility": "Outstanding Health Facilities",
+
+  "login.title": "Login",
+  "login.email": "Email",
+  "login.password": "Password",
+  "login.login-btn": "Login",
+  "login.forgot-password": "Forgot password?",
+  "login.email-placeholder": "Enter your email",
+  "login.password-placeholder": "Enter your password",
+
+  "menu.admin.manage-user": "User Management",
+  "menu.admin.manage-doctor": "Doctor Management",
+  "menu.admin.manage-schedule": "Doctor Schedule Management",
+  "menu.admin.manage-specialty": "Specialty Management",
+  "menu.admin.manage-clinic": "Clinic Management",
+
+  "menu.doctor.manage-patient": "Patient Appointment Management",
+
+  "common.welcome": "Welcome, ",
+  "common.logout": "Logout",
+  "common.login": "Login",
+  "common.go-to-dashboard": "Go to Dashboard",
+  "common.loading": "Loading...",
+  "common.save": "Save",
+  "common.cancel": "Cancel",
+  "common.confirm": "Confirm",
+  "common.delete": "Delete",
+  "common.edit": "Edit",
+  "common.create": "Create",
+  "common.search": "Search",
+  "common.no-data": "No data available",
+  "common.close": "Close",
+
+  "doctor.price": "EXAMINATION PRICE",
+  "doctor.insurance": "INSURANCE APPLIED",
+  "doctor.see-detail": "See details",
+  "doctor.choose-schedule": "SCHEDULE",
+  "doctor.choose-date": "Choose date",
+
+  "booking.title": "Book Appointment",
+  "booking.fullname": "Full name",
+  "booking.phone": "Phone number",
+  "booking.email": "Email",
+  "booking.reason": "Reason for visit",
+  "booking.birthday": "Date of birth",
+  "booking.gender": "Gender",
+  "booking.address": "Address",
+  "booking.confirm-btn": "Confirm booking"
+}

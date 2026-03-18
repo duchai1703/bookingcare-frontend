@@ -1,0 +1,152 @@
+// src/containers/Auth/Login.scss
+.login-background {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  @include flex-center;
+  padding: $spacing-lg;
+}
+
+.login-container {
+  width: 100%;
+  max-width: 420px;
+}
+
+.login-form {
+  background: $bg-white;
+  border-radius: $radius-md;
+  padding: $spacing-xxl $spacing-xl;
+  box-shadow: $shadow-lg;
+
+  .login-title {
+    text-align: center;
+    font-size: $font-size-xxl;
+    font-weight: $font-weight-bold;
+    color: $primary;
+    margin-bottom: $spacing-xl;
+
+    i {
+      font-size: 36px;
+      display: block;
+      margin-bottom: $spacing-sm;
+    }
+  }
+
+  .form-group {
+    margin-bottom: $spacing-lg;
+
+    label {
+      display: block;
+      font-size: $font-size-sm;
+      font-weight: $font-weight-medium;
+      color: $text-secondary;
+      margin-bottom: $spacing-xs;
+
+      i {
+        margin-right: $spacing-xs;
+        color: $primary;
+        width: 16px;
+      }
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px $spacing-md;
+      font-size: $font-size-base;
+      border: 1px solid $border-color-dark;
+      border-radius: $radius-sm;
+      transition: border-color $transition-fast, box-shadow $transition-fast;
+
+      &:focus {
+        border-color: $primary;
+        box-shadow: 0 0 0 3px rgba($primary, 0.15);
+      }
+    }
+
+    .password-wrapper {
+      position: relative;
+
+      .form-input {
+        padding-right: 45px;
+      }
+
+      .toggle-password {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: $text-light;
+        font-size: $font-size-md;
+        transition: color $transition-fast;
+
+        &:hover {
+          color: $primary;
+        }
+      }
+    }
+  }
+
+  // Error message + Shake animation — REQ-AU-007
+  .error-message {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: $danger;
+    padding: $spacing-sm $spacing-md;
+    border-radius: $radius-sm;
+    font-size: $font-size-sm;
+    margin-bottom: $spacing-md;
+
+    i { margin-right: $spacing-xs; }
+
+    &.shake {
+      animation: shake 0.5s ease-in-out;
+    }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-5px); }
+    80% { transform: translateX(5px); }
+  }
+
+  // Login button
+  .login-btn {
+    width: 100%;
+    padding: 12px;
+    font-size: $font-size-md;
+    font-weight: $font-weight-medium;
+    color: $text-white;
+    background: $primary;
+    border: none;
+    border-radius: $radius-sm;
+    transition: background $transition-fast, opacity $transition-fast;
+
+    &:hover:not(:disabled) {
+      background: $primary-dark;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    i { margin-right: $spacing-xs; }
+  }
+
+  // Forgot password
+  .forgot-password {
+    text-align: center;
+    margin-top: $spacing-md;
+
+    a {
+      font-size: $font-size-sm;
+      color: $text-light;
+      transition: color $transition-fast;
+
+      &:hover {
+        color: $primary;
+      }
+    }
+  }
+}
