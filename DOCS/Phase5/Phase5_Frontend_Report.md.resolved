@@ -1,0 +1,458 @@
+# BÁO CÁO CHI TIẾT GIAI ĐOẠN 5
+## Xây Dựng Frontend Cơ Bản
+
+---
+
+**Dự án:** Hệ Thống Đặt Lịch Khám Bệnh Trực Tuyến (BookingCare)
+**Trường:** Đại Học Công Nghệ Thông Tin – ĐHQG TP. Hồ Chí Minh (UIT – VNU-HCM)
+**Giảng viên hướng dẫn:** ThS. Trần Anh Dũng
+**Sinh viên thực hiện:** Trần Đức Hải (23520421) & Đặng Ngọc Trường Giang (23520406)
+**Thời gian thực hiện:** 21/03 – 05/04/2026
+
+---
+
+## 1. Tổng Quan Giai Đoạn
+
+Theo đề cương chi tiết, **Giai đoạn 5** được xác định với mục tiêu:
+
+| Hạng mục | Nội dung |
+|---|---|
+| **Tên giai đoạn** | Xây dựng Frontend cơ bản |
+| **Thời gian** | 21/03 – 05/04/2026 |
+| **Công việc dự kiến** | Nghiên cứu React.js (component, state, hooks); Tích hợp Redux quản lý state toàn cục; Xây dựng giao diện trang chủ với carousel, đa ngôn ngữ Anh-Việt |
+| **Kết quả mong đợi** | Giao diện React kết nối Backend, trang chủ đa ngôn ngữ |
+
+---
+
+## 2. Các Công Việc Đã Thực Hiện
+
+### 2.1 Khởi Tạo Dự Án React với Vite
+
+Thay vì dùng `create-react-app` (nặng, chậm), nhóm chọn **Vite** – build tool hiện đại, tốc độ cao để khởi tạo dự án React.
+
+#### ✅ Minh chứng: [package.json](file:///c:/Users/USER/Documents/DOAN1/package.json)
+
+```json
+{
+  "name": "bookingcare-frontend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@reduxjs/toolkit": "^2.11.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.30.3",
+    "react-redux": "^9.2.0",
+    "redux-persist": "^6.0.0",
+    "react-intl": "^10.0.0",
+    "react-markdown": "^10.1.0",
+    "react-slick": "^0.31.0",
+    "bootstrap": "^5.3.8",
+    "axios": "^1.13.6",
+    "moment": "^2.30.1",
+    "lodash": "^4.17.23",
+    "sweetalert2": "^11.26.23",
+    "sass": "^1.98.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^6.0.0"
+  }
+}
+```
+
+**Giải thích:** File [package.json](file:///c:/Users/USER/Documents/DOAN1/package.json) chứng minh đầy đủ bộ công nghệ đã được cài đặt đúng theo yêu cầu SRS:
+
+| Thư viện | Mục đích | Yêu cầu SRS |
+|---|---|---|
+| `react`, `react-dom` | Core React 18 | Ràng buộc thiết kế #2 |
+| `@reduxjs/toolkit`, `react-redux` | State management | Ràng buộc thiết kế #5 |
+| `redux-persist` | Lưu state vào localStorage | REQ-AU-009 |
+| `react-router-dom` | Routing SPA | Mô tả chức năng |
+| `react-intl` | Đa ngôn ngữ Anh-Việt | IL-005 |
+| `react-slick`, `slick-carousel` | Carousel trang chủ | REQ-PT-001 |
+| `axios` | Gọi RESTful API | Kiến trúc client-server |
+| `sass` | SCSS styling | Responsive design |
+
+---
+
+### 2.2 Cấu Hình Redux + Redux Persist
+
+Nhóm thiết lập **Redux Toolkit** (phiên bản hiện đại của Redux) kết hợp **redux-persist** để lưu trữ state vào localStorage. Đây là yêu cầu bắt buộc theo `REQ-AU-009`.
+
+#### ✅ Minh chứng: [src/redux/store.js](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/redux/store.js)
+
+```javascript
+// src/redux/store.js
+import { configureStore } from '@reduxjs/toolkit';
+import { persistStore, persistReducer } from 'redux-persist';
+import storage from 'redux-persist/lib/storage'; // localStorage
+import { combineReducers } from 'redux';
+
+import appReducer from './slices/appSlice';
+import userReducer from './slices/userSlice';
+import adminReducer from './slices/adminSlice';
+import doctorReducer from './slices/doctorSlice';
+
+// Cấu hình persist: chỉ lưu 'user' và 'app' (ngôn ngữ + thông tin đăng nhập)
+const persistConfig = {
+  key: 'root',
+  storage,
+  whitelist: ['user', 'app'], // Tiết kiệm bộ nhớ, không persist admin/doctor
+};
+
+const rootReducer = combineReducers({
+  app: appReducer,     // language, isLoading, allcodes
+  user: userReducer,   // isLoggedIn, userInfo, accessToken
+  admin: adminReducer, // users, doctors, specialties, clinics
+  doctor: doctorReducer, // patients, booking history
+});
+
+const persistedReducer = persistReducer(persistConfig, rootReducer);
+
+export const store = configureStore({
+  reducer: persistedReducer,
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE', ...],
+      },
+    }),
+});
+
+export const persistor = persistStore(store);
+```
+
+**Giải thích:**
+
+- **4 slices** được tổ chức rõ ràng theo module (`app`, `user`, `admin`, `doctor`)
+- Chỉ `whitelist: ['user', 'app']` → tiết kiệm, tránh lưu dữ liệu không cần thiết
+- Cấu hình `serializableCheck` để tương thích với redux-persist
+
+---
+
+### 2.3 Quản Lý State Ngôn Ngữ (Đa Ngôn Ngữ)
+
+Nhóm xây dựng [appSlice.js](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/redux/slices/appSlice.js) với chức năng trung tâm là quản lý ngôn ngữ (`vi`/`en`) và fetch dữ liệu Allcode.
+
+#### ✅ Minh chứng: [src/redux/slices/appSlice.js](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/redux/slices/appSlice.js)
+
+```javascript
+// src/redux/slices/appSlice.js
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+
+// Async thunk: fetch Allcode (ROLE, GENDER, TIME, STATUS, POSITION, PRICE...)
+export const fetchAllcodeByType = createAsyncThunk(
+  'app/fetchAllcodeByType',
+  async (type, { rejectWithValue }) => {
+    try {
+      const res = await getAllCode(type);
+      if (res && res.errCode === 0) {
+        return { type, data: res.data };
+      }
+      return rejectWithValue(`Lỗi khi fetch allcode type: ${type}`);
+    } catch (err) {
+      return rejectWithValue(err.message);
+    }
+  }
+);
+
+const appSlice = createSlice({
+  name: 'app',
+  initialState: {
+    language: 'vi',    // Ngôn ngữ mặc định: Tiếng Việt — SRS IL-006
+    genders: [],       // G1 (Nam), G2 (Nữ), G3 (Khác)
+    roles: [],         // R1 (Admin), R2 (Doctor), R3 (Patient)
+    positions: [],     // P1-P5 (Bác sĩ → Giáo sư)
+    times: [],         // T1-T8 (khung giờ khám)
+    prices: [],        // PRI1-PRI4 (giá khám)
+    payments: [],      // PAY1-PAY2 (hình thức thanh toán)
+    provinces: [],     // PRO1-PRO3 (tỉnh/thành phố)
+    isLoading: false,
+  },
+  reducers: {
+    changeLanguage: (state, action) => {
+      state.language = action.payload; // 'vi' hoặc 'en'
+    },
+  },
+  // ... extraReducers xử lý pending/fulfilled/rejected
+});
+
+export const { changeLanguage } = appSlice.actions;
+export default appSlice.reducer;
+```
+
+**Giải thích:**
+
+- `language: 'vi'` → Ngôn ngữ mặc định là Tiếng Việt (đúng `IL-006`)
+- [changeLanguage](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/redux/slices/appSlice.js#45-49) → Cho phép chuyển ngôn ngữ không cần reload trang (`IL-002`)
+- `fetchAllcodeByType` → Fetch bảng Allcode (dữ liệu tra cứu đa ngôn ngữ như giờ khám, giá, giới tính)
+
+---
+
+### 2.4 Hệ Thống Đa Ngôn Ngữ với react-intl
+
+Nhóm xây dựng hai file từ điển tiếng Việt và tiếng Anh phủ toàn bộ giao diện hệ thống.
+
+#### ✅ Minh chứng: [src/translations/vi.json](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/translations/vi.json) (trích)
+
+```json
+{
+  "header.specialty": "Chuyên khoa",
+  "header.find-doctor": "Tìm bác sĩ",
+  "header.health-facility": "Cơ sở y tế",
+
+  "banner.title-line1": "NỀN TẢNG Y TẾ",
+  "banner.title-line2": "CHĂM SÓC SỨC KHỎE TOÀN DIỆN",
+  "banner.search-placeholder": "Tìm kiếm bác sĩ, chuyên khoa, phòng khám...",
+
+  "homepage.specialty-popular": "Chuyên khoa phổ biến",
+  "homepage.outstanding-doctor": "Bác sĩ nổi bật",
+  "homepage.medical-facility": "Cơ sở y tế nổi bật",
+
+  "menu.admin.manage-user": "Quản lý người dùng",
+  "menu.admin.manage-doctor": "Quản lý bác sĩ",
+  "menu.admin.manage-schedule": "Quản lý lịch khám bác sĩ",
+  "menu.admin.manage-specialty": "Quản lý chuyên khoa",
+  "menu.admin.manage-clinic": "Quản lý phòng khám",
+
+  "booking.title": "Đặt lịch khám",
+  "booking.fullname": "Họ và tên",
+  "booking.phone": "Số điện thoại",
+  "booking.email": "Email",
+  "booking.reason": "Lý do khám",
+  "booking.birthday": "Ngày sinh",
+  "booking.gender": "Giới tính",
+  "booking.address": "Địa chỉ",
+  "booking.confirm-btn": "Xác nhận đặt lịch"
+}
+```
+
+**Giải thích:** File [vi.json](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/translations/vi.json) và [en.json](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/translations/en.json) bao gồm **toàn bộ text** của hệ thống được phân nhóm theo module: header, banner, homepage, login, menu admin, menu doctor, common actions, doctor info, booking form. Điều này đáp ứng yêu cầu `IL-003`: *"Tất cả text tĩnh phải được dịch sang cả 2 ngôn ngữ."*
+
+---
+
+### 2.5 Thiết Lập React Router DOM – Hệ Thống Route Đầy Đủ
+
+Nhóm xây dựng [App.jsx](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/containers/App.jsx) tổ chức toàn bộ routing của hệ thống, bao gồm public routes, protected routes cho Admin và Doctor.
+
+#### ✅ Minh chứng: [src/containers/App.jsx](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/containers/App.jsx)
+
+```jsx
+// src/containers/App.jsx
+import { Routes, Route, Navigate } from 'react-router-dom';
+import PrivateRoute from '../routes/PrivateRoute';
+
+const App = () => (
+  <div className="app-container">
+    <Loading />
+    <Routes>
+      {/* ===== PUBLIC ROUTES ===== */}
+      <Route path="/" element={<><Header /><HomePage /><Footer /></>} />
+      <Route path="/login" element={<Login />} />
+
+      {/* Chi tiết bác sĩ — SRS 3.8 */}
+      <Route path="/doctor/:id" element={<><Header /><DoctorDetail /><Footer /></>} />
+
+      {/* Chi tiết chuyên khoa — SRS 3.7 */}
+      <Route path="/specialty/:id" element={<><Header /><SpecialtyDetail /><Footer /></>} />
+
+      {/* Chi tiết phòng khám — SRS 3.7 */}
+      <Route path="/clinic/:id" element={<><Header /><ClinicDetail /><Footer /></>} />
+
+      {/* Xác thực email — SRS 3.10 */}
+      <Route path="/verify-booking" element={<VerifyEmail />} />
+
+      {/* ===== ADMIN ROUTES — Chỉ Admin R1 (SRS REQ-AU-005) ===== */}
+      <Route element={<PrivateRoute allowedRoles={['R1']} />}>
+        <Route path="/system/*" element={<SystemLayout />} />
+      </Route>
+
+      {/* ===== DOCTOR ROUTES — Chỉ Doctor R2 (SRS REQ-AU-005) ===== */}
+      <Route element={<PrivateRoute allowedRoles={['R2']} />}>
+        <Route path="/doctor-dashboard/*" element={<SystemLayout />} />
+      </Route>
+
+      {/* 404 */}
+      <Route path="*" element={<><h2>404</h2><Navigate to="/" /></>} />
+    </Routes>
+  </div>
+);
+```
+
+**Giải thích:**
+
+- `PrivateRoute` bảo vệ route Admin/Doctor → đáp ứng `REQ-AU-008`
+- Phân quyền `allowedRoles={['R1']}` (Admin) và `['R2']` (Doctor) → đúng `REQ-AU-004/005`
+- Đủ 7 route công khai (homepage, login, doctor, specialty, clinic, verify) + 2 protected routes
+
+---
+
+### 2.6 Trang Chủ – Banner + Thanh Tìm Kiếm Thông Minh
+
+Component [Banner.jsx](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/containers/HomePage/Sections/Banner.jsx) triển khai thanh tìm kiếm với tính năng **debounce 300ms**, gợi ý kết quả real-time (bác sĩ, chuyên khoa, phòng khám).
+
+#### ✅ Minh chứng: [src/containers/HomePage/Sections/Banner.jsx](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/containers/HomePage/Sections/Banner.jsx) (trích)
+
+```jsx
+// Tìm kiếm với debounce 300ms – tránh gọi API liên tục
+const debouncedSearch = useCallback(
+  debounce(async (keyword) => {
+    if (!keyword || keyword.trim().length < 2) {
+      setSearchResults(null);
+      setShowDropdown(false);
+      return;
+    }
+    const res = await searchApi(keyword);
+    if (res && res.errCode === 0) {
+      setSearchResults(res.data);
+      setShowDropdown(true);
+    }
+  }, 300),
+  []
+);
+
+// Hiển thị kết quả phân nhóm (Bác sĩ / Chuyên khoa / Phòng khám)
+{showDropdown && searchResults && (
+  <div className="search-dropdown">
+    {/* Bác sĩ */}
+    {searchResults.doctors?.map(item => (
+      <div key={`doc-${item.id}`} onClick={() => navigate(`/doctor/${item.id}`)}>
+        {language === 'vi' ? `${item.lastName} ${item.firstName}` : `${item.firstName} ${item.lastName}`}
+      </div>
+    ))}
+    {/* Chuyên khoa */}
+    {searchResults.specialties?.map(item => (
+      <div key={`spec-${item.id}`} onClick={() => navigate(`/specialty/${item.id}`)}>
+        {item.name}
+      </div>
+    ))}
+    {/* Phòng khám */}
+    {searchResults.clinics?.map(item => (
+      <div key={`cli-${item.id}`} onClick={() => navigate(`/clinic/${item.id}`)}>
+        {item.name}
+      </div>
+    ))}
+  </div>
+)}
+```
+
+**Giải thích:**
+- `debounce(fn, 300)` → Tối ưu hiệu năng, chỉ gọi API sau 300ms người dùng ngừng gõ
+- Kết quả phân nhóm 3 loại: Bác sĩ → Chuyên khoa → Phòng khám (hỗ trợ `REQ-PT-002`)
+- Đa ngôn ngữ: Hiển thị tên bác sĩ theo thứ tự Họ-Tên (vi) hoặc First-Last (en)
+
+---
+
+### 2.7 Cấu Trúc Thư Mục Frontend Hoàn Chỉnh
+
+```
+bookingcare-frontend/
+├── src/
+│   ├── components/              # Shared components (Header, Footer, Loading)
+│   ├── containers/
+│   │   ├── App.jsx              # Root component + routing
+│   │   ├── Auth/
+│   │   │   └── Login.jsx        # Đăng nhập
+│   │   ├── HomePage/
+│   │   │   ├── HomePage.jsx     # Trang chủ
+│   │   │   └── Sections/
+│   │   │       ├── Banner.jsx       # Banner + Search bar
+│   │   │       ├── TopDoctor.jsx    # Bác sĩ nổi bật
+│   │   │       ├── Specialty.jsx    # Chuyên khoa phổ biến
+│   │   │       └── MedicalFacility.jsx  # Cơ sở y tế
+│   │   ├── Patient/             # Trang bệnh nhân
+│   │   │   ├── DoctorDetail.jsx
+│   │   │   ├── SpecialtyDetail.jsx
+│   │   │   ├── ClinicDetail.jsx
+│   │   │   └── VerifyEmail.jsx
+│   │   └── System/              # Admin + Doctor Dashboard
+│   │       └── SystemLayout.jsx
+│   ├── redux/
+│   │   ├── store.js             # Redux store + persist config
+│   │   └── slices/
+│   │       ├── appSlice.js      # Language, loading, allcodes
+│   │       ├── userSlice.js     # Auth state
+│   │       ├── adminSlice.js    # Admin data
+│   │       └── doctorSlice.js   # Doctor dashboard
+│   ├── routes/
+│   │   └── PrivateRoute.jsx     # Protected routes
+│   ├── services/
+│   │   └── userService.js       # Axios API calls
+│   ├── translations/
+│   │   ├── vi.json              # Tiếng Việt
+│   │   └── en.json              # Tiếng Anh
+│   └── utils/
+│       └── constants.js         # Path, LANGUAGES, USER_ROLE
+```
+
+---
+
+## 3. Kết Quả Đạt Được
+
+| STT | Mục tiêu giai đoạn | Trạng thái | Minh chứng |
+|---|---|---|---|
+| 1 | Nghiên cứu React.js (component, state, hooks) | ✅ Hoàn thành | [Banner.jsx](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/containers/HomePage/Sections/Banner.jsx) dùng `useState`, `useCallback`, `useSelector` |
+| 2 | Tích hợp Redux Toolkit quản lý state toàn cục | ✅ Hoàn thành | [store.js](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/redux/store.js) – 4 slices, [appSlice.js](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/redux/slices/appSlice.js), [userSlice.js](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/redux/slices/userSlice.js) |
+| 3 | Redux Persist lưu state vào localStorage | ✅ Hoàn thành | [store.js](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/redux/store.js) – `persistConfig` với `whitelist` |
+| 4 | Xây dựng trang chủ với Carousel | ✅ Hoàn thành | [Banner.jsx](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/containers/HomePage/Sections/Banner.jsx), [TopDoctor.jsx](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/containers/HomePage/Sections/TopDoctor.jsx), [Specialty.jsx](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/containers/HomePage/Sections/Specialty.jsx), [MedicalFacility.jsx](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/containers/HomePage/Sections/MedicalFacility.jsx) |
+| 5 | Đa ngôn ngữ Anh-Việt với react-intl | ✅ Hoàn thành | [vi.json](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/translations/vi.json), [en.json](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/translations/en.json), [IntlProviderWrapper.jsx](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/containers/IntlProviderWrapper.jsx), [changeLanguage](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/redux/slices/appSlice.js#45-49) action |
+| 6 | Kết nối Frontend với Backend API | ✅ Hoàn thành | `services/userService.js` – Axios gọi RESTful API backend |
+| 7 | Routing SPA đầy đủ (React Router DOM) | ✅ Hoàn thành | [App.jsx](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/containers/App.jsx) – 7 public routes + 2 protected routes |
+| 8 | Phân quyền route theo role (Admin/Doctor) | ✅ Hoàn thành | `PrivateRoute.jsx` với `allowedRoles` |
+
+---
+
+## 4. Đối Chiếu Với Yêu Cầu SRS
+
+| Mã yêu cầu | Nội dung yêu cầu | Kết quả |
+|---|---|---|
+| REQ-AU-008 | Bảo vệ route khi chưa đăng nhập | ✅ `PrivateRoute.jsx` |
+| REQ-AU-009 | Lưu thông tin user vào Redux + localStorage | ✅ [userSlice.js](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/redux/slices/userSlice.js) + redux-persist |
+| REQ-PT-001 | Trang chủ hiển thị carousel/banner | ✅ [Banner.jsx](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/containers/HomePage/Sections/Banner.jsx) + [TopDoctor.jsx](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/containers/HomePage/Sections/TopDoctor.jsx) |
+| REQ-PT-002 | Thanh tìm kiếm bác sĩ/chuyên khoa | ✅ [Banner.jsx](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/containers/HomePage/Sections/Banner.jsx) với debounce search |
+| REQ-PT-003 | Danh sách bác sĩ nổi bật | ✅ [TopDoctor.jsx](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/containers/HomePage/Sections/TopDoctor.jsx) |
+| REQ-PT-004 | Danh sách phòng khám | ✅ [MedicalFacility.jsx](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/containers/HomePage/Sections/MedicalFacility.jsx) |
+| REQ-PT-005 | Danh sách chuyên khoa | ✅ [Specialty.jsx](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/containers/HomePage/Sections/Specialty.jsx) |
+| IL-002 | Chuyển ngôn ngữ không cần reload | ✅ Redux [changeLanguage](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/redux/slices/appSlice.js#45-49) + IntlProvider |
+| IL-003 | Toàn bộ text tĩnh dịch 2 ngôn ngữ | ✅ [vi.json](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/translations/vi.json) + [en.json](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/translations/en.json) (62 keys) |
+| IL-005 | Dùng react-intl | ✅ `react-intl@10.0.0` trong package.json |
+| IL-006 | Ngôn ngữ mặc định là Tiếng Việt | ✅ `language: 'vi'` trong [appSlice.js](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/redux/slices/appSlice.js) |
+| IL-007 | Lưu lựa chọn ngôn ngữ | ✅ `whitelist: ['app']` trong redux-persist |
+| QA-US-004 | Responsive desktop + mobile | ✅ SCSS + Bootstrap 5 |
+
+---
+
+## 5. Những Điểm Nổi Bật
+
+> [!NOTE]
+> **Áp dụng tốt nguyên tắc Component-based Architecture:** Trang chủ được chia nhỏ thành 4 sections độc lập ([Banner](file:///c:/Users/USER/Documents/DOAN1/bookingcare-frontend/src/containers/HomePage/Sections/Banner.jsx#12-162), `TopDoctor`, `Specialty`, `MedicalFacility`), mỗi component tự đảm nhiệm logic và style riêng, tái sử dụng dễ dàng.
+
+> [!TIP]
+> **Redux Toolkit thay vì Redux thuần:** Nhóm sử dụng `@reduxjs/toolkit` (RTK) – phiên bản hiện đại và gọn nhẹ hơn Redux truyền thống, giảm boilerplate code nhờ `createSlice` và `createAsyncThunk`.
+
+> [!IMPORTANT]
+> **Debounce Search Bar (300ms):** Tính năng tìm kiếm được tối ưu bằng kỹ thuật debounce với thư viện `lodash`, tránh gọi API mỗi lần gõ phím, cải thiện UX và giảm tải server.
+
+---
+
+## 6. Kết Luận
+
+Giai đoạn 5 đã được hoàn thành **đúng tiến độ** và **vượt mục tiêu ban đầu**. Không chỉ xây dựng trang chủ cơ bản, nhóm đã thiết lập được kiến trúc frontend vững chắc làm nền tảng cho tất cả giai đoạn tiếp theo:
+
+- ✅ **Cấu trúc thư mục rõ ràng** theo nguyên tắc Separation of Concerns
+- ✅ **Redux store hoàn chỉnh** với 4 slices và persist configuration
+- ✅ **Hệ thống routing đầy đủ** gồm 9 routes (public + protected)
+- ✅ **Đa ngôn ngữ** bao phủ 62 key text trên toàn bộ giao diện
+- ✅ **Kết nối thành công** với Backend API qua Axios
+
+Giai đoạn này tạo tiền đề trực tiếp cho **Giai đoạn 6 (Phát triển Module Admin)**, **Giai đoạn 7 (Module Bệnh nhân)** và **Giai đoạn 8 (Module Bác sĩ)**.
+
+---
+
+*Báo cáo được tạo ngày 24/03/2026*
