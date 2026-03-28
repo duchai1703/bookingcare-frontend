@@ -34,7 +34,7 @@ axiosInstance.interceptors.request.use(
 );
 
 // ===== RESPONSE INTERCEPTOR =====
-// Xử lý lỗi 401/403 → tự động logout (REQ-AU-006)
+// Xử lý lỗi 401 TokenExpired → tự động logout (REQ-AU-006)
 axiosInstance.interceptors.response.use(
   // Response thành công → trả data
   (response) => {
@@ -44,14 +44,13 @@ axiosInstance.interceptors.response.use(
   (error) => {
     const status = error.response?.status;
 
-    if (status === 401 || status === 403) {
-      // Token hết hạn hoặc không hợp lệ → auto logout
-      console.warn('>>> Token expired or invalid, auto logout...');
+    if (status === 401) {
+      // DS-02 FIX: chỉ logout khi token expired (401) — không logout khi bị cấm quyền (403)
+      console.warn('>>> Token expired, auto logout...');
       store.dispatch(processLogout());
-
-      // Redirect về trang login
       window.location.href = '/login';
     }
+    // 403 = no permission → để component tự xử lý lỗi, không logout
 
     return Promise.reject(error);
   }

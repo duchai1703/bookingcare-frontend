@@ -1,0 +1,46 @@
+// src/containers/System/Admin/DoctorManage.scss
+$primary: #45c3d2;
+
+.doctor-manage {
+  .manage-header {
+    display: flex; align-items: center; gap: 16px; margin-bottom: 20px;
+    .manage-title { font-size: 1.4rem; font-weight: 700; color: #333; margin: 0; }
+    .existing-badge { background: #e8f5e9; color: #2e7d32; padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
+  }
+
+  .form-card {
+    background: #fff; border-radius: 12px; padding: 24px;
+    margin-bottom: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+
+    .card-subtitle { font-size: 1rem; font-weight: 700; color: #333; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid $primary; display: inline-block; }
+
+    .form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 14px;
+      @media (max-width: 900px) { grid-template-columns: 1fr 1fr; }
+    }
+
+    .form-group {
+      display: flex; flex-direction: column; gap: 5px;
+      &.mt-12 { margin-top: 12px; }
+      label { font-size: 0.82rem; font-weight: 600; color: #555; .required { color: #dc3545; } }
+      .hint { font-size: 0.76rem; color: #888; font-style: italic; margin-top: 4px; }
+      .form-control {
+        padding: 8px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.88rem;
+        &:focus { outline: none; border-color: $primary; }
+      }
+      .select-lg { font-size: 0.95rem; padding: 10px; }
+    }
+  }
+
+  .loading-text { text-align: center; padding: 40px; color: #888; }
+
+  .action-footer {
+    display: flex; gap: 12px; padding: 16px 0;
+    .btn-save { background: $primary; color: #fff; border: none; padding: 12px 28px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s;
+      &:hover:not(:disabled) { background: darken($primary, 10%); }
+      &:disabled { opacity: 0.7; cursor: not-allowed; }
+    }
+    .btn-delete-outline { background: #fff; color: #dc3545; border: 2px solid #dc3545; padding: 12px 28px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s;
+      &:hover { background: #dc3545; color: #fff; }
+    }
+  }
+}

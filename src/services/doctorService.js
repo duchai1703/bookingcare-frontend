@@ -48,6 +48,12 @@ export const deleteSchedule = (data) => {
   return axiosInstance.delete(`/api/v1/schedules/${data.id || 0}`, { data });
 };
 
+// GAP-04 (REQ-AM-021): Chỉnh sửa lịch khám (vd: maxNumber)
+export const editSchedule = (data) => {
+  // data = { id, maxNumber, ... }
+  return axiosInstance.put(`/api/v1/schedules/${data.id}`, data);
+};
+
 // ===== DOCTOR — Dashboard (SRS 3.11, 3.12, 3.13) =====
 
 // REQ-DR-001, 002, 003: Lấy danh sách bệnh nhân

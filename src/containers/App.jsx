@@ -15,6 +15,11 @@ import VerifyEmail from './Patient/VerifyEmail';
 
 // ===== Protected Pages =====
 import SystemLayout from './System/SystemLayout';
+import UserManage from './System/Admin/UserManage';
+import DoctorManage from './System/Admin/DoctorManage';
+import ClinicManage from './System/Admin/ClinicManage';
+import SpecialtyManage from './System/Admin/SpecialtyManage';
+import ScheduleManage from './System/Admin/ScheduleManage';
 
 // ===== Layout =====
 import Header from '../components/Header/Header';
@@ -22,6 +27,15 @@ import Footer from '../components/Footer/Footer';
 import Loading from '../components/Loading/Loading';
 
 import './App.scss';
+
+// ===== Placeholders (GĐ7, GĐ8 sẽ thay thế) =====
+const DoctorPlaceholder = () => (
+  <div style={{ padding: '60px', textAlign: 'center', color: '#555' }}>
+    <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🩺</div>
+    <h3>Tính năng đang phát triển</h3>
+    <p>Module quản lý bệnh nhân sẽ có ở Giai đoạn 8.</p>
+  </div>
+);
 
 const App = () => {
   return (
@@ -31,7 +45,6 @@ const App = () => {
 
       <Routes>
         {/* ===== PUBLIC ROUTES ===== */}
-        {/* Trang chủ */}
         <Route
           path={path.HOME}
           element={
@@ -43,7 +56,6 @@ const App = () => {
           }
         />
 
-        {/* Trang đăng nhập */}
         <Route path={path.LOGIN} element={<Login />} />
 
         {/* Chi tiết bác sĩ — SRS 3.8 */}
@@ -86,30 +98,36 @@ const App = () => {
         <Route path={path.VERIFY_BOOKING} element={<VerifyEmail />} />
 
         {/* ===== ADMIN ROUTES — Chỉ Admin R1 (SRS REQ-AU-005) ===== */}
-        <Route
-          element={<PrivateRoute allowedRoles={[USER_ROLE.ADMIN]} />}
-        >
-          <Route path={`${path.SYSTEM}/*`} element={<SystemLayout />} />
+        <Route element={<PrivateRoute allowedRoles={[USER_ROLE.ADMIN]} />}>
+          <Route path={path.SYSTEM} element={<SystemLayout />}>
+            {/* /system → redirect /system/user-manage */}
+            <Route index element={<Navigate to="user-manage" replace />} />
+            <Route path="user-manage" element={<UserManage />} />
+            <Route path="doctor-manage" element={<DoctorManage />} />
+            <Route path="clinic-manage" element={<ClinicManage />} />
+            <Route path="specialty-manage" element={<SpecialtyManage />} />
+            <Route path="schedule-manage" element={<ScheduleManage />} />
+          </Route>
         </Route>
 
         {/* ===== DOCTOR ROUTES — Chỉ Doctor R2 (SRS REQ-AU-005) ===== */}
-        <Route
-          element={<PrivateRoute allowedRoles={[USER_ROLE.DOCTOR]} />}
-        >
-          <Route
-            path={`${path.DOCTOR_DASHBOARD}/*`}
-            element={<SystemLayout />}
-          />
+        <Route element={<PrivateRoute allowedRoles={[USER_ROLE.DOCTOR]} />}>
+          <Route path={path.DOCTOR_DASHBOARD} element={<SystemLayout />}>
+            <Route index element={<Navigate to="manage-patient" replace />} />
+            {/* FIX #1: Placeholder tránh màn trắng khi bác sĩ login (GĐ8 sẽ thay) */}
+            <Route path="manage-patient" element={<DoctorPlaceholder />} />
+          </Route>
         </Route>
 
         {/* ===== 404 — Not Found ===== */}
+        {/* FIX #3: Dùng <a> thay vì <Navigate> trong JSX */}
         <Route
           path="*"
           element={
-            <div className="not-found">
-              <h2>404</h2>
-              <p>Trang bạn tìm không tồn tại</p>
-              <Navigate to={path.HOME} replace />
+            <div style={{ textAlign: 'center', padding: '80px' }}>
+              <h2 style={{ fontSize: '4rem', color: '#45c3d2' }}>404</h2>
+              <p style={{ color: '#666' }}>Trang bạn tìm không tồn tại</p>
+              <a href="/" style={{ color: '#45c3d2', fontWeight: 600 }}>← Về trang chủ</a>
             </div>
           }
         />

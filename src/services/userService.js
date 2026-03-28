@@ -31,7 +31,8 @@ export const editUser = (data) => {
 
 // REQ-AM-004: Xóa user
 export const deleteUser = (id) => {
-  return axiosInstance.delete(`/api/v1/users/${id}`, { data: { id } });
+  // FIX FE-01: chỉ cần URL — không cần body cho DELETE
+  return axiosInstance.delete(`/api/v1/users/${id}`);
 };
 
 // ===== ALLCODE (SRS Section 4.2) =====

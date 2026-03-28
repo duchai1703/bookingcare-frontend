@@ -1,7 +1,7 @@
 // src/redux/store.js
 import { configureStore } from '@reduxjs/toolkit';
-import { persistStore, persistReducer } from 'redux-persist';
-import storage from 'redux-persist/lib/storage'; // Dùng localStorage
+import { persistStore, persistReducer, createTransform } from 'redux-persist';
+import storage from 'redux-persist/lib/storage';
 import { combineReducers } from 'redux';
 
 import appReducer from './slices/appSlice';
@@ -9,13 +9,18 @@ import userReducer from './slices/userSlice';
 import adminReducer from './slices/adminSlice';
 import doctorReducer from './slices/doctorSlice';
 
-// ===== CẤU HÌNH PERSIST =====
-// Chỉ persist những slice cần thiết
+// DS-03 FIX: Loại accessToken khỏi persist — không lưu JWT vào localStorage (ngăn XSS)
+const userTransform = createTransform(
+  (inboundState) => ({ ...inboundState, accessToken: null }), // trước khi ghi vào storage: xóa accessToken
+  (outboundState) => outboundState,                            // sau khi đọc lại: giữ nguyên (null)
+  { whitelist: ['user'] }
+);
+
 const persistConfig = {
-  key: 'root',          // Key trong localStorage
-  storage,              // localStorage (mặc định)
-  whitelist: ['user', 'app'],  // CHỈ persist user (token, info) và app (language)
-  // Không persist admin (fetch lại mỗi lần mở)
+  key: 'root',
+  storage,
+  whitelist: ['user', 'app'],  // persist user (isLoggedIn, userInfo) và app (language)
+  transforms: [userTransform], // DS-03: loại accessToken khỏi storage
 };
 
 // Combine tất cả reducers

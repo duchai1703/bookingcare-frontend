@@ -1,0 +1,32 @@
+// src/components/Common/MarkdownEditorField.scss
+$primary: #45c3d2;
+
+.markdown-editor-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+
+  .editor-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #555;
+  }
+
+  .editor-hint {
+    font-size: 0.78rem;
+    color: #888;
+    font-style: italic;
+    margin: 0;
+  }
+
+  .w-md-editor {
+    border-radius: 8px !important;
+    border: 1px solid #ddd !important;
+
+    &:focus-within {
+      border-color: $primary !important;
+      box-shadow: 0 0 0 3px rgba(69, 195, 210, 0.1) !important;
+    }
+  }
+}
