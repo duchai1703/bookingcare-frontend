@@ -1,0 +1,186 @@
+// src/containers/Patient/DoctorSchedule.scss
+// Styles cho Lịch Khám Theo Ngày — BEM Convention
+// SRS REQ-PT-009, REQ-AM-019 (8 khung giờ T1-T8)
+
+@import '../../styles/variables';
+@import '../../styles/mixins';
+
+.doctor-schedule {
+  padding: $spacing-md 0;
+
+  // ===== HEADER: Tiêu đề + Dropdown =====
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+    margin-bottom: $spacing-md;
+    padding-bottom: $spacing-sm;
+    border-bottom: 2px solid $primary;
+
+    @include mobile {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+
+  &__title {
+    font-size: $font-size-base;
+    font-weight: $font-weight-bold;
+    color: $text-primary;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+
+    i {
+      color: $primary;
+      margin-right: $spacing-xs;
+    }
+  }
+
+  &__date-select {
+    padding: 6px 12px;
+    border: 1px solid $border-color;
+    border-radius: $radius-sm;
+    font-size: $font-size-base;
+    color: $primary;
+    font-weight: $font-weight-medium;
+    background-color: $bg-white;
+    cursor: pointer;
+    outline: none;
+    transition: border-color $transition-fast;
+    min-width: 180px;
+
+    &:hover {
+      border-color: $primary;
+    }
+
+    &:focus {
+      border-color: $primary;
+      box-shadow: 0 0 0 2px rgba($primary, 0.15);
+    }
+
+    @include mobile {
+      width: 100%;
+    }
+  }
+
+  // ===== BODY: Danh sách khung giờ =====
+  &__body {
+    min-height: 100px;
+  }
+
+  // Loading
+  &__loading {
+    @include flex-center;
+    gap: $spacing-sm;
+    padding: $spacing-xl;
+    color: $text-light;
+    font-size: $font-size-sm;
+  }
+
+  &__loading-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid $border-color;
+    border-top-color: $primary;
+    border-radius: $radius-round;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  // ===== SLOTS: Các nút khung giờ =====
+  &__slots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $spacing-sm;
+    margin-bottom: $spacing-md;
+  }
+
+  &__slot-btn {
+    padding: 8px 16px;
+    min-width: 100px;
+    border: 1px solid $primary;
+    border-radius: $radius-sm;
+    background-color: $primary-light;
+    color: $primary-dark;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    cursor: pointer;
+    transition: all $transition-fast;
+    text-align: center;
+
+    &:hover {
+      background-color: $primary;
+      color: $text-white;
+      transform: translateY(-1px);
+      box-shadow: $shadow-sm;
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    // Slot đã hết chỗ (disabled) — REQ-AM-023
+    &--disabled {
+      background-color: $bg-light;
+      color: $text-light;
+      border-color: $border-color;
+      cursor: not-allowed;
+      opacity: 0.6;
+
+      &:hover {
+        background-color: $bg-light;
+        color: $text-light;
+        transform: none;
+        box-shadow: none;
+      }
+    }
+
+    @include mobile {
+      min-width: 85px;
+      padding: 8px 12px;
+      font-size: $font-size-xs;
+    }
+  }
+
+  // ===== GHI CHÚ =====
+  &__note {
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
+    padding-top: $spacing-sm;
+  }
+
+  &__note-icon {
+    font-size: $font-size-md;
+  }
+
+  &__note-text {
+    font-size: $font-size-sm;
+    color: $text-secondary;
+  }
+
+  // ===== TRẠNG THÁI TRỐNG =====
+  &__empty {
+    @include flex-column-center;
+    padding: $spacing-xl;
+    text-align: center;
+  }
+
+  &__empty-icon {
+    font-size: 36px;
+    margin-bottom: $spacing-sm;
+    opacity: 0.5;
+  }
+
+  &__empty-text {
+    font-size: $font-size-base;
+    color: $text-light;
+    font-style: italic;
+  }
+}

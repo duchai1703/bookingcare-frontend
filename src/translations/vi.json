@@ -59,5 +59,50 @@
   "booking.birthday": "Ngày sinh",
   "booking.gender": "Giới tính",
   "booking.address": "Địa chỉ",
-  "booking.confirm-btn": "Xác nhận đặt lịch"
+  "booking.confirm-btn": "Xác nhận đặt lịch",
+
+  "patient.doctor-detail.schedule": "LỊCH KHÁM",
+  "patient.doctor-detail.select-date": "Chọn ngày khám",
+  "patient.doctor-detail.no-schedule": "Bác sĩ không có lịch khám vào ngày này",
+  "patient.doctor-detail.book-free": "Chọn 🗓 và đặt (miễn phí)",
+  "patient.doctor-detail.price": "GIÁ KHÁM",
+  "patient.doctor-detail.see-detail": "Xem chi tiết",
+  "patient.doctor-detail.hide-detail": "Ẩn bảng giá",
+  "patient.doctor-detail.payment": "Thanh toán",
+  "patient.doctor-detail.insurance": "Bảo hiểm",
+  "patient.doctor-detail.clinic-address": "ĐỊA CHỈ KHÁM",
+
+  "patient.booking-modal.title": "Thông tin đặt lịch khám bệnh",
+  "patient.booking-modal.full-name": "Họ tên",
+  "patient.booking-modal.email": "Email",
+  "patient.booking-modal.phone": "Số điện thoại",
+  "patient.booking-modal.address": "Địa chỉ",
+  "patient.booking-modal.reason": "Lý do khám",
+  "patient.booking-modal.birthday": "Ngày sinh",
+  "patient.booking-modal.gender": "Giới tính",
+  "patient.booking-modal.confirm": "Xác nhận đặt lịch",
+  "patient.booking-modal.cancel": "Hủy",
+  "patient.booking-modal.booking-for": "Đặt lịch cho",
+  "patient.booking-modal.free-booking": "Miễn phí đặt lịch",
+  "patient.booking-modal.success": "Đặt lịch thành công! Vui lòng kiểm tra email để xác nhận.",
+  "patient.booking-modal.duplicate": "Lịch hẹn đã tồn tại. Vui lòng chọn khung giờ khác.",
+  "patient.booking-modal.error": "Có lỗi xảy ra, vui lòng thử lại sau.",
+
+  "patient.verify-email.success": "Xác nhận lịch hẹn thành công!",
+  "patient.verify-email.success-desc": "Cảm ơn bạn đã xác nhận. Vui lòng đến đúng giờ hẹn.",
+  "patient.verify-email.failed": "Xác nhận thất bại!",
+  "patient.verify-email.failed-desc": "Link xác nhận không hợp lệ hoặc đã được sử dụng.",
+  "patient.verify-email.go-home": "Về trang chủ",
+
+  "patient.specialty-detail.filter-province": "Toàn quốc",
+  "patient.specialty-detail.see-more": "Xem thêm",
+  "patient.specialty-detail.collapse": "Thu gọn",
+  "patient.specialty-detail.no-doctor": "Không tìm thấy bác sĩ nào trong khu vực này.",
+
+  "patient.clinic-detail.our-doctors": "Đội ngũ bác sĩ",
+  "patient.clinic-detail.no-doctor": "Chưa có bác sĩ nào thuộc phòng khám này.",
+  "patient.clinic-detail.not-found": "Không tìm thấy phòng khám",
+  "patient.clinic-detail.not-found-desc": "Vui lòng kiểm tra lại đường dẫn.",
+
+  "patient.social-plugin.like-share": "Thích và chia sẻ"
 }

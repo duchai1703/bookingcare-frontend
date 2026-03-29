@@ -59,5 +59,50 @@
   "booking.birthday": "Date of birth",
   "booking.gender": "Gender",
   "booking.address": "Address",
-  "booking.confirm-btn": "Confirm booking"
+  "booking.confirm-btn": "Confirm booking",
+
+  "patient.doctor-detail.schedule": "SCHEDULE",
+  "patient.doctor-detail.select-date": "Select date",
+  "patient.doctor-detail.no-schedule": "The doctor has no available schedule on this day",
+  "patient.doctor-detail.book-free": "Select 🗓 and book (free)",
+  "patient.doctor-detail.price": "EXAMINATION PRICE",
+  "patient.doctor-detail.see-detail": "See details",
+  "patient.doctor-detail.hide-detail": "Hide price details",
+  "patient.doctor-detail.payment": "Payment",
+  "patient.doctor-detail.insurance": "Insurance",
+  "patient.doctor-detail.clinic-address": "CLINIC ADDRESS",
+
+  "patient.booking-modal.title": "Book Appointment Information",
+  "patient.booking-modal.full-name": "Full name",
+  "patient.booking-modal.email": "Email",
+  "patient.booking-modal.phone": "Phone number",
+  "patient.booking-modal.address": "Address",
+  "patient.booking-modal.reason": "Reason for visit",
+  "patient.booking-modal.birthday": "Date of birth",
+  "patient.booking-modal.gender": "Gender",
+  "patient.booking-modal.confirm": "Confirm booking",
+  "patient.booking-modal.cancel": "Cancel",
+  "patient.booking-modal.booking-for": "Booking for",
+  "patient.booking-modal.free-booking": "Free booking",
+  "patient.booking-modal.success": "Booking successful! Please check your email to confirm.",
+  "patient.booking-modal.duplicate": "Appointment already exists. Please choose another time slot.",
+  "patient.booking-modal.error": "An error occurred, please try again later.",
+
+  "patient.verify-email.success": "Appointment confirmed successfully!",
+  "patient.verify-email.success-desc": "Thank you for confirming. Please arrive on time.",
+  "patient.verify-email.failed": "Confirmation failed!",
+  "patient.verify-email.failed-desc": "The confirmation link is invalid or has already been used.",
+  "patient.verify-email.go-home": "Go to homepage",
+
+  "patient.specialty-detail.filter-province": "All provinces",
+  "patient.specialty-detail.see-more": "See more",
+  "patient.specialty-detail.collapse": "Collapse",
+  "patient.specialty-detail.no-doctor": "No doctors found in this area.",
+
+  "patient.clinic-detail.our-doctors": "Our Doctors",
+  "patient.clinic-detail.no-doctor": "No doctors available at this clinic.",
+  "patient.clinic-detail.not-found": "Clinic not found",
+  "patient.clinic-detail.not-found-desc": "Please check the URL.",
+
+  "patient.social-plugin.like-share": "Like and share"
 }

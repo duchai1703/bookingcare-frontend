@@ -1,0 +1,235 @@
+// src/containers/Patient/BookingModal.scss
+// Styles cho Modal Đặt Lịch Khám — BEM Convention
+// SRS REQ-PT-012 → 023
+
+@import '../../styles/variables';
+@import '../../styles/mixins';
+
+// ===== OVERLAY =====
+.booking-modal__overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: $bg-overlay;
+  z-index: $z-modal;
+  @include flex-center;
+  padding: $spacing-md;
+}
+
+// ===== MODAL =====
+.booking-modal {
+  background-color: $bg-white;
+  border-radius: $radius-md;
+  box-shadow: $shadow-lg;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: modalSlideIn 0.3s ease;
+
+  @keyframes modalSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  // ===== HEADER =====
+  &__header {
+    @include flex-between;
+    padding: $spacing-md $spacing-lg;
+    border-bottom: 1px solid $border-color;
+    background-color: $primary-light;
+    border-radius: $radius-md $radius-md 0 0;
+  }
+
+  &__title {
+    font-size: $font-size-md;
+    font-weight: $font-weight-bold;
+    color: $text-primary;
+  }
+
+  &__close-btn {
+    width: 32px;
+    height: 32px;
+    @include flex-center;
+    font-size: $font-size-lg;
+    color: $text-light;
+    border-radius: $radius-round;
+    transition: all $transition-fast;
+
+    &:hover {
+      background-color: $danger;
+      color: $text-white;
+    }
+  }
+
+  // ===== INFO =====
+  &__info {
+    padding: $spacing-md $spacing-lg;
+    background-color: $bg-light;
+    border-bottom: 1px solid $border-color;
+  }
+
+  &__info-row {
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
+    font-size: $font-size-base;
+    color: $text-primary;
+    margin-bottom: 4px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  &__info-icon {
+    font-size: $font-size-md;
+  }
+
+  &__info-label {
+    font-size: $font-size-xs;
+    color: $text-light;
+  }
+
+  // ===== FORM =====
+  &__form {
+    padding: $spacing-lg;
+  }
+
+  &__row {
+    display: flex;
+    gap: $spacing-md;
+
+    @include mobile {
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .booking-modal__field {
+      flex: 1;
+    }
+  }
+
+  &__field {
+    margin-bottom: $spacing-md;
+  }
+
+  &__label {
+    display: block;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $text-primary;
+    margin-bottom: $spacing-xs;
+  }
+
+  &__input,
+  &__textarea,
+  &__select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid $border-color;
+    border-radius: $radius-sm;
+    font-size: $font-size-base;
+    color: $text-primary;
+    background-color: $bg-white;
+    transition: border-color $transition-fast, box-shadow $transition-fast;
+
+    &:focus {
+      border-color: $primary;
+      box-shadow: 0 0 0 2px rgba($primary, 0.15);
+    }
+
+    &::placeholder {
+      color: $text-light;
+    }
+
+    // Error state
+    &.input-error {
+      border-color: $danger;
+
+      &:focus {
+        box-shadow: 0 0 0 2px rgba($danger, 0.15);
+      }
+    }
+  }
+
+  &__textarea {
+    resize: vertical;
+    min-height: 60px;
+  }
+
+  &__select {
+    cursor: pointer;
+  }
+
+  // ===== FOOTER =====
+  &__footer {
+    @include flex-between;
+    padding: $spacing-md $spacing-lg;
+    border-top: 1px solid $border-color;
+    gap: $spacing-md;
+
+    @include mobile {
+      flex-direction: column-reverse;
+    }
+  }
+
+  &__btn {
+    padding: 10px 24px;
+    border-radius: $radius-sm;
+    font-size: $font-size-base;
+    font-weight: $font-weight-medium;
+    transition: all $transition-fast;
+    min-width: 140px;
+    text-align: center;
+
+    @include mobile {
+      width: 100%;
+    }
+
+    &--cancel {
+      background-color: $bg-light;
+      color: $text-secondary;
+      border: 1px solid $border-color;
+
+      &:hover {
+        background-color: $border-color;
+      }
+    }
+
+    &--confirm {
+      background-color: $primary;
+      color: $text-white;
+      border: none;
+
+      &:hover {
+        background-color: $primary-dark;
+        transform: translateY(-1px);
+        box-shadow: $shadow-sm;
+      }
+
+      &:disabled {
+        background-color: $text-light;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+    }
+  }
+}
+
+// ===== ERROR TEXT =====
+.error-text {
+  color: $danger;
+  font-size: $font-size-xs;
+  margin-top: 4px;
+  display: block;
+}

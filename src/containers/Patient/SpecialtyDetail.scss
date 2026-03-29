@@ -1,0 +1,358 @@
+// src/containers/Patient/SpecialtyDetail.scss
+// Styles cho Chi Tiết Chuyên Khoa — BEM Convention
+// SRS REQ-PT-006
+
+@import '../../styles/variables';
+@import '../../styles/mixins';
+
+// ===== SKELETON LOADING =====
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@mixin skeleton-base {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: $radius-sm;
+}
+
+.specialty-detail-skeleton {
+  min-height: 70vh;
+  background-color: $bg-white;
+
+  .skeleton-container {
+    max-width: $max-width;
+    margin: 0 auto;
+    padding: $spacing-xl $spacing-md;
+  }
+
+  .skeleton-description {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-sm;
+    padding-bottom: $spacing-xl;
+    border-bottom: 1px solid $border-color;
+    margin-bottom: $spacing-lg;
+  }
+
+  .skeleton-filter {
+    margin-bottom: $spacing-xl;
+  }
+
+  .skeleton-select {
+    @include skeleton-base;
+    width: 200px;
+    height: 36px;
+  }
+
+  .skeleton-text {
+    @include skeleton-base;
+    height: 16px;
+    &.long { width: 80%; }
+    &.medium { width: 50%; }
+    &.short { width: 30%; }
+  }
+
+  .skeleton-doctor-card {
+    padding: $spacing-lg;
+    margin-bottom: $spacing-lg;
+    border-bottom: 1px solid $border-color;
+  }
+
+  .skeleton-doctor-left {
+    display: flex;
+    gap: $spacing-md;
+    margin-bottom: $spacing-md;
+  }
+
+  .skeleton-avatar {
+    @include skeleton-base;
+    width: 80px;
+    height: 80px;
+    border-radius: $radius-round;
+    flex-shrink: 0;
+  }
+
+  .skeleton-doctor-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-sm;
+  }
+
+  .skeleton-doctor-body {
+    display: flex;
+    gap: $spacing-xl;
+
+    @include tablet {
+      flex-direction: column;
+    }
+  }
+
+  .skeleton-block {
+    @include skeleton-base;
+    flex: 1;
+    height: 120px;
+  }
+}
+
+// ===== SPECIALTY DETAIL — Main Styles =====
+.specialty-detail {
+  background-color: $bg-light;
+  min-height: 60vh;
+
+  // ===== MÔ TẢ CHUYÊN KHOA =====
+  &__description {
+    background-color: rgba($bg-white, 0.9);
+    position: relative;
+    max-height: 200px;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+
+    &--expanded {
+      max-height: none;
+    }
+
+    // Gradient fade khi thu gọn
+    &:not(&--expanded)::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: linear-gradient(transparent, rgba($bg-white, 0.95));
+      pointer-events: none;
+    }
+  }
+
+  &__description-container {
+    max-width: $max-width;
+    margin: 0 auto;
+    padding: $spacing-lg $spacing-md;
+  }
+
+  &__description-content {
+    font-size: $font-size-base;
+    color: $text-primary;
+    line-height: 1.7;
+
+    h1, h2, h3, h4 {
+      margin-top: $spacing-md;
+      margin-bottom: $spacing-sm;
+      font-weight: $font-weight-bold;
+    }
+
+    p {
+      margin-bottom: $spacing-sm;
+    }
+
+    ul, ol {
+      padding-left: $spacing-xl;
+      margin-bottom: $spacing-sm;
+
+      li { margin-bottom: $spacing-xs; }
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+      border-radius: $radius-sm;
+    }
+
+    a {
+      color: $primary;
+      &:hover { text-decoration: underline; }
+    }
+  }
+
+  &__description-toggle {
+    text-align: center;
+    padding: $spacing-sm 0;
+    background-color: rgba($bg-white, 0.95);
+    position: relative;
+    z-index: 1;
+
+    span {
+      font-size: $font-size-sm;
+      color: $primary;
+      cursor: pointer;
+      font-weight: $font-weight-medium;
+
+      &:hover { color: $primary-dark; }
+    }
+  }
+
+  // ===== LỌC TỈNH/THÀNH PHỐ =====
+  &__filter {
+    background-color: $bg-white;
+    border-bottom: 1px solid $border-color;
+    position: sticky;
+    top: 0;
+    z-index: $z-sticky;
+  }
+
+  &__filter-container {
+    max-width: $max-width;
+    margin: 0 auto;
+    padding: $spacing-sm $spacing-md;
+  }
+
+  &__filter-select {
+    padding: 6px 12px;
+    min-width: 200px;
+    border: 1px solid $border-color;
+    border-radius: $radius-sm;
+    font-size: $font-size-base;
+    color: $text-primary;
+    background-color: $bg-white;
+    cursor: pointer;
+    outline: none;
+    transition: border-color $transition-fast;
+
+    &:hover { border-color: $primary; }
+
+    &:focus {
+      border-color: $primary;
+      box-shadow: 0 0 0 2px rgba($primary, 0.15);
+    }
+
+    @include mobile {
+      width: 100%;
+    }
+  }
+
+  // ===== DANH SÁCH BÁC SĨ =====
+  &__doctors {
+    padding: $spacing-lg 0;
+  }
+
+  &__doctors-container {
+    max-width: $max-width;
+    margin: 0 auto;
+    padding: 0 $spacing-md;
+  }
+
+  // --- Doctor Card ---
+  &__doctor-card {
+    background-color: $bg-white;
+    border-radius: $radius-md;
+    padding: $spacing-lg;
+    margin-bottom: $spacing-lg;
+    box-shadow: $shadow-sm;
+    transition: box-shadow $transition-fast;
+
+    &:hover {
+      box-shadow: $shadow-md;
+    }
+  }
+
+  &__doctor-header {
+    display: flex;
+    align-items: flex-start;
+    gap: $spacing-md;
+    margin-bottom: $spacing-md;
+    padding-bottom: $spacing-md;
+    border-bottom: 1px solid $border-color;
+
+    @include mobile {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+  }
+
+  &__doctor-avatar {
+    flex-shrink: 0;
+
+    img {
+      width: 80px;
+      height: 80px;
+      border-radius: $radius-round;
+      object-fit: cover;
+      border: 2px solid $primary-light;
+    }
+  }
+
+  &__doctor-info {
+    flex: 1;
+  }
+
+  &__doctor-name {
+    font-size: $font-size-md;
+    font-weight: $font-weight-bold;
+    color: $primary;
+    margin-bottom: $spacing-xs;
+    cursor: pointer;
+    transition: color $transition-fast;
+
+    &:hover {
+      color: $primary-dark;
+      text-decoration: underline;
+    }
+  }
+
+  &__doctor-specialty {
+    font-size: $font-size-sm;
+    color: $text-secondary;
+    margin-bottom: $spacing-xs;
+  }
+
+  &__doctor-desc {
+    font-size: $font-size-sm;
+    color: $text-light;
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  // --- Doctor Body: Schedule + ExtraInfo ---
+  &__doctor-body {
+    display: flex;
+
+    @include tablet {
+      flex-direction: column;
+    }
+  }
+
+  &__doctor-schedule {
+    flex: 1;
+    padding-right: $spacing-lg;
+    border-right: 1px solid $border-color;
+
+    @include tablet {
+      padding-right: 0;
+      border-right: none;
+      border-bottom: 1px solid $border-color;
+      padding-bottom: $spacing-md;
+      margin-bottom: $spacing-md;
+    }
+  }
+
+  &__doctor-extra {
+    flex: 1;
+    padding-left: $spacing-lg;
+
+    @include tablet {
+      padding-left: 0;
+    }
+  }
+
+  // ===== TRẠNG THÁI TRỐNG =====
+  &__empty {
+    @include flex-column-center;
+    padding: $spacing-xxl;
+    text-align: center;
+
+    p {
+      font-size: $font-size-base;
+      color: $text-light;
+      font-style: italic;
+    }
+  }
+}

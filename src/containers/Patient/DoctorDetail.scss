@@ -1,0 +1,439 @@
+// src/containers/Patient/DoctorDetail.scss
+// Styles cho Trang Chi Tiết Bác Sĩ — BEM Convention
+// [DEEP-SCAN FIX-2] Includes Skeleton Loading animation
+
+@import '../../styles/variables';
+@import '../../styles/mixins';
+
+// ===== SKELETON LOADING — Shimmer animation =====
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+// Skeleton base mixin
+@mixin skeleton-base {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: $radius-sm;
+}
+
+// ===== SKELETON LAYOUT =====
+.doctor-detail-skeleton {
+  min-height: 80vh;
+  background-color: $bg-white;
+
+  .skeleton-container {
+    max-width: $max-width;
+    margin: 0 auto;
+    padding: $spacing-xl $spacing-md;
+  }
+
+  // Skeleton Header
+  .skeleton-header {
+    display: flex;
+    align-items: flex-start;
+    gap: $spacing-lg;
+    padding-bottom: $spacing-xl;
+    border-bottom: 1px solid $border-color;
+    margin-bottom: $spacing-xl;
+
+    @include mobile {
+      flex-direction: column;
+      align-items: center;
+    }
+  }
+
+  .skeleton-avatar {
+    @include skeleton-base;
+    width: 120px;
+    height: 120px;
+    border-radius: $radius-round;
+    flex-shrink: 0;
+  }
+
+  .skeleton-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-sm;
+    padding-top: $spacing-xs;
+
+    @include mobile {
+      width: 100%;
+      align-items: center;
+    }
+  }
+
+  .skeleton-text {
+    @include skeleton-base;
+    height: 16px;
+
+    &.long {
+      width: 80%;
+    }
+
+    &.medium {
+      width: 50%;
+    }
+
+    &.short {
+      width: 30%;
+    }
+  }
+
+  // Skeleton Body (Schedule + Extra Info)
+  .skeleton-body {
+    display: flex;
+    gap: $spacing-xl;
+    margin-bottom: $spacing-xl;
+    padding-bottom: $spacing-xl;
+    border-bottom: 1px solid $border-color;
+
+    @include tablet {
+      flex-direction: column;
+    }
+  }
+
+  .skeleton-left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-sm;
+  }
+
+  .skeleton-right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-sm;
+    border-left: 1px solid $border-color;
+    padding-left: $spacing-xl;
+
+    @include tablet {
+      border-left: none;
+      padding-left: 0;
+      border-top: 1px solid $border-color;
+      padding-top: $spacing-lg;
+    }
+  }
+
+  .skeleton-block {
+    @include skeleton-base;
+    height: 40px;
+    width: 100%;
+  }
+
+  .skeleton-block-sm {
+    @include skeleton-base;
+    height: 30px;
+    width: 100%;
+  }
+
+  .skeleton-slots {
+    display: flex;
+    gap: $spacing-sm;
+    flex-wrap: wrap;
+    margin-top: $spacing-sm;
+  }
+
+  .skeleton-slot {
+    @include skeleton-base;
+    width: 100px;
+    height: 40px;
+    border-radius: $radius-sm;
+  }
+
+  // Skeleton Content
+  .skeleton-content {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-sm;
+  }
+}
+
+// ===== DOCTOR DETAIL — Main Styles =====
+.doctor-detail {
+  background-color: $bg-white;
+  min-height: 60vh;
+
+  // ===== HEADER SECTION — Avatar + Thông tin bác sĩ =====
+  &__header {
+    background-color: $bg-white;
+    padding: $spacing-xl 0;
+    border-bottom: 1px solid $border-color;
+  }
+
+  &__header-container {
+    max-width: $max-width;
+    margin: 0 auto;
+    padding: 0 $spacing-md;
+    display: flex;
+    align-items: flex-start;
+    gap: $spacing-lg;
+
+    @include mobile {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+  }
+
+  // Avatar
+  &__avatar {
+    flex-shrink: 0;
+  }
+
+  &__avatar-img {
+    width: 120px;
+    height: 120px;
+    border-radius: $radius-round;
+    object-fit: cover;
+    border: 3px solid $primary-light;
+    box-shadow: $shadow-md;
+  }
+
+  // Thông tin bác sĩ
+  &__info {
+    flex: 1;
+    padding-top: $spacing-xs;
+  }
+
+  &__name {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    color: $text-primary;
+    margin-bottom: $spacing-sm;
+    line-height: 1.3;
+  }
+
+  &__description {
+    font-size: $font-size-base;
+    color: $text-secondary;
+    line-height: 1.7;
+    margin-bottom: $spacing-sm;
+    white-space: pre-line;
+  }
+
+  &__location {
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
+    font-size: $font-size-sm;
+    color: $text-light;
+
+    i {
+      color: $primary;
+    }
+  }
+
+  // ===== SCHEDULE SECTION — DoctorSchedule + DoctorExtraInfo =====
+  &__schedule-section {
+    background-color: $bg-light;
+    padding: $spacing-lg 0;
+    border-bottom: 1px solid $border-color;
+  }
+
+  &__schedule-container {
+    max-width: $max-width;
+    margin: 0 auto;
+    padding: 0 $spacing-md;
+    display: flex;
+
+    @include tablet {
+      flex-direction: column;
+    }
+  }
+
+  &__schedule-left {
+    flex: 1;
+    padding-right: $spacing-xl;
+    border-right: 1px solid $border-color;
+
+    @include tablet {
+      padding-right: 0;
+      border-right: none;
+      border-bottom: 1px solid $border-color;
+      padding-bottom: $spacing-lg;
+      margin-bottom: $spacing-lg;
+    }
+  }
+
+  &__schedule-right {
+    flex: 1;
+    padding-left: $spacing-xl;
+
+    @include tablet {
+      padding-left: 0;
+    }
+  }
+
+  // ===== CONTENT SECTION — Bài viết bác sĩ (contentHTML) =====
+  &__content-section {
+    background-color: $bg-white;
+    padding: $spacing-xl 0;
+    border-bottom: 8px solid $bg-light;
+  }
+
+  &__content-container {
+    max-width: $max-width;
+    margin: 0 auto;
+    padding: 0 $spacing-md;
+  }
+
+  &__content-body {
+    font-size: $font-size-base;
+    color: $text-primary;
+    line-height: 1.8;
+
+    // Style cho nội dung HTML được render bởi dangerouslySetInnerHTML
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: $spacing-lg;
+      margin-bottom: $spacing-sm;
+      color: $text-primary;
+      font-weight: $font-weight-bold;
+      line-height: 1.4;
+    }
+
+    h1 { font-size: $font-size-xxl; }
+    h2 { font-size: $font-size-xl; }
+    h3 { font-size: $font-size-lg; }
+    h4 { font-size: $font-size-md; }
+
+    p {
+      margin-bottom: $spacing-sm;
+      line-height: 1.8;
+    }
+
+    ul, ol {
+      margin-bottom: $spacing-sm;
+      padding-left: $spacing-xl;
+
+      li {
+        margin-bottom: $spacing-xs;
+        list-style: disc;
+        line-height: 1.6;
+      }
+    }
+
+    ol li {
+      list-style: decimal;
+    }
+
+    strong, b {
+      font-weight: $font-weight-bold;
+    }
+
+    em, i {
+      font-style: italic;
+    }
+
+    a {
+      color: $primary;
+      text-decoration: underline;
+
+      &:hover {
+        color: $primary-dark;
+      }
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+      border-radius: $radius-md;
+      margin: $spacing-sm 0;
+    }
+
+    blockquote {
+      border-left: 4px solid $primary;
+      padding: $spacing-sm $spacing-md;
+      margin: $spacing-md 0;
+      background-color: $primary-light;
+      font-style: italic;
+      color: $text-secondary;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: $spacing-md 0;
+
+      th, td {
+        border: 1px solid $border-color;
+        padding: $spacing-sm $spacing-md;
+        text-align: left;
+      }
+
+      th {
+        background-color: $bg-light;
+        font-weight: $font-weight-bold;
+      }
+
+      tr:hover {
+        background-color: $primary-light;
+      }
+    }
+
+    code {
+      background-color: $bg-light;
+      padding: 2px 6px;
+      border-radius: $radius-sm;
+      font-size: $font-size-sm;
+      font-family: 'Courier New', monospace;
+    }
+
+    pre {
+      background-color: $bg-light;
+      padding: $spacing-md;
+      border-radius: $radius-md;
+      overflow-x: auto;
+      margin: $spacing-md 0;
+
+      code {
+        padding: 0;
+        background: none;
+      }
+    }
+  }
+
+  // ===== COMMENT SECTION =====
+  &__comment-section {
+    background-color: $bg-white;
+    padding: $spacing-xl 0;
+  }
+
+  &__comment-container {
+    max-width: $max-width;
+    margin: 0 auto;
+    padding: 0 $spacing-md;
+  }
+
+  // ===== NOT FOUND =====
+  &__not-found {
+    @include flex-column-center;
+    padding: 80px $spacing-md;
+    min-height: 50vh;
+    text-align: center;
+
+    &-icon {
+      font-size: 64px;
+      margin-bottom: $spacing-lg;
+    }
+
+    h2 {
+      font-size: $font-size-xl;
+      color: $text-primary;
+      margin-bottom: $spacing-sm;
+    }
+
+    p {
+      font-size: $font-size-base;
+      color: $text-secondary;
+    }
+  }
+}

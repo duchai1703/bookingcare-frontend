@@ -1,0 +1,107 @@
+// src/containers/Patient/DoctorExtraInfo.scss
+// Styles cho Thông Tin Phòng Khám & Giá Khám — BEM Convention
+// SRS REQ-PT-010 (giá), REQ-PT-011 (phòng khám)
+
+@import '../../styles/variables';
+@import '../../styles/mixins';
+
+.doctor-extra-info {
+  padding: $spacing-md 0;
+
+  // ===== SECTION CHUNG =====
+  &__section {
+    margin-bottom: $spacing-md;
+    padding-bottom: $spacing-md;
+    border-bottom: 1px dashed $border-color;
+
+    &:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+  }
+
+  &__label {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-bold;
+    color: $text-primary;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: $spacing-sm;
+  }
+
+  // ===== ĐỊA CHỈ KHÁM =====
+  &__clinic-name {
+    font-size: $font-size-base;
+    font-weight: $font-weight-bold;
+    color: $text-primary;
+    margin-bottom: 4px;
+  }
+
+  &__clinic-address {
+    font-size: $font-size-sm;
+    color: $text-secondary;
+    line-height: 1.5;
+  }
+
+  // ===== GIÁ KHÁM =====
+  &__price-row {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+  }
+
+  &__price-value {
+    font-size: $font-size-base;
+    font-weight: $font-weight-medium;
+    color: $text-primary;
+  }
+
+  &__toggle {
+    font-size: $font-size-sm;
+    color: $primary;
+    cursor: pointer;
+    transition: color $transition-fast;
+
+    &:hover {
+      color: $primary-dark;
+      text-decoration: underline;
+    }
+  }
+
+  // Chi tiết giá (expanded)
+  &__price-detail {
+    margin-top: $spacing-xs;
+  }
+
+  &__price-detail-box {
+    background-color: $bg-light;
+    padding: $spacing-sm $spacing-md;
+    border-radius: $radius-sm;
+    margin-bottom: $spacing-sm;
+  }
+
+  &__price-detail-row {
+    @include flex-between;
+    padding: $spacing-xs 0;
+    font-size: $font-size-base;
+    color: $text-primary;
+  }
+
+  &__price-bold {
+    font-weight: $font-weight-bold;
+    color: $danger;
+  }
+
+  &__note {
+    font-size: $font-size-sm;
+    color: $text-light;
+    font-style: italic;
+    margin-top: $spacing-xs;
+  }
+
+  &__payment {
+    font-size: $font-size-sm;
+    color: $text-secondary;
+    margin-bottom: $spacing-sm;
+  }
+}
