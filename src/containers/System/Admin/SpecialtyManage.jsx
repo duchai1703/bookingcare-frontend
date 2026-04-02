@@ -40,7 +40,7 @@ const SpecialtyManage = () => {
     setFormData({
       id: spec.id, name: spec.name || '',
       descriptionMarkdown: spec.descriptionMarkdown || '', descriptionHTML: spec.descriptionHTML || '',
-      previewImgURL: spec.image ? CommonUtils.decodeBase64Image(spec.image) : '', imageBase64: '',
+      previewImgURL: spec.image && typeof spec.image === 'string' ? CommonUtils.decodeBase64Image(spec.image) : '', imageBase64: '',
     });
     setIsEditing(true); setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -95,7 +95,7 @@ const SpecialtyManage = () => {
             </div>
             <MarkdownEditorField
               value={formData.descriptionMarkdown}
-              onChange={(val) => setFormData((prev) => ({ ...prev, descriptionMarkdown: val, descriptionHTML: val }))}
+              onChange={(val) => setFormData((prev) => ({ ...prev, descriptionMarkdown: val }))}
               height={280} label="Mô tả chuyên khoa (Markdown)"
             />
             <div className="form-actions">
@@ -113,7 +113,7 @@ const SpecialtyManage = () => {
          specialties.map((spec) => (
           <div key={spec.id} className="specialty-card">
             <div className="spec-img-wrap">
-              {spec.image
+              {spec.image && typeof spec.image === 'string'
                 ? <img src={CommonUtils.decodeBase64Image(spec.image)} alt={spec.name} className="spec-img" />
                 : <div className="spec-img-placeholder">🔬</div>
               }

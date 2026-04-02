@@ -1,6 +1,6 @@
 // src/redux/store.js
 import { configureStore } from '@reduxjs/toolkit';
-import { persistStore, persistReducer, createTransform } from 'redux-persist';
+import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import { combineReducers } from 'redux';
 
@@ -9,18 +9,12 @@ import userReducer from './slices/userSlice';
 import adminReducer from './slices/adminSlice';
 import doctorReducer from './slices/doctorSlice';
 
-// DS-03 FIX: Loại accessToken khỏi persist — không lưu JWT vào localStorage (ngăn XSS)
-const userTransform = createTransform(
-  (inboundState) => ({ ...inboundState, accessToken: null }), // trước khi ghi vào storage: xóa accessToken
-  (outboundState) => outboundState,                            // sau khi đọc lại: giữ nguyên (null)
-  { whitelist: ['user'] }
-);
-
+// FIX AUTO-LOGOUT: Giữ accessToken trong persist để không bị logout khi F5
+// (DS-03 cũ: strip accessToken — gây auto-logout liên tục, user không thể sử dụng)
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['user', 'app'],  // persist user (isLoggedIn, userInfo) và app (language)
-  transforms: [userTransform], // DS-03: loại accessToken khỏi storage
+  whitelist: ['user', 'app'],  // persist user (isLoggedIn, userInfo, accessToken) và app (language)
 };
 
 // Combine tất cả reducers

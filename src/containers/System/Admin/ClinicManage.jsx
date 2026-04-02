@@ -40,7 +40,7 @@ const ClinicManage = () => {
     setFormData({
       id: clinic.id, name: clinic.name || '', address: clinic.address || '',
       descriptionMarkdown: clinic.descriptionMarkdown || '', descriptionHTML: clinic.descriptionHTML || '',
-      previewImgURL: clinic.image ? CommonUtils.decodeBase64Image(clinic.image) : '', imageBase64: '',
+      previewImgURL: clinic.image && typeof clinic.image === 'string' ? CommonUtils.decodeBase64Image(clinic.image) : '', imageBase64: '',
     });
     setIsEditing(true); setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -99,7 +99,7 @@ const ClinicManage = () => {
             </div>
             <MarkdownEditorField
               value={formData.descriptionMarkdown}
-              onChange={(val) => setFormData((prev) => ({ ...prev, descriptionMarkdown: val, descriptionHTML: val }))}
+              onChange={(val) => setFormData((prev) => ({ ...prev, descriptionMarkdown: val }))}
               height={300} label="Mô tả chi tiết (Markdown)" placeholder="## Giới thiệu phòng khám..."
             />
             <div className="form-actions">
@@ -116,7 +116,7 @@ const ClinicManage = () => {
          clinics.map((clinic) => (
           <div key={clinic.id} className="clinic-card">
             <div className="clinic-img-wrap">
-              {clinic.image
+              {clinic.image && typeof clinic.image === 'string'
                 ? <img src={CommonUtils.decodeBase64Image(clinic.image)} alt={clinic.name} className="clinic-img" />
                 : <div className="clinic-img-placeholder">🏥</div>
               }

@@ -256,7 +256,7 @@ const DoctorManage = () => {
           <div className="form-card">
             <MarkdownEditorField
               value={doctorInfo.contentMarkdown}
-              onChange={(val) => setDoctorInfo((prev) => ({ ...prev, contentMarkdown: val, contentHTML: val }))}
+              onChange={(val) => setDoctorInfo((prev) => ({ ...prev, contentMarkdown: val }))}
               height={420}
               label="📝 Bài Giới Thiệu Bác Sĩ (Markdown)"
               placeholder="## Giới thiệu&#10;&#10;BS. Nguyễn Văn A..."

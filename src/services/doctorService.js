@@ -14,10 +14,17 @@ export const getDoctorDetail = (id) => {
   return axiosInstance.get(`/api/v1/doctors/${id}`);
 };
 
-// REQ-PT-009: Lấy lịch khám theo ngày
+// REQ-PT-009: Lấy lịch khám theo ngày (Patient — chỉ slot còn chỗ)
 export const getScheduleByDate = (doctorId, date) => {
   return axiosInstance.get(`/api/v1/doctors/${doctorId}/schedules`, {
     params: { date },
+  });
+};
+
+// FIX BUG-06: Admin version — includes fully booked slots
+export const getScheduleByDateAdmin = (doctorId, date) => {
+  return axiosInstance.get(`/api/v1/doctors/${doctorId}/schedules`, {
+    params: { date, includeAll: 'true' },
   });
 };
 

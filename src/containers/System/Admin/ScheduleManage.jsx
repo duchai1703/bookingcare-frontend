@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import moment from 'moment';
 import { getAllUsers } from '../../../services/userService';
-import { bulkCreateSchedule, deleteSchedule, editSchedule, getScheduleByDate } from '../../../services/doctorService';
+import { bulkCreateSchedule, deleteSchedule, editSchedule, getScheduleByDateAdmin } from '../../../services/doctorService';
 import { confirmDelete, showSuccess, showError, showWarning } from '../../../utils/confirmDelete';
 import './ScheduleManage.scss';
 
@@ -63,7 +63,7 @@ const ScheduleManage = () => {
     try {
       // BUG-01: dùng moment.utc() — tránh lệch múi giờ GMT+7 vs UTC
       const timestamp = moment.utc(selectedDate, 'YYYY-MM-DD').startOf('day').valueOf();
-      const res = await getScheduleByDate(selectedDoctorId, timestamp);
+      const res = await getScheduleByDateAdmin(selectedDoctorId, timestamp);
       if (res.errCode === 0) {
         setExistingSchedules(res.data || []);
         setSelectedTimes((res.data || []).map((s) => s.timeType));
@@ -222,7 +222,7 @@ const ScheduleManage = () => {
                               const res = await editSchedule({ id: schedule.id, maxNumber: newMax });
                               if (res.errCode === 0) {
                                 showSuccess(`Đã cập nhật số lượng tối đa → ${newMax}.`);
-                                schedule.maxNumber = newMax; // optimistic update
+                                loadExistingSchedules(); // FIX BUG-08: Refresh from server instead of mutating state
                               } else {
                                 showError(res.message || 'Cập nhật thất bại.');
                                 e.target.value = schedule.maxNumber;

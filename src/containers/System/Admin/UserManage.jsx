@@ -15,9 +15,9 @@ const INIT_FORM = {
   lastName: '',
   address: '',
   phoneNumber: '',
-  gender: 'M',
-  roleId: 'R3',
-  positionId: 'P0',
+  gender: '',      // FIX BUG-01: dynamic from allcodes (was 'M' → FK violation)
+  roleId: '',      // FIX BUG-01: dynamic from allcodes (was 'R3')
+  positionId: '',  // FIX BUG-01: dynamic from allcodes (was 'P0')
   previewImgURL: '',
   imageBase64: '',
 };
@@ -55,9 +55,19 @@ const UserManage = () => {
         getAllCode('ROLE'),
         getAllCode('POSITION'),
       ]);
-      if (gRes.errCode === 0) setGenders(gRes.data);
-      if (rRes.errCode === 0) setRoles(rRes.data);
-      if (pRes.errCode === 0) setPositions(pRes.data);
+      // FIX BUG-01: Set allcode arrays + init INIT_FORM defaults from first entry
+      if (gRes.errCode === 0) {
+        setGenders(gRes.data);
+        setFormData((prev) => prev.gender === '' ? { ...prev, gender: gRes.data[0]?.keyMap || '' } : prev);
+      }
+      if (rRes.errCode === 0) {
+        setRoles(rRes.data);
+        setFormData((prev) => prev.roleId === '' ? { ...prev, roleId: rRes.data[0]?.keyMap || '' } : prev);
+      }
+      if (pRes.errCode === 0) {
+        setPositions(pRes.data);
+        setFormData((prev) => prev.positionId === '' ? { ...prev, positionId: pRes.data[0]?.keyMap || '' } : prev);
+      }
     } catch { /* silent */ }
   };
 
@@ -67,7 +77,13 @@ const UserManage = () => {
   };
 
   const handleAddNew = () => {
-    setFormData(INIT_FORM);
+    // FIX BUG-01: Reset form with current allcode defaults
+    setFormData({
+      ...INIT_FORM,
+      gender: genders[0]?.keyMap || '',
+      roleId: roles[0]?.keyMap || '',
+      positionId: positions[0]?.keyMap || '',
+    });
     setIsEditing(false);
     setShowForm(true);
   };
@@ -283,7 +299,7 @@ const UserManage = () => {
                       <td>{idx + 1}</td>
                       <td>
                         <div className="user-avatar">
-                          {user.image
+                        {user.image && typeof user.image === 'string'
                             ? <img src={CommonUtils.decodeBase64Image(user.image)} alt="avatar" />
                             : <span>{(user.lastName || '?')[0]}</span>
                           }
