@@ -36,10 +36,9 @@ const ImageUploadInput = ({
     }
 
     const dataUrl = await CommonUtils.getBase64(file); // "data:image/jpeg;base64,XXXX"
-    // Strip prefix — backend expects raw base64 only
-    const base64 = dataUrl.split(',')[1] || dataUrl;
+    // ✅ [FIX] Giữ nguyên prefix data:image/...;base64,... — backend validateBase64Image() yêu cầu
     const objectUrl = URL.createObjectURL(file);
-    if (onChange) onChange({ base64, objectUrl });
+    if (onChange) onChange({ base64: dataUrl, objectUrl });
     // Reset input để có thể chọn lại cùng file
     e.target.value = '';
   };
