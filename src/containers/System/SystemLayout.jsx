@@ -1,7 +1,7 @@
 // src/containers/System/SystemLayout.jsx
 // Layout wrapper chung cho Admin (R1) và Doctor (R2) Dashboard
 import React from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import Navigator from '../../components/Navigator/Navigator';
 import './SystemLayout.scss';
@@ -13,11 +13,11 @@ const SystemLayout = () => {
     <div className="system-layout">
       {/* ===== SIDEBAR TRÁI ===== */}
       <div className="system-sidebar">
-        <div className="sidebar-logo">
+        <Link to="/" className="sidebar-logo" title="Về Trang chủ">
           <span className="logo-icon">🏥</span>
           <span className="logo-text">BookingCare</span>
-          <span className="logo-sub">Admin Panel</span>
-        </div>
+          <span className="logo-sub">ADMIN PANEL</span>
+        </Link>
         <Navigator />
       </div>
 
@@ -26,7 +26,9 @@ const SystemLayout = () => {
         {/* Header top bar */}
         <div className="system-header">
           <div className="header-left">
-            <span className="breadcrumb">Dashboard</span>
+            <Link to="/" className="home-link" title="Về Trang chủ">
+              <i className="fas fa-home" /> Trang chủ
+            </Link>
           </div>
           <div className="header-right">
             <span className="admin-badge">
