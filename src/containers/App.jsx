@@ -20,6 +20,7 @@ import DoctorManage from './System/Admin/DoctorManage';
 import ClinicManage from './System/Admin/ClinicManage';
 import SpecialtyManage from './System/Admin/SpecialtyManage';
 import ScheduleManage from './System/Admin/ScheduleManage';
+import ManagePatient from './System/Doctor/ManagePatient';
 
 // ===== Layout =====
 import Header from '../components/Header/Header';
@@ -27,15 +28,6 @@ import Footer from '../components/Footer/Footer';
 import Loading from '../components/Loading/Loading';
 
 import './App.scss';
-
-// ===== Placeholders (GĐ7, GĐ8 sẽ thay thế) =====
-const DoctorPlaceholder = () => (
-  <div style={{ padding: '60px', textAlign: 'center', color: '#555' }}>
-    <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🩺</div>
-    <h3>Tính năng đang phát triển</h3>
-    <p>Module quản lý bệnh nhân sẽ có ở Giai đoạn 8.</p>
-  </div>
-);
 
 const App = () => {
   return (
@@ -114,8 +106,8 @@ const App = () => {
         <Route element={<PrivateRoute allowedRoles={[USER_ROLE.DOCTOR]} />}>
           <Route path={path.DOCTOR_DASHBOARD} element={<SystemLayout />}>
             <Route index element={<Navigate to="manage-patient" replace />} />
-            {/* FIX #1: Placeholder tránh màn trắng khi bác sĩ login (GĐ8 sẽ thay) */}
-            <Route path="manage-patient" element={<DoctorPlaceholder />} />
+            {/* ✅ GĐ8: Component thật thay thế placeholder */}
+            <Route path="manage-patient" element={<ManagePatient />} />
           </Route>
         </Route>
 

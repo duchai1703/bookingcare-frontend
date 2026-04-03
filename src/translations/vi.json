@@ -104,5 +104,43 @@
   "patient.clinic-detail.not-found": "Không tìm thấy phòng khám",
   "patient.clinic-detail.not-found-desc": "Vui lòng kiểm tra lại đường dẫn.",
 
-  "patient.social-plugin.like-share": "Thích và chia sẻ"
+  "patient.social-plugin.like-share": "Thích và chia sẻ",
+
+  "doctor.manage-patient.title": "Quản lý lịch hẹn bệnh nhân",
+  "doctor.manage-patient.select-date": "Chọn ngày khám",
+  "doctor.manage-patient.filter-status": "Lọc trạng thái",
+  "doctor.manage-patient.status-all": "Tất cả",
+  "doctor.manage-patient.status-new": "Chờ xác nhận",
+  "doctor.manage-patient.status-confirmed": "Đã xác nhận",
+  "doctor.manage-patient.status-done": "Đã khám xong",
+  "doctor.manage-patient.status-cancelled": "Đã hủy",
+
+  "doctor.manage-patient.col-name": "Tên bệnh nhân",
+  "doctor.manage-patient.col-phone": "Số điện thoại",
+  "doctor.manage-patient.col-address": "Địa chỉ",
+  "doctor.manage-patient.col-gender": "Giới tính",
+  "doctor.manage-patient.col-time": "Khung giờ",
+  "doctor.manage-patient.col-reason": "Lý do khám",
+  "doctor.manage-patient.col-actions": "Thao tác",
+
+  "doctor.manage-patient.btn-send-remedy": "Gửi kết quả",
+  "doctor.manage-patient.btn-cancel": "Hủy lịch",
+  "doctor.manage-patient.no-patient": "Không có bệnh nhân nào trong ngày này",
+
+  "doctor.manage-patient.remedy-title": "Gửi kết quả khám bệnh",
+  "doctor.manage-patient.patient-name": "Bệnh nhân",
+  "doctor.manage-patient.email-label": "Email bệnh nhân",
+  "doctor.manage-patient.image-label": "Đính kèm ảnh kết quả (JPEG/PNG, tối đa 5MB)",
+  "doctor.manage-patient.btn-send": "Gửi",
+  "doctor.manage-patient.sending": "Đang gửi...",
+
+  "doctor.manage-patient.send-success": "Gửi kết quả khám thành công!",
+  "doctor.manage-patient.send-error": "Gửi kết quả thất bại, vui lòng thử lại.",
+  "doctor.manage-patient.cancel-success": "Hủy lịch hẹn thành công!",
+  "doctor.manage-patient.cancel-error": "Hủy lịch thất bại, vui lòng thử lại.",
+  "doctor.manage-patient.load-error": "Lỗi tải danh sách bệnh nhân!",
+  "doctor.manage-patient.session-expired": "Phiên đăng nhập đã hết hạn! Vui lòng đăng nhập lại.",
+  "doctor.manage-patient.no-permission": "Bạn không có quyền truy cập chức năng này!",
+  "doctor.manage-patient.email-required": "Vui lòng nhập email bệnh nhân!",
+  "doctor.manage-patient.image-required": "Vui lòng đính kèm ảnh kết quả khám!"
 }

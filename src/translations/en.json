@@ -104,5 +104,43 @@
   "patient.clinic-detail.not-found": "Clinic not found",
   "patient.clinic-detail.not-found-desc": "Please check the URL.",
 
-  "patient.social-plugin.like-share": "Like and share"
+  "patient.social-plugin.like-share": "Like and share",
+
+  "doctor.manage-patient.title": "Patient Appointment Management",
+  "doctor.manage-patient.select-date": "Select date",
+  "doctor.manage-patient.filter-status": "Filter by status",
+  "doctor.manage-patient.status-all": "All",
+  "doctor.manage-patient.status-new": "Pending",
+  "doctor.manage-patient.status-confirmed": "Confirmed",
+  "doctor.manage-patient.status-done": "Done",
+  "doctor.manage-patient.status-cancelled": "Cancelled",
+
+  "doctor.manage-patient.col-name": "Patient Name",
+  "doctor.manage-patient.col-phone": "Phone Number",
+  "doctor.manage-patient.col-address": "Address",
+  "doctor.manage-patient.col-gender": "Gender",
+  "doctor.manage-patient.col-time": "Time Slot",
+  "doctor.manage-patient.col-reason": "Reason",
+  "doctor.manage-patient.col-actions": "Actions",
+
+  "doctor.manage-patient.btn-send-remedy": "Send Result",
+  "doctor.manage-patient.btn-cancel": "Cancel",
+  "doctor.manage-patient.no-patient": "No patients found for this date",
+
+  "doctor.manage-patient.remedy-title": "Send Medical Examination Results",
+  "doctor.manage-patient.patient-name": "Patient",
+  "doctor.manage-patient.email-label": "Patient Email",
+  "doctor.manage-patient.image-label": "Attach result image (JPEG/PNG, max 5MB)",
+  "doctor.manage-patient.btn-send": "Send",
+  "doctor.manage-patient.sending": "Sending...",
+
+  "doctor.manage-patient.send-success": "Medical results sent successfully!",
+  "doctor.manage-patient.send-error": "Failed to send results, please try again.",
+  "doctor.manage-patient.cancel-success": "Appointment cancelled successfully!",
+  "doctor.manage-patient.cancel-error": "Failed to cancel appointment, please try again.",
+  "doctor.manage-patient.load-error": "Error loading patient list!",
+  "doctor.manage-patient.session-expired": "Session expired! Please log in again.",
+  "doctor.manage-patient.no-permission": "You do not have permission to access this feature!",
+  "doctor.manage-patient.email-required": "Please enter patient email!",
+  "doctor.manage-patient.image-required": "Please attach the examination result image!"
 }
