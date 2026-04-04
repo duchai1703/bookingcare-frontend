@@ -20,7 +20,10 @@ export const loginUser = createAsyncThunk(
       // Login thất bại → trả message lỗi (REQ-AU-007)
       return rejectWithValue(res.message || 'Đăng nhập thất bại!');
     } catch (err) {
-      return rejectWithValue(err.message || 'Lỗi kết nối server!');
+      // ✅ [FIX] Lấy message lỗi từ API response (err.response.data.message)
+      // chứ không phải Axios error message (err.message = "Request failed with status code 401")
+      const apiMessage = err.response?.data?.message;
+      return rejectWithValue(apiMessage || err.message || 'Lỗi kết nối server!');
     }
   }
 );

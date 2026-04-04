@@ -45,10 +45,15 @@ axiosInstance.interceptors.response.use(
     const status = error.response?.status;
 
     if (status === 401) {
-      // DS-02 FIX: chỉ logout khi token expired (401) — không logout khi bị cấm quyền (403)
-      console.warn('>>> Token expired, auto logout...');
-      store.dispatch(processLogout());
-      window.location.href = '/login';
+      // ✅ [FIX] Phân biệt 401 từ login (sai mật khẩu) vs 401 từ protected route (token expired)
+      // Nếu request URL chứa '/auth/login' → KHÔNG logout, để component xử lý lỗi
+      const requestUrl = error.config?.url || '';
+      if (!requestUrl.includes('/auth/login')) {
+        // DS-02 FIX: chỉ logout khi token expired (401 từ protected route)
+        console.warn('>>> Token expired, auto logout...');
+        store.dispatch(processLogout());
+        window.location.href = '/login';
+      }
     }
     // 403 = no permission → để component tự xử lý lỗi, không logout
 
