@@ -1,5 +1,6 @@
 // src/containers/HomePage/Sections/Banner.jsx
 // Banner section — Gradient + Search bar with debounce — SRS REQ-PT-001, 002
+// [Phase 9 Final] Full i18n — search group labels + no-results
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -37,7 +38,6 @@ const Banner = () => {
           setShowDropdown(true);
         }
       } catch (err) {
-        console.error('Search error:', err);
       } finally {
         setIsSearching(false);
       }
@@ -94,7 +94,7 @@ const Banner = () => {
               {searchResults.doctors && searchResults.doctors.length > 0 && (
                 <div className="search-group">
                   <h4 className="group-title">
-                    <i className="fas fa-user-md" /> Bác sĩ
+                    <i className="fas fa-user-md" /> <FormattedMessage id="banner.search-group.doctor" />
                   </h4>
                   {searchResults.doctors.map((item) => (
                     <div
@@ -114,7 +114,7 @@ const Banner = () => {
               {searchResults.specialties && searchResults.specialties.length > 0 && (
                 <div className="search-group">
                   <h4 className="group-title">
-                    <i className="fas fa-stethoscope" /> Chuyên khoa
+                    <i className="fas fa-stethoscope" /> <FormattedMessage id="banner.search-group.specialty" />
                   </h4>
                   {searchResults.specialties.map((item) => (
                     <div
@@ -132,7 +132,7 @@ const Banner = () => {
               {searchResults.clinics && searchResults.clinics.length > 0 && (
                 <div className="search-group">
                   <h4 className="group-title">
-                    <i className="fas fa-hospital" /> Phòng khám
+                    <i className="fas fa-hospital" /> <FormattedMessage id="banner.search-group.clinic" />
                   </h4>
                   {searchResults.clinics.map((item) => (
                     <div
@@ -150,7 +150,7 @@ const Banner = () => {
               {(!searchResults.doctors || searchResults.doctors.length === 0) &&
                 (!searchResults.specialties || searchResults.specialties.length === 0) &&
                 (!searchResults.clinics || searchResults.clinics.length === 0) && (
-                  <div className="no-results">Không tìm thấy kết quả</div>
+                  <div className="no-results"><FormattedMessage id="banner.search-no-results" /></div>
                 )}
             </div>
           )}

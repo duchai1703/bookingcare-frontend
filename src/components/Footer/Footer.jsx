@@ -1,5 +1,7 @@
 // src/components/Footer/Footer.jsx
+// [Phase 9 Final] Full i18n — FormattedMessage
 import React from 'react';
+import { FormattedMessage } from 'react-intl';
 import './Footer.scss';
 
 const Footer = () => {
@@ -8,25 +10,25 @@ const Footer = () => {
       <div className="footer-content">
         {/* Cột trái: Thông tin công ty */}
         <div className="footer-left">
-          <h3 className="footer-logo">BookingCare</h3>
+          <h3 className="footer-logo"><FormattedMessage id="common.brand-name" /></h3>
           <p>
             <i className="fas fa-map-marker-alt" />{' '}
-            28 Thành Thái, Phường 14, Quận 10, TP. Hồ Chí Minh
+            <FormattedMessage id="footer.address" />
           </p>
           <p>
             <i className="fas fa-phone" />{' '}
-            024-7300-6858
+            <FormattedMessage id="footer.phone" />
           </p>
           <p>
             <i className="fas fa-envelope" />{' '}
-            support@bookingcare.vn
+            <FormattedMessage id="footer.email" />
           </p>
         </div>
 
         {/* Cột phải: Links */}
         <div className="footer-right">
-          <p>© 2026 BookingCare. All rights reserved.</p>
-          <p>Đồ án 1 — Trường Đại học Công nghệ Thông tin (UIT)</p>
+          <p><FormattedMessage id="footer.copyright" /></p>
+          <p><FormattedMessage id="footer.university" /></p>
         </div>
       </div>
     </footer>

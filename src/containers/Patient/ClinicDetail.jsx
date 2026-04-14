@@ -36,7 +36,6 @@ const ClinicDetail = () => {
           setDoctorList(res.data?.doctorList || []);
         }
       } catch (err) {
-        console.error('>>> Error fetching clinic detail:', err);
       } finally {
         setIsLoading(false);
       }

@@ -52,6 +52,12 @@ const userSlice = createSlice({
     clearLoginError: (state) => {
       state.loginError = null;
     },
+
+    // [Phase 9.3] Merge partial profile updates vào userInfo
+    // VD: sau khi editPatientProfile → dispatch(updateUserInfo(updatedFields))
+    updateUserInfo: (state, action) => {
+      state.userInfo = { ...state.userInfo, ...action.payload };
+    },
   },
 
   extraReducers: (builder) => {
@@ -77,5 +83,5 @@ const userSlice = createSlice({
   },
 });
 
-export const { processLogout, clearLoginError } = userSlice.actions;
+export const { processLogout, clearLoginError, updateUserInfo } = userSlice.actions;
 export default userSlice.reducer;

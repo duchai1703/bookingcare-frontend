@@ -48,3 +48,23 @@ export const getAllCode = (type) => {
 export const searchApi = (keyword) => {
   return axiosInstance.get('/api/v1/search', { params: { keyword } });
 };
+
+// ===== [Phase 9.3] AUTH — Register, Forgot Password, Reset Password =====
+
+// Đăng ký bệnh nhân (R3)
+export const registerPatient = (data) => {
+  // data = { email, password, firstName, lastName, phoneNumber }
+  return axiosInstance.post('/api/v1/auth/register', data);
+};
+
+// Gửi email link reset mật khẩu
+export const forgotPassword = (data) => {
+  // data = { email, language }
+  return axiosInstance.post('/api/v1/auth/forgot-password', data);
+};
+
+// Đặt mật khẩu mới (từ link email)
+export const resetPassword = (data) => {
+  // data = { token, newPassword }
+  return axiosInstance.post('/api/v1/auth/reset-password', data);
+};

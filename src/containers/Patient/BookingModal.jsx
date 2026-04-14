@@ -1,21 +1,26 @@
 // src/containers/Patient/BookingModal.jsx
 // Modal Đặt Lịch Khám — SRS 3.9 (REQ-PT-012 → 023)
+// [Phase 9.5] Refactor Strict Auth:
+//   - Auto-fill data từ userInfo (Redux)
+//   - Email disabled (lấy TRỰC TIẾP từ userInfo — KHÔNG dùng state)
+//   - 100% i18n qua react-intl
+//   - Xử lý deprecationWarning từ Dual Mode Backend
+// [Phase 9.7] Triệt tiêu formData.email, isLoading UX guard
 // [CTO-FIX-4] Dọn rác khi đóng modal (chống data leak)
-// [ĐỢT 2] Nâng cấp: Thay alert() bằng react-toastify, dispatch Redux thunk
 
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import moment from 'moment';
 import { toast } from 'react-toastify';
+import { FormattedMessage, useIntl } from 'react-intl';
 import { bookAppointment } from '../../redux/slices/doctorSlice';
 import { fetchAllcodeByType } from '../../redux/slices/appSlice';
 import { LANGUAGES, ALLCODE_TYPES } from '../../utils/constants';
 import './BookingModal.scss';
 
-// Constants
+// [Fix Bug 9.7] Triệt tiêu email khỏi state — email lấy từ userInfo.email trực tiếp
 const INITIAL_FORM = {
   fullName: '',
-  email: '',
   phoneNumber: '',
   address: '',
   reason: '',
@@ -25,7 +30,6 @@ const INITIAL_FORM = {
 
 const INITIAL_ERRORS = {
   fullName: '',
-  email: '',
   phoneNumber: '',
   address: '',
   reason: '',
@@ -35,12 +39,16 @@ const INITIAL_ERRORS = {
 
 const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date }) => {
   const dispatch = useDispatch();
+  const intl = useIntl();
   const language = useSelector((state) => state.app.language);
   const genders = useSelector((state) => state.app.genders);
+  // [Phase 9.5] Lấy userInfo từ Redux — email lấy TRỰC TIẾP từ đây
+  const userInfo = useSelector((state) => state.user.userInfo);
 
   const [formData, setFormData] = useState(INITIAL_FORM);
   const [errors, setErrors] = useState(INITIAL_ERRORS);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // [Phase 9.7] isLoading UX guard — chặn double-click (Race Condition UI)
+  const [isLoading, setIsLoading] = useState(false);
 
   // Fetch gender allcode on mount
   useEffect(() => {
@@ -49,11 +57,32 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date }) => {
     }
   }, [dispatch, genders]);
 
+  // ═══════════════════════════════════════════════════════════════════════
+  // [Phase 9.5] Auto-fill: Khi modal mở hoặc userInfo thay đổi,
+  // tự động điền firstName+lastName, phoneNumber, address, gender
+  // [Fix Bug 9.7] Đã xóa email khỏi auto-fill — email lấy từ userInfo trực tiếp
+  // ═══════════════════════════════════════════════════════════════════════
+  useEffect(() => {
+    if (isOpen && userInfo) {
+      const autoFullName = [userInfo.lastName || '', userInfo.firstName || '']
+        .filter(Boolean)
+        .join(' ');
+
+      setFormData((prev) => ({
+        ...prev,
+        fullName: autoFullName || prev.fullName,
+        phoneNumber: userInfo.phoneNumber || prev.phoneNumber,
+        address: userInfo.address || prev.address,
+        gender: userInfo.gender || prev.gender,
+      }));
+    }
+  }, [isOpen, userInfo]);
+
   // ✅ [CTO-FIX-4] Dọn rác khi đóng modal — reset toàn bộ state
   const handleCloseModal = () => {
     setFormData(INITIAL_FORM);
     setErrors(INITIAL_ERRORS);
-    setIsSubmitting(false);
+    setIsLoading(false);
     onClose();
   };
 
@@ -61,89 +90,62 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date }) => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    // Lỗi tự dismiss khi user bắt đầu nhập lại
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: '' }));
     }
   };
 
-  // ===== Validate form (REQ-PT-014, REQ-PT-021) =====
+  // ═══════════════════════════════════════════════════════════════════════
+  // [Fix Bug 9.7] Validate form — ĐÃ XÓA toàn bộ validate email
+  // Email lấy từ userInfo.email (đã verified khi đăng ký), không cần validate lại
+  // ═══════════════════════════════════════════════════════════════════════
   const validateForm = () => {
     const newErrors = { ...INITIAL_ERRORS };
     let isValid = true;
 
     // fullName: required, trim(), length >= 2
     if (!formData.fullName || formData.fullName.trim().length < 2) {
-      newErrors.fullName =
-        language === LANGUAGES.VI
-          ? 'Vui lòng nhập họ tên (tối thiểu 2 ký tự)'
-          : 'Please enter full name (minimum 2 characters)';
-      isValid = false;
-    }
-
-    // email: required, regex
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.email || !emailRegex.test(formData.email)) {
-      newErrors.email =
-        language === LANGUAGES.VI
-          ? 'Email không đúng định dạng'
-          : 'Invalid email format';
+      newErrors.fullName = intl.formatMessage({ id: 'booking-modal.err-fullname' });
       isValid = false;
     }
 
     // phoneNumber: required, VN format 10 digits
     const phoneRegex = /^(0[3|5|7|8|9])\d{8}$/;
     if (!formData.phoneNumber || !phoneRegex.test(formData.phoneNumber)) {
-      newErrors.phoneNumber =
-        language === LANGUAGES.VI
-          ? 'Số điện thoại không hợp lệ (10 số, đầu 03/05/07/08/09)'
-          : 'Invalid phone number (10 digits, starts with 03/05/07/08/09)';
+      newErrors.phoneNumber = intl.formatMessage({ id: 'booking-modal.err-phone' });
       isValid = false;
     }
 
     // address: required
     if (!formData.address || formData.address.trim().length === 0) {
-      newErrors.address =
-        language === LANGUAGES.VI
-          ? 'Vui lòng nhập địa chỉ'
-          : 'Please enter address';
+      newErrors.address = intl.formatMessage({ id: 'booking-modal.err-address' });
       isValid = false;
     }
 
     // reason: required
     if (!formData.reason || formData.reason.trim().length === 0) {
-      newErrors.reason =
-        language === LANGUAGES.VI
-          ? 'Vui lòng nhập lý do khám'
-          : 'Please enter reason';
+      newErrors.reason = intl.formatMessage({ id: 'booking-modal.err-reason' });
       isValid = false;
     }
 
     // birthday: required, valid date
     if (!formData.birthday) {
-      newErrors.birthday =
-        language === LANGUAGES.VI
-          ? 'Vui lòng nhập ngày sinh hợp lệ'
-          : 'Please enter a valid date of birth';
+      newErrors.birthday = intl.formatMessage({ id: 'booking-modal.err-birthday' });
       isValid = false;
     }
 
     // gender: required, must be G1|G2|G3
     if (!formData.gender || !['G1', 'G2', 'G3'].includes(formData.gender)) {
-      newErrors.gender =
-        language === LANGUAGES.VI
-          ? 'Vui lòng chọn giới tính'
-          : 'Please select gender';
+      newErrors.gender = intl.formatMessage({ id: 'booking-modal.err-gender' });
       isValid = false;
     }
 
     return { isValid, errors: newErrors };
   };
 
-  // ===== Submit handler (REQ-PT-015) =====
-  // [ĐỢT 2] Dùng dispatch(bookAppointment) thay vì gọi service trực tiếp
-  // [ĐỢT 2] Dùng toast thay vì alert()
-  // try/catch/finally đảm bảo isSubmitting luôn được reset
+  // ═══════════════════════════════════════════════════════════════════════
+  // [Phase 9.7] Submit handler — isLoading UX guard + email từ userInfo
+  // ═══════════════════════════════════════════════════════════════════════
   const handleSubmit = async () => {
     const { isValid, errors: validationErrors } = validateForm();
     if (!isValid) {
@@ -151,68 +153,52 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date }) => {
       return;
     }
 
-    setIsSubmitting(true); // ← a) disable nút, hiển thị spinner
+    // [Phase 9.7] isLoading = true → disable nút, hiển thị "Đang xử lý..."
+    setIsLoading(true);
     try {
+      // [Fix Bug 9.7] email BẮT BUỘC lấy từ userInfo.email, KHÔNG từ state
       const bookingData = {
         fullName: formData.fullName,
-        email: formData.email,
+        email: userInfo?.email || '',
         phoneNumber: formData.phoneNumber,
         address: formData.address,
         reason: formData.reason,
-        date: date, // ← UTC timestamp từ DoctorSchedule (moment.utc)
+        date: date,
         birthday: formData.birthday,
         doctorId: doctorId,
         timeType: timeSlot.timeType,
         gender: formData.gender,
-        language: language, // vi hoặc en — để backend gửi email đúng ngôn ngữ
+        language: language,
         timeString:
           language === LANGUAGES.VI
-            ? timeSlot.timeTypeData?.valueVi // "8:00 – 9:00"
-            : timeSlot.timeTypeData?.valueEn, // "8:00 AM – 9:00 AM"
+            ? timeSlot.timeTypeData?.valueVi
+            : timeSlot.timeTypeData?.valueEn,
         dateString: moment(parseInt(date, 10)).format(
           language === LANGUAGES.VI ? 'DD/MM/YYYY' : 'MM/DD/YYYY'
         ),
       };
 
-      // Dispatch Redux thunk — unwrap() để bắt được errCode
       const result = await dispatch(bookAppointment(bookingData)).unwrap();
 
-      // ✅ [ĐỢT 2] Thay alert() bằng toast — REQ-PT-023
       if (result.errCode === 0) {
-        toast.success(
-          language === LANGUAGES.VI
-            ? 'Đặt lịch thành công! Vui lòng kiểm tra email để xác nhận.'
-            : 'Booking successful! Please check your email to confirm.'
-        );
-        handleCloseModal(); // ← dọn rác + đóng modal
+        if (result.deprecationWarning) {
+          toast.warn(result.deprecationWarning, { autoClose: 8000 });
+        } else {
+          toast.success(intl.formatMessage({ id: 'booking-modal.success' }));
+        }
+        handleCloseModal();
       } else if (result.errCode === 2) {
-        toast.error(
-          language === LANGUAGES.VI
-            ? 'Lịch hẹn đã tồn tại. Vui lòng chọn khung giờ khác.'
-            : 'Appointment already exists. Please choose another time slot.'
-        );
+        toast.error(intl.formatMessage({ id: 'booking-modal.duplicate' }));
       } else if (result.errCode === 4) {
-        toast.error(
-          language === LANGUAGES.VI
-            ? 'Khung giờ này đã hết chỗ! Vui lòng chọn khung giờ khác.'
-            : 'This time slot is full! Please choose another time slot.'
-        );
+        toast.error(intl.formatMessage({ id: 'booking-modal.slot-full' }));
       } else {
-        toast.error(
-          language === LANGUAGES.VI
-            ? 'Có lỗi xảy ra, vui lòng thử lại sau.'
-            : 'An error occurred. Please try again later.'
-        );
+        toast.error(intl.formatMessage({ id: 'booking-modal.error' }));
       }
-    } catch (err) {
-      console.error('>>> Error booking appointment:', err);
-      toast.error(
-        language === LANGUAGES.VI
-          ? 'Có lỗi xảy ra, vui lòng thử lại sau.'
-          : 'An error occurred. Please try again later.'
-      );
+    } catch {
+      toast.error(intl.formatMessage({ id: 'booking-modal.error' }));
     } finally {
-      setIsSubmitting(false); // ← e) LUÔN tắt spinner dù thành công hay lỗi
+      // [Phase 9.7] LUÔN tắt loading dù thành công hay lỗi
+      setIsLoading(false);
     }
   };
 
@@ -224,9 +210,7 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date }) => {
         {/* ===== HEADER ===== */}
         <div className="booking-modal__header">
           <h2 className="booking-modal__title">
-            {language === LANGUAGES.VI
-              ? 'Thông tin đặt lịch khám bệnh'
-              : 'Book Appointment Information'}
+            <FormattedMessage id="booking-modal.title" />
           </h2>
           <button
             className="booking-modal__close-btn"
@@ -252,17 +236,17 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date }) => {
           </div>
           <div className="booking-modal__info-row">
             <span className="booking-modal__info-label">
-              {language === LANGUAGES.VI ? 'Miễn phí đặt lịch' : 'Free booking'}
+              <FormattedMessage id="booking-modal.free-booking" />
             </span>
           </div>
         </div>
 
-        {/* ===== FORM — 7 fields (REQ-PT-013) ===== */}
+        {/* ===== FORM — 6 fields (email disabled riêng) — 100% i18n ===== */}
         <div className="booking-modal__form">
           {/* Full Name */}
           <div className="booking-modal__field">
             <label className="booking-modal__label">
-              {language === LANGUAGES.VI ? 'Họ tên' : 'Full name'} *
+              <FormattedMessage id="booking-modal.fullname-label" /> *
             </label>
             <input
               type="text"
@@ -270,38 +254,32 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date }) => {
               className={`booking-modal__input ${errors.fullName ? 'input-error' : ''}`}
               value={formData.fullName}
               onChange={handleInputChange}
-              placeholder={
-                language === LANGUAGES.VI ? 'Nhập họ tên...' : 'Enter full name...'
-              }
+              placeholder={intl.formatMessage({ id: 'booking-modal.fullname-placeholder' })}
             />
             {errors.fullName && (
               <span className="error-text">{errors.fullName}</span>
             )}
           </div>
 
-          {/* Email */}
+          {/* Email — [Fix Bug 9.7] HOÀN TOÀN từ userInfo, KHÔNG dùng state */}
           <div className="booking-modal__field">
-            <label className="booking-modal__label">Email *</label>
+            <label className="booking-modal__label">
+              <FormattedMessage id="booking-modal.email-label" /> *
+            </label>
             <input
               type="email"
               name="email"
-              className={`booking-modal__input ${errors.email ? 'input-error' : ''}`}
-              value={formData.email}
-              onChange={handleInputChange}
-              placeholder={
-                language === LANGUAGES.VI ? 'Nhập email...' : 'Enter email...'
-              }
+              className="booking-modal__input booking-modal__input--disabled"
+              value={userInfo && userInfo.email ? userInfo.email : ''}
+              disabled={true}
             />
-            {errors.email && (
-              <span className="error-text">{errors.email}</span>
-            )}
           </div>
 
           {/* Phone + Address */}
           <div className="booking-modal__row">
             <div className="booking-modal__field">
               <label className="booking-modal__label">
-                {language === LANGUAGES.VI ? 'Số điện thoại' : 'Phone number'} *
+                <FormattedMessage id="booking-modal.phone-label" /> *
               </label>
               <input
                 type="tel"
@@ -309,9 +287,7 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date }) => {
                 className={`booking-modal__input ${errors.phoneNumber ? 'input-error' : ''}`}
                 value={formData.phoneNumber}
                 onChange={handleInputChange}
-                placeholder={
-                  language === LANGUAGES.VI ? 'Nhập SĐT...' : 'Enter phone...'
-                }
+                placeholder={intl.formatMessage({ id: 'booking-modal.phone-placeholder' })}
               />
               {errors.phoneNumber && (
                 <span className="error-text">{errors.phoneNumber}</span>
@@ -319,7 +295,7 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date }) => {
             </div>
             <div className="booking-modal__field">
               <label className="booking-modal__label">
-                {language === LANGUAGES.VI ? 'Địa chỉ' : 'Address'} *
+                <FormattedMessage id="booking-modal.address-label" /> *
               </label>
               <input
                 type="text"
@@ -327,9 +303,7 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date }) => {
                 className={`booking-modal__input ${errors.address ? 'input-error' : ''}`}
                 value={formData.address}
                 onChange={handleInputChange}
-                placeholder={
-                  language === LANGUAGES.VI ? 'Nhập địa chỉ...' : 'Enter address...'
-                }
+                placeholder={intl.formatMessage({ id: 'booking-modal.address-placeholder' })}
               />
               {errors.address && (
                 <span className="error-text">{errors.address}</span>
@@ -340,7 +314,7 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date }) => {
           {/* Reason */}
           <div className="booking-modal__field">
             <label className="booking-modal__label">
-              {language === LANGUAGES.VI ? 'Lý do khám' : 'Reason for visit'} *
+              <FormattedMessage id="booking-modal.reason-label" /> *
             </label>
             <textarea
               name="reason"
@@ -348,9 +322,7 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date }) => {
               value={formData.reason}
               onChange={handleInputChange}
               rows={3}
-              placeholder={
-                language === LANGUAGES.VI ? 'Nhập lý do khám...' : 'Enter reason...'
-              }
+              placeholder={intl.formatMessage({ id: 'booking-modal.reason-placeholder' })}
             />
             {errors.reason && (
               <span className="error-text">{errors.reason}</span>
@@ -361,7 +333,7 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date }) => {
           <div className="booking-modal__row">
             <div className="booking-modal__field">
               <label className="booking-modal__label">
-                {language === LANGUAGES.VI ? 'Ngày sinh' : 'Date of birth'} *
+                <FormattedMessage id="booking-modal.birthday-label" /> *
               </label>
               <input
                 type="date"
@@ -376,7 +348,7 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date }) => {
             </div>
             <div className="booking-modal__field">
               <label className="booking-modal__label">
-                {language === LANGUAGES.VI ? 'Giới tính' : 'Gender'} *
+                <FormattedMessage id="booking-modal.gender-label" /> *
               </label>
               <select
                 name="gender"
@@ -385,7 +357,7 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date }) => {
                 onChange={handleInputChange}
               >
                 <option value="">
-                  {language === LANGUAGES.VI ? '-- Chọn --' : '-- Select --'}
+                  {intl.formatMessage({ id: 'booking-modal.gender-select' })}
                 </option>
                 {genders &&
                   genders.length > 0 &&
@@ -402,26 +374,24 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date }) => {
           </div>
         </div>
 
-        {/* ===== FOOTER — Nút Hủy + Xác nhận ===== */}
+        {/* ===== FOOTER — [Phase 9.7] isLoading UX guard ===== */}
         <div className="booking-modal__footer">
           <button
             className="booking-modal__btn booking-modal__btn--cancel"
             onClick={handleCloseModal}
           >
-            {language === LANGUAGES.VI ? 'Hủy' : 'Cancel'}
+            <FormattedMessage id="booking-modal.cancel-btn" />
           </button>
           <button
             className="booking-modal__btn booking-modal__btn--confirm"
             onClick={handleSubmit}
-            disabled={isSubmitting}
+            disabled={isLoading}
           >
-            {isSubmitting
-              ? language === LANGUAGES.VI
-                ? '⏳ Đang xử lý...'
-                : '⏳ Processing...'
-              : language === LANGUAGES.VI
-              ? 'Xác nhận đặt lịch'
-              : 'Confirm booking'}
+            {isLoading ? (
+              <><i className="fas fa-spinner fa-spin" /> <FormattedMessage id="booking-modal.submitting" /></>
+            ) : (
+              <FormattedMessage id="booking-modal.confirm-btn" />
+            )}
           </button>
         </div>
       </div>

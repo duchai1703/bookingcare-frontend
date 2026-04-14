@@ -14,6 +14,7 @@ import { LANGUAGES } from '../../utils/constants';
 import CommonUtils from '../../utils/CommonUtils';
 import DoctorSchedule from './DoctorSchedule';
 import DoctorExtraInfo from './DoctorExtraInfo';
+import DoctorReviewList from './DoctorReviewList';
 import SocialPlugin from './SocialPlugin';
 import './DoctorDetail.scss';
 
@@ -35,7 +36,6 @@ const DoctorDetail = () => {
           setDoctorInfo(res.data);
         }
       } catch (err) {
-        console.error('>>> Error fetching doctor detail:', err);
       } finally {
         setIsLoading(false);
       }
@@ -201,7 +201,14 @@ const DoctorDetail = () => {
             </div>
           )}
 
-          {/* ====== PHẦN 4: BÌNH LUẬN — Facebook Comment Plugin (REQ-SI-001, 002, 003) ====== */}
+          {/* ====== PHẦN 4: ĐÁNH GIÁ BÁC SĨ — [Phase 9.6] ====== */}
+          <div className="doctor-detail__review-section">
+            <div className="doctor-detail__review-container">
+              <DoctorReviewList doctorId={id} />
+            </div>
+          </div>
+
+          {/* ====== PHẦN 5: BÌNH LUẬN — Facebook Comment Plugin (REQ-SI-001, 002, 003) ====== */}
           <div className="doctor-detail__comment-section">
             <div className="doctor-detail__comment-container">
               <SocialPlugin
@@ -217,14 +224,10 @@ const DoctorDetail = () => {
         <div className="doctor-detail__not-found">
           <div className="doctor-detail__not-found-icon">🔍</div>
           <h2>
-            {language === LANGUAGES.VI
-              ? 'Không tìm thấy thông tin bác sĩ'
-              : 'Doctor information not found'}
+            <FormattedMessage id="doctor-detail.not-found-title" />
           </h2>
           <p>
-            {language === LANGUAGES.VI
-              ? 'Vui lòng kiểm tra lại đường dẫn hoặc quay về trang chủ.'
-              : 'Please check the URL or go back to the homepage.'}
+            <FormattedMessage id="doctor-detail.not-found-desc" />
           </p>
         </div>
       )}

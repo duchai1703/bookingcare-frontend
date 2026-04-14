@@ -3,11 +3,14 @@
 // [CTO-FIX-1] Lọc khung giờ quá khứ (chống đặt lịch quá khứ)
 // [CTO-FIX-2] Dùng moment.utc để đồng bộ timezone với Backend
 // [CROSS-VALIDATION] maxNumber / currentNumber kiểm tra slot đầy
+// [Phase 9.5] GUARD: Bắt buộc đăng nhập trước khi mở BookingModal
 
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { FormattedMessage } from 'react-intl';
+import { useNavigate } from 'react-router-dom';
+import { FormattedMessage, useIntl } from 'react-intl';
 import moment from 'moment';
+import { toast } from 'react-toastify';
 import { getScheduleByDate } from '../../services/doctorService';
 import { LANGUAGES } from '../../utils/constants';
 import BookingModal from './BookingModal';
@@ -27,6 +30,10 @@ const TIME_SLOT_START = {
 
 const DoctorSchedule = ({ doctorId }) => {
   const language = useSelector((state) => state.app.language);
+  // [Phase 9.5] Lấy trạng thái đăng nhập từ Redux
+  const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
+  const navigate = useNavigate();
+  const intl = useIntl();
 
   // STATE
   const [availableDays, setAvailableDays] = useState([]);
@@ -65,8 +72,6 @@ const DoctorSchedule = ({ doctorId }) => {
       }
 
       // ✅ [CTO-FIX-2] BẮT BUỘC dùng moment.utc để đồng bộ timezone với Backend
-      // Backend lưu date = UNIX timestamp of 00:00:00 UTC
-      // Nếu dùng setHours(0,0,0,0) → ra 00:00:00 LOCAL (UTC+7) → lệch 7 tiếng → API trả rỗng
       const utcTimestamp = moment
         .utc(dateMoment.format('YYYY-MM-DD'))
         .startOf('day')
@@ -81,7 +86,6 @@ const DoctorSchedule = ({ doctorId }) => {
   useEffect(() => {
     const days = getArrDays(language);
     setAvailableDays(days);
-    // Mặc định chọn ngày đầu tiên (hôm nay)
     if (days.length > 0) {
       setSelectedDate(days[0].value);
     }
@@ -101,7 +105,6 @@ const DoctorSchedule = ({ doctorId }) => {
           setSchedules([]);
         }
       } catch (err) {
-        console.error('>>> Error fetching schedule:', err);
         setSchedules([]);
       } finally {
         setIsLoadingSchedule(false);
@@ -115,44 +118,53 @@ const DoctorSchedule = ({ doctorId }) => {
   const getDisplaySlots = () => {
     if (!schedules || schedules.length === 0) return [];
 
-    // Lọc 1: Loại bỏ slot đã đầy (currentNumber >= maxNumber) — REQ-AM-023
     const availableSlots = schedules.filter(
       (slot) => slot.currentNumber < slot.maxNumber
     );
 
-    // ✅ [CTO-FIX-1] Lọc 2: Nếu là ngày hôm nay → loại bỏ khung giờ đã trôi qua
+    // ✅ [CTO-FIX-1] Nếu là ngày hôm nay → loại bỏ khung giờ đã trôi qua
     const now = moment();
     const isToday = moment
       .utc(parseInt(selectedDate, 10))
       .isSame(moment.utc().startOf('day'));
 
     const displaySlots = availableSlots.filter((slot) => {
-      if (!isToday) return true; // Ngày tương lai → hiển thị hết
-      const startHour = TIME_SLOT_START[slot.timeType]; // T1 → 8, T2 → 9, ...
-      return now.hour() < startHour; // Chỉ giữ slot chưa đến giờ
+      if (!isToday) return true;
+      const startHour = TIME_SLOT_START[slot.timeType];
+      return now.hour() < startHour;
     });
 
     return displaySlots;
   };
 
-  // ===== HANDLER: Thay đổi ngày =====
   const handleChangeDate = (e) => {
     setSelectedDate(e.target.value);
   };
 
-  // ===== HANDLER: Click vào khung giờ → mở BookingModal =====
+  // ═══════════════════════════════════════════════════════════════════════
+  // [Phase 9.5] GUARD CLAUSE: Kiểm tra đăng nhập trước khi mở Modal
+  // NẾU CHƯA ĐĂNG NHẬP → redirect sang /login?redirect=<URL hiện tại>
+  // NẾU ĐÃ ĐĂNG NHẬP → mở BookingModal bình thường
+  // ═══════════════════════════════════════════════════════════════════════
   const handleClickTimeSlot = (slot) => {
+    if (!isLoggedIn) {
+      // Toast thông báo yêu cầu đăng nhập
+      toast.info(intl.formatMessage({ id: 'schedule.login-required' }));
+      // Redirect sang Login, kèm URL hiện tại để quay lại sau khi login
+      navigate('/login?redirect=' + encodeURIComponent(window.location.pathname));
+      return; // TUYỆT ĐỐI không mở modal
+    }
+
+    // Đã đăng nhập → cho phép mở Modal
     setSelectedTimeSlot(slot);
     setShowBookingModal(true);
   };
 
-  // ===== HANDLER: Đóng BookingModal =====
   const handleCloseModal = () => {
     setShowBookingModal(false);
     setSelectedTimeSlot(null);
   };
 
-  // Lấy danh sách slot đã lọc
   const displaySlots = getDisplaySlots();
 
   return (
@@ -182,13 +194,11 @@ const DoctorSchedule = ({ doctorId }) => {
 
       {/* ===== BODY: Danh sách khung giờ ===== */}
       <div className="doctor-schedule__body">
-        {/* Loading */}
+        {/* Loading — Fix i18n */}
         {isLoadingSchedule && (
           <div className="doctor-schedule__loading">
             <div className="doctor-schedule__loading-spinner"></div>
-            <span>
-              {language === LANGUAGES.VI ? 'Đang tải...' : 'Loading...'}
-            </span>
+            <span><FormattedMessage id="schedule.loading" /></span>
           </div>
         )}
 
@@ -203,7 +213,6 @@ const DoctorSchedule = ({ doctorId }) => {
                   onClick={() => handleClickTimeSlot(slot)}
                   id={`time-slot-${slot.timeType}`}
                 >
-                  {/* Hiển thị text khung giờ theo ngôn ngữ từ Allcode */}
                   {language === LANGUAGES.VI
                     ? slot.timeTypeData?.valueVi
                     : slot.timeTypeData?.valueEn}
@@ -211,26 +220,22 @@ const DoctorSchedule = ({ doctorId }) => {
               ))}
             </div>
 
-            {/* Ghi chú đặt lịch */}
+            {/* Ghi chú đặt lịch — Fix i18n */}
             <div className="doctor-schedule__note">
               <span className="doctor-schedule__note-icon">🗓</span>
               <span className="doctor-schedule__note-text">
-                {language === LANGUAGES.VI
-                  ? 'Chọn và đặt (miễn phí)'
-                  : 'Select and book (free)'}
+                <FormattedMessage id="schedule.note" />
               </span>
             </div>
           </>
         )}
 
-        {/* Không có lịch khám */}
+        {/* Không có lịch khám — Fix i18n */}
         {!isLoadingSchedule && displaySlots.length === 0 && (
           <div className="doctor-schedule__empty">
             <span className="doctor-schedule__empty-icon">📋</span>
             <p className="doctor-schedule__empty-text">
-              {language === LANGUAGES.VI
-                ? 'Bác sĩ không có lịch khám vào ngày này.'
-                : 'The doctor has no available schedule on this day.'}
+              <FormattedMessage id="schedule.empty" />
             </p>
           </div>
         )}

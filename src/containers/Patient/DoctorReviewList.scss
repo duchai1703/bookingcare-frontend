@@ -1,0 +1,158 @@
+// src/containers/Patient/DoctorReviewList.scss
+$star-color: #f59e0b;
+$primary: #45c3d2;
+
+.doctor-review-list {
+  padding: 24px 0;
+
+  .review-list__title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 20px;
+    i { color: $primary; margin-right: 8px; }
+  }
+
+  // ===== SUMMARY =====
+  .review-list__summary {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #fffbeb 0%, #fff 100%);
+    border: 1px solid #fef3c7;
+    border-radius: 10px;
+    margin-bottom: 20px;
+  }
+
+  .review-list__average {
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+
+    .average-number {
+      font-size: 2rem;
+      font-weight: 700;
+      color: $star-color;
+    }
+
+    .average-max {
+      font-size: 1rem;
+      color: #999;
+    }
+
+    .average-label {
+      font-size: 0.75rem;
+      color: #999;
+      margin-left: 4px;
+    }
+  }
+
+  .review-list__stars-big {
+    .review-star {
+      font-size: 1.1rem;
+      color: #d1d5db;
+      &--filled { color: $star-color; }
+    }
+  }
+
+  .review-list__count {
+    font-size: 0.82rem;
+    color: #666;
+  }
+
+  // ===== LIST =====
+  .review-list__items {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .review-item {
+    padding: 16px;
+    background: #fff;
+    border: 1px solid #f0f0f0;
+    border-radius: 8px;
+    transition: box-shadow 0.2s;
+
+    &:hover { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); }
+
+    &__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    &__name {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #555;
+      i { color: $primary; margin-right: 6px; }
+    }
+
+    &__stars {
+      .review-star {
+        font-size: 0.8rem;
+        color: #d1d5db;
+        &--filled { color: $star-color; }
+      }
+    }
+
+    &__comment {
+      font-size: 0.85rem;
+      color: #444;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    &__date {
+      display: block;
+      font-size: 0.72rem;
+      color: #999;
+      margin-top: 8px;
+    }
+  }
+
+  // ===== EMPTY =====
+  .review-list__empty {
+    text-align: center;
+    padding: 32px;
+    color: #999;
+    i { font-size: 1.5rem; display: block; margin-bottom: 8px; color: #ccc; }
+    p { font-size: 0.88rem; margin: 0; }
+  }
+
+  // ===== LOADING =====
+  .review-list__loading {
+    text-align: center;
+    padding: 16px;
+    color: #999;
+    font-size: 0.85rem;
+    i { margin-right: 6px; }
+  }
+
+  // ===== LOAD MORE =====
+  .review-list__load-more {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    padding: 12px;
+    margin-top: 16px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: $primary;
+    background: #fff;
+    border: 1px solid $primary;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      background: $primary;
+      color: #fff;
+    }
+  }
+}

@@ -3,7 +3,7 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { useIntl } from 'react-intl';
+import { FormattedMessage, useIntl } from 'react-intl';
 import { path } from '../../utils/constants';
 import { processLogout } from '../../redux/slices/userSlice';
 import { adminMenu, doctorMenu } from '../Header/MenuData';
@@ -59,7 +59,7 @@ const Navigator = () => {
       <div className="nav-footer">
         <button className="btn-logout" onClick={handleLogout}>
           <span>🚪</span>
-          <span>Đăng xuất</span>
+          <span><FormattedMessage id="common.logout" /></span>
         </button>
       </div>
     </nav>

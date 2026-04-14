@@ -1,6 +1,8 @@
 // src/containers/System/Admin/UserManage.jsx
 // Quản lý Users — CRUD (REQ-AM-001 → REQ-AM-005)
+// [Phase 9 Final] Full i18n — useIntl + FormattedMessage
 import React, { useEffect, useState } from 'react';
+import { FormattedMessage, useIntl } from 'react-intl';
 import { getAllUsers, createNewUser, editUser, deleteUser, getAllCode } from '../../../services/userService';
 import { confirmDelete, showSuccess, showError, showWarning } from '../../../utils/confirmDelete';
 import CommonUtils from '../../../utils/CommonUtils';
@@ -23,6 +25,7 @@ const INIT_FORM = {
 };
 
 const UserManage = () => {
+  const intl = useIntl();
   const [users, setUsers] = useState([]);
   const [formData, setFormData] = useState(INIT_FORM);
   const [isEditing, setIsEditing] = useState(false);
@@ -109,26 +112,33 @@ const UserManage = () => {
   };
 
   const handleDeleteUser = async (user) => {
-    const ok = await confirmDelete(`${user.lastName} ${user.firstName}`);
+    const fullName = `${user.lastName} ${user.firstName}`;
+    const ok = await confirmDelete(fullName);
     if (!ok) return;
     try {
       const res = await deleteUser(user.id);
       if (res.errCode === 0) {
-        showSuccess('Đã xóa người dùng thành công.');
+        showSuccess(intl.formatMessage({ id: 'admin.manage.user.toast-delete-success' }, { name: fullName }));
         fetchUsers();
-      } else showError(res.message || 'Xóa thất bại');
-    } catch { showError('Không thể kết nối server'); }
+      } else showError(res.message || intl.formatMessage({ id: 'admin.manage.user.toast-delete-error' }));
+    } catch { showError(intl.formatMessage({ id: 'admin.manage.user.toast-server-error' })); }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.email || (!isEditing && !formData.password)) {
-      showWarning('Thiếu thông tin!', 'Vui lòng điền email và mật khẩu.');
+      showWarning(
+        intl.formatMessage({ id: 'admin.manage.user.toast-missing-info' }),
+        intl.formatMessage({ id: 'admin.manage.user.toast-missing-info-desc' })
+      );
       return;
     }
     // GAP-02: validate độ dài password tối thiểu 6 ký tự
     if (!isEditing && formData.password.length < 6) {
-      showWarning('Mật khẩu quá ngắn!', 'Mật khẩu phải có ít nhất 6 ký tự.');
+      showWarning(
+        intl.formatMessage({ id: 'admin.manage.user.toast-password-short' }),
+        intl.formatMessage({ id: 'admin.manage.user.toast-password-short-desc' })
+      );
       return;
     }
 
@@ -155,17 +165,23 @@ const UserManage = () => {
       }
 
       if (res.errCode === 0) {
-        showSuccess(isEditing ? 'Đã cập nhật người dùng.' : 'Đã tạo người dùng mới.');
+        showSuccess(intl.formatMessage({
+          id: isEditing ? 'admin.manage.user.toast-save-success-edit' : 'admin.manage.user.toast-save-success-create'
+        }));
         setShowForm(false);
         setFormData(INIT_FORM);
         fetchUsers();
-      } else showError(res.message || 'Lưu thất bại');
-    } catch { showError('Không thể kết nối server'); }
+      } else showError(res.message || intl.formatMessage({ id: 'admin.manage.user.toast-save-error' }));
+    } catch { showError(intl.formatMessage({ id: 'admin.manage.user.toast-server-error' })); }
   };
 
   const getRoleBadge = (roleId) => {
-    const map = { R1: { label: 'Admin', cls: 'badge-admin' }, R2: { label: 'Bác sĩ', cls: 'badge-doctor' }, R3: { label: 'Bệnh nhân', cls: 'badge-patient' } };
-    return map[roleId] || { label: roleId, cls: '' };
+    const map = {
+      R1: { labelId: 'admin.manage.user.role-admin', cls: 'badge-admin' },
+      R2: { labelId: 'admin.manage.user.role-doctor', cls: 'badge-doctor' },
+      R3: { labelId: 'admin.manage.user.role-patient', cls: 'badge-patient' },
+    };
+    return map[roleId] || { labelId: '', cls: '' };
   };
 
   // GAP-03: derived list — lọc theo họ tên + email
@@ -178,8 +194,8 @@ const UserManage = () => {
   return (
     <div className="user-manage">
       <div className="manage-header">
-        <h2 className="manage-title">👥 Quản Lý Người Dùng</h2>
-        <button className="btn-add" onClick={handleAddNew}>+ Thêm mới</button>
+        <h2 className="manage-title"><FormattedMessage id="admin.manage.user.title" /></h2>
+        <button className="btn-add" onClick={handleAddNew}><FormattedMessage id="admin.manage.user.btn-add" /></button>
       </div>
 
       {/* GAP-03: Search bar */}
@@ -187,13 +203,13 @@ const UserManage = () => {
         <input
           type="text"
           className="form-control search-input"
-          placeholder="🔍 Tìm theo họ tên hoặc email..."
+          placeholder={intl.formatMessage({ id: 'admin.manage.user.placeholder-search' })}
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
         />
         {searchText && (
           <span className="search-count">
-            {filteredUsers.length}/{users.length} kết quả
+            {intl.formatMessage({ id: 'common.results-count' }, { filtered: filteredUsers.length, total: users.length })}
           </span>
         )}
       </div>
@@ -201,7 +217,9 @@ const UserManage = () => {
       {/* ===== FORM ===== */}
       {showForm && (
         <div className="form-card">
-          <h4 className="form-title">{isEditing ? '✏️ Sửa người dùng' : '➕ Thêm người dùng mới'}</h4>
+          <h4 className="form-title">
+            <FormattedMessage id={isEditing ? 'admin.manage.user.form-title-edit' : 'admin.manage.user.form-title-add'} />
+          </h4>
           <form onSubmit={handleSubmit}>
             <div className="form-top-row">
               {/* Ảnh đại diện */}
@@ -216,45 +234,45 @@ const UserManage = () => {
               <div className="form-fields">
                 <div className="form-row-2">
                   <div className="form-group">
-                    <label>Họ <span className="required">*</span></label>
-                    <input name="lastName" value={formData.lastName} onChange={handleInput} className="form-control" placeholder="Nguyễn" />
+                    <label><FormattedMessage id="admin.manage.user.label-last-name" /> <span className="required">*</span></label>
+                    <input name="lastName" value={formData.lastName} onChange={handleInput} className="form-control" placeholder={intl.formatMessage({ id: 'admin.manage.user.placeholder-last-name' })} />
                   </div>
                   <div className="form-group">
-                    <label>Tên <span className="required">*</span></label>
-                    <input name="firstName" value={formData.firstName} onChange={handleInput} className="form-control" placeholder="Văn A" />
+                    <label><FormattedMessage id="admin.manage.user.label-first-name" /> <span className="required">*</span></label>
+                    <input name="firstName" value={formData.firstName} onChange={handleInput} className="form-control" placeholder={intl.formatMessage({ id: 'admin.manage.user.placeholder-first-name' })} />
                   </div>
                   <div className="form-group">
-                    <label>Email <span className="required">*</span></label>
-                    <input name="email" type="email" value={formData.email} onChange={handleInput} className="form-control" placeholder="user@example.com" disabled={isEditing} />
+                    <label><FormattedMessage id="admin.manage.user.label-email" /> <span className="required">*</span></label>
+                    <input name="email" type="email" value={formData.email} onChange={handleInput} className="form-control" placeholder={intl.formatMessage({ id: 'admin.manage.user.placeholder-email' })} disabled={isEditing} />
                   </div>
                   {!isEditing && (
                     <div className="form-group">
-                      <label>Mật khẩu <span className="required">*</span></label>
-                      <input name="password" type="password" value={formData.password} onChange={handleInput} className="form-control" placeholder="Tối thiểu 6 ký tự" />
+                      <label><FormattedMessage id="admin.manage.user.label-password" /> <span className="required">*</span></label>
+                      <input name="password" type="password" value={formData.password} onChange={handleInput} className="form-control" placeholder={intl.formatMessage({ id: 'admin.manage.user.placeholder-password' })} />
                     </div>
                   )}
                   <div className="form-group">
-                    <label>Số điện thoại</label>
-                    <input name="phoneNumber" value={formData.phoneNumber} onChange={handleInput} className="form-control" placeholder="0909..." />
+                    <label><FormattedMessage id="admin.manage.user.label-phone" /></label>
+                    <input name="phoneNumber" value={formData.phoneNumber} onChange={handleInput} className="form-control" placeholder={intl.formatMessage({ id: 'admin.manage.user.placeholder-phone' })} />
                   </div>
                   <div className="form-group">
-                    <label>Địa chỉ</label>
-                    <input name="address" value={formData.address} onChange={handleInput} className="form-control" placeholder="123 Đường ABC, TP.HCM" />
+                    <label><FormattedMessage id="admin.manage.user.label-address" /></label>
+                    <input name="address" value={formData.address} onChange={handleInput} className="form-control" placeholder={intl.formatMessage({ id: 'admin.manage.user.placeholder-address' })} />
                   </div>
                   <div className="form-group">
-                    <label>Giới tính</label>
+                    <label><FormattedMessage id="admin.manage.user.label-gender" /></label>
                     <select name="gender" value={formData.gender} onChange={handleInput} className="form-control">
                       {genders.map((g) => <option key={g.keyMap} value={g.keyMap}>{g.valueVi}</option>)}
                     </select>
                   </div>
                   <div className="form-group">
-                    <label>Role <span className="required">*</span></label>
+                    <label><FormattedMessage id="admin.manage.user.label-role" /> <span className="required">*</span></label>
                     <select name="roleId" value={formData.roleId} onChange={handleInput} className="form-control">
                       {roles.map((r) => <option key={r.keyMap} value={r.keyMap}>{r.valueVi}</option>)}
                     </select>
                   </div>
                   <div className="form-group">
-                    <label>Chức danh</label>
+                    <label><FormattedMessage id="admin.manage.user.label-position" /></label>
                     <select name="positionId" value={formData.positionId} onChange={handleInput} className="form-control">
                       {positions.map((p) => <option key={p.keyMap} value={p.keyMap}>{p.valueVi}</option>)}
                     </select>
@@ -263,8 +281,8 @@ const UserManage = () => {
               </div>
             </div>
             <div className="form-actions">
-              <button type="submit" className="btn-save">💾 Lưu lại</button>
-              <button type="button" className="btn-cancel" onClick={() => setShowForm(false)}>✕ Huỷ</button>
+              <button type="submit" className="btn-save"><FormattedMessage id="admin.manage.user.btn-save" /></button>
+              <button type="button" className="btn-cancel" onClick={() => setShowForm(false)}><FormattedMessage id="admin.manage.user.btn-cancel" /></button>
             </div>
           </form>
         </div>
@@ -273,25 +291,29 @@ const UserManage = () => {
       {/* ===== TABLE ===== */}
       <div className="table-card">
         {isLoading ? (
-          <p className="loading-text">Đang tải...</p>
+          <p className="loading-text"><FormattedMessage id="admin.manage.user.loading" /></p>
         ) : (
           <div className="table-wrap">
             <table className="user-table">
               <thead>
                 <tr>
-                  <th>#</th>
-                  <th>Ảnh</th>
-                  <th>Họ Tên</th>
-                  <th>Email</th>
-                  <th>SĐT</th>
-                  <th>Role</th>
-                  <th>Hành động</th>
+                  <th><FormattedMessage id="admin.manage.user.col-index" /></th>
+                  <th><FormattedMessage id="admin.manage.user.col-avatar" /></th>
+                  <th><FormattedMessage id="admin.manage.user.col-fullname" /></th>
+                  <th><FormattedMessage id="admin.manage.user.col-email" /></th>
+                  <th><FormattedMessage id="admin.manage.user.col-phone" /></th>
+                  <th><FormattedMessage id="admin.manage.user.col-role" /></th>
+                  <th><FormattedMessage id="admin.manage.user.col-actions" /></th>
                 </tr>
               </thead>
               <tbody>
                 {filteredUsers.length === 0 ? (
                   <tr><td colSpan={7} className="no-data">
-                    {searchText ? `Không tìm thấy user nào với từ khóa "${searchText}"` : 'Chưa có người dùng nào'}</td></tr>
+                    {searchText
+                      ? intl.formatMessage({ id: 'admin.manage.user.no-search-result' }, { keyword: searchText })
+                      : intl.formatMessage({ id: 'admin.manage.user.no-data' })
+                    }
+                  </td></tr>
                 ) : filteredUsers.map((user, idx) => {
                   const badge = getRoleBadge(user.roleId);
                   return (
@@ -308,10 +330,10 @@ const UserManage = () => {
                       <td><span className="user-name">{user.lastName} {user.firstName}</span></td>
                       <td className="user-email">{user.email}</td>
                       <td>{user.phoneNumber || '—'}</td>
-                      <td><span className={`role-badge ${badge.cls}`}>{badge.label}</span></td>
+                      <td><span className={`role-badge ${badge.cls}`}>{badge.labelId ? intl.formatMessage({ id: badge.labelId }) : user.roleId}</span></td>
                       <td>
-                        <button className="btn-edit" onClick={() => handleEdit(user)}>✏️ Sửa</button>
-                        <button className="btn-delete" onClick={() => handleDeleteUser(user)}>🗑️ Xóa</button>
+                        <button className="btn-edit" onClick={() => handleEdit(user)}><FormattedMessage id="admin.manage.user.btn-edit" /></button>
+                        <button className="btn-delete" onClick={() => handleDeleteUser(user)}><FormattedMessage id="admin.manage.user.btn-delete" /></button>
                       </td>
                     </tr>
                   );

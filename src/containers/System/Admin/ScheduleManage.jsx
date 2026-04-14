@@ -1,6 +1,8 @@
 // src/containers/System/Admin/ScheduleManage.jsx
 // Quản lý lịch khám bác sĩ (REQ-AM-018, 019, 021, 023)
+// [Phase 9 Final] Full i18n — useIntl + FormattedMessage
 import React, { useEffect, useState } from 'react';
+import { FormattedMessage, useIntl } from 'react-intl';
 import moment from 'moment';
 import { getAllUsers } from '../../../services/userService';
 import { bulkCreateSchedule, deleteSchedule, editSchedule, getScheduleByDateAdmin } from '../../../services/doctorService';
@@ -20,6 +22,7 @@ const TIME_FRAMES = [
 ];
 
 const ScheduleManage = () => {
+  const intl = useIntl();
   const [doctorList, setDoctorList] = useState([]);
   const [selectedDoctorId, setSelectedDoctorId] = useState('');
   const [selectedDate, setSelectedDate] = useState(moment().format('YYYY-MM-DD'));
@@ -85,9 +88,21 @@ const ScheduleManage = () => {
   };
 
   const handleSave = async () => {
-    if (!selectedDoctorId) { showWarning('Chưa chọn bác sĩ!', 'Vui lòng chọn bác sĩ.'); return; }
+    if (!selectedDoctorId) {
+      showWarning(
+        intl.formatMessage({ id: 'admin.manage.schedule.toast-no-doctor' }),
+        intl.formatMessage({ id: 'admin.manage.schedule.toast-no-doctor-desc' })
+      );
+      return;
+    }
     const newTimes = selectedTimes.filter((t) => !existingSchedules.some((s) => s.timeType === t));
-    if (newTimes.length === 0) { showWarning('Không có gì mới!', 'Tất cả khung giờ đã tồn tại hoặc chưa chọn giờ mới.'); return; }
+    if (newTimes.length === 0) {
+      showWarning(
+        intl.formatMessage({ id: 'admin.manage.schedule.toast-no-new' }),
+        intl.formatMessage({ id: 'admin.manage.schedule.toast-no-new-desc' })
+      );
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -101,44 +116,46 @@ const ScheduleManage = () => {
       }));
       const res = await bulkCreateSchedule({ arrSchedule });
       if (res.errCode === 0) {
-        showSuccess(`Đã tạo ${newTimes.length} lịch khám.`);
+        showSuccess(intl.formatMessage({ id: 'admin.manage.schedule.toast-create-success' }, { count: newTimes.length }));
         loadExistingSchedules();
-      } else showError(res.message || 'Tạo lịch thất bại');
-    } catch { showError('Không thể kết nối server'); }
+      } else showError(res.message || intl.formatMessage({ id: 'admin.manage.schedule.toast-create-error' }));
+    } catch { showError(intl.formatMessage({ id: 'admin.manage.schedule.toast-server-error' })); }
     setIsSaving(false);
   };
 
   const handleDeleteSchedule = async (schedule) => {
     const frame = TIME_FRAMES.find((t) => t.key === schedule.timeType);
-    const ok = await confirmDelete(`khung giờ ${frame?.label || schedule.timeType}`);
+    const ok = await confirmDelete(intl.formatMessage({ id: 'admin.manage.schedule.toast-delete-confirm' }, { timeLabel: frame?.label || schedule.timeType }));
     if (!ok) return;
     try {
       const res = await deleteSchedule({ id: schedule.id });
-      if (res.errCode === 0) { showSuccess('Đã xóa lịch khám.'); loadExistingSchedules(); }
-      else showError(res.message || 'Xóa thất bại');
-    } catch { showError('Không thể kết nối server'); }
+      if (res.errCode === 0) {
+        showSuccess(intl.formatMessage({ id: 'admin.manage.schedule.toast-delete-success' }));
+        loadExistingSchedules();
+      } else showError(res.message || intl.formatMessage({ id: 'admin.manage.schedule.toast-delete-error' }));
+    } catch { showError(intl.formatMessage({ id: 'admin.manage.schedule.toast-server-error' })); }
   };
 
   return (
     <div className="schedule-manage">
       <div className="manage-header">
-        <h2 className="manage-title">📅 Quản Lý Lịch Khám</h2>
+        <h2 className="manage-title"><FormattedMessage id="admin.manage.schedule.title" /></h2>
       </div>
 
       {/* Chọn bác sĩ & ngày */}
       <div className="filter-card">
         <div className="filter-row">
           <div className="form-group">
-            <label>Chọn bác sĩ</label>
+            <label><FormattedMessage id="admin.manage.schedule.label-select-doctor" /></label>
             <select className="form-control" value={selectedDoctorId} onChange={(e) => setSelectedDoctorId(e.target.value)}>
-              <option value="">-- Chọn bác sĩ (R2) --</option>
+              <option value="">{intl.formatMessage({ id: 'admin.manage.schedule.select-default' })}</option>
               {doctorList.map((doc) => (
                 <option key={doc.id} value={doc.id}>{doc.lastName} {doc.firstName}</option>
               ))}
             </select>
           </div>
           <div className="form-group">
-            <label>Chọn ngày khám</label>
+            <label><FormattedMessage id="admin.manage.schedule.label-select-date" /></label>
             <input type="date" className="form-control" value={selectedDate}
               min={moment().format('YYYY-MM-DD')}
               onChange={(e) => setSelectedDate(e.target.value)}
@@ -152,14 +169,14 @@ const ScheduleManage = () => {
         <>
           <div className="timeslot-card">
             <h4 className="card-title">
-              ⏰ Khung giờ cho ngày {moment(selectedDate).format('DD/MM/YYYY')}
+              {intl.formatMessage({ id: 'admin.manage.schedule.timeslot-title' }, { date: moment(selectedDate).format('DD/MM/YYYY') })}
             </h4>
             <p className="hint">
-              <span className="dot-teal" /> Đã tạo (không thể bỏ chọn) &nbsp;
-              <span className="dot-green" /> Sẽ tạo mới (click để chọn)
+              <span className="dot-teal" /> <FormattedMessage id="admin.manage.schedule.legend-exists" /> &nbsp;
+              <span className="dot-green" /> <FormattedMessage id="admin.manage.schedule.legend-new" />
             </p>
 
-            {isLoading ? <p className="loading-text">Đang tải lịch...</p> : (
+            {isLoading ? <p className="loading-text"><FormattedMessage id="admin.manage.schedule.loading" /></p> : (
               <div className="timeslot-grid">
                 {TIME_FRAMES.map((frame) => {
                   const alreadyExists = existingSchedules.some((s) => s.timeType === frame.key);
@@ -169,11 +186,11 @@ const ScheduleManage = () => {
                       key={frame.key}
                       className={`timeslot-item${alreadyExists ? ' exists' : ''}${isSelected && !alreadyExists ? ' selected' : ''}`}
                       onClick={() => toggleTime(frame.key)}
-                      title={alreadyExists ? 'Đã có lịch — dùng nút Xóa bên dưới' : 'Click để chọn/bỏ chọn'}
+                      title={intl.formatMessage({ id: alreadyExists ? 'admin.manage.schedule.tooltip-exists' : 'admin.manage.schedule.tooltip-toggle' })}
                     >
                       <span className="time-label">{frame.label}</span>
-                      {alreadyExists && <span className="time-badge exists">✅ Đã tạo</span>}
-                      {isSelected && !alreadyExists && <span className="time-badge new">➕ Sẽ tạo</span>}
+                      {alreadyExists && <span className="time-badge exists"><FormattedMessage id="admin.manage.schedule.badge-exists" /></span>}
+                      {isSelected && !alreadyExists && <span className="time-badge new"><FormattedMessage id="admin.manage.schedule.badge-new" /></span>}
                     </div>
                   );
                 })}
@@ -182,10 +199,12 @@ const ScheduleManage = () => {
 
             <div className="timeslot-footer">
               <span className="count-text">
-                Sẽ tạo mới: <strong>{selectedTimes.filter((t) => !existingSchedules.some((s) => s.timeType === t)).length}</strong> khung giờ
+                <FormattedMessage id="admin.manage.schedule.new-count" />{' '}
+                <strong>{selectedTimes.filter((t) => !existingSchedules.some((s) => s.timeType === t)).length}</strong>{' '}
+                <FormattedMessage id="admin.manage.schedule.new-count-unit" />
               </span>
               <button className="btn-save" onClick={handleSave} disabled={isSaving}>
-                {isSaving ? '⏳ Đang lưu...' : '💾 Lưu lịch khám'}
+                <FormattedMessage id={isSaving ? 'admin.manage.schedule.btn-saving' : 'admin.manage.schedule.btn-save'} />
               </button>
             </div>
           </div>
@@ -193,17 +212,19 @@ const ScheduleManage = () => {
           {/* Lịch đã tạo — xóa từng cái (REQ-AM-021) */}
           {existingSchedules.length > 0 && (
             <div className="existing-card">
-              <h4 className="card-title">📋 Lịch Đã Tạo</h4>
+              <h4 className="card-title"><FormattedMessage id="admin.manage.schedule.existing-title" /></h4>
               <div className="existing-list">
                 {existingSchedules.map((schedule) => {
                   const frame = TIME_FRAMES.find((t) => t.key === schedule.timeType);
                   return (
                     <div key={schedule.id} className="existing-item">
                       <span className="existing-time">⏰ {frame?.label || schedule.timeType}</span>
-                      <span className="existing-quota">👥 {schedule.currentNumber || 0}/{schedule.maxNumber} bệnh nhân</span>
+                      <span className="existing-quota">
+                        {intl.formatMessage({ id: 'admin.manage.schedule.existing-quota' }, { current: schedule.currentNumber || 0, max: schedule.maxNumber })}
+                      </span>
                       {/* GAP-04: Inline edit maxNumber (REQ-AM-021) */}
                       <div className="quota-edit">
-                        <label className="quota-label">Tối đa:</label>
+                        <label className="quota-label"><FormattedMessage id="admin.manage.schedule.quota-label" /></label>
                         <input
                           type="number"
                           className="quota-input"
@@ -213,7 +234,10 @@ const ScheduleManage = () => {
                           onBlur={async (e) => {
                             const newMax = parseInt(e.target.value, 10);
                             if (isNaN(newMax) || newMax < (schedule.currentNumber || 0)) {
-                              showWarning('Không hợp lệ!', `Số tối đa phải ≥ số đã đặt (${schedule.currentNumber || 0}).`);
+                              showWarning(
+                                intl.formatMessage({ id: 'admin.manage.schedule.toast-quota-invalid' }),
+                                intl.formatMessage({ id: 'admin.manage.schedule.toast-quota-invalid-desc' }, { current: schedule.currentNumber || 0 })
+                              );
                               e.target.value = schedule.maxNumber;
                               return;
                             }
@@ -221,21 +245,21 @@ const ScheduleManage = () => {
                             try {
                               const res = await editSchedule({ id: schedule.id, maxNumber: newMax });
                               if (res.errCode === 0) {
-                                showSuccess(`Đã cập nhật số lượng tối đa → ${newMax}.`);
+                                showSuccess(intl.formatMessage({ id: 'admin.manage.schedule.toast-quota-success' }, { max: newMax }));
                                 loadExistingSchedules(); // FIX BUG-08: Refresh from server instead of mutating state
                               } else {
-                                showError(res.message || 'Cập nhật thất bại.');
+                                showError(res.message || intl.formatMessage({ id: 'admin.manage.schedule.toast-quota-error' }));
                                 e.target.value = schedule.maxNumber;
                               }
                             } catch {
-                              showError('Không thể kết nối server.');
+                              showError(intl.formatMessage({ id: 'admin.manage.schedule.toast-server-error' }));
                               e.target.value = schedule.maxNumber;
                             }
                           }}
                         />
-                        <span className="quota-unit">người</span>
+                        <span className="quota-unit"><FormattedMessage id="admin.manage.schedule.quota-unit" /></span>
                       </div>
-                      <button className="btn-delete-sm" onClick={() => handleDeleteSchedule(schedule)}>🗑️ Xóa</button>
+                      <button className="btn-delete-sm" onClick={() => handleDeleteSchedule(schedule)}><FormattedMessage id="admin.manage.schedule.btn-delete" /></button>
                     </div>
                   );
                 })}

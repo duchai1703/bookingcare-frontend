@@ -20,7 +20,6 @@ const MedicalFacility = () => {
           setClinics(res.data);
         }
       } catch (err) {
-        console.error('Error fetching clinics:', err);
       }
     };
     fetchData();

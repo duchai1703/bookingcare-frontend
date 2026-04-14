@@ -32,6 +32,14 @@ export const path = {
   CLINIC_DETAIL: '/clinic/:id',
   VERIFY_BOOKING: '/verify-booking',
 
+  // [Phase 9.3] Auth Pages
+  REGISTER: '/register',
+  FORGOT_PASSWORD: '/forgot-password',
+  RESET_PASSWORD: '/reset-password',
+
+  // [Phase 9.4] Patient Portal
+  PATIENT_PORTAL: '/patient',
+
   // Admin (R1)
   SYSTEM: '/system',
   USER_MANAGE: '/system/user-manage',

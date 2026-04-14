@@ -27,7 +27,6 @@ const DoctorExtraInfo = ({ extraInfo: extraInfoProp, doctorId }) => {
           setFetchedInfo(res.data.Doctor_Info);
         }
       } catch (err) {
-        console.error('>>> Error fetching extra info:', err);
       }
     };
 

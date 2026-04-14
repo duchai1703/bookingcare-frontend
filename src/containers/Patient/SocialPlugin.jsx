@@ -29,7 +29,6 @@ const SocialPlugin = ({ dataHref, width = '100%', numPosts = 5 }) => {
     // Lấy App ID từ environment
     const appId = import.meta.env.VITE_FB_APP_ID;
     if (!appId) {
-      console.warn('>>> VITE_FB_APP_ID chưa được cấu hình trong .env');
       return;
     }
 

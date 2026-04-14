@@ -49,7 +49,6 @@ const SpecialtyDetail = () => {
           setDoctorList(res.data?.doctorList || []);
         }
       } catch (err) {
-        console.error('>>> Error fetching specialty detail:', err);
       } finally {
         setIsLoading(false);
       }

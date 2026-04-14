@@ -21,7 +21,6 @@ const Specialty = () => {
           setSpecialties(res.data);
         }
       } catch (err) {
-        console.error('Error fetching specialties:', err);
       }
     };
     fetchData();

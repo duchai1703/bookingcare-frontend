@@ -1,6 +1,8 @@
 // src/containers/System/Admin/DoctorManage.jsx
 // Hồ sơ bác sĩ (REQ-AM-006→010, REQ-AM-022)
+// [Phase 9 Final] Full i18n — useIntl + FormattedMessage
 import React, { useEffect, useState } from 'react';
+import { FormattedMessage, useIntl } from 'react-intl';
 import { getAllUsers, getAllCode } from '../../../services/userService';
 import { getDoctorDetail, saveInfoDoctor, deleteDoctorInfo } from '../../../services/doctorService';
 import CommonUtils from '../../../utils/CommonUtils';
@@ -29,6 +31,7 @@ const INIT_INFO = {
 };
 
 const DoctorManage = () => {
+  const intl = useIntl();
   const [doctorList, setDoctorList] = useState([]);
   const [selectedDoctorId, setSelectedDoctorId] = useState('');
   const [doctorInfo, setDoctorInfo] = useState(INIT_INFO);
@@ -117,9 +120,18 @@ const DoctorManage = () => {
   };
 
   const handleSave = async () => {
-    if (!selectedDoctorId) { showWarning('Chưa chọn bác sĩ!', 'Vui lòng chọn bác sĩ.'); return; }
+    if (!selectedDoctorId) {
+      showWarning(
+        intl.formatMessage({ id: 'admin.manage.doctor.toast-no-doctor' }),
+        intl.formatMessage({ id: 'admin.manage.doctor.toast-no-doctor-desc' })
+      );
+      return;
+    }
     if (!doctorInfo.specialtyId || !doctorInfo.clinicId || !doctorInfo.priceId) {
-      showWarning('Thiếu thông tin!', 'Vui lòng chọn chuyên khoa, phòng khám và giá khám.');
+      showWarning(
+        intl.formatMessage({ id: 'admin.manage.doctor.toast-missing-info' }),
+        intl.formatMessage({ id: 'admin.manage.doctor.toast-missing-info-desc' })
+      );
       return;
     }
     setIsSaving(true);
@@ -140,91 +152,96 @@ const DoctorManage = () => {
         image: doctorInfo.imageBase64 || undefined,
       };
       const res = await saveInfoDoctor(payload);
-      if (res.errCode === 0) { showSuccess('Đã lưu hồ sơ bác sĩ.'); setHasExistingInfo(true); }
-      else showError(res.message || 'Lưu thất bại');
-    } catch { showError('Không thể kết nối server'); }
+      if (res.errCode === 0) {
+        showSuccess(intl.formatMessage({ id: 'admin.manage.doctor.toast-save-success' }));
+        setHasExistingInfo(true);
+      } else showError(res.message || intl.formatMessage({ id: 'admin.manage.doctor.toast-save-error' }));
+    } catch { showError(intl.formatMessage({ id: 'admin.manage.doctor.toast-server-error' })); }
     setIsSaving(false);
   };
 
   const handleDelete = async () => {
-    const ok = await confirmDelete('hồ sơ bác sĩ này', 'Toàn bộ thông tin hồ sơ sẽ bị xóa.');
+    const ok = await confirmDelete(
+      intl.formatMessage({ id: 'admin.manage.doctor.toast-delete-confirm' }),
+      intl.formatMessage({ id: 'admin.manage.doctor.toast-delete-confirm-desc' })
+    );
     if (!ok) return;
     try {
       const res = await deleteDoctorInfo(selectedDoctorId);
       if (res.errCode === 0) {
-        showSuccess('Đã xóa hồ sơ bác sĩ.');
+        showSuccess(intl.formatMessage({ id: 'admin.manage.doctor.toast-delete-success' }));
         setDoctorInfo({ ...INIT_INFO, doctorId: selectedDoctorId });
         setHasExistingInfo(false);
-      } else showError(res.message || 'Xóa thất bại');
-    } catch { showError('Không thể kết nối server'); }
+      } else showError(res.message || intl.formatMessage({ id: 'admin.manage.doctor.toast-delete-error' }));
+    } catch { showError(intl.formatMessage({ id: 'admin.manage.doctor.toast-server-error' })); }
   };
 
   return (
     <div className="doctor-manage">
       <div className="manage-header">
-        <h2 className="manage-title">🩺 Quản Lý Hồ Sơ Bác Sĩ</h2>
-        {hasExistingInfo && <span className="existing-badge">✅ Đã có hồ sơ</span>}
+        <h2 className="manage-title"><FormattedMessage id="admin.manage.doctor.title" /></h2>
+        {hasExistingInfo && <span className="existing-badge"><FormattedMessage id="admin.manage.doctor.existing-badge" /></span>}
       </div>
 
       {/* Chọn bác sĩ (REQ-AM-022 — chỉ R2) */}
       <div className="form-card">
         <div className="form-group">
-          <label>Chọn bác sĩ <span className="required">*</span></label>
+          <label><FormattedMessage id="admin.manage.doctor.label-select-doctor" /> <span className="required">*</span></label>
           <select className="form-control select-lg" value={selectedDoctorId} onChange={handleSelectDoctor}>
-            <option value="">-- Chọn bác sĩ (User role R2) --</option>
+            <option value="">{intl.formatMessage({ id: 'admin.manage.doctor.select-default' })}</option>
             {doctorList.map((doc) => (
               <option key={doc.id} value={doc.id}>{doc.lastName} {doc.firstName} — {doc.email}</option>
             ))}
           </select>
-          <small className="hint">💡 Chỉ hiện user có role Bác sĩ (R2). Cần gán role R2 trước ở Quản lý Người dùng.</small>
+          <small className="hint"><FormattedMessage id="admin.manage.doctor.hint" /></small>
         </div>
       </div>
 
       {selectedDoctorId && (isLoading ? (
-        <p className="loading-text">Đang tải hồ sơ...</p>
+        <p className="loading-text"><FormattedMessage id="admin.manage.doctor.loading" /></p>
       ) : (
         <>
           {/* Thông tin chuyên môn */}
           <div className="form-card">
-            <h4 className="card-subtitle">📋 Thông Tin Chuyên Môn</h4>
+            <h4 className="card-subtitle"><FormattedMessage id="admin.manage.doctor.card-subtitle" /></h4>
             <div className="form-grid-3">
               <div className="form-group">
-                <label>Chuyên khoa <span className="required">*</span></label>
+                <label><FormattedMessage id="admin.manage.doctor.label-specialty" /> <span className="required">*</span></label>
                 <select name="specialtyId" value={doctorInfo.specialtyId} onChange={handleInput} className="form-control">
-                  <option value="">-- Chọn chuyên khoa --</option>
+                  <option value="">{intl.formatMessage({ id: 'admin.manage.doctor.select-specialty' })}</option>
                   {specialties.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               </div>
               <div className="form-group">
-                <label>Phòng khám <span className="required">*</span></label>
+                <label><FormattedMessage id="admin.manage.doctor.label-clinic" /> <span className="required">*</span></label>
                 <select name="clinicId" value={doctorInfo.clinicId} onChange={handleInput} className="form-control">
-                  <option value="">-- Chọn phòng khám --</option>
+                  <option value="">{intl.formatMessage({ id: 'admin.manage.doctor.select-clinic' })}</option>
                   {clinics.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div className="form-group">
-                <label>Giá khám <span className="required">*</span></label>
+                <label><FormattedMessage id="admin.manage.doctor.label-price" /> <span className="required">*</span></label>
                 <select name="priceId" value={doctorInfo.priceId} onChange={handleInput} className="form-control">
-                  <option value="">-- Chọn giá --</option>
+                  <option value="">{intl.formatMessage({ id: 'admin.manage.doctor.select-price' })}</option>
                   {prices.map((p) => <option key={p.keyMap} value={p.keyMap}>{p.valueVi}</option>)}
                 </select>
               </div>
               <div className="form-group">
-                <label>Tỉnh/Thành phố</label>
+                <label><FormattedMessage id="admin.manage.doctor.label-province" /></label>
                 <select name="provinceId" value={doctorInfo.provinceId} onChange={handleInput} className="form-control">
-                  <option value="">-- Chọn tỉnh --</option>
+                  <option value="">{intl.formatMessage({ id: 'admin.manage.doctor.select-province' })}</option>
                   {provinces.map((p) => <option key={p.keyMap} value={p.keyMap}>{p.valueVi}</option>)}
                 </select>
               </div>
               <div className="form-group">
-                <label>Phương thức thanh toán</label>
+                <label><FormattedMessage id="admin.manage.doctor.label-payment" /></label>
                 <select name="paymentId" value={doctorInfo.paymentId} onChange={handleInput} className="form-control">
-                  <option value="">-- Chọn thanh toán --</option>
+                  <option value="">{intl.formatMessage({ id: 'admin.manage.doctor.select-payment' })}</option>
                   {payments.map((p) => <option key={p.keyMap} value={p.keyMap}>{p.valueVi}</option>)}
                 </select>
               </div>
               <div className="form-group">
-                <label>Chức danh</label>
+                <label><FormattedMessage id="admin.manage.doctor.label-position" /></label>
                 <select name="positionId" value={doctorInfo.positionId} onChange={handleInput} className="form-control">
                   {positions.map((p) => <option key={p.keyMap} value={p.keyMap}>{p.valueVi}</option>)}
                 </select>
@@ -232,15 +249,15 @@ const DoctorManage = () => {
             </div>
 
             <div className="form-group mt-12">
-              <label>Mô tả ngắn (hiển thị trang chủ)</label>
-              <textarea name="description" value={doctorInfo.description} onChange={handleInput} className="form-control" rows={3} placeholder="BS. Nguyễn Văn A có hơn 10 năm kinh nghiệm..." />
+              <label><FormattedMessage id="admin.manage.doctor.label-description" /></label>
+              <textarea name="description" value={doctorInfo.description} onChange={handleInput} className="form-control" rows={3} placeholder={intl.formatMessage({ id: 'admin.manage.doctor.placeholder-description' })} />
             </div>
             <div className="form-group">
-              <label>Ghi chú (Admin)</label>
-              <input type="text" name="note" value={doctorInfo.note} onChange={handleInput} className="form-control" placeholder="Ghi chú nội bộ..." />
+              <label><FormattedMessage id="admin.manage.doctor.label-note" /></label>
+              <input type="text" name="note" value={doctorInfo.note} onChange={handleInput} className="form-control" placeholder={intl.formatMessage({ id: 'admin.manage.doctor.placeholder-note' })} />
             </div>
             <div className="form-group">
-              <label>Ảnh đại diện (max 5MB)</label>
+              <label><FormattedMessage id="admin.manage.doctor.label-avatar" /></label>
               <ImageUploadInput
                 previewUrl={doctorInfo.previewImgURL}
                 inputId="doctor-img-upload"
@@ -258,18 +275,18 @@ const DoctorManage = () => {
               value={doctorInfo.contentMarkdown}
               onChange={(val) => setDoctorInfo((prev) => ({ ...prev, contentMarkdown: val }))}
               height={420}
-              label="📝 Bài Giới Thiệu Bác Sĩ (Markdown)"
-              placeholder="## Giới thiệu&#10;&#10;BS. Nguyễn Văn A..."
+              label={intl.formatMessage({ id: 'admin.manage.doctor.label-markdown' })}
+              placeholder={intl.formatMessage({ id: 'admin.manage.doctor.placeholder-markdown' })}
             />
           </div>
 
           {/* Actions */}
           <div className="action-footer">
             <button className="btn-save" onClick={handleSave} disabled={isSaving}>
-              {isSaving ? '⏳ Đang lưu...' : '💾 Lưu hồ sơ'}
+              <FormattedMessage id={isSaving ? 'admin.manage.doctor.btn-saving' : 'admin.manage.doctor.btn-save'} />
             </button>
             {hasExistingInfo && (
-              <button className="btn-delete-outline" onClick={handleDelete}>🗑️ Xóa hồ sơ</button>
+              <button className="btn-delete-outline" onClick={handleDelete}><FormattedMessage id="admin.manage.doctor.btn-delete" /></button>
             )}
           </div>
         </>

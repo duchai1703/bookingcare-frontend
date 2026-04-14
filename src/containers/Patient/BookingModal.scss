@@ -159,6 +159,13 @@
         box-shadow: 0 0 0 2px rgba($danger, 0.15);
       }
     }
+
+    // [Phase 9.5] Disabled/ReadOnly input (email lấy từ tài khoản)
+    &--disabled {
+      background-color: $bg-light;
+      color: $text-light;
+      cursor: not-allowed;
+    }
   }
 
   &__textarea {

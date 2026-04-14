@@ -17,6 +17,26 @@
   padding: $spacing-xxl $spacing-xl;
   box-shadow: $shadow-lg;
 
+  // [Phase 9.3] Description text (used by ForgotPassword)
+  .form-description {
+    text-align: center;
+    color: $text-secondary;
+    font-size: $font-size-sm;
+    margin-bottom: $spacing-lg;
+    line-height: 1.5;
+  }
+
+  // [Phase 9.3] 2-column row (used by Register: Họ + Tên)
+  .form-row {
+    display: flex;
+    gap: $spacing-md;
+    margin-bottom: 0;
+
+    .form-group--half {
+      flex: 1;
+    }
+  }
+
   .login-title {
     text-align: center;
     font-size: $font-size-xxl;
@@ -134,18 +154,31 @@
     i { margin-right: $spacing-xs; }
   }
 
-  // Forgot password
-  .forgot-password {
+  // [Phase 9.3] Auth links: Quên MK + Đăng ký
+  .auth-links {
     text-align: center;
     margin-top: $spacing-md;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-xs;
 
-    a {
+    .auth-link {
       font-size: $font-size-sm;
       color: $text-light;
       transition: color $transition-fast;
+      text-decoration: none;
 
       &:hover {
         color: $primary;
+      }
+
+      &--register {
+        color: $primary;
+        font-weight: $font-weight-medium;
+
+        &:hover {
+          color: $primary-dark;
+        }
       }
     }
   }

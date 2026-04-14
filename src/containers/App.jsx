@@ -1,13 +1,18 @@
 // src/containers/App.jsx
 // Main application component — Chứa tất cả routes
+// [Phase 9.3] Auth Pages + [Phase 9.4] Patient Portal
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { FormattedMessage } from 'react-intl';
 import { path, USER_ROLE } from '../utils/constants';
 import PrivateRoute from '../routes/PrivateRoute';
 
 // ===== Public Pages =====
 import HomePage from './HomePage/HomePage';
 import Login from './Auth/Login';
+import Register from './Auth/Register';
+import ForgotPassword from './Auth/ForgotPassword';
+import ResetPassword from './Auth/ResetPassword';
 import DoctorDetail from './Patient/DoctorDetail';
 import SpecialtyDetail from './Patient/SpecialtyDetail';
 import ClinicDetail from './Patient/ClinicDetail';
@@ -21,6 +26,11 @@ import ClinicManage from './System/Admin/ClinicManage';
 import SpecialtyManage from './System/Admin/SpecialtyManage';
 import ScheduleManage from './System/Admin/ScheduleManage';
 import ManagePatient from './System/Doctor/ManagePatient';
+
+// [Phase 9.4] Patient Portal
+import PatientLayout from './PatientPortal/PatientLayout';
+import PatientProfile from './PatientPortal/PatientProfile';
+import AppointmentHistory from './PatientPortal/AppointmentHistory';
 
 // ===== Layout =====
 import Header from '../components/Header/Header';
@@ -48,7 +58,11 @@ const App = () => {
           }
         />
 
+        {/* [Phase 9.3] Auth Pages — Public */}
         <Route path={path.LOGIN} element={<Login />} />
+        <Route path={path.REGISTER} element={<Register />} />
+        <Route path={path.FORGOT_PASSWORD} element={<ForgotPassword />} />
+        <Route path={path.RESET_PASSWORD} element={<ResetPassword />} />
 
         {/* Chi tiết bác sĩ — SRS 3.8 */}
         <Route
@@ -106,20 +120,28 @@ const App = () => {
         <Route element={<PrivateRoute allowedRoles={[USER_ROLE.DOCTOR]} />}>
           <Route path={path.DOCTOR_DASHBOARD} element={<SystemLayout />}>
             <Route index element={<Navigate to="manage-patient" replace />} />
-            {/* ✅ GĐ8: Component thật thay thế placeholder */}
             <Route path="manage-patient" element={<ManagePatient />} />
           </Route>
         </Route>
 
+        {/* ===== PATIENT ROUTES — Chỉ Patient R3 (Phase 9.4) ===== */}
+        <Route element={<PrivateRoute allowedRoles={[USER_ROLE.PATIENT]} />}>
+          <Route path={path.PATIENT_PORTAL} element={<PatientLayout />}>
+            {/* /patient → redirect /patient/profile */}
+            <Route index element={<Navigate to="profile" replace />} />
+            <Route path="profile" element={<PatientProfile />} />
+            <Route path="history" element={<AppointmentHistory />} />
+          </Route>
+        </Route>
+
         {/* ===== 404 — Not Found ===== */}
-        {/* FIX #3: Dùng <a> thay vì <Navigate> trong JSX */}
         <Route
           path="*"
           element={
             <div style={{ textAlign: 'center', padding: '80px' }}>
               <h2 style={{ fontSize: '4rem', color: '#45c3d2' }}>404</h2>
-              <p style={{ color: '#666' }}>Trang bạn tìm không tồn tại</p>
-              <a href="/" style={{ color: '#45c3d2', fontWeight: 600 }}>← Về trang chủ</a>
+              <p style={{ color: '#666' }}><FormattedMessage id="common.page-not-found" /></p>
+              <a href="/" style={{ color: '#45c3d2', fontWeight: 600 }}><FormattedMessage id="common.back-to-home" /></a>
             </div>
           }
         />

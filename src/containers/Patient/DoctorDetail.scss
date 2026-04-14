@@ -401,6 +401,19 @@
     }
   }
 
+  // ===== REVIEW SECTION — [Phase 9.6] =====
+  &__review-section {
+    background-color: $bg-white;
+    padding: $spacing-xl 0;
+    border-bottom: 1px solid $border-color;
+  }
+
+  &__review-container {
+    max-width: $max-width;
+    margin: 0 auto;
+    padding: 0 $spacing-md;
+  }
+
   // ===== COMMENT SECTION =====
   &__comment-section {
     background-color: $bg-white;

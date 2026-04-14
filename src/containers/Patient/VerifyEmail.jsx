@@ -72,7 +72,6 @@ const VerifyEmail = () => {
           );
         }
       } catch (err) {
-        console.error('>>> Error verifying booking:', err);
         setStatus('error');
         setMessage(
           language === LANGUAGES.VI

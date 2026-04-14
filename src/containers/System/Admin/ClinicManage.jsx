@@ -1,6 +1,8 @@
 // src/containers/System/Admin/ClinicManage.jsx
 // Quản lý phòng khám (REQ-AM-011→014)
+// [Phase 9 Final] Full i18n — useIntl + FormattedMessage
 import React, { useEffect, useState } from 'react';
+import { FormattedMessage, useIntl } from 'react-intl';
 import { getAllClinic, createClinic, editClinic, deleteClinic } from '../../../services/clinicService';
 import { confirmDelete, showSuccess, showError, showWarning } from '../../../utils/confirmDelete';
 import CommonUtils from '../../../utils/CommonUtils';
@@ -12,6 +14,7 @@ import './ClinicManage.scss';
 const INIT_FORM = { id: '', name: '', address: '', descriptionMarkdown: '', descriptionHTML: '', previewImgURL: '', imageBase64: '' };
 
 const ClinicManage = () => {
+  const intl = useIntl();
   const [clinics, setClinics] = useState([]);
   const [formData, setFormData] = useState(INIT_FORM);
   const [isEditing, setIsEditing] = useState(false);
@@ -51,45 +54,59 @@ const ClinicManage = () => {
     if (!ok) return;
     try {
       const res = await deleteClinic(clinic.id);
-      if (res.errCode === 0) { showSuccess('Đã xóa phòng khám.'); fetchClinics(); }
-      else showError(res.message || 'Xóa thất bại');
-    } catch { showError('Không thể kết nối server'); }
+      if (res.errCode === 0) {
+        showSuccess(intl.formatMessage({ id: 'admin.manage.clinic.toast-delete-success' }, { name: clinic.name }));
+        fetchClinics();
+      } else showError(res.message || intl.formatMessage({ id: 'admin.manage.clinic.toast-delete-error' }));
+    } catch { showError(intl.formatMessage({ id: 'admin.manage.clinic.toast-server-error' })); }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.address) { showWarning('Thiếu thông tin!', 'Vui lòng điền tên và địa chỉ.'); return; }
+    if (!formData.name || !formData.address) {
+      showWarning(
+        intl.formatMessage({ id: 'admin.manage.clinic.toast-missing-info' }),
+        intl.formatMessage({ id: 'admin.manage.clinic.toast-missing-info-desc' })
+      );
+      return;
+    }
     try {
       const payload = { name: formData.name, address: formData.address, descriptionMarkdown: formData.descriptionMarkdown, descriptionHTML: marked.parse(formData.descriptionMarkdown || ''), imageBase64: formData.imageBase64 || undefined };
       const res = isEditing ? await editClinic({ ...payload, id: formData.id }) : await createClinic(payload);
-      if (res.errCode === 0) { showSuccess(isEditing ? 'Đã cập nhật phòng khám.' : 'Đã tạo phòng khám mới.'); setShowForm(false); setFormData(INIT_FORM); fetchClinics(); }
-      else showError(res.message || 'Lưu thất bại');
-    } catch { showError('Không thể kết nối server'); }
+      if (res.errCode === 0) {
+        showSuccess(intl.formatMessage({
+          id: isEditing ? 'admin.manage.clinic.toast-save-success-edit' : 'admin.manage.clinic.toast-save-success-create'
+        }));
+        setShowForm(false); setFormData(INIT_FORM); fetchClinics();
+      } else showError(res.message || intl.formatMessage({ id: 'admin.manage.clinic.toast-save-error' }));
+    } catch { showError(intl.formatMessage({ id: 'admin.manage.clinic.toast-server-error' })); }
   };
 
   return (
     <div className="clinic-manage">
       <div className="manage-header">
-        <h2 className="manage-title">🏥 Quản Lý Phòng Khám</h2>
-        <button className="btn-add" onClick={handleAddNew}>+ Thêm mới</button>
+        <h2 className="manage-title"><FormattedMessage id="admin.manage.clinic.title" /></h2>
+        <button className="btn-add" onClick={handleAddNew}><FormattedMessage id="admin.manage.clinic.btn-add" /></button>
       </div>
 
       {showForm && (
         <div className="form-card">
-          <h4 className="form-title">{isEditing ? '✏️ Sửa phòng khám' : '➕ Thêm phòng khám mới'}</h4>
+          <h4 className="form-title">
+            <FormattedMessage id={isEditing ? 'admin.manage.clinic.form-title-edit' : 'admin.manage.clinic.form-title-add'} />
+          </h4>
           <form onSubmit={handleSubmit}>
             <div className="form-row-2">
               <div className="form-group">
-                <label>Tên phòng khám <span className="required">*</span></label>
-                <input type="text" name="name" value={formData.name} onChange={handleInput} className="form-control" placeholder="Bệnh viện Chợ Rẫy" />
+                <label><FormattedMessage id="admin.manage.clinic.label-name" /> <span className="required">*</span></label>
+                <input type="text" name="name" value={formData.name} onChange={handleInput} className="form-control" placeholder={intl.formatMessage({ id: 'admin.manage.clinic.placeholder-name' })} />
               </div>
               <div className="form-group">
-                <label>Địa chỉ <span className="required">*</span></label>
-                <input type="text" name="address" value={formData.address} onChange={handleInput} className="form-control" placeholder="201 Nguyễn Chí Thanh, Q.5" />
+                <label><FormattedMessage id="admin.manage.clinic.label-address" /> <span className="required">*</span></label>
+                <input type="text" name="address" value={formData.address} onChange={handleInput} className="form-control" placeholder={intl.formatMessage({ id: 'admin.manage.clinic.placeholder-address' })} />
               </div>
             </div>
             <div className="form-group">
-              <label>Ảnh phòng khám (max 5MB)</label>
+              <label><FormattedMessage id="admin.manage.clinic.label-image" /></label>
               <ImageUploadInput
                 previewUrl={formData.previewImgURL}
                 inputId="clinic-img-upload"
@@ -100,19 +117,21 @@ const ClinicManage = () => {
             <MarkdownEditorField
               value={formData.descriptionMarkdown}
               onChange={(val) => setFormData((prev) => ({ ...prev, descriptionMarkdown: val }))}
-              height={300} label="Mô tả chi tiết (Markdown)" placeholder="## Giới thiệu phòng khám..."
+              height={300}
+              label={intl.formatMessage({ id: 'admin.manage.clinic.label-markdown' })}
+              placeholder={intl.formatMessage({ id: 'admin.manage.clinic.placeholder-markdown' })}
             />
             <div className="form-actions">
-              <button type="submit" className="btn-save">💾 Lưu lại</button>
-              <button type="button" className="btn-cancel" onClick={() => setShowForm(false)}>✕ Huỷ</button>
+              <button type="submit" className="btn-save"><FormattedMessage id="admin.manage.clinic.btn-save" /></button>
+              <button type="button" className="btn-cancel" onClick={() => setShowForm(false)}><FormattedMessage id="admin.manage.clinic.btn-cancel" /></button>
             </div>
           </form>
         </div>
       )}
 
       <div className="clinic-list">
-        {isLoading ? <p className="loading-text">Đang tải...</p> :
-         clinics.length === 0 ? <p className="no-data">Chưa có phòng khám nào.</p> :
+        {isLoading ? <p className="loading-text"><FormattedMessage id="admin.manage.clinic.loading" /></p> :
+         clinics.length === 0 ? <p className="no-data"><FormattedMessage id="admin.manage.clinic.no-data" /></p> :
          clinics.map((clinic) => (
           <div key={clinic.id} className="clinic-card">
             <div className="clinic-img-wrap">
@@ -126,8 +145,8 @@ const ClinicManage = () => {
               <p className="clinic-address">📍 {clinic.address}</p>
             </div>
             <div className="clinic-actions">
-              <button className="btn-edit" onClick={() => handleEdit(clinic)}>✏️ Sửa</button>
-              <button className="btn-delete" onClick={() => handleDeleteClinic(clinic)}>🗑️ Xóa</button>
+              <button className="btn-edit" onClick={() => handleEdit(clinic)}><FormattedMessage id="admin.manage.clinic.btn-edit" /></button>
+              <button className="btn-delete" onClick={() => handleDeleteClinic(clinic)}><FormattedMessage id="admin.manage.clinic.btn-delete" /></button>
             </div>
           </div>
         ))}

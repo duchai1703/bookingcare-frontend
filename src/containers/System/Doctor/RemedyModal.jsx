@@ -80,7 +80,6 @@ const RemedyModal = ({ isOpen, dataModal, onClose, onSendSuccess }) => {
       const objectUrl = URL.createObjectURL(file);
       setPreviewUrl(objectUrl);
     } catch (err) {
-      console.error('>>> Error converting image:', err);
       toast.error(
         language === LANGUAGES.VI
           ? 'Lỗi xử lý ảnh!'
