@@ -54,7 +54,7 @@ const Header = () => {
   // Đi đến dashboard theo role
   const handleGoToDashboard = () => {
     if (userInfo?.roleId === USER_ROLE.ADMIN) {
-      navigate(path.USER_MANAGE);
+      navigate('/system/dashboard');
     } else if (userInfo?.roleId === USER_ROLE.DOCTOR) {
       navigate(path.MANAGE_PATIENT);
     }

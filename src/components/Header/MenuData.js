@@ -5,6 +5,10 @@ import { path } from '../../utils/constants';
 // ===== ADMIN MENU (R1) — 5 items =====
 export const adminMenu = [
   {
+    name: 'menu.admin.dashboard',
+    link: '/system/dashboard',
+  },
+  {
     name: 'menu.admin.manage-user',    // i18n key
     link: path.USER_MANAGE,
   },
@@ -26,10 +30,14 @@ export const adminMenu = [
   },
 ];
 
-// ===== DOCTOR MENU (R2) — 1 item =====
+// ===== DOCTOR MENU (R2) — 2 items =====
 export const doctorMenu = [
   {
     name: 'menu.doctor.manage-patient',
     link: path.MANAGE_PATIENT,
+  },
+  {
+    name: 'menu.doctor.manage-schedule',
+    link: '/doctor-dashboard/manage-schedule',
   },
 ];

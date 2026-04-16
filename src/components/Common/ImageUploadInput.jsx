@@ -1,7 +1,7 @@
 // src/components/Common/ImageUploadInput.jsx
 // Shared component — Upload ảnh, preview, convert sang base64 (REQ-AM-008)
 // Dùng ở: UserManage, DoctorManage, ClinicManage, SpecialtyManage (GĐ6)
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { showError } from '../../utils/confirmDelete';
 import CommonUtils from '../../utils/CommonUtils';
 import './ImageUploadInput.scss';
@@ -22,6 +22,20 @@ const ImageUploadInput = ({
   inputId = 'img-upload',
   label = '📷 Chọn ảnh',
 }) => {
+  // [Phase 10.5 VULN-003] Dọn rác objectURL khi previewUrl thay đổi hoặc unmount
+  const prevUrlRef = useRef(null);
+  useEffect(() => {
+    return () => {
+      if (prevUrlRef.current && prevUrlRef.current.startsWith('blob:')) {
+        URL.revokeObjectURL(prevUrlRef.current);
+      }
+    };
+  }, [previewUrl]);
+
+  useEffect(() => {
+    prevUrlRef.current = previewUrl;
+  }, [previewUrl]);
+
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;

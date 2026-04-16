@@ -85,5 +85,9 @@ $transition-slow: 0.5s ease;
 $z-dropdown: 100;
 $z-sticky: 900;
 $z-header: 1000;
-$z-modal: 10000;
-$z-loading: 99999;
+$z-modal: 9999;               // [Phase 10 Hotfix] Dưới Toastify(10000) & SweetAlert2(10002)
+$z-loading: 9999;             // [Phase 10 Hotfix] Dưới Toastify(10000) & SweetAlert2(10002)
+
+// ===== LEGACY COMPAT (Phase 1-9) =====
+$common-bg: #f0f2f5;          // [Phase 10 Hotfix] Tương thích ngược P1-9
+

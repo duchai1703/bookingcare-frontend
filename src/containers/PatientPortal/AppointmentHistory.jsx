@@ -60,9 +60,9 @@ const AppointmentHistory = () => {
       });
 
       if (result.errCode === 0) {
-        setBookings(result.data?.rows || result.data || []);
-        const total = result.data?.count || result.totalCount || 0;
-        setTotalPages(Math.max(1, Math.ceil(total / PAGE_SIZE)));
+        // [Phase 10.5 VULN-002] BE trả { data: [...], pagination: { totalPages } }
+        setBookings(result.data?.data || result.data || []);
+        setTotalPages(result.data?.pagination?.totalPages || result.pagination?.totalPages || 1);
       } else {
         setBookings([]);
       }
@@ -127,16 +127,20 @@ const AppointmentHistory = () => {
 
   return (
     <div className="appointment-history">
-      <h2 className="page-title">
-        <i className="fas fa-calendar-check" /> <FormattedMessage id="patient-portal.appointments.title" />
+      <h2 className="tw-text-xl tw-font-bold tw-text-text-main tw-mb-5 tw-flex tw-items-center tw-gap-2">
+        <i className="fas fa-calendar-check tw-text-primary" /> <FormattedMessage id="patient-portal.appointments.title" />
       </h2>
 
       {/* ===== 3 TABS ===== */}
-      <div className="tabs">
+      <div className="tw-flex tw-gap-1 tw-mb-5 tw-bg-bg-light tw-rounded-lg tw-p-1">
         {TABS.map((tab) => (
           <button
             key={tab.key}
-            className={`tab-btn ${activeTab === tab.key ? 'active' : ''}`}
+            className={`tw-flex-1 tw-flex tw-items-center tw-justify-center tw-gap-2 tw-px-4 tw-py-2.5 tw-rounded-md tw-text-sm tw-font-medium tw-border-0 tw-cursor-pointer tw-transition-all ${
+              activeTab === tab.key
+                ? 'tw-bg-white tw-text-primary tw-shadow-sm'
+                : 'tw-bg-transparent tw-text-text-sub hover:tw-text-text-main'
+            }`}
             onClick={() => handleChangeTab(tab.key)}
           >
             <i className={`fas ${tab.icon}`} />
@@ -147,38 +151,38 @@ const AppointmentHistory = () => {
 
       {/* ===== TABLE ===== */}
       {isLoading ? (
-        <div className="loading-state">
+        <div className="tw-flex tw-items-center tw-justify-center tw-gap-3 tw-py-12 tw-text-text-sub">
           <i className="fas fa-spinner fa-spin" /> <FormattedMessage id="common.loading" />
         </div>
       ) : bookings.length === 0 ? (
-        <div className="empty-state">
-          <i className="fas fa-inbox" />
-          <p><FormattedMessage id="patient-portal.appointments.no-data" /></p>
+        <div className="tw-text-center tw-py-16 tw-bg-white tw-rounded-card tw-shadow-card">
+          <i className="fas fa-inbox tw-text-4xl tw-text-text-light tw-mb-3 tw-block" />
+          <p className="tw-text-text-sub"><FormattedMessage id="patient-portal.appointments.no-data" /></p>
         </div>
       ) : (
-        <div className="table-wrapper">
-          <table className="booking-table">
+        <div className="tw-bg-white tw-rounded-card tw-shadow-card tw-overflow-x-auto">
+          <table className="tw-w-full tw-text-sm">
             <thead>
-              <tr>
-                <th>#</th>
-                <th><FormattedMessage id="patient-portal.appointments.col-doctor" /></th>
-                <th><FormattedMessage id="patient-portal.appointments.col-date" /></th>
-                <th><FormattedMessage id="patient-portal.appointments.col-time" /></th>
-                <th><FormattedMessage id="patient-portal.appointments.col-reason" /></th>
-                <th><FormattedMessage id="patient-portal.appointments.col-status" /></th>
-                <th><FormattedMessage id="patient-portal.appointments.col-actions" /></th>
+              <tr className="tw-bg-bg-light tw-border-b tw-border-gray-200">
+                <th className="tw-px-4 tw-py-3 tw-text-left tw-font-semibold tw-text-text-sub">#</th>
+                <th className="tw-px-4 tw-py-3 tw-text-left tw-font-semibold tw-text-text-sub"><FormattedMessage id="patient-portal.appointments.col-doctor" /></th>
+                <th className="tw-px-4 tw-py-3 tw-text-left tw-font-semibold tw-text-text-sub"><FormattedMessage id="patient-portal.appointments.col-date" /></th>
+                <th className="tw-px-4 tw-py-3 tw-text-left tw-font-semibold tw-text-text-sub"><FormattedMessage id="patient-portal.appointments.col-time" /></th>
+                <th className="tw-px-4 tw-py-3 tw-text-left tw-font-semibold tw-text-text-sub"><FormattedMessage id="patient-portal.appointments.col-reason" /></th>
+                <th className="tw-px-4 tw-py-3 tw-text-left tw-font-semibold tw-text-text-sub"><FormattedMessage id="patient-portal.appointments.col-status" /></th>
+                <th className="tw-px-4 tw-py-3 tw-text-left tw-font-semibold tw-text-text-sub"><FormattedMessage id="patient-portal.appointments.col-actions" /></th>
               </tr>
             </thead>
             <tbody>
               {bookings.map((b, idx) => {
-                // Hiển thị tên bác sĩ từ association
-                const doctorName = b.doctorData
-                  ? `${b.doctorData.lastName || ''} ${b.doctorData.firstName || ''}`.trim()
+                // [Phase 10.5] Dùng alias doctorBookingData từ Backend
+                const doctorName = b.doctorBookingData
+                  ? `${b.doctorBookingData.lastName || ''} ${b.doctorBookingData.firstName || ''}`.trim()
                   : `#${b.doctorId}`;
 
-                // Hiển thị khung giờ từ timeTypeData
-                const timeSlot = b.timeTypeData
-                  ? (language === LANGUAGES.VI ? b.timeTypeData.valueVi : b.timeTypeData.valueEn)
+                // [Phase 10.5] Dùng alias timeTypeBooking từ Backend
+                const timeSlot = b.timeTypeBooking
+                  ? (language === LANGUAGES.VI ? b.timeTypeBooking.valueVi : b.timeTypeBooking.valueEn)
                   : b.timeType;
 
                 // Format ngày khám
@@ -187,18 +191,18 @@ const AppointmentHistory = () => {
                   : '--';
 
                 return (
-                  <tr key={b.id || idx}>
-                    <td>{(currentPage - 1) * PAGE_SIZE + idx + 1}</td>
-                    <td className="td-doctor">{doctorName}</td>
-                    <td>{dateStr}</td>
-                    <td>{timeSlot}</td>
-                    <td className="td-reason">{b.reason || '--'}</td>
-                    <td>{renderStatusBadge(b.statusId)}</td>
-                    <td className="td-actions">
+                  <tr key={b.id || idx} className="tw-border-b tw-border-gray-100 hover:tw-bg-primary-light/30 tw-transition-colors">
+                    <td className="tw-px-4 tw-py-3 tw-text-text-sub">{(currentPage - 1) * PAGE_SIZE + idx + 1}</td>
+                    <td className="tw-px-4 tw-py-3 tw-font-medium tw-text-text-main">{doctorName}</td>
+                    <td className="tw-px-4 tw-py-3 tw-text-text-sub">{dateStr}</td>
+                    <td className="tw-px-4 tw-py-3"><span className="tw-px-2 tw-py-0.5 tw-bg-indigo-50 tw-text-indigo-700 tw-rounded-md tw-text-xs tw-font-medium">{timeSlot}</span></td>
+                    <td className="tw-px-4 tw-py-3 tw-text-text-sub tw-max-w-[150px] tw-truncate">{b.reason || '--'}</td>
+                    <td className="tw-px-4 tw-py-3">{renderStatusBadge(b.statusId)}</td>
+                    <td className="tw-px-4 tw-py-3">
                       {/* Tab Sắp tới: Nút Hủy lịch */}
                       {activeTab === 'upcoming' && (b.statusId === 'S1' || b.statusId === 'S2') && (
                         <button
-                          className="action-btn action-btn--cancel"
+                          className="tw-px-3 tw-py-1.5 tw-bg-red-50 tw-text-red-600 tw-rounded-md tw-text-xs tw-font-medium tw-border tw-border-red-200 tw-cursor-pointer hover:tw-bg-red-100 tw-transition-colors tw-flex tw-items-center tw-gap-1"
                           onClick={() => handleOpenCancelModal(b.id)}
                         >
                           <i className="fas fa-ban" />
@@ -209,12 +213,12 @@ const AppointmentHistory = () => {
                       {/* Tab Đã khám: Nút Đánh giá (ẨN nếu isReviewed === true) */}
                       {activeTab === 'done' && b.statusId === 'S3' && (
                         b.isReviewed ? (
-                          <span className="reviewed-badge">
+                          <span className="tw-px-2.5 tw-py-1 tw-bg-emerald-100 tw-text-emerald-700 tw-rounded-badge tw-text-xs tw-font-semibold tw-flex tw-items-center tw-gap-1 tw-w-fit">
                             <i className="fas fa-check" /> <FormattedMessage id="patient-portal.appointments.reviewed" />
                           </span>
                         ) : (
                           <button
-                            className="action-btn action-btn--review"
+                            className="tw-px-3 tw-py-1.5 tw-bg-amber-50 tw-text-amber-700 tw-rounded-md tw-text-xs tw-font-medium tw-border tw-border-amber-200 tw-cursor-pointer hover:tw-bg-amber-100 tw-transition-colors tw-flex tw-items-center tw-gap-1"
                             onClick={() => setRatingModal({
                               isOpen: true,
                               bookingData: { bookingId: b.id, doctorId: b.doctorId },
@@ -236,17 +240,17 @@ const AppointmentHistory = () => {
 
       {/* ===== PAGINATION ===== */}
       {totalPages > 1 && (
-        <div className="pagination">
+        <div className="tw-flex tw-items-center tw-justify-center tw-gap-4 tw-mt-5">
           <button
-            className="page-btn"
+            className="tw-px-4 tw-py-2 tw-bg-white tw-text-text-sub tw-rounded-lg tw-text-sm tw-font-medium tw-border tw-border-gray-300 tw-cursor-pointer hover:tw-bg-gray-50 tw-transition-colors disabled:tw-opacity-40 disabled:tw-cursor-not-allowed tw-flex tw-items-center tw-gap-1"
             disabled={currentPage <= 1}
             onClick={() => setCurrentPage((p) => p - 1)}
           >
             <i className="fas fa-chevron-left" /> <FormattedMessage id="patient-portal.appointments.prev-page" />
           </button>
-          <span className="page-info">{currentPage} / {totalPages}</span>
+          <span className="tw-text-sm tw-font-semibold tw-text-text-main">{currentPage} / {totalPages}</span>
           <button
-            className="page-btn"
+            className="tw-px-4 tw-py-2 tw-bg-white tw-text-text-sub tw-rounded-lg tw-text-sm tw-font-medium tw-border tw-border-gray-300 tw-cursor-pointer hover:tw-bg-gray-50 tw-transition-colors disabled:tw-opacity-40 disabled:tw-cursor-not-allowed tw-flex tw-items-center tw-gap-1"
             disabled={currentPage >= totalPages}
             onClick={() => setCurrentPage((p) => p + 1)}
           >
@@ -260,25 +264,25 @@ const AppointmentHistory = () => {
           KHÔNG gọi API khi click nút Hủy → phải qua modal này
       ═══════════════════════════════════════════════════════════ */}
       {cancelModal.isOpen && (
-        <div className="modal-overlay" onClick={handleCloseCancelModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3 className="modal-title">
-              <i className="fas fa-exclamation-triangle" />
+        <div className="tw-fixed tw-inset-0 tw-bg-black/50 tw-flex tw-items-center tw-justify-center tw-p-4 tw-z-[9999]" onClick={handleCloseCancelModal}>
+          <div className="tw-bg-white tw-rounded-card tw-shadow-2xl tw-w-full tw-max-w-md tw-p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="tw-text-lg tw-font-semibold tw-text-text-main tw-mb-3 tw-flex tw-items-center tw-gap-2">
+              <i className="fas fa-exclamation-triangle tw-text-amber-500" />
               <FormattedMessage id="patient-portal.appointments.cancel-confirm-title" />
             </h3>
-            <p className="modal-message">
+            <p className="tw-text-sm tw-text-text-sub tw-mb-5">
               <FormattedMessage id="patient-portal.appointments.cancel-confirm-msg" />
             </p>
-            <div className="modal-actions">
+            <div className="tw-flex tw-justify-end tw-gap-3">
               <button
-                className="modal-btn modal-btn--cancel"
+                className="tw-px-5 tw-py-2 tw-bg-gray-100 tw-text-text-sub tw-rounded-lg tw-font-medium tw-text-sm tw-border tw-border-gray-300 tw-cursor-pointer hover:tw-bg-gray-200 tw-transition-colors disabled:tw-opacity-50"
                 onClick={handleCloseCancelModal}
                 disabled={cancelModal.isCancelling}
               >
                 <FormattedMessage id="patient-portal.appointments.btn-close" />
               </button>
               <button
-                className="modal-btn modal-btn--confirm"
+                className="tw-px-5 tw-py-2 tw-bg-red-500 tw-text-white tw-rounded-lg tw-font-semibold tw-text-sm tw-border-0 tw-cursor-pointer hover:tw-bg-red-600 tw-transition-colors disabled:tw-opacity-50"
                 onClick={handleConfirmCancel}
                 disabled={cancelModal.isCancelling}
               >

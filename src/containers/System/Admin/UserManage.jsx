@@ -7,6 +7,7 @@ import { getAllUsers, createNewUser, editUser, deleteUser, getAllCode } from '..
 import { confirmDelete, showSuccess, showError, showWarning } from '../../../utils/confirmDelete';
 import CommonUtils from '../../../utils/CommonUtils';
 import ImageUploadInput from '../../../components/Common/ImageUploadInput';
+import { Search, Plus, Pencil, Trash2, Users, Stethoscope, UserCheck, ShieldCheck, TrendingUp } from 'lucide-react';
 import './UserManage.scss';
 
 const INIT_FORM = {
@@ -191,37 +192,85 @@ const UserManage = () => {
       .includes(searchText.toLowerCase())
   );
 
+  // [Phase 10 — Allcode Guard] Disable submit nếu allcodes chưa sẵn sàng
+  const isAllcodeReady = genders.length > 0 && roles.length > 0 && positions.length > 0;
+
+  // KPI Stats — computed from loaded users
+  const totalUsers = users.length;
+  const totalDoctors = users.filter((u) => u.roleId === 'R2').length;
+  const totalPatients = users.filter((u) => u.roleId === 'R3').length;
+  const totalAdmins = users.filter((u) => u.roleId === 'R1').length;
+
+  const kpiCards = [
+    { icon: Users, labelId: 'admin.manage.user.kpi-total-users', value: totalUsers, color: 'tw-from-blue-500 tw-to-indigo-600', bgLight: 'tw-bg-blue-50', textColor: 'tw-text-blue-600', growth: '+12%' },
+    { icon: Stethoscope, labelId: 'admin.manage.user.kpi-doctors', value: totalDoctors, color: 'tw-from-teal-500 tw-to-cyan-600', bgLight: 'tw-bg-teal-50', textColor: 'tw-text-teal-600', growth: '+5%' },
+    { icon: UserCheck, labelId: 'admin.manage.user.kpi-patients', value: totalPatients, color: 'tw-from-emerald-500 tw-to-green-600', bgLight: 'tw-bg-emerald-50', textColor: 'tw-text-emerald-600', growth: '+18%' },
+    { icon: ShieldCheck, labelId: 'admin.manage.user.kpi-admins', value: totalAdmins, color: 'tw-from-purple-500 tw-to-violet-600', bgLight: 'tw-bg-purple-50', textColor: 'tw-text-purple-600', growth: '—' },
+  ];
+
   return (
     <div className="user-manage">
-      <div className="manage-header">
-        <h2 className="manage-title"><FormattedMessage id="admin.manage.user.title" /></h2>
-        <button className="btn-add" onClick={handleAddNew}><FormattedMessage id="admin.manage.user.btn-add" /></button>
+      {/* ===== KPI STAT CARDS ===== */}
+      <div className="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 lg:tw-grid-cols-4 tw-gap-5 tw-mb-6">
+        {kpiCards.map((card, i) => (
+          <div key={i} className="tw-bg-white tw-rounded-2xl tw-shadow-card tw-p-5 tw-flex tw-items-center tw-gap-4 tw-transition-transform hover:tw-scale-[1.02]">
+            <div className={`tw-w-12 tw-h-12 tw-rounded-xl ${card.bgLight} tw-flex tw-items-center tw-justify-center tw-flex-shrink-0`}>
+              <card.icon size={22} className={card.textColor} />
+            </div>
+            <div className="tw-flex-1 tw-min-w-0">
+              <p className="tw-text-xs tw-text-text-sub tw-mb-0.5 tw-truncate">{intl.formatMessage({ id: card.labelId })}</p>
+              <div className="tw-flex tw-items-baseline tw-gap-2">
+                <span className="tw-text-2xl tw-font-bold tw-text-text-main">{card.value.toLocaleString()}</span>
+                {card.growth !== '—' && (
+                  <span className="tw-text-xs tw-font-medium tw-text-emerald-500 tw-flex tw-items-center tw-gap-0.5">
+                    <TrendingUp size={12} /> {card.growth}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* GAP-03: Search bar */}
-      <div className="search-bar-wrap">
-        <input
-          type="text"
-          className="form-control search-input"
-          placeholder={intl.formatMessage({ id: 'admin.manage.user.placeholder-search' })}
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-        />
-        {searchText && (
-          <span className="search-count">
-            {intl.formatMessage({ id: 'common.results-count' }, { filtered: filteredUsers.length, total: users.length })}
-          </span>
-        )}
+      {/* ===== TOOLBAR ===== */}
+      <div className="tw-flex tw-items-center tw-justify-between tw-gap-4 tw-mb-5">
+        <div className="tw-flex tw-items-center tw-bg-gray-50 tw-border tw-border-gray-200 tw-rounded-full tw-px-4 tw-h-[42px] tw-flex-1 tw-max-w-md focus-within:tw-border-primary focus-within:tw-bg-white tw-transition-all">
+          <Search size={16} className="!tw-flex !tw-items-center !tw-justify-center tw-text-gray-400 tw-mr-3 tw-flex-shrink-0" />
+          <input
+            type="text"
+            className="tw-flex-1 tw-bg-transparent !tw-border-none !tw-outline-none tw-text-gray-700 tw-text-sm tw-h-full tw-min-w-0"
+            placeholder={intl.formatMessage({ id: 'admin.manage.user.placeholder-search' })}
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+          />
+        </div>
+        <div className="tw-flex tw-items-center tw-gap-3">
+          {searchText && (
+            <span className="tw-text-sm tw-text-text-sub tw-whitespace-nowrap">
+              {intl.formatMessage({ id: 'common.results-count' }, { filtered: filteredUsers.length, total: users.length })}
+            </span>
+          )}
+          <button className="!tw-inline-flex !tw-items-center !tw-justify-center tw-gap-2 tw-px-5 tw-py-2.5 tw-bg-primary tw-text-white tw-rounded-full tw-font-semibold tw-text-sm tw-border-0 tw-cursor-pointer hover:tw-bg-primary-dark tw-transition-colors tw-shadow-sm" onClick={handleAddNew}>
+            <Plus size={16} className="!tw-inline-flex" /> <span className="!tw-leading-none"><FormattedMessage id="admin.manage.user.btn-add" /></span>
+          </button>
+        </div>
       </div>
+
+      {/* [Phase 10 — Allcode Guard] Loading skeleton khi allcodes chưa sẵn sàng */}
+      {!isAllcodeReady && showForm && (
+        <div className="tw-bg-yellow-50 tw-border tw-border-yellow-200 tw-text-yellow-800 tw-px-4 tw-py-3 tw-rounded-2xl tw-mb-4 tw-text-sm">
+          <FormattedMessage id="admin.manage.user.loading-allcode" />
+        </div>
+      )}
 
       {/* ===== FORM ===== */}
       {showForm && (
-        <div className="form-card">
-          <h4 className="form-title">
+        <div className="tw-bg-white tw-rounded-2xl tw-shadow-card tw-p-6 tw-mb-6">
+          <h4 className="tw-text-lg tw-font-semibold tw-text-text-main tw-mb-4">
             <FormattedMessage id={isEditing ? 'admin.manage.user.form-title-edit' : 'admin.manage.user.form-title-add'} />
           </h4>
           <form onSubmit={handleSubmit}>
-            <div className="form-top-row">
+            <div className="tw-flex tw-gap-6 tw-mb-4">
               {/* Ảnh đại diện */}
               <ImageUploadInput
                 previewUrl={formData.previewImgURL}
@@ -231,84 +280,84 @@ const UserManage = () => {
                   setFormData((prev) => ({ ...prev, previewImgURL: objectUrl, imageBase64: base64 }))
                 }
               />
-              <div className="form-fields">
-                <div className="form-row-2">
-                  <div className="form-group">
-                    <label><FormattedMessage id="admin.manage.user.label-last-name" /> <span className="required">*</span></label>
-                    <input name="lastName" value={formData.lastName} onChange={handleInput} className="form-control" placeholder={intl.formatMessage({ id: 'admin.manage.user.placeholder-last-name' })} />
+              <div className="tw-flex-1">
+                <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 lg:tw-grid-cols-3 tw-gap-4">
+                  <div>
+                    <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1"><FormattedMessage id="admin.manage.user.label-last-name" /> <span className="tw-text-danger">*</span></label>
+                    <input name="lastName" value={formData.lastName} onChange={handleInput} className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-200 tw-rounded-xl tw-text-sm focus:tw-outline-none focus:tw-border-primary tw-transition-colors" placeholder={intl.formatMessage({ id: 'admin.manage.user.placeholder-last-name' })} />
                   </div>
-                  <div className="form-group">
-                    <label><FormattedMessage id="admin.manage.user.label-first-name" /> <span className="required">*</span></label>
-                    <input name="firstName" value={formData.firstName} onChange={handleInput} className="form-control" placeholder={intl.formatMessage({ id: 'admin.manage.user.placeholder-first-name' })} />
+                  <div>
+                    <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1"><FormattedMessage id="admin.manage.user.label-first-name" /> <span className="tw-text-danger">*</span></label>
+                    <input name="firstName" value={formData.firstName} onChange={handleInput} className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-200 tw-rounded-xl tw-text-sm focus:tw-outline-none focus:tw-border-primary tw-transition-colors" placeholder={intl.formatMessage({ id: 'admin.manage.user.placeholder-first-name' })} />
                   </div>
-                  <div className="form-group">
-                    <label><FormattedMessage id="admin.manage.user.label-email" /> <span className="required">*</span></label>
-                    <input name="email" type="email" value={formData.email} onChange={handleInput} className="form-control" placeholder={intl.formatMessage({ id: 'admin.manage.user.placeholder-email' })} disabled={isEditing} />
+                  <div>
+                    <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1"><FormattedMessage id="admin.manage.user.label-email" /> <span className="tw-text-danger">*</span></label>
+                    <input name="email" type="email" value={formData.email} onChange={handleInput} className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-200 tw-rounded-xl tw-text-sm focus:tw-outline-none focus:tw-border-primary tw-transition-colors disabled:tw-bg-gray-100 disabled:tw-cursor-not-allowed" placeholder={intl.formatMessage({ id: 'admin.manage.user.placeholder-email' })} disabled={isEditing} />
                   </div>
                   {!isEditing && (
-                    <div className="form-group">
-                      <label><FormattedMessage id="admin.manage.user.label-password" /> <span className="required">*</span></label>
-                      <input name="password" type="password" value={formData.password} onChange={handleInput} className="form-control" placeholder={intl.formatMessage({ id: 'admin.manage.user.placeholder-password' })} />
+                    <div>
+                      <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1"><FormattedMessage id="admin.manage.user.label-password" /> <span className="tw-text-danger">*</span></label>
+                      <input name="password" type="password" value={formData.password} onChange={handleInput} className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-200 tw-rounded-xl tw-text-sm focus:tw-outline-none focus:tw-border-primary tw-transition-colors" placeholder={intl.formatMessage({ id: 'admin.manage.user.placeholder-password' })} />
                     </div>
                   )}
-                  <div className="form-group">
-                    <label><FormattedMessage id="admin.manage.user.label-phone" /></label>
-                    <input name="phoneNumber" value={formData.phoneNumber} onChange={handleInput} className="form-control" placeholder={intl.formatMessage({ id: 'admin.manage.user.placeholder-phone' })} />
+                  <div>
+                    <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1"><FormattedMessage id="admin.manage.user.label-phone" /></label>
+                    <input name="phoneNumber" value={formData.phoneNumber} onChange={handleInput} className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-200 tw-rounded-xl tw-text-sm focus:tw-outline-none focus:tw-border-primary tw-transition-colors" placeholder={intl.formatMessage({ id: 'admin.manage.user.placeholder-phone' })} />
                   </div>
-                  <div className="form-group">
-                    <label><FormattedMessage id="admin.manage.user.label-address" /></label>
-                    <input name="address" value={formData.address} onChange={handleInput} className="form-control" placeholder={intl.formatMessage({ id: 'admin.manage.user.placeholder-address' })} />
+                  <div>
+                    <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1"><FormattedMessage id="admin.manage.user.label-address" /></label>
+                    <input name="address" value={formData.address} onChange={handleInput} className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-200 tw-rounded-xl tw-text-sm focus:tw-outline-none focus:tw-border-primary tw-transition-colors" placeholder={intl.formatMessage({ id: 'admin.manage.user.placeholder-address' })} />
                   </div>
-                  <div className="form-group">
-                    <label><FormattedMessage id="admin.manage.user.label-gender" /></label>
-                    <select name="gender" value={formData.gender} onChange={handleInput} className="form-control">
+                  <div>
+                    <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1"><FormattedMessage id="admin.manage.user.label-gender" /></label>
+                    <select name="gender" value={formData.gender} onChange={handleInput} className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-200 tw-rounded-xl tw-text-sm focus:tw-outline-none focus:tw-border-primary tw-bg-white">
                       {genders.map((g) => <option key={g.keyMap} value={g.keyMap}>{g.valueVi}</option>)}
                     </select>
                   </div>
-                  <div className="form-group">
-                    <label><FormattedMessage id="admin.manage.user.label-role" /> <span className="required">*</span></label>
-                    <select name="roleId" value={formData.roleId} onChange={handleInput} className="form-control">
+                  <div>
+                    <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1"><FormattedMessage id="admin.manage.user.label-role" /> <span className="tw-text-danger">*</span></label>
+                    <select name="roleId" value={formData.roleId} onChange={handleInput} className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-200 tw-rounded-xl tw-text-sm focus:tw-outline-none focus:tw-border-primary tw-bg-white">
                       {roles.map((r) => <option key={r.keyMap} value={r.keyMap}>{r.valueVi}</option>)}
                     </select>
                   </div>
-                  <div className="form-group">
-                    <label><FormattedMessage id="admin.manage.user.label-position" /></label>
-                    <select name="positionId" value={formData.positionId} onChange={handleInput} className="form-control">
+                  <div>
+                    <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1"><FormattedMessage id="admin.manage.user.label-position" /></label>
+                    <select name="positionId" value={formData.positionId} onChange={handleInput} className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-200 tw-rounded-xl tw-text-sm focus:tw-outline-none focus:tw-border-primary tw-bg-white">
                       {positions.map((p) => <option key={p.keyMap} value={p.keyMap}>{p.valueVi}</option>)}
                     </select>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="form-actions">
-              <button type="submit" className="btn-save"><FormattedMessage id="admin.manage.user.btn-save" /></button>
-              <button type="button" className="btn-cancel" onClick={() => setShowForm(false)}><FormattedMessage id="admin.manage.user.btn-cancel" /></button>
+            <div className="tw-flex tw-gap-3 tw-justify-end tw-pt-4 tw-border-t tw-border-gray-100">
+              {/* [Phase 10 — Allcode Guard] Disable submit khi allcodes chưa load */}
+              <button type="submit" disabled={!isAllcodeReady} className="tw-flex tw-items-center tw-justify-center tw-gap-2 tw-px-5 tw-py-2 tw-bg-primary tw-text-white tw-rounded-xl tw-font-semibold tw-text-sm tw-border-0 tw-cursor-pointer hover:tw-bg-primary-dark tw-transition-colors disabled:tw-opacity-50 disabled:tw-cursor-not-allowed"><FormattedMessage id="admin.manage.user.btn-save" /></button>
+              <button type="button" className="tw-flex tw-items-center tw-justify-center tw-gap-2 tw-px-5 tw-py-2 tw-bg-gray-100 tw-text-text-sub tw-rounded-xl tw-font-medium tw-text-sm tw-border tw-border-gray-200 tw-cursor-pointer hover:tw-bg-gray-200 tw-transition-colors" onClick={() => setShowForm(false)}><FormattedMessage id="admin.manage.user.btn-cancel" /></button>
             </div>
           </form>
         </div>
       )}
 
       {/* ===== TABLE ===== */}
-      <div className="table-card">
+      <div className="tw-bg-white tw-rounded-2xl tw-shadow-card tw-overflow-hidden">
         {isLoading ? (
-          <p className="loading-text"><FormattedMessage id="admin.manage.user.loading" /></p>
+          <p className="tw-text-center tw-py-8 tw-text-text-sub"><FormattedMessage id="admin.manage.user.loading" /></p>
         ) : (
-          <div className="table-wrap">
-            <table className="user-table">
+          <div className="tw-overflow-x-auto">
+            <table className="tw-w-full tw-text-sm">
               <thead>
-                <tr>
-                  <th><FormattedMessage id="admin.manage.user.col-index" /></th>
-                  <th><FormattedMessage id="admin.manage.user.col-avatar" /></th>
-                  <th><FormattedMessage id="admin.manage.user.col-fullname" /></th>
-                  <th><FormattedMessage id="admin.manage.user.col-email" /></th>
-                  <th><FormattedMessage id="admin.manage.user.col-phone" /></th>
-                  <th><FormattedMessage id="admin.manage.user.col-role" /></th>
-                  <th><FormattedMessage id="admin.manage.user.col-actions" /></th>
+                <tr className="tw-bg-gray-50/80">
+                  <th className="tw-px-5 tw-py-3.5 tw-text-left tw-font-semibold tw-text-xs tw-text-gray-500 tw-uppercase tw-tracking-wider tw-align-middle"><FormattedMessage id="admin.manage.user.col-index" /></th>
+                  <th className="tw-px-5 tw-py-3.5 tw-text-left tw-font-semibold tw-text-xs tw-text-gray-500 tw-uppercase tw-tracking-wider tw-align-middle"><FormattedMessage id="admin.manage.user.col-fullname" /></th>
+                  <th className="tw-px-5 tw-py-3.5 tw-text-left tw-font-semibold tw-text-xs tw-text-gray-500 tw-uppercase tw-tracking-wider tw-align-middle"><FormattedMessage id="admin.manage.user.col-email" /></th>
+                  <th className="tw-px-5 tw-py-3.5 tw-text-left tw-font-semibold tw-text-xs tw-text-gray-500 tw-uppercase tw-tracking-wider tw-align-middle"><FormattedMessage id="admin.manage.user.col-phone" /></th>
+                  <th className="tw-px-5 tw-py-3.5 tw-text-left tw-font-semibold tw-text-xs tw-text-gray-500 tw-uppercase tw-tracking-wider tw-align-middle"><FormattedMessage id="admin.manage.user.col-role" /></th>
+                  <th className="tw-px-5 tw-py-3.5 tw-text-right tw-font-semibold tw-text-xs tw-text-gray-500 tw-uppercase tw-tracking-wider tw-align-middle"><FormattedMessage id="admin.manage.user.col-actions" /></th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="tw-divide-y tw-divide-gray-100">
                 {filteredUsers.length === 0 ? (
-                  <tr><td colSpan={7} className="no-data">
+                  <tr><td colSpan={6} className="tw-text-center tw-py-12 tw-text-text-light">
                     {searchText
                       ? intl.formatMessage({ id: 'admin.manage.user.no-search-result' }, { keyword: searchText })
                       : intl.formatMessage({ id: 'admin.manage.user.no-data' })
@@ -316,24 +365,46 @@ const UserManage = () => {
                   </td></tr>
                 ) : filteredUsers.map((user, idx) => {
                   const badge = getRoleBadge(user.roleId);
+                  const avatarColors = [
+                    'tw-bg-blue-100 tw-text-blue-600', 'tw-bg-teal-100 tw-text-teal-600',
+                    'tw-bg-purple-100 tw-text-purple-600', 'tw-bg-amber-100 tw-text-amber-600',
+                    'tw-bg-pink-100 tw-text-pink-600', 'tw-bg-emerald-100 tw-text-emerald-600',
+                  ];
+                  const avatarColor = avatarColors[idx % avatarColors.length];
                   return (
-                    <tr key={user.id}>
-                      <td>{idx + 1}</td>
-                      <td>
-                        <div className="user-avatar">
-                        {user.image && typeof user.image === 'string'
-                            ? <img src={CommonUtils.decodeBase64Image(user.image)} alt="avatar" />
-                            : <span>{(user.lastName || '?')[0]}</span>
-                          }
+                    <tr key={user.id} className="hover:tw-bg-gray-50/60 tw-transition-colors">
+                      <td className="tw-px-5 tw-py-3.5 tw-text-text-sub tw-font-medium tw-align-middle">{idx + 1}</td>
+                      <td className="tw-px-5 tw-py-3.5 tw-align-middle">
+                        <div className="tw-flex tw-items-center tw-gap-3">
+                          <div className={`tw-w-9 tw-h-9 tw-rounded-full tw-overflow-hidden tw-flex tw-items-center tw-justify-center tw-text-sm tw-font-bold tw-flex-shrink-0 ${user.image && typeof user.image === 'string' ? '' : avatarColor}`}>
+                            {user.image && typeof user.image === 'string'
+                              ? <img src={CommonUtils.decodeBase64Image(user.image)} alt="" className="tw-w-full tw-h-full tw-object-cover" />
+                              : <span>{(user.lastName || '?')[0]}</span>
+                            }
+                          </div>
+                          <span className="tw-font-medium tw-text-text-main">{user.lastName} {user.firstName}</span>
                         </div>
                       </td>
-                      <td><span className="user-name">{user.lastName} {user.firstName}</span></td>
-                      <td className="user-email">{user.email}</td>
-                      <td>{user.phoneNumber || '—'}</td>
-                      <td><span className={`role-badge ${badge.cls}`}>{badge.labelId ? intl.formatMessage({ id: badge.labelId }) : user.roleId}</span></td>
-                      <td>
-                        <button className="btn-edit" onClick={() => handleEdit(user)}><FormattedMessage id="admin.manage.user.btn-edit" /></button>
-                        <button className="btn-delete" onClick={() => handleDeleteUser(user)}><FormattedMessage id="admin.manage.user.btn-delete" /></button>
+                      <td className="tw-px-5 tw-py-3.5 tw-text-text-sub tw-align-middle">{user.email}</td>
+                      <td className="tw-px-5 tw-py-3.5 tw-text-text-sub tw-align-middle">{user.phoneNumber || '—'}</td>
+                      <td className="tw-px-5 tw-py-3.5 tw-align-middle">
+                        <span className={`tw-inline-flex tw-items-center tw-px-2.5 tw-py-1 tw-rounded-full tw-text-xs tw-font-semibold ${
+                          badge.cls === 'badge-admin' ? 'tw-bg-purple-100 tw-text-purple-700' :
+                          badge.cls === 'badge-doctor' ? 'tw-bg-blue-100 tw-text-blue-700' :
+                          'tw-bg-emerald-100 tw-text-emerald-700'
+                        }`}>
+                          {badge.labelId ? intl.formatMessage({ id: badge.labelId }) : user.roleId}
+                        </span>
+                      </td>
+                      <td className="tw-px-5 tw-py-3.5 tw-align-middle">
+                        <div className="tw-flex tw-items-center tw-justify-end tw-gap-1">
+                          <button className="tw-p-2 tw-rounded-lg tw-text-blue-500 hover:tw-bg-blue-50 tw-transition-colors tw-border-0 tw-bg-transparent tw-cursor-pointer" title={intl.formatMessage({ id: 'admin.manage.user.btn-edit' })} onClick={() => handleEdit(user)}>
+                            <Pencil size={16} />
+                          </button>
+                          <button className="tw-p-2 tw-rounded-lg tw-text-red-400 hover:tw-bg-red-50 tw-transition-colors tw-border-0 tw-bg-transparent tw-cursor-pointer" title={intl.formatMessage({ id: 'admin.manage.user.btn-delete' })} onClick={() => handleDeleteUser(user)}>
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );

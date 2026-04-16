@@ -23,6 +23,9 @@ import 'react-toastify/dist/ReactToastify.css';
 // Import Global SCSS
 import './styles/global.scss';
 
+// [Phase 10] Import Tailwind CSS — PHẢI ĐẶT SAU global.scss
+import './styles/tailwind.css';
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <Provider store={store}>

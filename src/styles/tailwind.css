@@ -1,0 +1,6 @@
+/* src/styles/tailwind.css */
+/* [Phase 10] — Tailwind CSS directives */
+/* KHÔNG import @tailwind base; vì đã tắt preflight */
+
+@tailwind components;
+@tailwind utilities;

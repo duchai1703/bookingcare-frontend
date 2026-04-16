@@ -159,129 +159,123 @@ const ManagePatient = () => {
   return (
     <div className="manage-patient-container">
       {/* RÀNG BUỘC #6: Đa ngôn ngữ — toàn bộ text tĩnh dùng intl.formatMessage */}
-      <h2 className="manage-patient__title">
+      <h2 className="tw-text-xl tw-font-bold tw-text-text-main tw-mb-5">
         {intl.formatMessage({ id: 'doctor.manage-patient.title' })}
       </h2>
 
       {/* ===== BỘ LỌC ===== */}
-      <div className="manage-patient__filter">
-        <div className="filter-date">
-          <label>{intl.formatMessage({ id: 'doctor.manage-patient.select-date' })}</label>
-          <DatePicker
-            className="form-control"
-            selected={new Date(currentDate)}
-            onChange={handleOnChangeDatePicker}
-            dateFormat="dd/MM/yyyy"
-          />
-        </div>
+      <div className="tw-bg-white tw-rounded-card tw-shadow-card tw-p-5 tw-mb-5">
+        <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4">
+          <div className="filter-date">
+            <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1">{intl.formatMessage({ id: 'doctor.manage-patient.select-date' })}</label>
+            <DatePicker
+              className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-lg tw-text-sm"
+              selected={new Date(currentDate)}
+              onChange={handleOnChangeDatePicker}
+              dateFormat="dd/MM/yyyy"
+            />
+          </div>
 
-        {/* RÀNG BUỘC #2: Status Filter — REQ-DR-003 */}
-        <div className="filter-status">
-          <label>{intl.formatMessage({ id: 'doctor.manage-patient.filter-status' })}</label>
-          <select
-            className="form-control"
-            value={statusFilter}
-            onChange={handleStatusFilterChange}
-          >
-            <option value="ALL">
-              {intl.formatMessage({ id: 'doctor.manage-patient.status-all' })}
-            </option>
-            <option value="S1">
-              {intl.formatMessage({ id: 'doctor.manage-patient.status-new' })}
-            </option>
-            <option value="S2">
-              {intl.formatMessage({ id: 'doctor.manage-patient.status-confirmed' })}
-            </option>
-            <option value="S3">
-              {intl.formatMessage({ id: 'doctor.manage-patient.status-done' })}
-            </option>
-            <option value="S4">
-              {intl.formatMessage({ id: 'doctor.manage-patient.status-cancelled' })}
-            </option>
-          </select>
+          {/* RÀNG BUỘC #2: Status Filter — REQ-DR-003 */}
+          <div className="filter-status">
+            <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1">{intl.formatMessage({ id: 'doctor.manage-patient.filter-status' })}</label>
+            <select
+              className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-lg tw-text-sm tw-bg-white focus:tw-outline-none focus:tw-border-primary"
+              value={statusFilter}
+              onChange={handleStatusFilterChange}
+            >
+              <option value="ALL">{intl.formatMessage({ id: 'doctor.manage-patient.status-all' })}</option>
+              <option value="S1">{intl.formatMessage({ id: 'doctor.manage-patient.status-new' })}</option>
+              <option value="S2">{intl.formatMessage({ id: 'doctor.manage-patient.status-confirmed' })}</option>
+              <option value="S3">{intl.formatMessage({ id: 'doctor.manage-patient.status-done' })}</option>
+              <option value="S4">{intl.formatMessage({ id: 'doctor.manage-patient.status-cancelled' })}</option>
+            </select>
+          </div>
         </div>
       </div>
 
       {/* ===== TABLE / LOADING / EMPTY ===== */}
       {/* RÀNG BUỘC #7: Loading & Empty State */}
       {isLoading ? (
-        <div className="manage-patient__loading">
-          <div className="spinner"></div>
+        <div className="tw-flex tw-items-center tw-justify-center tw-gap-3 tw-py-12 tw-text-text-sub">
+          <div className="tw-animate-spin tw-w-6 tw-h-6 tw-border-3 tw-border-primary tw-border-t-transparent tw-rounded-full"></div>
           <span>{intl.formatMessage({ id: 'common.loading' })}</span>
         </div>
       ) : dataPatient && dataPatient.length > 0 ? (
-        <table className="manage-patient__table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>{intl.formatMessage({ id: 'doctor.manage-patient.col-name' })}</th>
-              <th>{intl.formatMessage({ id: 'doctor.manage-patient.col-phone' })}</th>
-              <th>{intl.formatMessage({ id: 'doctor.manage-patient.col-address' })}</th>
-              <th>{intl.formatMessage({ id: 'doctor.manage-patient.col-gender' })}</th>
-              <th>{intl.formatMessage({ id: 'doctor.manage-patient.col-time' })}</th>
-              <th>{intl.formatMessage({ id: 'doctor.manage-patient.col-reason' })}</th>
-              <th>{intl.formatMessage({ id: 'doctor.manage-patient.col-actions' })}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {dataPatient.map((item, index) => {
-              const genderLabel = language === LANGUAGES.VI
-                ? item.patientData?.genderData?.valueVi
-                : item.patientData?.genderData?.valueEn;
-              const timeLabel = language === LANGUAGES.VI
-                ? item.timeTypeBooking?.valueVi
-                : item.timeTypeBooking?.valueEn;
+        <div className="tw-bg-white tw-rounded-card tw-shadow-card tw-overflow-x-auto">
+          <table className="tw-w-full tw-text-sm">
+            <thead>
+              <tr className="tw-bg-bg-light tw-border-b tw-border-gray-200">
+                <th className="tw-px-4 tw-py-3 tw-text-left tw-font-semibold tw-text-text-sub">#</th>
+                <th className="tw-px-4 tw-py-3 tw-text-left tw-font-semibold tw-text-text-sub">{intl.formatMessage({ id: 'doctor.manage-patient.col-name' })}</th>
+                <th className="tw-px-4 tw-py-3 tw-text-left tw-font-semibold tw-text-text-sub">{intl.formatMessage({ id: 'doctor.manage-patient.col-phone' })}</th>
+                <th className="tw-px-4 tw-py-3 tw-text-left tw-font-semibold tw-text-text-sub">{intl.formatMessage({ id: 'doctor.manage-patient.col-address' })}</th>
+                <th className="tw-px-4 tw-py-3 tw-text-left tw-font-semibold tw-text-text-sub">{intl.formatMessage({ id: 'doctor.manage-patient.col-gender' })}</th>
+                <th className="tw-px-4 tw-py-3 tw-text-left tw-font-semibold tw-text-text-sub">{intl.formatMessage({ id: 'doctor.manage-patient.col-time' })}</th>
+                <th className="tw-px-4 tw-py-3 tw-text-left tw-font-semibold tw-text-text-sub">{intl.formatMessage({ id: 'doctor.manage-patient.col-reason' })}</th>
+                <th className="tw-px-4 tw-py-3 tw-text-left tw-font-semibold tw-text-text-sub">{intl.formatMessage({ id: 'doctor.manage-patient.col-actions' })}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {dataPatient.map((item, index) => {
+                const genderLabel = language === LANGUAGES.VI
+                  ? item.patientData?.genderData?.valueVi
+                  : item.patientData?.genderData?.valueEn;
+                const timeLabel = language === LANGUAGES.VI
+                  ? item.timeTypeBooking?.valueVi
+                  : item.timeTypeBooking?.valueEn;
 
-              return (
-                <tr key={item.id || index}>
-                  <td>{index + 1}</td>
-                  <td>{item.patientName || `${item.patientData?.lastName} ${item.patientData?.firstName}`}</td>
-                  <td>{item.patientData?.phoneNumber || item.patientPhoneNumber}</td>
-                  <td>{item.patientData?.address || item.patientAddress}</td>
-                  <td>{genderLabel || '—'}</td>
-                  <td>{timeLabel || '—'}</td>
-                  <td className="reason-cell">{item.reason || '—'}</td>
-                  <td className="action-cell">
-                    {/* RÀNG BUỘC #5: Nút "Gửi kết quả" và "Hủy lịch" CHỈ HIỂN THỊ khi S2 */}
-                    {isActionable(item) ? (
-                      <>
-                        <button
-                          className="btn-remedy"
-                          onClick={() => handleOpenRemedyModal(item)}
-                          title={intl.formatMessage({ id: 'doctor.manage-patient.btn-send-remedy' })}
-                        >
-                          📧 {intl.formatMessage({ id: 'doctor.manage-patient.btn-send-remedy' })}
-                        </button>
-                        <button
-                          className="btn-cancel"
-                          onClick={() => handleCancelBooking(item)}
-                          title={intl.formatMessage({ id: 'doctor.manage-patient.btn-cancel' })}
-                        >
-                          ❌ {intl.formatMessage({ id: 'doctor.manage-patient.btn-cancel' })}
-                        </button>
-                      </>
-                    ) : (
-                      /* RÀNG BUỘC #5: Trạng thái khác chỉ hiện Badge text */
-                      <span className="status-badge">
-                        {item.statusId === 'S3' ? '✅ ' : item.statusId === 'S4' ? '🚫 ' : '⏳ '}
-                        {item.statusId === 'S3'
-                          ? (language === LANGUAGES.VI ? 'Đã khám' : 'Done')
-                          : item.statusId === 'S4'
-                            ? (language === LANGUAGES.VI ? 'Đã hủy' : 'Cancelled')
-                            : (language === LANGUAGES.VI ? 'Chờ xác nhận' : 'Pending')}
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                return (
+                  <tr key={item.id || index} className="tw-border-b tw-border-gray-100 hover:tw-bg-primary-light/30 tw-transition-colors">
+                    <td className="tw-px-4 tw-py-3 tw-text-text-sub">{index + 1}</td>
+                    <td className="tw-px-4 tw-py-3 tw-font-medium tw-text-text-main">{item.patientName || `${item.patientData?.lastName} ${item.patientData?.firstName}`}</td>
+                    <td className="tw-px-4 tw-py-3 tw-text-text-sub">{item.patientData?.phoneNumber || item.patientPhoneNumber}</td>
+                    <td className="tw-px-4 tw-py-3 tw-text-text-sub tw-max-w-[150px] tw-truncate">{item.patientData?.address || item.patientAddress}</td>
+                    <td className="tw-px-4 tw-py-3 tw-text-text-sub">{genderLabel || '—'}</td>
+                    <td className="tw-px-4 tw-py-3"><span className="tw-px-2 tw-py-0.5 tw-bg-indigo-50 tw-text-indigo-700 tw-rounded-md tw-text-xs tw-font-medium">{timeLabel || '—'}</span></td>
+                    <td className="tw-px-4 tw-py-3 tw-text-text-sub tw-max-w-[150px] tw-truncate">{item.reason || '—'}</td>
+                    <td className="tw-px-4 tw-py-3">
+                      {/* RÀNG BUỘC #5: Nút "Gửi kết quả" và "Hủy lịch" CHỈ HIỂN THỊ khi S2 */}
+                      {isActionable(item) ? (
+                        <div className="tw-flex tw-gap-2">
+                          <button
+                            className="tw-px-3 tw-py-1.5 tw-bg-emerald-50 tw-text-emerald-700 tw-rounded-md tw-text-xs tw-font-medium tw-border tw-border-emerald-200 tw-cursor-pointer hover:tw-bg-emerald-100 tw-transition-colors"
+                            onClick={() => handleOpenRemedyModal(item)}
+                            title={intl.formatMessage({ id: 'doctor.manage-patient.btn-send-remedy' })}
+                          >
+                            📧 {intl.formatMessage({ id: 'doctor.manage-patient.btn-send-remedy' })}
+                          </button>
+                          <button
+                            className="tw-px-3 tw-py-1.5 tw-bg-red-50 tw-text-red-600 tw-rounded-md tw-text-xs tw-font-medium tw-border tw-border-red-200 tw-cursor-pointer hover:tw-bg-red-100 tw-transition-colors"
+                            onClick={() => handleCancelBooking(item)}
+                            title={intl.formatMessage({ id: 'doctor.manage-patient.btn-cancel' })}
+                          >
+                            ❌ {intl.formatMessage({ id: 'doctor.manage-patient.btn-cancel' })}
+                          </button>
+                        </div>
+                      ) : (
+                        /* RÀNG BUỘC #5: Trạng thái khác chỉ hiện Badge text */
+                        <span className={`tw-px-2.5 tw-py-1 tw-rounded-badge tw-text-xs tw-font-semibold ${item.statusId === 'S3' ? 'tw-bg-emerald-100 tw-text-emerald-700' : item.statusId === 'S4' ? 'tw-bg-red-100 tw-text-red-700' : 'tw-bg-amber-100 tw-text-amber-700'}`}>
+                          {item.statusId === 'S3' ? '✅ ' : item.statusId === 'S4' ? '🚫 ' : '⏳ '}
+                          {item.statusId === 'S3'
+                            ? (language === LANGUAGES.VI ? 'Đã khám' : 'Done')
+                            : item.statusId === 'S4'
+                              ? (language === LANGUAGES.VI ? 'Đã hủy' : 'Cancelled')
+                              : (language === LANGUAGES.VI ? 'Chờ xác nhận' : 'Pending')}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       ) : (
         /* RÀNG BUỘC #7: Empty State với Icon 📭 */
-        <div className="manage-patient__empty">
-          <div className="empty-icon">📭</div>
-          <p>{intl.formatMessage({ id: 'doctor.manage-patient.no-patient' })}</p>
+        <div className="tw-text-center tw-py-16 tw-bg-white tw-rounded-card tw-shadow-card">
+          <div className="tw-text-5xl tw-mb-3">📭</div>
+          <p className="tw-text-text-sub">{intl.formatMessage({ id: 'doctor.manage-patient.no-patient' })}</p>
         </div>
       )}
 

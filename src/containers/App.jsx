@@ -25,6 +25,7 @@ import DoctorManage from './System/Admin/DoctorManage';
 import ClinicManage from './System/Admin/ClinicManage';
 import SpecialtyManage from './System/Admin/SpecialtyManage';
 import ScheduleManage from './System/Admin/ScheduleManage';
+import Dashboard from './System/Admin/Dashboard';
 import ManagePatient from './System/Doctor/ManagePatient';
 
 // [Phase 9.4] Patient Portal
@@ -106,8 +107,9 @@ const App = () => {
         {/* ===== ADMIN ROUTES — Chỉ Admin R1 (SRS REQ-AU-005) ===== */}
         <Route element={<PrivateRoute allowedRoles={[USER_ROLE.ADMIN]} />}>
           <Route path={path.SYSTEM} element={<SystemLayout />}>
-            {/* /system → redirect /system/user-manage */}
-            <Route index element={<Navigate to="user-manage" replace />} />
+            {/* /system → redirect /system/dashboard */}
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<Dashboard />} />
             <Route path="user-manage" element={<UserManage />} />
             <Route path="doctor-manage" element={<DoctorManage />} />
             <Route path="clinic-manage" element={<ClinicManage />} />
@@ -121,6 +123,7 @@ const App = () => {
           <Route path={path.DOCTOR_DASHBOARD} element={<SystemLayout />}>
             <Route index element={<Navigate to="manage-patient" replace />} />
             <Route path="manage-patient" element={<ManagePatient />} />
+            <Route path="manage-schedule" element={<ScheduleManage />} />
           </Route>
         </Route>
 

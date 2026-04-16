@@ -173,41 +173,41 @@ const RemedyModal = ({ isOpen, dataModal, onClose, onSendSuccess }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="remedy-modal-overlay" onClick={handleCloseModal}>
+    <div className="tw-fixed tw-inset-0 tw-bg-black/50 tw-flex tw-items-center tw-justify-center tw-p-4 tw-z-[9999]" onClick={handleCloseModal}>
       <div
-        className="remedy-modal-content"
+        className="tw-bg-white tw-rounded-card tw-shadow-2xl tw-w-full tw-max-w-lg tw-max-h-[90vh] tw-overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ===== HEADER ===== */}
-        <div className="remedy-modal__header">
-          <h3>{intl.formatMessage({ id: 'doctor.manage-patient.remedy-title' })}</h3>
-          <button className="btn-close-modal" onClick={handleCloseModal}>×</button>
+        <div className="tw-flex tw-items-center tw-justify-between tw-px-6 tw-py-4 tw-border-b tw-border-gray-100">
+          <h3 className="tw-text-lg tw-font-semibold tw-text-text-main">{intl.formatMessage({ id: 'doctor.manage-patient.remedy-title' })}</h3>
+          <button className="tw-w-8 tw-h-8 tw-flex tw-items-center tw-justify-center tw-text-xl tw-text-text-light tw-bg-transparent tw-border-0 tw-cursor-pointer hover:tw-text-text-main tw-transition-colors tw-rounded-full hover:tw-bg-gray-100" onClick={handleCloseModal}>×</button>
         </div>
 
         {/* ===== BODY ===== */}
-        <div className="remedy-modal__body">
+        <div className="tw-px-6 tw-py-5 tw-space-y-4">
           {/* Thông tin bệnh nhân (read-only) */}
-          <div className="patient-info">
-            <p>
+          <div className="tw-bg-bg-light tw-rounded-lg tw-px-4 tw-py-3">
+            <p className="tw-text-sm tw-text-text-main">
               <strong>{intl.formatMessage({ id: 'doctor.manage-patient.patient-name' })}:</strong>
               {' '}{dataModal.patientName || `${dataModal.patientData?.lastName || ''} ${dataModal.patientData?.firstName || ''}`}
             </p>
           </div>
 
           {/* ===== ⭐ [FIX #3] EMAIL — READONLY, KHÔNG CHO CHỈNH SỬA ===== */}
-          <div className="form-group">
-            <label>
+          <div>
+            <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1">
               {intl.formatMessage({ id: 'doctor.manage-patient.email-label' })} *
-              <span className="readonly-badge">🔒</span>
+              <span className="tw-ml-1">🔒</span>
             </label>
             <input
               type="email"
-              className="form-control form-control--readonly"
+              className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-lg tw-text-sm tw-bg-gray-50 tw-text-text-sub tw-cursor-not-allowed"
               value={email}
               readOnly              // ✅ [FIX #3] READONLY — không cho sửa
               tabIndex={-1}         // Bỏ qua khi Tab
             />
-            <small className="form-hint">
+            <small className="tw-text-xs tw-text-text-light tw-mt-1 tw-block">
               {language === LANGUAGES.VI
                 ? 'Email được lấy tự động từ hồ sơ bệnh nhân. Không thể thay đổi.'
                 : 'Email is automatically retrieved from patient records. Cannot be changed.'}
@@ -215,28 +215,28 @@ const RemedyModal = ({ isOpen, dataModal, onClose, onSendSuccess }) => {
           </div>
 
           {/* ===== IMAGE UPLOAD + PREVIEW VỚI NÚT [X] REMOVE ===== */}
-          <div className="form-group">
-            <label>{intl.formatMessage({ id: 'doctor.manage-patient.image-label' })}</label>
+          <div>
+            <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1">{intl.formatMessage({ id: 'doctor.manage-patient.image-label' })}</label>
             <input
               type="file"
               accept="image/jpeg,image/png"
               onChange={handleImageChange}
               disabled={isSubmitting}
-              className="form-control"
+              className="tw-w-full tw-text-sm tw-text-text-sub file:tw-mr-3 file:tw-py-2 file:tw-px-4 file:tw-rounded-lg file:tw-border-0 file:tw-text-sm file:tw-font-medium file:tw-bg-primary-light file:tw-text-primary file:tw-cursor-pointer hover:file:tw-bg-primary-light/80"
             />
 
             {/* Preview Container với nút Remove */}
             {previewUrl && (
-              <div className="image-preview-container">
+              <div className="tw-relative tw-mt-3 tw-inline-block">
                 <img
                   src={previewUrl}
                   alt="preview"
-                  className="image-preview__img"
+                  className="tw-max-w-[200px] tw-max-h-[200px] tw-rounded-lg tw-border tw-border-gray-200 tw-object-contain"
                 />
                 {!isSubmitting && (
                   <button
                     type="button"
-                    className="image-preview__remove-btn"
+                    className="tw-absolute tw--top-2 tw--right-2 tw-w-6 tw-h-6 tw-bg-red-500 tw-text-white tw-rounded-full tw-flex tw-items-center tw-justify-center tw-text-xs tw-border-0 tw-cursor-pointer hover:tw-bg-red-600 tw-transition-colors tw-shadow-md"
                     onClick={handleRemoveImage}
                     title={
                       language === LANGUAGES.VI
@@ -253,15 +253,15 @@ const RemedyModal = ({ isOpen, dataModal, onClose, onSendSuccess }) => {
         </div>
 
         {/* ===== FOOTER ===== */}
-        <div className="remedy-modal__footer">
+        <div className="tw-flex tw-justify-end tw-gap-3 tw-px-6 tw-py-4 tw-border-t tw-border-gray-100">
           <button
-            className="btn btn-send"
+            className="tw-px-5 tw-py-2 tw-bg-primary tw-text-white tw-rounded-lg tw-font-semibold tw-text-sm tw-border-0 tw-cursor-pointer hover:tw-bg-primary-dark tw-transition-colors disabled:tw-opacity-50 tw-flex tw-items-center tw-gap-2"
             onClick={handleSendRemedy}
             disabled={isSubmitting}
           >
             {isSubmitting ? (
               <>
-                <span className="spinner-small"></span>
+                <span className="tw-animate-spin tw-w-4 tw-h-4 tw-border-2 tw-border-white tw-border-t-transparent tw-rounded-full"></span>
                 {intl.formatMessage({ id: 'doctor.manage-patient.sending' })}
               </>
             ) : (
@@ -269,7 +269,7 @@ const RemedyModal = ({ isOpen, dataModal, onClose, onSendSuccess }) => {
             )}
           </button>
           <button
-            className="btn btn-cancel-modal"
+            className="tw-px-5 tw-py-2 tw-bg-gray-100 tw-text-text-sub tw-rounded-lg tw-font-medium tw-text-sm tw-border tw-border-gray-300 tw-cursor-pointer hover:tw-bg-gray-200 tw-transition-colors disabled:tw-opacity-50"
             onClick={handleCloseModal}
             disabled={isSubmitting}
           >

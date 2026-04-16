@@ -56,7 +56,7 @@ const Login = () => {
       // Default redirect theo role
       switch (userInfo.roleId) {
         case USER_ROLE.ADMIN:
-          navigate('/system/user-manage', { replace: true });
+          navigate('/system/dashboard', { replace: true });
           break;
         case USER_ROLE.DOCTOR:
           navigate('/doctor-dashboard/manage-patient', { replace: true });

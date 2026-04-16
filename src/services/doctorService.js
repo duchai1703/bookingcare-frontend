@@ -21,10 +21,10 @@ export const getScheduleByDate = (doctorId, date) => {
   });
 };
 
-// FIX BUG-06: Admin version — includes fully booked slots
+// [Phase 10.5 VULN-001] Admin version — uses dedicated secured route
 export const getScheduleByDateAdmin = (doctorId, date) => {
-  return axiosInstance.get(`/api/v1/doctors/${doctorId}/schedules`, {
-    params: { date, includeAll: 'true' },
+  return axiosInstance.get('/api/v1/admin/schedules', {
+    params: { doctorId, date, includeAll: 'true' },
   });
 };
 

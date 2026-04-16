@@ -102,3 +102,8 @@ select {
   background: $border-color-dark;
   border-radius: $radius-sm;
 }
+
+/* [Phase 10 Hotfix] Lock SweetAlert2 Z-index to top-most */
+.swal2-container {
+  z-index: 10002 !important;
+}

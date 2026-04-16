@@ -42,6 +42,7 @@ export const path = {
 
   // Admin (R1)
   SYSTEM: '/system',
+  DASHBOARD: '/system/dashboard',
   USER_MANAGE: '/system/user-manage',
   DOCTOR_MANAGE: '/system/doctor-manage',
   SCHEDULE_MANAGE: '/system/schedule-manage',

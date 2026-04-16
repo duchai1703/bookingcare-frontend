@@ -73,60 +73,64 @@ const RatingModal = ({ isOpen, onClose, bookingData, onSuccess }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="rating-modal__overlay" onClick={handleClose}>
-      <div className="rating-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="tw-fixed tw-inset-0 tw-bg-black/50 tw-flex tw-items-center tw-justify-center tw-p-4 tw-z-[9999]" onClick={handleClose}>
+      <div className="tw-bg-white tw-rounded-card tw-shadow-2xl tw-w-full tw-max-w-md" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div className="rating-modal__header">
-          <h3 className="rating-modal__title">
-            <i className="fas fa-star" /> <FormattedMessage id="rating.modal-title" />
+        <div className="tw-flex tw-items-center tw-justify-between tw-px-6 tw-py-4 tw-border-b tw-border-gray-100">
+          <h3 className="tw-text-lg tw-font-semibold tw-text-text-main tw-flex tw-items-center tw-gap-2">
+            <i className="fas fa-star tw-text-amber-400" /> <FormattedMessage id="rating.modal-title" />
           </h3>
-          <button className="rating-modal__close" onClick={handleClose}>✕</button>
+          <button className="tw-w-8 tw-h-8 tw-flex tw-items-center tw-justify-center tw-text-xl tw-text-text-light tw-bg-transparent tw-border-0 tw-cursor-pointer hover:tw-text-text-main tw-transition-colors tw-rounded-full hover:tw-bg-gray-100" onClick={handleClose}>✕</button>
         </div>
 
         {/* Star Rating */}
-        <div className="rating-modal__body">
-          <label className="rating-modal__label">
+        <div className="tw-px-6 tw-py-5 tw-space-y-4">
+          <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main">
             <FormattedMessage id="rating.star-label" />
           </label>
-          <div className="rating-modal__stars">
+          <div className="tw-flex tw-items-center tw-gap-2">
             {[1, 2, 3, 4, 5].map((star) => (
               <i
                 key={star}
-                className={`fas fa-star rating-star ${
-                  star <= (hoverRating || rating) ? 'rating-star--active' : ''
+                className={`fas fa-star tw-text-3xl tw-cursor-pointer tw-transition-all tw-duration-150 ${
+                  star <= (hoverRating || rating)
+                    ? 'tw-text-amber-400 tw-scale-110'
+                    : 'tw-text-gray-300 hover:tw-text-amber-200'
                 }`}
                 onMouseEnter={() => setHoverRating(star)}
                 onMouseLeave={() => setHoverRating(0)}
                 onClick={() => setRating(star)}
               />
             ))}
-            {rating > 0 && <span className="rating-value">{rating}/5</span>}
+            {rating > 0 && <span className="tw-ml-2 tw-text-sm tw-font-semibold tw-text-amber-600">{rating}/5</span>}
           </div>
 
           {/* Comment */}
-          <label className="rating-modal__label">
-            <FormattedMessage id="rating.comment-label" />
-          </label>
-          <textarea
-            className="rating-modal__textarea"
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            rows={4}
-            placeholder={intl.formatMessage({ id: 'rating.comment-placeholder' })}
-          />
+          <div>
+            <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1">
+              <FormattedMessage id="rating.comment-label" />
+            </label>
+            <textarea
+              className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-lg tw-text-sm tw-resize-y focus:tw-outline-none focus:tw-border-primary"
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              rows={4}
+              placeholder={intl.formatMessage({ id: 'rating.comment-placeholder' })}
+            />
+          </div>
         </div>
 
         {/* Footer */}
-        <div className="rating-modal__footer">
+        <div className="tw-flex tw-justify-end tw-gap-3 tw-px-6 tw-py-4 tw-border-t tw-border-gray-100">
           <button
-            className="rating-modal__btn rating-modal__btn--cancel"
+            className="tw-px-5 tw-py-2 tw-bg-gray-100 tw-text-text-sub tw-rounded-lg tw-font-medium tw-text-sm tw-border tw-border-gray-300 tw-cursor-pointer hover:tw-bg-gray-200 tw-transition-colors disabled:tw-opacity-50"
             onClick={handleClose}
             disabled={isSubmitting}
           >
             <FormattedMessage id="rating.cancel-btn" />
           </button>
           <button
-            className="rating-modal__btn rating-modal__btn--submit"
+            className="tw-px-5 tw-py-2 tw-bg-primary tw-text-white tw-rounded-lg tw-font-semibold tw-text-sm tw-border-0 tw-cursor-pointer hover:tw-bg-primary-dark tw-transition-colors disabled:tw-opacity-50 tw-flex tw-items-center tw-gap-2"
             onClick={handleSubmit}
             disabled={isSubmitting}
           >

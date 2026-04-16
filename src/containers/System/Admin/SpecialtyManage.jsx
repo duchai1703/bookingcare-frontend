@@ -9,6 +9,7 @@ import CommonUtils from '../../../utils/CommonUtils';
 import ImageUploadInput from '../../../components/Common/ImageUploadInput';
 import MarkdownEditorField from '../../../components/Common/MarkdownEditorField';
 import { marked } from 'marked'; // BUG-08: render markdown → HTML trước khi gửi backend
+import { Microscope, Plus, Pencil, Trash2 } from 'lucide-react';
 import './SpecialtyManage.scss';
 
 const INIT_FORM = { id: '', name: '', descriptionMarkdown: '', descriptionHTML: '', previewImgURL: '', imageBase64: '' };
@@ -84,20 +85,28 @@ const SpecialtyManage = () => {
 
   return (
     <div className="specialty-manage">
-      <div className="manage-header">
-        <h2 className="manage-title"><FormattedMessage id="admin.manage.specialty.title" /></h2>
-        <button className="btn-add" onClick={handleAddNew}><FormattedMessage id="admin.manage.specialty.btn-add" /></button>
+      {/* ===== HEADER ===== */}
+      <div className="tw-flex tw-items-center tw-justify-between tw-mb-6">
+        <div className="tw-flex tw-items-center tw-gap-3">
+          <div className="tw-w-10 tw-h-10 tw-rounded-xl tw-bg-primary/10 tw-flex tw-items-center tw-justify-center">
+            <Microscope size={20} className="tw-text-primary" />
+          </div>
+          <h2 className="tw-text-xl tw-font-bold tw-text-text-main"><FormattedMessage id="admin.manage.specialty.title" /></h2>
+        </div>
+        <button className="!tw-inline-flex !tw-items-center !tw-justify-center tw-gap-2 tw-px-5 tw-py-2.5 tw-bg-primary tw-text-white tw-rounded-full tw-font-semibold tw-text-sm tw-border-0 tw-cursor-pointer hover:tw-bg-primary-dark tw-transition-colors tw-shadow-sm" onClick={handleAddNew}>
+          <Plus size={16} className="!tw-inline-flex" /> <span className="!tw-leading-none"><FormattedMessage id="admin.manage.specialty.btn-add" /></span>
+        </button>
       </div>
 
       {showForm && (
-        <div className="form-card">
-          <h4 className="form-title">
+        <div className="tw-bg-white tw-rounded-2xl tw-shadow-card tw-p-6 tw-mb-6">
+          <h4 className="tw-text-lg tw-font-semibold tw-text-text-main tw-mb-4">
             <FormattedMessage id={isEditing ? 'admin.manage.specialty.form-title-edit' : 'admin.manage.specialty.form-title-add'} />
           </h4>
           <form onSubmit={handleSubmit}>
-            <div className="form-top">
-              <div className="img-col">
-                <label className="small-label"><FormattedMessage id="admin.manage.specialty.label-image" /></label>
+            <div className="tw-flex tw-gap-5 tw-items-start tw-mb-4">
+              <div className="tw-flex-shrink-0">
+                <label className="tw-block tw-text-xs tw-font-medium tw-text-text-sub tw-mb-1"><FormattedMessage id="admin.manage.specialty.label-image" /></label>
                 <ImageUploadInput
                   previewUrl={formData.previewImgURL}
                   inputId="spec-img-upload"
@@ -105,9 +114,9 @@ const SpecialtyManage = () => {
                   onChange={({ base64, objectUrl }) => setFormData((prev) => ({ ...prev, previewImgURL: objectUrl, imageBase64: base64 }))}
                 />
               </div>
-              <div className="form-group flex-1">
-                <label><FormattedMessage id="admin.manage.specialty.label-name" /> <span className="required">*</span></label>
-                <input type="text" name="name" value={formData.name} onChange={handleInput} className="form-control" placeholder={intl.formatMessage({ id: 'admin.manage.specialty.placeholder-name' })} />
+              <div className="tw-flex-1">
+                <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1"><FormattedMessage id="admin.manage.specialty.label-name" /> <span className="tw-text-danger">*</span></label>
+                <input type="text" name="name" value={formData.name} onChange={handleInput} className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-200 tw-rounded-xl tw-text-sm focus:tw-outline-none focus:tw-border-primary tw-transition-colors" placeholder={intl.formatMessage({ id: 'admin.manage.specialty.placeholder-name' })} />
               </div>
             </div>
             <MarkdownEditorField
@@ -116,30 +125,34 @@ const SpecialtyManage = () => {
               height={280}
               label={intl.formatMessage({ id: 'admin.manage.specialty.label-markdown' })}
             />
-            <div className="form-actions">
-              <button type="submit" className="btn-save"><FormattedMessage id="admin.manage.specialty.btn-save" /></button>
-              <button type="button" className="btn-cancel" onClick={() => setShowForm(false)}><FormattedMessage id="admin.manage.specialty.btn-cancel" /></button>
+            <div className="tw-flex tw-gap-3 tw-justify-end tw-pt-4 tw-border-t tw-border-gray-100 tw-mt-4">
+              <button type="submit" className="tw-flex tw-items-center tw-justify-center tw-gap-2 tw-px-5 tw-py-2 tw-bg-primary tw-text-white tw-rounded-xl tw-font-semibold tw-text-sm tw-border-0 tw-cursor-pointer hover:tw-bg-primary-dark tw-transition-colors"><FormattedMessage id="admin.manage.specialty.btn-save" /></button>
+              <button type="button" className="tw-flex tw-items-center tw-justify-center tw-gap-2 tw-px-5 tw-py-2 tw-bg-gray-100 tw-text-text-sub tw-rounded-xl tw-font-medium tw-text-sm tw-border tw-border-gray-200 tw-cursor-pointer hover:tw-bg-gray-200 tw-transition-colors" onClick={() => setShowForm(false)}><FormattedMessage id="admin.manage.specialty.btn-cancel" /></button>
             </div>
           </form>
         </div>
       )}
 
-      {/* Grid 4 cột — BookingCare style */}
-      <div className="specialty-grid">
-        {isLoading ? <p className="loading-text"><FormattedMessage id="admin.manage.specialty.loading" /></p> :
-         specialties.length === 0 ? <p className="no-data"><FormattedMessage id="admin.manage.specialty.no-data" /></p> :
+      {/* ===== SPECIALTY GRID ===== */}
+      <div className="tw-grid tw-grid-cols-2 md:tw-grid-cols-3 lg:tw-grid-cols-4 tw-gap-4">
+        {isLoading ? <p className="tw-col-span-full tw-text-center tw-py-8 tw-text-text-sub"><FormattedMessage id="admin.manage.specialty.loading" /></p> :
+         specialties.length === 0 ? <p className="tw-col-span-full tw-text-center tw-py-12 tw-text-text-light"><FormattedMessage id="admin.manage.specialty.no-data" /></p> :
          specialties.map((spec) => (
-          <div key={spec.id} className="specialty-card">
-            <div className="spec-img-wrap">
+          <div key={spec.id} className="tw-bg-white tw-rounded-2xl tw-shadow-card tw-p-5 tw-text-center hover:tw-shadow-lg tw-transition-all tw-group">
+            <div className="tw-w-16 tw-h-16 tw-rounded-full tw-overflow-hidden tw-mx-auto tw-mb-3 tw-bg-gray-100 tw-flex tw-items-center tw-justify-center">
               {spec.image && typeof spec.image === 'string'
-                ? <img src={CommonUtils.decodeBase64Image(spec.image)} alt={spec.name} className="spec-img" />
-                : <div className="spec-img-placeholder">🔬</div>
+                ? <img src={CommonUtils.decodeBase64Image(spec.image)} alt={spec.name} className="tw-w-full tw-h-full tw-object-cover" />
+                : <Microscope size={24} className="tw-text-gray-400" />
               }
             </div>
-            <h5 className="spec-name">{spec.name}</h5>
-            <div className="spec-actions">
-              <button className="btn-edit" onClick={() => handleEdit(spec)} title={intl.formatMessage({ id: 'common.edit' })}>✏️</button>
-              <button className="btn-delete" onClick={() => handleDeleteSpec(spec)} title={intl.formatMessage({ id: 'common.delete' })}>🗑️</button>
+            <h5 className="tw-font-semibold tw-text-text-main tw-text-sm tw-mb-3 tw-truncate">{spec.name}</h5>
+            <div className="tw-flex tw-justify-center tw-gap-1 tw-opacity-0 group-hover:tw-opacity-100 tw-transition-opacity">
+              <button className="tw-p-2 tw-rounded-lg tw-text-blue-500 hover:tw-bg-blue-50 tw-transition-colors tw-border-0 tw-bg-transparent tw-cursor-pointer" onClick={() => handleEdit(spec)} title={intl.formatMessage({ id: 'common.edit' })}>
+                <Pencil size={15} />
+              </button>
+              <button className="tw-p-2 tw-rounded-lg tw-text-red-400 hover:tw-bg-red-50 tw-transition-colors tw-border-0 tw-bg-transparent tw-cursor-pointer" onClick={() => handleDeleteSpec(spec)} title={intl.formatMessage({ id: 'common.delete' })}>
+                <Trash2 size={15} />
+              </button>
             </div>
           </div>
         ))}

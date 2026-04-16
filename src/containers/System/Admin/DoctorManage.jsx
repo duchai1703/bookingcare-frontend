@@ -12,6 +12,7 @@ import { confirmDelete, showSuccess, showError, showWarning } from '../../../uti
 import ImageUploadInput from '../../../components/Common/ImageUploadInput';
 import MarkdownEditorField from '../../../components/Common/MarkdownEditorField';
 import { marked } from 'marked'; // GAP-01: render markdown → HTML trước khi gửi backend
+import { Stethoscope, Save, Trash2, Loader2 } from 'lucide-react';
 import './DoctorManage.scss';
 
 const INIT_INFO = {
@@ -178,86 +179,94 @@ const DoctorManage = () => {
 
   return (
     <div className="doctor-manage">
-      <div className="manage-header">
-        <h2 className="manage-title"><FormattedMessage id="admin.manage.doctor.title" /></h2>
-        {hasExistingInfo && <span className="existing-badge"><FormattedMessage id="admin.manage.doctor.existing-badge" /></span>}
+      {/* ===== HEADER ===== */}
+      <div className="tw-flex tw-items-center tw-justify-between tw-mb-6">
+        <div className="tw-flex tw-items-center tw-gap-3">
+          <div className="tw-w-10 tw-h-10 tw-rounded-xl tw-bg-primary/10 tw-flex tw-items-center tw-justify-center">
+            <Stethoscope size={20} className="tw-text-primary" />
+          </div>
+          <h2 className="tw-text-xl tw-font-bold tw-text-text-main"><FormattedMessage id="admin.manage.doctor.title" /></h2>
+        </div>
+        {hasExistingInfo && <span className="tw-px-3 tw-py-1 tw-bg-emerald-100 tw-text-emerald-700 tw-rounded-full tw-text-xs tw-font-semibold"><FormattedMessage id="admin.manage.doctor.existing-badge" /></span>}
       </div>
 
-      {/* Chọn bác sĩ (REQ-AM-022 — chỉ R2) */}
-      <div className="form-card">
-        <div className="form-group">
-          <label><FormattedMessage id="admin.manage.doctor.label-select-doctor" /> <span className="required">*</span></label>
-          <select className="form-control select-lg" value={selectedDoctorId} onChange={handleSelectDoctor}>
+      {/* Chọn bác sĩ */}
+      <div className="tw-bg-white tw-rounded-2xl tw-shadow-card tw-p-6 tw-mb-5">
+        <div>
+          <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1.5"><FormattedMessage id="admin.manage.doctor.label-select-doctor" /> <span className="tw-text-danger">*</span></label>
+          <select className="tw-w-full tw-px-3 tw-py-2.5 tw-border tw-border-gray-200 tw-rounded-xl tw-text-sm focus:tw-outline-none focus:tw-border-primary tw-bg-white tw-font-medium tw-transition-colors" value={selectedDoctorId} onChange={handleSelectDoctor}>
             <option value="">{intl.formatMessage({ id: 'admin.manage.doctor.select-default' })}</option>
             {doctorList.map((doc) => (
               <option key={doc.id} value={doc.id}>{doc.lastName} {doc.firstName} — {doc.email}</option>
             ))}
           </select>
-          <small className="hint"><FormattedMessage id="admin.manage.doctor.hint" /></small>
+          <small className="tw-text-xs tw-text-text-light tw-mt-1 tw-block"><FormattedMessage id="admin.manage.doctor.hint" /></small>
         </div>
       </div>
 
       {selectedDoctorId && (isLoading ? (
-        <p className="loading-text"><FormattedMessage id="admin.manage.doctor.loading" /></p>
+        <div className="tw-flex tw-items-center tw-justify-center tw-py-10 tw-text-text-sub tw-gap-2">
+          <Loader2 size={18} className="tw-animate-spin" /> <FormattedMessage id="admin.manage.doctor.loading" />
+        </div>
       ) : (
         <>
           {/* Thông tin chuyên môn */}
-          <div className="form-card">
-            <h4 className="card-subtitle"><FormattedMessage id="admin.manage.doctor.card-subtitle" /></h4>
-            <div className="form-grid-3">
-              <div className="form-group">
-                <label><FormattedMessage id="admin.manage.doctor.label-specialty" /> <span className="required">*</span></label>
-                <select name="specialtyId" value={doctorInfo.specialtyId} onChange={handleInput} className="form-control">
+          <div className="tw-bg-white tw-rounded-2xl tw-shadow-card tw-p-6 tw-mb-5">
+            <h4 className="tw-text-base tw-font-semibold tw-text-text-main tw-mb-4"><FormattedMessage id="admin.manage.doctor.card-subtitle" /></h4>
+            <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 lg:tw-grid-cols-3 tw-gap-4">
+              <div>
+                <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1"><FormattedMessage id="admin.manage.doctor.label-specialty" /> <span className="tw-text-danger">*</span></label>
+                <select name="specialtyId" value={doctorInfo.specialtyId} onChange={handleInput} className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-200 tw-rounded-xl tw-text-sm tw-bg-white focus:tw-outline-none focus:tw-border-primary tw-transition-colors">
                   <option value="">{intl.formatMessage({ id: 'admin.manage.doctor.select-specialty' })}</option>
                   {specialties.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               </div>
-              <div className="form-group">
-                <label><FormattedMessage id="admin.manage.doctor.label-clinic" /> <span className="required">*</span></label>
-                <select name="clinicId" value={doctorInfo.clinicId} onChange={handleInput} className="form-control">
+              <div>
+                <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1"><FormattedMessage id="admin.manage.doctor.label-clinic" /> <span className="tw-text-danger">*</span></label>
+                <select name="clinicId" value={doctorInfo.clinicId} onChange={handleInput} className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-200 tw-rounded-xl tw-text-sm tw-bg-white focus:tw-outline-none focus:tw-border-primary tw-transition-colors">
                   <option value="">{intl.formatMessage({ id: 'admin.manage.doctor.select-clinic' })}</option>
                   {clinics.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
-              <div className="form-group">
-                <label><FormattedMessage id="admin.manage.doctor.label-price" /> <span className="required">*</span></label>
-                <select name="priceId" value={doctorInfo.priceId} onChange={handleInput} className="form-control">
+              <div>
+                <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1"><FormattedMessage id="admin.manage.doctor.label-price" /> <span className="tw-text-danger">*</span></label>
+                <select name="priceId" value={doctorInfo.priceId} onChange={handleInput} className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-200 tw-rounded-xl tw-text-sm tw-bg-white focus:tw-outline-none focus:tw-border-primary tw-transition-colors">
                   <option value="">{intl.formatMessage({ id: 'admin.manage.doctor.select-price' })}</option>
                   {prices.map((p) => <option key={p.keyMap} value={p.keyMap}>{p.valueVi}</option>)}
                 </select>
               </div>
-              <div className="form-group">
-                <label><FormattedMessage id="admin.manage.doctor.label-province" /></label>
-                <select name="provinceId" value={doctorInfo.provinceId} onChange={handleInput} className="form-control">
+              <div>
+                <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1"><FormattedMessage id="admin.manage.doctor.label-province" /></label>
+                <select name="provinceId" value={doctorInfo.provinceId} onChange={handleInput} className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-200 tw-rounded-xl tw-text-sm tw-bg-white focus:tw-outline-none focus:tw-border-primary tw-transition-colors">
                   <option value="">{intl.formatMessage({ id: 'admin.manage.doctor.select-province' })}</option>
                   {provinces.map((p) => <option key={p.keyMap} value={p.keyMap}>{p.valueVi}</option>)}
                 </select>
               </div>
-              <div className="form-group">
-                <label><FormattedMessage id="admin.manage.doctor.label-payment" /></label>
-                <select name="paymentId" value={doctorInfo.paymentId} onChange={handleInput} className="form-control">
+              <div>
+                <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1"><FormattedMessage id="admin.manage.doctor.label-payment" /></label>
+                <select name="paymentId" value={doctorInfo.paymentId} onChange={handleInput} className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-200 tw-rounded-xl tw-text-sm tw-bg-white focus:tw-outline-none focus:tw-border-primary tw-transition-colors">
                   <option value="">{intl.formatMessage({ id: 'admin.manage.doctor.select-payment' })}</option>
                   {payments.map((p) => <option key={p.keyMap} value={p.keyMap}>{p.valueVi}</option>)}
                 </select>
               </div>
-              <div className="form-group">
-                <label><FormattedMessage id="admin.manage.doctor.label-position" /></label>
-                <select name="positionId" value={doctorInfo.positionId} onChange={handleInput} className="form-control">
+              <div>
+                <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1"><FormattedMessage id="admin.manage.doctor.label-position" /></label>
+                <select name="positionId" value={doctorInfo.positionId} onChange={handleInput} className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-200 tw-rounded-xl tw-text-sm tw-bg-white focus:tw-outline-none focus:tw-border-primary tw-transition-colors">
                   {positions.map((p) => <option key={p.keyMap} value={p.keyMap}>{p.valueVi}</option>)}
                 </select>
               </div>
             </div>
 
-            <div className="form-group mt-12">
-              <label><FormattedMessage id="admin.manage.doctor.label-description" /></label>
-              <textarea name="description" value={doctorInfo.description} onChange={handleInput} className="form-control" rows={3} placeholder={intl.formatMessage({ id: 'admin.manage.doctor.placeholder-description' })} />
+            <div className="tw-mt-4">
+              <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1"><FormattedMessage id="admin.manage.doctor.label-description" /></label>
+              <textarea name="description" value={doctorInfo.description} onChange={handleInput} className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-200 tw-rounded-xl tw-text-sm focus:tw-outline-none focus:tw-border-primary tw-resize-y tw-transition-colors" rows={3} placeholder={intl.formatMessage({ id: 'admin.manage.doctor.placeholder-description' })} />
             </div>
-            <div className="form-group">
-              <label><FormattedMessage id="admin.manage.doctor.label-note" /></label>
-              <input type="text" name="note" value={doctorInfo.note} onChange={handleInput} className="form-control" placeholder={intl.formatMessage({ id: 'admin.manage.doctor.placeholder-note' })} />
+            <div className="tw-mt-3">
+              <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1"><FormattedMessage id="admin.manage.doctor.label-note" /></label>
+              <input type="text" name="note" value={doctorInfo.note} onChange={handleInput} className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-200 tw-rounded-xl tw-text-sm focus:tw-outline-none focus:tw-border-primary tw-transition-colors" placeholder={intl.formatMessage({ id: 'admin.manage.doctor.placeholder-note' })} />
             </div>
-            <div className="form-group">
-              <label><FormattedMessage id="admin.manage.doctor.label-avatar" /></label>
+            <div className="tw-mt-3">
+              <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1"><FormattedMessage id="admin.manage.doctor.label-avatar" /></label>
               <ImageUploadInput
                 previewUrl={doctorInfo.previewImgURL}
                 inputId="doctor-img-upload"
@@ -269,8 +278,8 @@ const DoctorManage = () => {
             </div>
           </div>
 
-          {/* Markdown editor (REQ-AM-007) */}
-          <div className="form-card">
+          {/* Markdown editor */}
+          <div className="tw-bg-white tw-rounded-2xl tw-shadow-card tw-p-6 tw-mb-5">
             <MarkdownEditorField
               value={doctorInfo.contentMarkdown}
               onChange={(val) => setDoctorInfo((prev) => ({ ...prev, contentMarkdown: val }))}
@@ -281,12 +290,15 @@ const DoctorManage = () => {
           </div>
 
           {/* Actions */}
-          <div className="action-footer">
-            <button className="btn-save" onClick={handleSave} disabled={isSaving}>
-              <FormattedMessage id={isSaving ? 'admin.manage.doctor.btn-saving' : 'admin.manage.doctor.btn-save'} />
+          <div className="tw-flex tw-gap-3 tw-mb-6">
+            <button className="!tw-inline-flex !tw-items-center !tw-justify-center tw-gap-2 tw-px-6 tw-py-2.5 tw-bg-primary tw-text-white tw-rounded-xl tw-font-semibold tw-text-sm tw-border-0 tw-cursor-pointer hover:tw-bg-primary-dark tw-transition-colors disabled:tw-opacity-50 tw-shadow-sm" onClick={handleSave} disabled={isSaving}>
+              {isSaving ? <Loader2 size={16} className="tw-animate-spin !tw-inline-flex" /> : <Save size={16} className="!tw-inline-flex" />}
+              <span className="!tw-leading-none"><FormattedMessage id={isSaving ? 'admin.manage.doctor.btn-saving' : 'admin.manage.doctor.btn-save'} /></span>
             </button>
             {hasExistingInfo && (
-              <button className="btn-delete-outline" onClick={handleDelete}><FormattedMessage id="admin.manage.doctor.btn-delete" /></button>
+              <button className="!tw-inline-flex !tw-items-center !tw-justify-center tw-gap-2 tw-px-5 tw-py-2.5 tw-bg-white tw-text-red-500 tw-rounded-xl tw-font-medium tw-text-sm tw-border tw-border-red-200 tw-cursor-pointer hover:tw-bg-red-50 tw-transition-colors" onClick={handleDelete}>
+                <Trash2 size={16} className="!tw-inline-flex" /> <span className="!tw-leading-none"><FormattedMessage id="admin.manage.doctor.btn-delete" /></span>
+              </button>
             )}
           </div>
         </>

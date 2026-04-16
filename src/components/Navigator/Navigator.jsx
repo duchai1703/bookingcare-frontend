@@ -11,6 +11,7 @@ import './Navigator.scss';
 
 // Icon mapping cho từng menu item
 const MENU_ICONS = {
+  'menu.admin.dashboard': '📊',
   'menu.admin.manage-user': '👥',
   'menu.admin.manage-doctor': '🩺',
   'menu.admin.manage-schedule': '📅',

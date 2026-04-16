@@ -171,7 +171,8 @@ const PatientProfile = () => {
 
     setIsChangingPwd(true);
     try {
-      const result = await changePassword({ currentPassword, newPassword });
+      // [Phase 10.5 Hotfix] BE expects 'oldPassword', not 'currentPassword'
+      const result = await changePassword({ oldPassword: currentPassword, newPassword });
 
       if (result.errCode === 0) {
         toast.success(intl.formatMessage({ id: 'patient-portal.change-password.success' }));
@@ -193,21 +194,21 @@ const PatientProfile = () => {
   };
 
   return (
-    <div className="patient-profile">
+    <div className="patient-profile tw-space-y-6">
       {/* ═══════ KHỐI 1: Thông tin cá nhân ═══════ */}
-      <div className="profile-section">
-        <h2 className="section-title">
-          <i className="fas fa-user-edit" /> <FormattedMessage id="patient-portal.profile.title" />
+      <div className="tw-bg-white tw-rounded-card tw-shadow-card tw-p-6">
+        <h2 className="tw-text-xl tw-font-bold tw-text-text-main tw-mb-5 tw-flex tw-items-center tw-gap-2">
+          <i className="fas fa-user-edit tw-text-primary" /> <FormattedMessage id="patient-portal.profile.title" />
         </h2>
 
-        <div className="profile-content">
+        <div className="tw-flex tw-flex-col md:tw-flex-row tw-gap-6">
           {/* Avatar */}
-          <div className="avatar-section">
-            <div className="avatar-preview">
+          <div className="tw-flex tw-flex-col tw-items-center tw-gap-3 tw-flex-shrink-0">
+            <div className="tw-w-28 tw-h-28 tw-rounded-full tw-overflow-hidden tw-bg-bg-light tw-flex tw-items-center tw-justify-center tw-border-4 tw-border-primary-light tw-shadow-md">
               {previewAvatar ? (
-                <img src={previewAvatar} alt="Avatar" />
+                <img src={previewAvatar} alt="Avatar" className="tw-w-full tw-h-full tw-object-cover" />
               ) : (
-                <i className="fas fa-user-circle avatar-placeholder" />
+                <i className="fas fa-user-circle tw-text-6xl tw-text-text-light" />
               )}
             </div>
             <input
@@ -219,7 +220,7 @@ const PatientProfile = () => {
               style={{ display: 'none' }}
             />
             <button
-              className="avatar-btn"
+              className="tw-px-4 tw-py-1.5 tw-bg-primary-light tw-text-primary tw-rounded-lg tw-text-xs tw-font-medium tw-border-0 tw-cursor-pointer hover:tw-bg-primary hover:tw-text-white tw-transition-colors tw-flex tw-items-center tw-gap-1.5"
               onClick={() => fileInputRef.current?.click()}
             >
               <i className="fas fa-camera" /> <FormattedMessage id="patient-portal.profile.change-avatar" />
@@ -227,25 +228,25 @@ const PatientProfile = () => {
           </div>
 
           {/* Form fields */}
-          <div className="profile-form">
-            <div className="form-row">
-              <div className="form-group">
-                <label><FormattedMessage id="patient-portal.profile.last-name" /></label>
+          <div className="tw-flex-1 tw-space-y-4">
+            <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4">
+              <div>
+                <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1"><FormattedMessage id="patient-portal.profile.last-name" /></label>
                 <input
                   type="text"
                   name="lastName"
-                  className="form-input"
+                  className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-lg tw-text-sm focus:tw-outline-none focus:tw-border-primary"
                   placeholder={intl.formatMessage({ id: 'patient-portal.profile.last-name-placeholder' })}
                   value={profile.lastName}
                   onChange={handleProfileChange}
                 />
               </div>
-              <div className="form-group">
-                <label><FormattedMessage id="patient-portal.profile.first-name" /></label>
+              <div>
+                <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1"><FormattedMessage id="patient-portal.profile.first-name" /></label>
                 <input
                   type="text"
                   name="firstName"
-                  className="form-input"
+                  className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-lg tw-text-sm focus:tw-outline-none focus:tw-border-primary"
                   placeholder={intl.formatMessage({ id: 'patient-portal.profile.first-name-placeholder' })}
                   value={profile.firstName}
                   onChange={handleProfileChange}
@@ -253,22 +254,22 @@ const PatientProfile = () => {
               </div>
             </div>
 
-            <div className="form-row">
-              <div className="form-group">
-                <label><FormattedMessage id="patient-portal.profile.email" /></label>
+            <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4">
+              <div>
+                <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1"><FormattedMessage id="patient-portal.profile.email" /></label>
                 <input
                   type="email"
-                  className="form-input form-input--disabled"
+                  className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-lg tw-text-sm tw-bg-gray-50 tw-text-text-sub tw-cursor-not-allowed"
                   value={profile.email}
                   disabled
                 />
               </div>
-              <div className="form-group">
-                <label><FormattedMessage id="patient-portal.profile.phone" /></label>
+              <div>
+                <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1"><FormattedMessage id="patient-portal.profile.phone" /></label>
                 <input
                   type="tel"
                   name="phoneNumber"
-                  className="form-input"
+                  className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-lg tw-text-sm focus:tw-outline-none focus:tw-border-primary"
                   placeholder={intl.formatMessage({ id: 'patient-portal.profile.phone-placeholder' })}
                   value={profile.phoneNumber}
                   onChange={handleProfileChange}
@@ -276,23 +277,23 @@ const PatientProfile = () => {
               </div>
             </div>
 
-            <div className="form-row">
-              <div className="form-group">
-                <label><FormattedMessage id="patient-portal.profile.address" /></label>
+            <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4">
+              <div>
+                <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1"><FormattedMessage id="patient-portal.profile.address" /></label>
                 <input
                   type="text"
                   name="address"
-                  className="form-input"
+                  className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-lg tw-text-sm focus:tw-outline-none focus:tw-border-primary"
                   placeholder={intl.formatMessage({ id: 'patient-portal.profile.address-placeholder' })}
                   value={profile.address}
                   onChange={handleProfileChange}
                 />
               </div>
-              <div className="form-group">
-                <label><FormattedMessage id="patient-portal.profile.gender" /></label>
+              <div>
+                <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1"><FormattedMessage id="patient-portal.profile.gender" /></label>
                 <select
                   name="gender"
-                  className="form-input"
+                  className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-lg tw-text-sm tw-bg-white focus:tw-outline-none focus:tw-border-primary"
                   value={profile.gender}
                   onChange={handleProfileChange}
                 >
@@ -310,7 +311,7 @@ const PatientProfile = () => {
 
             <button
               id="save-profile-btn"
-              className="btn-primary"
+              className="tw-px-6 tw-py-2.5 tw-bg-primary tw-text-white tw-rounded-lg tw-font-semibold tw-text-sm tw-border-0 tw-cursor-pointer hover:tw-bg-primary-dark tw-transition-colors disabled:tw-opacity-50 tw-flex tw-items-center tw-gap-2"
               onClick={handleSaveProfile}
               disabled={isSaving}
             >
@@ -325,38 +326,38 @@ const PatientProfile = () => {
       </div>
 
       {/* ═══════ KHỐI 2: Đổi mật khẩu ═══════ */}
-      <div className="profile-section">
-        <h2 className="section-title">
-          <i className="fas fa-key" /> <FormattedMessage id="patient-portal.change-password.title" />
+      <div className="tw-bg-white tw-rounded-card tw-shadow-card tw-p-6">
+        <h2 className="tw-text-xl tw-font-bold tw-text-text-main tw-mb-5 tw-flex tw-items-center tw-gap-2">
+          <i className="fas fa-key tw-text-amber-500" /> <FormattedMessage id="patient-portal.change-password.title" />
         </h2>
 
-        <form className="password-form" onSubmit={handleChangePassword}>
-          <div className="form-group">
-            <label><FormattedMessage id="patient-portal.change-password.current" /></label>
+        <form className="tw-space-y-4" onSubmit={handleChangePassword}>
+          <div>
+            <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1"><FormattedMessage id="patient-portal.change-password.current" /></label>
             <input
               type="password"
-              className="form-input"
+              className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-lg tw-text-sm focus:tw-outline-none focus:tw-border-primary"
               placeholder={intl.formatMessage({ id: 'patient-portal.change-password.current-placeholder' })}
               value={pwdForm.currentPassword}
               onChange={(e) => setPwdForm((p) => ({ ...p, currentPassword: e.target.value }))}
             />
           </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label><FormattedMessage id="patient-portal.change-password.new" /></label>
+          <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4">
+            <div>
+              <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1"><FormattedMessage id="patient-portal.change-password.new" /></label>
               <input
                 type="password"
-                className="form-input"
+                className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-lg tw-text-sm focus:tw-outline-none focus:tw-border-primary"
                 placeholder={intl.formatMessage({ id: 'patient-portal.change-password.new-placeholder' })}
                 value={pwdForm.newPassword}
                 onChange={(e) => setPwdForm((p) => ({ ...p, newPassword: e.target.value }))}
               />
             </div>
-            <div className="form-group">
-              <label><FormattedMessage id="patient-portal.change-password.confirm" /></label>
+            <div>
+              <label className="tw-block tw-text-sm tw-font-medium tw-text-text-main tw-mb-1"><FormattedMessage id="patient-portal.change-password.confirm" /></label>
               <input
                 type="password"
-                className="form-input"
+                className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-lg tw-text-sm focus:tw-outline-none focus:tw-border-primary"
                 placeholder={intl.formatMessage({ id: 'patient-portal.change-password.confirm-placeholder' })}
                 value={pwdForm.confirmPassword}
                 onChange={(e) => setPwdForm((p) => ({ ...p, confirmPassword: e.target.value }))}
@@ -367,7 +368,7 @@ const PatientProfile = () => {
           <button
             id="change-password-btn"
             type="submit"
-            className="btn-warning"
+            className="tw-px-6 tw-py-2.5 tw-bg-amber-500 tw-text-white tw-rounded-lg tw-font-semibold tw-text-sm tw-border-0 tw-cursor-pointer hover:tw-bg-amber-600 tw-transition-colors disabled:tw-opacity-50 tw-flex tw-items-center tw-gap-2"
             disabled={isChangingPwd}
           >
             {isChangingPwd ? (
