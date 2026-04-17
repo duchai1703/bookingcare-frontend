@@ -147,7 +147,7 @@ const DoctorDetail = () => {
                 <h1 className="doctor-detail__name">{getDoctorName()}</h1>
 
                 <p className="doctor-detail__description">
-                  day la vi tri cua mo ta ngan{getDescription()}
+                  {getDescription()}
                 </p>
 
                 {/* Địa chỉ phòng khám (nếu có) */}
