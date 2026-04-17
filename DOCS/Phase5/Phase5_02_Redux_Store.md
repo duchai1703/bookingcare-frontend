@@ -10,31 +10,31 @@
 
 ```js
 // src/redux/store.js
-import { configureStore } from '@reduxjs/toolkit';
-import { persistStore, persistReducer } from 'redux-persist';
-import storage from 'redux-persist/lib/storage'; // Dùng localStorage
-import { combineReducers } from 'redux';
+import { configureStore } from "@reduxjs/toolkit";
+import { persistStore, persistReducer } from "redux-persist";
+import storage from "redux-persist/lib/storage"; // Dùng localStorage
+import { combineReducers } from "redux";
 
-import appReducer from './slices/appSlice';
-import userReducer from './slices/userSlice';
-import adminReducer from './slices/adminSlice';
-import doctorReducer from './slices/doctorSlice';
+import appReducer from "./slices/appSlice";
+import userReducer from "./slices/userSlice";
+import adminReducer from "./slices/adminSlice";
+import doctorReducer from "./slices/doctorSlice";
 
 // ===== CẤU HÌNH PERSIST =====
 // Chỉ persist những slice cần thiết
 const persistConfig = {
-  key: 'root',          // Key trong localStorage
-  storage,              // localStorage (mặc định)
-  whitelist: ['user', 'app'],  // CHỈ persist user (token, info) và app (language)
+  key: "root", // Key trong localStorage
+  storage, // localStorage (mặc định)
+  whitelist: ["user", "app"], // CHỈ persist user (token, info) và app (language)
   // Không persist admin (fetch lại mỗi lần mở)
 };
 
 // Combine tất cả reducers
 const rootReducer = combineReducers({
-  app: appReducer,        // language, loading, allcodes
-  user: userReducer,      // isLoggedIn, userInfo, accessToken
-  admin: adminReducer,    // users, doctors, specialties, clinics
-  doctor: doctorReducer,  // doctor dashboard: patients, booking history
+  app: appReducer, // language, loading, allcodes
+  user: userReducer, // isLoggedIn, userInfo, accessToken
+  admin: adminReducer, // users, doctors, specialties, clinics
+  doctor: doctorReducer, // doctor dashboard: patients, booking history
 });
 
 // Wrap rootReducer với persist
@@ -48,12 +48,12 @@ export const store = configureStore({
       serializableCheck: {
         // Bỏ qua warning serialize của redux-persist
         ignoredActions: [
-          'persist/PERSIST',
-          'persist/REHYDRATE',
-          'persist/PAUSE',
-          'persist/PURGE',
-          'persist/REGISTER',
-          'persist/FLUSH',
+          "persist/PERSIST",
+          "persist/REHYDRATE",
+          "persist/PAUSE",
+          "persist/PURGE",
+          "persist/REGISTER",
+          "persist/FLUSH",
         ],
       },
     }),
@@ -65,11 +65,11 @@ export const persistor = persistStore(store);
 
 **Giải thích chi tiết:**
 
-| Khái niệm | Vai trò |
-|-----------|---------|
-| `persistConfig.whitelist` | Chỉ lưu `user` và `app` vào localStorage. Slice `admin` KHÔNG persist vì dữ liệu CRUD nên fetch mới |
-| `serializableCheck` | Redux Toolkit mặc định warn nếu action không serializable. redux-persist có actions đặc biệt nên phải bỏ qua |
-| `persistor` | Object dùng trong `<PersistGate>` ở `main.jsx` để đợi rehydrate xong mới render UI |
+| Khái niệm                 | Vai trò                                                                                                      |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `persistConfig.whitelist` | Chỉ lưu `user` và `app` vào localStorage. Slice `admin` KHÔNG persist vì dữ liệu CRUD nên fetch mới          |
+| `serializableCheck`       | Redux Toolkit mặc định warn nếu action không serializable. redux-persist có actions đặc biệt nên phải bỏ qua |
+| `persistor`               | Object dùng trong `<PersistGate>` ở `main.jsx` để đợi rehydrate xong mới render UI                           |
 
 ---
 
@@ -79,14 +79,14 @@ Quản lý: ngôn ngữ, trạng thái loading, dữ liệu Allcode
 
 ```js
 // src/redux/slices/appSlice.js
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getAllCode } from '../../services/userService';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { getAllCode } from "../../services/userService";
 
 // ===== ASYNC THUNKS =====
 
 // Fetch Allcode theo type (ROLE, GENDER, TIME, STATUS, POSITION, PRICE, PAYMENT, PROVINCE)
 export const fetchAllcodeByType = createAsyncThunk(
-  'app/fetchAllcodeByType',
+  "app/fetchAllcodeByType",
   async (type, { rejectWithValue }) => {
     try {
       const res = await getAllCode(type);
@@ -97,25 +97,25 @@ export const fetchAllcodeByType = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.message);
     }
-  }
+  },
 );
 
 // ===== SLICE =====
 const appSlice = createSlice({
-  name: 'app',
+  name: "app",
 
   initialState: {
     // Ngôn ngữ: 'vi' (mặc định) hoặc 'en' — SRS IL-006
-    language: 'vi',
+    language: "vi",
 
     // Dữ liệu Allcode (tra cứu)
-    genders: [],       // G1, G2, G3
-    roles: [],         // R1, R2, R3
-    positions: [],     // P1-P5
-    times: [],         // T1-T8
-    prices: [],        // PRI1-PRI6
-    payments: [],      // PAY1-PAY3
-    provinces: [],     // PRO1-PRO6
+    genders: [], // G1, G2, G3
+    roles: [], // R1, R2, R3
+    positions: [], // P1-P5
+    times: [], // T1-T8
+    prices: [], // PRI1-PRI6
+    payments: [], // PAY1-PAY3
+    provinces: [], // PRO1-PRO6
 
     // UI state
     isLoading: false,
@@ -143,13 +143,13 @@ const appSlice = createSlice({
         const { type, data } = action.payload;
         // Map type → state key
         const typeMap = {
-          GENDER: 'genders',
-          ROLE: 'roles',
-          POSITION: 'positions',
-          TIME: 'times',
-          PRICE: 'prices',
-          PAYMENT: 'payments',
-          PROVINCE: 'provinces',
+          GENDER: "genders",
+          ROLE: "roles",
+          POSITION: "positions",
+          TIME: "times",
+          PRICE: "prices",
+          PAYMENT: "payments",
+          PROVINCE: "provinces",
         };
         const key = typeMap[type];
         if (key) {
@@ -158,7 +158,7 @@ const appSlice = createSlice({
       })
       .addCase(fetchAllcodeByType.rejected, (state, action) => {
         state.isLoading = false;
-        console.error('>>> fetchAllcodeByType failed:', action.payload);
+        console.error(">>> fetchAllcodeByType failed:", action.payload);
       });
   },
 });
@@ -173,16 +173,16 @@ export default appSlice.reducer;
 **Cách dùng trong component:**
 
 ```jsx
-import { useDispatch, useSelector } from 'react-redux';
-import { changeLanguage, fetchAllcodeByType } from '../redux/slices/appSlice';
+import { useDispatch, useSelector } from "react-redux";
+import { changeLanguage, fetchAllcodeByType } from "../redux/slices/appSlice";
 
 // Đọc state
-const language = useSelector(state => state.app.language);
-const genders = useSelector(state => state.app.genders);
+const language = useSelector((state) => state.app.language);
+const genders = useSelector((state) => state.app.genders);
 
 // Dispatch action
-dispatch(changeLanguage('en'));                 // Chuyển sang tiếng Anh
-dispatch(fetchAllcodeByType('GENDER'));         // Fetch danh sách giới tính
+dispatch(changeLanguage("en")); // Chuyển sang tiếng Anh
+dispatch(fetchAllcodeByType("GENDER")); // Fetch danh sách giới tính
 ```
 
 ---
@@ -193,41 +193,41 @@ Quản lý: trạng thái đăng nhập, thông tin user, JWT token
 
 ```js
 // src/redux/slices/userSlice.js
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { handleLoginApi } from '../../services/userService';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { handleLoginApi } from "../../services/userService";
 
 // ===== ASYNC THUNKS =====
 
 // Đăng nhập — SRS REQ-AU-001
 export const loginUser = createAsyncThunk(
-  'user/loginUser',
+  "user/loginUser",
   async ({ email, password }, { rejectWithValue }) => {
     try {
       const res = await handleLoginApi(email, password);
       if (res && res.errCode === 0) {
         // Trả về user + token
         return {
-          user: res.user,           // {id, email, roleId, firstName, lastName}
+          user: res.user, // {id, email, roleId, firstName, lastName}
           accessToken: res.accessToken,
         };
       }
       // Login thất bại → trả message lỗi (REQ-AU-007)
-      return rejectWithValue(res.message || 'Đăng nhập thất bại!');
+      return rejectWithValue(res.message || "Đăng nhập thất bại!");
     } catch (err) {
-      return rejectWithValue(err.message || 'Lỗi kết nối server!');
+      return rejectWithValue(err.message || "Lỗi kết nối server!");
     }
-  }
+  },
 );
 
 // ===== SLICE =====
 const userSlice = createSlice({
-  name: 'user',
+  name: "user",
 
   initialState: {
-    isLoggedIn: false,      // true nếu đã login
-    userInfo: null,         // {id, email, roleId, firstName, lastName} — REQ-AU-009
-    accessToken: null,      // JWT token — REQ-AU-003
-    loginError: null,       // Message lỗi khi login thất bại
+    isLoggedIn: false, // true nếu đã login
+    userInfo: null, // {id, email, roleId, firstName, lastName} — REQ-AU-009
+    accessToken: null, // JWT token — REQ-AU-003
+    loginError: null, // Message lỗi khi login thất bại
   },
 
   reducers: {
@@ -289,34 +289,34 @@ Quản lý state cho các trang Admin CRUD (sẽ dùng ở giai đoạn 6):
 
 ```js
 // src/redux/slices/adminSlice.js
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import {
   getAllUsers,
   createNewUser,
   editUser as editUserApi,
   deleteUser as deleteUserApi,
-} from '../../services/userService';
-import { getTopDoctors } from '../../services/doctorService';
+} from "../../services/userService";
+import { getTopDoctors } from "../../services/doctorService";
 
 // ===== ASYNC THUNKS =====
 
 // Fetch tất cả users — REQ-AM-001
 export const fetchAllUsers = createAsyncThunk(
-  'admin/fetchAllUsers',
+  "admin/fetchAllUsers",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await getAllUsers('ALL');
+      const res = await getAllUsers("ALL");
       if (res && res.errCode === 0) return res.data;
       return rejectWithValue(res?.message);
     } catch (err) {
       return rejectWithValue(err.message);
     }
-  }
+  },
 );
 
 // Fetch top doctors — REQ-PT-003
 export const fetchTopDoctors = createAsyncThunk(
-  'admin/fetchTopDoctors',
+  "admin/fetchTopDoctors",
   async (limit = 10, { rejectWithValue }) => {
     try {
       const res = await getTopDoctors(limit);
@@ -325,16 +325,16 @@ export const fetchTopDoctors = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.message);
     }
-  }
+  },
 );
 
 // ===== SLICE =====
 const adminSlice = createSlice({
-  name: 'admin',
+  name: "admin",
 
   initialState: {
-    users: [],            // Danh sách tất cả users
-    topDoctors: [],       // Top bác sĩ nổi bật
+    users: [], // Danh sách tất cả users
+    topDoctors: [], // Top bác sĩ nổi bật
     isLoadingAdmin: false,
   },
 
@@ -343,20 +343,28 @@ const adminSlice = createSlice({
   extraReducers: (builder) => {
     builder
       // Fetch All Users
-      .addCase(fetchAllUsers.pending, (state) => { state.isLoadingAdmin = true; })
+      .addCase(fetchAllUsers.pending, (state) => {
+        state.isLoadingAdmin = true;
+      })
       .addCase(fetchAllUsers.fulfilled, (state, action) => {
         state.isLoadingAdmin = false;
         state.users = action.payload;
       })
-      .addCase(fetchAllUsers.rejected, (state) => { state.isLoadingAdmin = false; })
+      .addCase(fetchAllUsers.rejected, (state) => {
+        state.isLoadingAdmin = false;
+      })
 
       // Fetch Top Doctors
-      .addCase(fetchTopDoctors.pending, (state) => { state.isLoadingAdmin = true; })
+      .addCase(fetchTopDoctors.pending, (state) => {
+        state.isLoadingAdmin = true;
+      })
       .addCase(fetchTopDoctors.fulfilled, (state, action) => {
         state.isLoadingAdmin = false;
         state.topDoctors = action.payload;
       })
-      .addCase(fetchTopDoctors.rejected, (state) => { state.isLoadingAdmin = false; });
+      .addCase(fetchTopDoctors.rejected, (state) => {
+        state.isLoadingAdmin = false;
+      });
   },
 });
 
@@ -373,19 +381,19 @@ Quản lý state cho Doctor Dashboard (sẽ dùng ở giai đoạn 8):
 
 ```js
 // src/redux/slices/doctorSlice.js
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import {
   getListPatientForDoctor,
   sendRemedy,
   cancelBooking,
   getPatientBookingHistory,
-} from '../../services/doctorService';
+} from "../../services/doctorService";
 
 // ===== ASYNC THUNKS =====
 
 // REQ-DR-001, 002, 003: Lấy danh sách bệnh nhân theo ngày + trạng thái
 export const fetchPatientList = createAsyncThunk(
-  'doctor/fetchPatientList',
+  "doctor/fetchPatientList",
   async ({ doctorId, date, statusId }, { rejectWithValue }) => {
     try {
       const res = await getListPatientForDoctor(doctorId, date, statusId);
@@ -394,12 +402,12 @@ export const fetchPatientList = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.message);
     }
-  }
+  },
 );
 
 // REQ-DR-008, 009, 010: Gửi kết quả khám (S2 → S3)
 export const sendRemedyAction = createAsyncThunk(
-  'doctor/sendRemedy',
+  "doctor/sendRemedy",
   async ({ bookingId, data }, { rejectWithValue }) => {
     try {
       const res = await sendRemedy(bookingId, data);
@@ -408,12 +416,12 @@ export const sendRemedyAction = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.message);
     }
-  }
+  },
 );
 
 // REQ-DR-004: Hủy lịch hẹn (S2 → S4)
 export const cancelBookingAction = createAsyncThunk(
-  'doctor/cancelBooking',
+  "doctor/cancelBooking",
   async ({ bookingId, data }, { rejectWithValue }) => {
     try {
       const res = await cancelBooking(bookingId, data);
@@ -422,12 +430,12 @@ export const cancelBookingAction = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.message);
     }
-  }
+  },
 );
 
 // REQ-DR-007: Lấy lịch sử booking của bệnh nhân
 export const fetchPatientHistory = createAsyncThunk(
-  'doctor/fetchPatientHistory',
+  "doctor/fetchPatientHistory",
   async (patientId, { rejectWithValue }) => {
     try {
       const res = await getPatientBookingHistory(patientId);
@@ -436,16 +444,16 @@ export const fetchPatientHistory = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.message);
     }
-  }
+  },
 );
 
 // ===== SLICE =====
 const doctorSlice = createSlice({
-  name: 'doctor',
+  name: "doctor",
 
   initialState: {
-    patientList: [],         // DS bệnh nhân đặt lịch hôm nay
-    patientHistory: [],      // Lịch sử booking 1 bệnh nhân
+    patientList: [], // DS bệnh nhân đặt lịch hôm nay
+    patientHistory: [], // Lịch sử booking 1 bệnh nhân
     isLoadingDoctor: false,
   },
 
@@ -462,30 +470,50 @@ const doctorSlice = createSlice({
   extraReducers: (builder) => {
     builder
       // Fetch Patient List
-      .addCase(fetchPatientList.pending, (state) => { state.isLoadingDoctor = true; })
+      .addCase(fetchPatientList.pending, (state) => {
+        state.isLoadingDoctor = true;
+      })
       .addCase(fetchPatientList.fulfilled, (state, action) => {
         state.isLoadingDoctor = false;
         state.patientList = action.payload;
       })
-      .addCase(fetchPatientList.rejected, (state) => { state.isLoadingDoctor = false; })
+      .addCase(fetchPatientList.rejected, (state) => {
+        state.isLoadingDoctor = false;
+      })
 
       // Send Remedy
-      .addCase(sendRemedyAction.pending, (state) => { state.isLoadingDoctor = true; })
-      .addCase(sendRemedyAction.fulfilled, (state) => { state.isLoadingDoctor = false; })
-      .addCase(sendRemedyAction.rejected, (state) => { state.isLoadingDoctor = false; })
+      .addCase(sendRemedyAction.pending, (state) => {
+        state.isLoadingDoctor = true;
+      })
+      .addCase(sendRemedyAction.fulfilled, (state) => {
+        state.isLoadingDoctor = false;
+      })
+      .addCase(sendRemedyAction.rejected, (state) => {
+        state.isLoadingDoctor = false;
+      })
 
       // Cancel Booking
-      .addCase(cancelBookingAction.pending, (state) => { state.isLoadingDoctor = true; })
-      .addCase(cancelBookingAction.fulfilled, (state) => { state.isLoadingDoctor = false; })
-      .addCase(cancelBookingAction.rejected, (state) => { state.isLoadingDoctor = false; })
+      .addCase(cancelBookingAction.pending, (state) => {
+        state.isLoadingDoctor = true;
+      })
+      .addCase(cancelBookingAction.fulfilled, (state) => {
+        state.isLoadingDoctor = false;
+      })
+      .addCase(cancelBookingAction.rejected, (state) => {
+        state.isLoadingDoctor = false;
+      })
 
       // Fetch Patient History
-      .addCase(fetchPatientHistory.pending, (state) => { state.isLoadingDoctor = true; })
+      .addCase(fetchPatientHistory.pending, (state) => {
+        state.isLoadingDoctor = true;
+      })
       .addCase(fetchPatientHistory.fulfilled, (state, action) => {
         state.isLoadingDoctor = false;
         state.patientHistory = action.payload;
       })
-      .addCase(fetchPatientHistory.rejected, (state) => { state.isLoadingDoctor = false; });
+      .addCase(fetchPatientHistory.rejected, (state) => {
+        state.isLoadingDoctor = false;
+      });
   },
 });
 
@@ -506,7 +534,7 @@ src/redux/
 ├── store.js                    ← configureStore + persist
 └── slices/
     ├── appSlice.js             ← language, allcodes, loading
-    ├── userSlice.js            ← isLoggedIn, userInfo, token 
+    ├── userSlice.js            ← isLoggedIn, userInfo, token
     ├── adminSlice.js           ← users, topDoctors
     └── doctorSlice.js          ← patientList, patientHistory
 ```
@@ -557,6 +585,7 @@ Value: {"app":"{\"language\":\"vi\",...}","user":"{\"isLoggedIn\":true,...}"}
 ## 2.7 Cài Redux DevTools (Khuyến nghị)
 
 Cài extension **Redux DevTools** trên Chrome:
+
 1. Mở Chrome Web Store
 2. Tìm "Redux DevTools"
 3. Nhấn "Add to Chrome"

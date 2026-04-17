@@ -4,19 +4,19 @@
 // [CROSS-VALIDATION] Dùng dangerouslySetInnerHTML cho contentHTML (KHÔNG dùng ReactMarkdown)
 // ✅ [SECURITY-FIX] DOMPurify làm sạch HTML trước khi render (Defense-in-Depth Layer 2)
 
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import { FormattedMessage } from 'react-intl';
-import DOMPurify from 'dompurify';
-import { getDoctorDetail } from '../../services/doctorService';
-import { LANGUAGES } from '../../utils/constants';
-import CommonUtils from '../../utils/CommonUtils';
-import DoctorSchedule from './DoctorSchedule';
-import DoctorExtraInfo from './DoctorExtraInfo';
-import DoctorReviewList from './DoctorReviewList';
-import SocialPlugin from './SocialPlugin';
-import './DoctorDetail.scss';
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { FormattedMessage } from "react-intl";
+import DOMPurify from "dompurify";
+import { getDoctorDetail } from "../../services/doctorService";
+import { LANGUAGES } from "../../utils/constants";
+import CommonUtils from "../../utils/CommonUtils";
+import DoctorSchedule from "./DoctorSchedule";
+import DoctorExtraInfo from "./DoctorExtraInfo";
+import DoctorReviewList from "./DoctorReviewList";
+import SocialPlugin from "./SocialPlugin";
+import "./DoctorDetail.scss";
 
 const DoctorDetail = () => {
   const { id } = useParams();
@@ -48,22 +48,22 @@ const DoctorDetail = () => {
 
   // ===== Xử lý hình ảnh BLOB (SRS Constraint #7) =====
   const getImageSrc = () => {
-    if (!doctorInfo || !doctorInfo.image) return '';
+    if (!doctorInfo || !doctorInfo.image) return "";
     return CommonUtils.decodeBase64Image(doctorInfo.image);
   };
 
   // ===== Hiển thị tên bác sĩ theo ngôn ngữ =====
   const getDoctorName = () => {
-    if (!doctorInfo) return '';
+    if (!doctorInfo) return "";
     if (language === LANGUAGES.VI) {
-      return `${doctorInfo.positionData?.valueVi || ''} ${doctorInfo.lastName || ''} ${doctorInfo.firstName || ''}`;
+      return `${doctorInfo.positionData?.valueVi || ""} ${doctorInfo.lastName || ""} ${doctorInfo.firstName || ""}`;
     }
-    return `${doctorInfo.positionData?.valueEn || ''} ${doctorInfo.firstName || ''} ${doctorInfo.lastName || ''}`;
+    return `${doctorInfo.positionData?.valueEn || ""} ${doctorInfo.firstName || ""} ${doctorInfo.lastName || ""}`;
   };
 
   // ===== Hiển thị chức danh theo ngôn ngữ =====
   const getPosition = () => {
-    if (!doctorInfo || !doctorInfo.positionData) return '';
+    if (!doctorInfo || !doctorInfo.positionData) return "";
     return language === LANGUAGES.VI
       ? doctorInfo.positionData.valueVi
       : doctorInfo.positionData.valueEn;
@@ -71,8 +71,7 @@ const DoctorDetail = () => {
 
   // ===== Hiển thị mô tả ngắn =====
   const getDescription = () => {
-    if (!doctorInfo || !doctorInfo.Doctor_Info) return '';
-    return doctorInfo.Doctor_Info.description || '';
+    return doctorInfo?.doctorInfoData?.description || "khong co mo ta ngan";
   };
 
   // ✅ [DEEP-SCAN FIX-2] SKELETON LOADING — Chống giật màn hình
@@ -130,7 +129,8 @@ const DoctorDetail = () => {
     <div className="doctor-detail" id="doctor-detail-page">
       {doctorInfo && (
         <>
-          {/* ====== PHẦN 1: HEADER — Thông tin bác sĩ ====== */}
+          {console.log("DoctorDetail Rendered with doctorInfo:", doctorInfo)}
+          {/** ====== PHẦN 1: HEADER — Thông tin bác sĩ ======  */}
           <div className="doctor-detail__header">
             <div className="doctor-detail__header-container">
               {/* Avatar */}
@@ -144,12 +144,10 @@ const DoctorDetail = () => {
 
               {/* Thông tin */}
               <div className="doctor-detail__info">
-                <h1 className="doctor-detail__name">
-                  {getDoctorName()}
-                </h1>
+                <h1 className="doctor-detail__name">{getDoctorName()}</h1>
 
                 <p className="doctor-detail__description">
-                  {getDescription()}
+                  day la vi tri cua mo ta ngan{getDescription()}
                 </p>
 
                 {/* Địa chỉ phòng khám (nếu có) */}
@@ -167,7 +165,6 @@ const DoctorDetail = () => {
               </div>
             </div>
           </div>
-
           {/* ====== PHẦN 2: BODY — Lịch khám + Thông tin phòng khám ====== */}
           <div className="doctor-detail__schedule-section">
             <div className="doctor-detail__schedule-container">
@@ -182,32 +179,31 @@ const DoctorDetail = () => {
               </div>
             </div>
           </div>
-
           {/* ====== PHẦN 3: BÀI VIẾT — contentHTML (dangerouslySetInnerHTML) ====== */}
           {/* ⚠️ [CROSS-VALIDATION] BẮT BUỘC dùng dangerouslySetInnerHTML
               TUYỆT ĐỐI KHÔNG dùng ReactMarkdown vì Backend đã render Markdown → HTML
               Nếu dùng ReactMarkdown sẽ render 2 lần → HTML entities bị escape sai */}
-          {doctorInfo.Doctor_Info && doctorInfo.Doctor_Info.contentHTML && (
+          {doctorInfo?.doctorInfoData?.contentHTML && (
             <div className="doctor-detail__content-section">
               <div className="doctor-detail__content-container">
                 <div
                   className="doctor-detail__content-body"
                   dangerouslySetInnerHTML={{
                     // ✅ [SECURITY-FIX] DOMPurify làm sạch HTML (Defense-in-Depth Layer 2)
-                    __html: DOMPurify.sanitize(doctorInfo.Doctor_Info.contentHTML),
+                    __html: DOMPurify.sanitize(
+                      doctorInfo.doctorInfoData.contentHTML,
+                    ),
                   }}
                 />
               </div>
             </div>
           )}
-
           {/* ====== PHẦN 4: ĐÁNH GIÁ BÁC SĨ — [Phase 9.6] ====== */}
           <div className="doctor-detail__review-section">
             <div className="doctor-detail__review-container">
               <DoctorReviewList doctorId={id} />
             </div>
           </div>
-
           {/* ====== PHẦN 5: BÌNH LUẬN — Facebook Comment Plugin (REQ-SI-001, 002, 003) ====== */}
           <div className="doctor-detail__comment-section">
             <div className="doctor-detail__comment-container">
