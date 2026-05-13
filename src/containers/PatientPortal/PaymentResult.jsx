@@ -123,17 +123,24 @@ function PaymentResult() {
   if (result?.error)
     return <div className="tw-text-center tw-text-red-500 tw-py-20">{result.error}</div>;
 
-  // CẤM dangerouslySetInnerHTML. TEXT thuần.
   const data = result?.data || {};
+  
+  // Format Date if it's a timestamp
+  let formattedDate = data.date;
+  if (data.date && !isNaN(data.date)) {
+    const d = new Date(parseInt(data.date, 10));
+    formattedDate = `${('0' + d.getDate()).slice(-2)}/${('0' + (d.getMonth() + 1)).slice(-2)}/${d.getFullYear()}`;
+  }
+
   return (
     <div className="tw-max-w-lg tw-mx-auto tw-p-6 tw-bg-white tw-rounded tw-shadow tw-mt-10">
       <h2 className="tw-text-xl tw-font-bold tw-mb-4">Kết quả thanh toán</h2>
       <p>Bệnh nhân: {data.patientNameMasked}</p>
       <p>Bác sĩ: {data.doctorName}</p>
-      <p>Ngày khám: {data.date}</p>
+      <p>Ngày khám: {formattedDate}</p>
       <p>Giờ khám: {data.timeType}</p>
       <p>Số tiền: {data.bookingPrice?.toLocaleString()} VNĐ</p>
-      <p>Mã GD: {data.vnpayTransactionNo}</p>
+      <p>Mã GD: {data.vnpayTransactionNo || 'Đang cập nhật'}</p>
       <div className="tw-mt-3">
         <PaymentBadge status={data.paymentStatus} />
       </div>

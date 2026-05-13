@@ -32,7 +32,8 @@
     "redux-persist": "^6.0.0",
     "sass": "^1.98.0",
     "slick-carousel": "^1.8.1",
-    "sweetalert2": "^11.26.23"
+    "sweetalert2": "^11.26.23",
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",

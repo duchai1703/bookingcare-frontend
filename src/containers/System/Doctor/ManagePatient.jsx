@@ -219,8 +219,8 @@ const ManagePatient = () => {
             <tbody>
               {dataPatient.map((item, index) => {
                 const genderLabel = language === LANGUAGES.VI
-                  ? item.patientData?.genderData?.valueVi
-                  : item.patientData?.genderData?.valueEn;
+                  ? (item.genderBookingData?.valueVi || item.patientData?.genderData?.valueVi)
+                  : (item.genderBookingData?.valueEn || item.patientData?.genderData?.valueEn);
                 const timeLabel = language === LANGUAGES.VI
                   ? item.timeTypeBooking?.valueVi
                   : item.timeTypeBooking?.valueEn;
@@ -229,8 +229,8 @@ const ManagePatient = () => {
                   <tr key={item.id || index} className="tw-border-b tw-border-gray-100 hover:tw-bg-primary-light/30 tw-transition-colors">
                     <td className="tw-px-4 tw-py-3 tw-text-text-sub">{index + 1}</td>
                     <td className="tw-px-4 tw-py-3 tw-font-medium tw-text-text-main">{item.patientName || `${item.patientData?.lastName} ${item.patientData?.firstName}`}</td>
-                    <td className="tw-px-4 tw-py-3 tw-text-text-sub">{item.patientData?.phoneNumber || item.patientPhoneNumber}</td>
-                    <td className="tw-px-4 tw-py-3 tw-text-text-sub tw-max-w-[150px] tw-truncate">{item.patientData?.address || item.patientAddress}</td>
+                    <td className="tw-px-4 tw-py-3 tw-text-text-sub">{item.patientPhoneNumber || item.patientData?.phoneNumber}</td>
+                    <td className="tw-px-4 tw-py-3 tw-text-text-sub tw-max-w-[150px] tw-truncate">{item.patientAddress || item.patientData?.address}</td>
                     <td className="tw-px-4 tw-py-3 tw-text-text-sub">{genderLabel || '—'}</td>
                     <td className="tw-px-4 tw-py-3"><span className="tw-px-2 tw-py-0.5 tw-bg-indigo-50 tw-text-indigo-700 tw-rounded-md tw-text-xs tw-font-medium">{timeLabel || '—'}</span></td>
                     <td className="tw-px-4 tw-py-3 tw-text-text-sub tw-max-w-[150px] tw-truncate">{item.reason || '—'}</td>

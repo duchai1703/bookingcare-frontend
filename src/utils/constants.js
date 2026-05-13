@@ -31,6 +31,7 @@ export const path = {
   SPECIALTY_DETAIL: '/specialty/:id',
   CLINIC_DETAIL: '/clinic/:id',
   VERIFY_BOOKING: '/verify-booking',
+  PAYMENT_RESULT: '/payment-result',
 
   // [Phase 9.3] Auth Pages
   REGISTER: '/register',

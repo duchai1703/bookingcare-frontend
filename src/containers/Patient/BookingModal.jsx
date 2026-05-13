@@ -14,10 +14,9 @@ import { useSelector, useDispatch } from 'react-redux';
 import moment from 'moment';
 import { toast } from 'react-toastify';
 import { FormattedMessage, useIntl } from 'react-intl';
-import { v4 as uuidv4 } from 'uuid';
 import { fetchAllcodeByType } from '../../redux/slices/appSlice';
 import { LANGUAGES, ALLCODE_TYPES } from '../../utils/constants';
-import { callWithRetry, createPaymentUrl } from '../../services/paymentService';
+import { postBookAppointment } from '../../services/patientService';
 import './BookingModal.scss';
 
 // [Fix Bug 9.7] Triệt tiêu email khỏi state — email lấy từ userInfo.email trực tiếp
@@ -50,10 +49,7 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price }) => {
 
   const [formData, setFormData] = useState(INITIAL_FORM);
   const [errors, setErrors] = useState(INITIAL_ERRORS);
-  // [Phase 11] VNPay UI states: idle | loading | retrying | cancelled | failed
   const [uiState, setUiState] = useState('idle');
-  const [retryInfo, setRetryInfo] = useState(null);
-  const abortRef = useRef(new AbortController());
 
   // Fetch gender allcode on mount
   useEffect(() => {
@@ -88,7 +84,6 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price }) => {
     setFormData(INITIAL_FORM);
     setErrors(INITIAL_ERRORS);
     setUiState('idle');
-    setRetryInfo(null);
     onClose();
   };
 
@@ -150,7 +145,7 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price }) => {
   };
 
   // ═══════════════════════════════════════════════════════════════════════
-  // [Phase 11] VNPay Submit handler — callWithRetry + idempotency
+  // [Phase 11] Flow mới: Lưu Đặt khám -> Gửi Email -> Xác nhận -> VNPay
   // ═══════════════════════════════════════════════════════════════════════
   const handleSubmit = async () => {
     const { isValid, errors: validationErrors } = validateForm();
@@ -159,57 +154,39 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price }) => {
       return;
     }
 
-    if (['loading', 'retrying'].includes(uiState)) return;
+    if (uiState === 'loading') return;
     setUiState('loading');
 
-    const idempotencyKey = uuidv4();
-
     try {
-      const result = await callWithRetry(
-        (signal) =>
-          createPaymentUrl(
-            {
-              doctorId,
-              date,
-              timeType: timeSlot.timeType,
-              price: price,
-              fullName: formData.fullName,
-              email: userInfo?.email || '',
-              phoneNumber: formData.phoneNumber,
-              address: formData.address,
-              reason: formData.reason,
-              birthday: formData.birthday,
-              gender: formData.gender,
-              language: language,
-            },
-            accessToken,
-            idempotencyKey,
-            signal,
-          ),
-        {
-          onRetry: (a, d) => {
-            setUiState('retrying');
-            setRetryInfo({ attempt: a, delay: d, maxRetry: 5 });
-          },
-          signal: abortRef.current.signal,
-        },
-      );
-      if (result.isResume) toast.info('Tiếp tục giao dịch trước đó...');
-      window.location.href = result.paymentUrl;
-    } catch (err) {
-      setUiState(abortRef.current.signal.aborted ? 'cancelled' : 'failed');
-      if (!abortRef.current.signal.aborted)
-        toast.error('Không thể tạo giao dịch');
-      setRetryInfo(null);
-    }
-  };
+      const response = await postBookAppointment({
+        doctorId,
+        date,
+        timeType: timeSlot.timeType,
+        fullName: formData.fullName,
+        email: userInfo?.email || '',
+        phoneNumber: formData.phoneNumber,
+        address: formData.address,
+        reason: formData.reason,
+        birthday: formData.birthday,
+        gender: formData.gender,
+        language: language,
+      });
 
-  // ═══ Hủy retry — abort current request ═══
-  const handleCancelRetry = () => {
-    abortRef.current.abort();
-    abortRef.current = new AbortController();
-    setUiState('cancelled');
-    setRetryInfo(null);
+      if (response && response.errCode === 0) {
+        toast.success(
+          language === LANGUAGES.VI
+            ? "Đặt lịch thành công! Vui lòng kiểm tra email để xác nhận và thanh toán."
+            : "Booking successful! Please check your email to confirm and pay."
+        );
+        handleCloseModal();
+      } else {
+        toast.error(response?.errMessage || "Lỗi đặt lịch khám!");
+        setUiState('idle');
+      }
+    } catch (err) {
+      toast.error('Lỗi kết nối Server!');
+      setUiState('idle');
+    }
   };
 
   if (!isOpen) return null;
@@ -230,20 +207,7 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price }) => {
           </button>
         </div>
 
-        {/* ===== RETRY OVERLAY — [Phase 11] ===== */}
-        {uiState === 'retrying' && retryInfo && (
-          <div className="retry-overlay tw-bg-yellow-50 tw-border tw-border-yellow-200 tw-rounded tw-p-4 tw-mb-4 tw-text-center">
-            <p className="tw-text-yellow-700 tw-font-medium">
-              Đang thử lại giao dịch... (Lần {retryInfo.attempt}/{retryInfo.maxRetry})
-            </p>
-            <button
-              className="tw-mt-2 tw-px-4 tw-py-1 tw-bg-red-500 tw-text-white tw-rounded tw-text-sm"
-              onClick={handleCancelRetry}
-            >
-              Hủy bỏ
-            </button>
-          </div>
-        )}
+
 
         {/* ===== INFO SECTION — Thông tin lịch khám đã chọn ===== */}
         <div className="booking-modal__info">
@@ -399,7 +363,7 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price }) => {
           </div>
         </div>
 
-        {/* ===== FOOTER — [Phase 11] VNPay button states ===== */}
+        {/* ===== FOOTER — [Phase 11] Submit Button ===== */}
         <div className="booking-modal__footer">
           <button
             className="booking-modal__btn booking-modal__btn--cancel"
@@ -410,14 +374,12 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price }) => {
           <button
             className="booking-modal__btn booking-modal__btn--confirm"
             onClick={handleSubmit}
-            disabled={['loading', 'retrying'].includes(uiState)}
+            disabled={uiState === 'loading'}
           >
             {uiState === 'loading' ? (
               <><i className="fas fa-spinner fa-spin" /> Đang xử lý...</>
-            ) : uiState === 'retrying' ? (
-              <><i className="fas fa-spinner fa-spin" /> Đang thử lại...</>
             ) : (
-              'Thanh toán VNPay'
+              language === LANGUAGES.VI ? 'Xác nhận đặt lịch' : 'Confirm Booking'
             )}
           </button>
         </div>

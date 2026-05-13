@@ -17,6 +17,7 @@ import DoctorDetail from './Patient/DoctorDetail';
 import SpecialtyDetail from './Patient/SpecialtyDetail';
 import ClinicDetail from './Patient/ClinicDetail';
 import VerifyEmail from './Patient/VerifyEmail';
+import PaymentResult from './PatientPortal/PaymentResult';
 
 // ===== Protected Pages =====
 import SystemLayout from './System/SystemLayout';
@@ -103,6 +104,9 @@ const App = () => {
 
         {/* Xác thực email — SRS 3.10 */}
         <Route path={path.VERIFY_BOOKING} element={<VerifyEmail />} />
+
+        {/* Kết quả thanh toán VNPay */}
+        <Route path={path.PAYMENT_RESULT} element={<PaymentResult />} />
 
         {/* ===== ADMIN ROUTES — Chỉ Admin R1 (SRS REQ-AU-005) ===== */}
         <Route element={<PrivateRoute allowedRoles={[USER_ROLE.ADMIN]} />}>
