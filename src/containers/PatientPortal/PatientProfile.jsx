@@ -9,6 +9,7 @@ import { FormattedMessage, useIntl } from 'react-intl';
 import { toast } from 'react-toastify';
 
 import { processLogout, updateUserInfo } from '../../redux/slices/userSlice';
+import { persistor } from '../../redux/store'; // ✅ [Fix 3.2] Import persistor
 import { fetchAllcodeByType } from '../../redux/slices/appSlice';
 import { getPatientProfile, editPatientProfile, changePassword } from '../../services/patientService';
 import { ALLCODE_TYPES } from '../../utils/constants';
@@ -177,9 +178,10 @@ const PatientProfile = () => {
       if (result.errCode === 0) {
         toast.success(intl.formatMessage({ id: 'patient-portal.change-password.success' }));
 
-        // ✅ BẮT BUỘC: Logout vì token cũ đã bị revoke (tokenVersion++)
-        setTimeout(() => {
+        // ✅ [Fix 3.2] BẮT BUỘC: Logout + flush persistor vì token cũ đã bị revoke
+        setTimeout(async () => {
           dispatch(processLogout());
+          await persistor.flush(); // ✅ [Fix 3.2] Xóa sạch storage
           navigate('/login', { replace: true });
         }, 1500);
       } else {

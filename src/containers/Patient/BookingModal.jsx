@@ -7,15 +7,17 @@
 //   - Xử lý deprecationWarning từ Dual Mode Backend
 // [Phase 9.7] Triệt tiêu formData.email, isLoading UX guard
 // [CTO-FIX-4] Dọn rác khi đóng modal (chống data leak)
+// [Phase 11 — GĐ 11.4] VNPay Payment Flow: callWithRetry + idempotency
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import moment from 'moment';
 import { toast } from 'react-toastify';
 import { FormattedMessage, useIntl } from 'react-intl';
-import { bookAppointment } from '../../redux/slices/doctorSlice';
+import { v4 as uuidv4 } from 'uuid';
 import { fetchAllcodeByType } from '../../redux/slices/appSlice';
 import { LANGUAGES, ALLCODE_TYPES } from '../../utils/constants';
+import { callWithRetry, createPaymentUrl } from '../../services/paymentService';
 import './BookingModal.scss';
 
 // [Fix Bug 9.7] Triệt tiêu email khỏi state — email lấy từ userInfo.email trực tiếp
@@ -37,18 +39,21 @@ const INITIAL_ERRORS = {
   gender: '',
 };
 
-const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date }) => {
+const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price }) => {
   const dispatch = useDispatch();
   const intl = useIntl();
   const language = useSelector((state) => state.app.language);
   const genders = useSelector((state) => state.app.genders);
   // [Phase 9.5] Lấy userInfo từ Redux — email lấy TRỰC TIẾP từ đây
   const userInfo = useSelector((state) => state.user.userInfo);
+  const accessToken = useSelector((state) => state.user.accessToken);
 
   const [formData, setFormData] = useState(INITIAL_FORM);
   const [errors, setErrors] = useState(INITIAL_ERRORS);
-  // [Phase 9.7] isLoading UX guard — chặn double-click (Race Condition UI)
-  const [isLoading, setIsLoading] = useState(false);
+  // [Phase 11] VNPay UI states: idle | loading | retrying | cancelled | failed
+  const [uiState, setUiState] = useState('idle');
+  const [retryInfo, setRetryInfo] = useState(null);
+  const abortRef = useRef(new AbortController());
 
   // Fetch gender allcode on mount
   useEffect(() => {
@@ -82,7 +87,8 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date }) => {
   const handleCloseModal = () => {
     setFormData(INITIAL_FORM);
     setErrors(INITIAL_ERRORS);
-    setIsLoading(false);
+    setUiState('idle');
+    setRetryInfo(null);
     onClose();
   };
 
@@ -144,7 +150,7 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date }) => {
   };
 
   // ═══════════════════════════════════════════════════════════════════════
-  // [Phase 9.7] Submit handler — isLoading UX guard + email từ userInfo
+  // [Phase 11] VNPay Submit handler — callWithRetry + idempotency
   // ═══════════════════════════════════════════════════════════════════════
   const handleSubmit = async () => {
     const { isValid, errors: validationErrors } = validateForm();
@@ -153,53 +159,57 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date }) => {
       return;
     }
 
-    // [Phase 9.7] isLoading = true → disable nút, hiển thị "Đang xử lý..."
-    setIsLoading(true);
+    if (['loading', 'retrying'].includes(uiState)) return;
+    setUiState('loading');
+
+    const idempotencyKey = uuidv4();
+
     try {
-      // [Fix Bug 9.7] email BẮT BUỘC lấy từ userInfo.email, KHÔNG từ state
-      const bookingData = {
-        fullName: formData.fullName,
-        email: userInfo?.email || '',
-        phoneNumber: formData.phoneNumber,
-        address: formData.address,
-        reason: formData.reason,
-        date: date,
-        birthday: formData.birthday,
-        doctorId: doctorId,
-        timeType: timeSlot.timeType,
-        gender: formData.gender,
-        language: language,
-        timeString:
-          language === LANGUAGES.VI
-            ? timeSlot.timeTypeData?.valueVi
-            : timeSlot.timeTypeData?.valueEn,
-        dateString: moment(parseInt(date, 10)).format(
-          language === LANGUAGES.VI ? 'DD/MM/YYYY' : 'MM/DD/YYYY'
-        ),
-      };
-
-      const result = await dispatch(bookAppointment(bookingData)).unwrap();
-
-      if (result.errCode === 0) {
-        if (result.deprecationWarning) {
-          toast.warn(result.deprecationWarning, { autoClose: 8000 });
-        } else {
-          toast.success(intl.formatMessage({ id: 'booking-modal.success' }));
-        }
-        handleCloseModal();
-      } else if (result.errCode === 2) {
-        toast.error(intl.formatMessage({ id: 'booking-modal.duplicate' }));
-      } else if (result.errCode === 4) {
-        toast.error(intl.formatMessage({ id: 'booking-modal.slot-full' }));
-      } else {
-        toast.error(intl.formatMessage({ id: 'booking-modal.error' }));
-      }
-    } catch {
-      toast.error(intl.formatMessage({ id: 'booking-modal.error' }));
-    } finally {
-      // [Phase 9.7] LUÔN tắt loading dù thành công hay lỗi
-      setIsLoading(false);
+      const result = await callWithRetry(
+        (signal) =>
+          createPaymentUrl(
+            {
+              doctorId,
+              date,
+              timeType: timeSlot.timeType,
+              price: price,
+              fullName: formData.fullName,
+              email: userInfo?.email || '',
+              phoneNumber: formData.phoneNumber,
+              address: formData.address,
+              reason: formData.reason,
+              birthday: formData.birthday,
+              gender: formData.gender,
+              language: language,
+            },
+            accessToken,
+            idempotencyKey,
+            signal,
+          ),
+        {
+          onRetry: (a, d) => {
+            setUiState('retrying');
+            setRetryInfo({ attempt: a, delay: d, maxRetry: 5 });
+          },
+          signal: abortRef.current.signal,
+        },
+      );
+      if (result.isResume) toast.info('Tiếp tục giao dịch trước đó...');
+      window.location.href = result.paymentUrl;
+    } catch (err) {
+      setUiState(abortRef.current.signal.aborted ? 'cancelled' : 'failed');
+      if (!abortRef.current.signal.aborted)
+        toast.error('Không thể tạo giao dịch');
+      setRetryInfo(null);
     }
+  };
+
+  // ═══ Hủy retry — abort current request ═══
+  const handleCancelRetry = () => {
+    abortRef.current.abort();
+    abortRef.current = new AbortController();
+    setUiState('cancelled');
+    setRetryInfo(null);
   };
 
   if (!isOpen) return null;
@@ -219,6 +229,21 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date }) => {
             ✕
           </button>
         </div>
+
+        {/* ===== RETRY OVERLAY — [Phase 11] ===== */}
+        {uiState === 'retrying' && retryInfo && (
+          <div className="retry-overlay tw-bg-yellow-50 tw-border tw-border-yellow-200 tw-rounded tw-p-4 tw-mb-4 tw-text-center">
+            <p className="tw-text-yellow-700 tw-font-medium">
+              Đang thử lại giao dịch... (Lần {retryInfo.attempt}/{retryInfo.maxRetry})
+            </p>
+            <button
+              className="tw-mt-2 tw-px-4 tw-py-1 tw-bg-red-500 tw-text-white tw-rounded tw-text-sm"
+              onClick={handleCancelRetry}
+            >
+              Hủy bỏ
+            </button>
+          </div>
+        )}
 
         {/* ===== INFO SECTION — Thông tin lịch khám đã chọn ===== */}
         <div className="booking-modal__info">
@@ -374,7 +399,7 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date }) => {
           </div>
         </div>
 
-        {/* ===== FOOTER — [Phase 9.7] isLoading UX guard ===== */}
+        {/* ===== FOOTER — [Phase 11] VNPay button states ===== */}
         <div className="booking-modal__footer">
           <button
             className="booking-modal__btn booking-modal__btn--cancel"
@@ -385,12 +410,14 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date }) => {
           <button
             className="booking-modal__btn booking-modal__btn--confirm"
             onClick={handleSubmit}
-            disabled={isLoading}
+            disabled={['loading', 'retrying'].includes(uiState)}
           >
-            {isLoading ? (
-              <><i className="fas fa-spinner fa-spin" /> <FormattedMessage id="booking-modal.submitting" /></>
+            {uiState === 'loading' ? (
+              <><i className="fas fa-spinner fa-spin" /> Đang xử lý...</>
+            ) : uiState === 'retrying' ? (
+              <><i className="fas fa-spinner fa-spin" /> Đang thử lại...</>
             ) : (
-              <FormattedMessage id="booking-modal.confirm-btn" />
+              'Thanh toán VNPay'
             )}
           </button>
         </div>
