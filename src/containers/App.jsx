@@ -39,6 +39,9 @@ import Header from '../components/Header/Header';
 import Footer from '../components/Footer/Footer';
 import Loading from '../components/Loading/Loading';
 
+// [Phase 12] AI Chatbot — Floating widget
+import AIChatbot from './Patient/AIChatbot/AIChatbot';
+
 import './App.scss';
 
 const App = () => {
@@ -153,6 +156,9 @@ const App = () => {
           }
         />
       </Routes>
+
+      {/* [Phase 12] AI Chatbot — Floating widget, render ngoài Routes */}
+      <AIChatbot />
     </div>
   );
 };
