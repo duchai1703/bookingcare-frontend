@@ -29,6 +29,25 @@ const SpecialtyDetail = () => {
   const [doctorList, setDoctorList] = useState([]);
   const [selectedProvince, setSelectedProvince] = useState('ALL');
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const [expandedDoctors, setExpandedDoctors] = useState({});
+
+  const toggleDoctorExpand = (doctorId) => {
+    setExpandedDoctors((prev) => ({
+      ...prev,
+      [doctorId]: !prev[doctorId],
+    }));
+  };
+
+  const handleAIConsult = (doctor) => {
+    const doctorName = getDoctorName(doctor);
+    const promptText = language === LANGUAGES.VI
+      ? `Tôi muốn tư vấn triệu chứng với bác sĩ ${doctorName}`
+      : `I want to consult symptoms with doctor ${doctorName}`;
+    const event = new CustomEvent('open-ai-chat', {
+      detail: { prompt: promptText }
+    });
+    window.dispatchEvent(event);
+  };
 
   // Fetch provinces cho dropdown lọc
   useEffect(() => {
@@ -173,40 +192,88 @@ const SpecialtyDetail = () => {
                 className="specialty-detail__doctor-card"
                 id={`doctor-card-${doctor.id}`}
               >
-                {/* Cột trái: Avatar + Tên + Chức danh */}
-                <div className="specialty-detail__doctor-header">
-                  <div className="specialty-detail__doctor-avatar">
-                    <img
-                      src={
-                        doctor.image
-                          ? CommonUtils.decodeBase64Image(doctor.image)
-                          : ''
+                {/* Cột trái: Avatar + Tên + Mô tả bác sĩ + Tư vấn AI */}
+                <div className="specialty-detail__doctor-left">
+                  <div className="specialty-detail__doctor-avatar-side">
+                    <div className="specialty-detail__doctor-avatar">
+                      <img
+                        src={
+                          doctor.image
+                            ? CommonUtils.decodeBase64Image(doctor.image)
+                            : ''
+                        }
+                        alt={getDoctorName(doctor)}
+                      />
+                    </div>
+                    <span
+                      className="specialty-detail__avatar-more"
+                      onClick={() =>
+                        (window.location.href = `/doctor/${doctor.id}`)
                       }
-                      alt={getDoctorName(doctor)}
-                    />
+                    >
+                      {language === LANGUAGES.VI ? 'Xem thêm' : 'See more'}
+                    </span>
                   </div>
-                  <div className="specialty-detail__doctor-info">
+
+                  <div className="specialty-detail__doctor-intro-side">
                     <h3
                       className="specialty-detail__doctor-name"
                       onClick={() =>
                         (window.location.href = `/doctor/${doctor.id}`)
                       }
                     >
+                      <span className="specialty-detail__favorite-badge">
+                        ❤️ {language === LANGUAGES.VI ? 'Yêu thích' : 'Favorite'}
+                      </span>{' '}
                       {getDoctorName(doctor)}
                     </h3>
                     <p className="specialty-detail__doctor-specialty">
                       {doctor.Doctor_Info?.specialtyData?.name || ''}
                     </p>
                     {doctor.Doctor_Info?.description && (
-                      <p className="specialty-detail__doctor-desc">
-                        {doctor.Doctor_Info.description}
-                      </p>
+                      <div className="specialty-detail__doctor-desc-wrapper">
+                        <p
+                          className={`specialty-detail__doctor-desc ${
+                            expandedDoctors[doctor.id] ? 'expanded' : ''
+                          }`}
+                        >
+                          {doctor.Doctor_Info.description}
+                        </p>
+                        {doctor.Doctor_Info.description.length > 120 && (
+                          <button
+                            type="button"
+                            className="specialty-detail__desc-toggle"
+                            onClick={() => toggleDoctorExpand(doctor.id)}
+                          >
+                            {expandedDoctors[doctor.id]
+                              ? language === LANGUAGES.VI
+                                ? '▲ Thu gọn'
+                                : '▲ Collapse'
+                              : language === LANGUAGES.VI
+                              ? '▼ Xem thêm'
+                              : '▼ See more'}
+                          </button>
+                        )}
+                      </div>
                     )}
+                    <div className="specialty-detail__doctor-location">
+                      <i className="fas fa-map-marker-alt"></i>{' '}
+                      {language === LANGUAGES.VI
+                        ? doctor.Doctor_Info?.provinceData?.valueVi || 'Toàn quốc'
+                        : doctor.Doctor_Info?.provinceData?.valueEn || 'National'}
+                    </div>
+                    <button
+                      type="button"
+                      className="specialty-detail__ai-btn"
+                      onClick={() => handleAIConsult(doctor)}
+                    >
+                      🤖 {language === LANGUAGES.VI ? 'Tư vấn AI' : 'AI Consultation'}
+                    </button>
                   </div>
                 </div>
 
-                {/* Cột dưới: DoctorSchedule + DoctorExtraInfo */}
-                <div className="specialty-detail__doctor-body">
+                {/* Cột phải: Lịch khám + Thông tin giá & bảo hiểm */}
+                <div className="specialty-detail__doctor-right">
                   <div className="specialty-detail__doctor-schedule">
                     <DoctorSchedule doctorId={doctor.id} />
                   </div>

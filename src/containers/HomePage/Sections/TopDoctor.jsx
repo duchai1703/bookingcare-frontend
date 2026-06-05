@@ -45,7 +45,7 @@ const TopDoctor = () => {
   };
 
   return (
-    <div className="section-top-doctor">
+    <div className="section-top-doctor" id="section-top-doctor">
       <div className="section-content">
         <div className="section-header">
           <h2 className="section-title">
@@ -77,7 +77,7 @@ const TopDoctor = () => {
                 <div className="card-info">
                   <h3 className="doctor-name">{getNameByLanguage(doctor)}</h3>
                   <p className="doctor-specialty">
-                    {doctor.Doctor_Info?.specialtyData?.name || ''}
+                    {doctor.doctorInfoData?.specialtyData?.name || ''}
                   </p>
                 </div>
               </div>

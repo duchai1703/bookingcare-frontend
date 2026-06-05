@@ -1,13 +1,18 @@
 // ═══════════════════════════════════════════════════════════════════════
-// [Phase 12.5] AIChatbot — Root Component + SSE Streaming
+// [Phase 12.5 — PREMIUM UI] AIChatbot — Root Component + SSE Streaming
 // 42 Guards — BẮT BUỘC fetch + ReadableStream
+// + Lucide Icons, Header redesign, Scroll FAB, Typing Dots, Empty State
 // ═══════════════════════════════════════════════════════════════════════
 
 import React, { useState, useRef, useCallback, useEffect, memo } from 'react';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { MessageCircle, Trash2, X, ChevronDown } from 'lucide-react';
 import MessageItem from './MessageItem';
 import ChatInput from './ChatInput';
+import SuggestionChips from './SuggestionChips';
 import { useChatStorage } from './useChatStorage';
+import { FormattedMessage, useIntl } from 'react-intl';
 import './AIChatbot.scss';
 
 // ═══ [ErrorBoundary — Bẫy Async setError] ═══
@@ -32,6 +37,12 @@ class ChatErrorBoundary extends React.Component {
 // Root Component — React.memo
 // ═══════════════════════════════════════════════════════════════════════
 const AIChatbot = memo(() => {
+  const intl = useIntl();
+  const navigate = useNavigate();
+  const handleLoginRedirect = useCallback(() => {
+    setIsOpen(false);
+    navigate('/login');
+  }, [navigate]);
   // ═══ [Chờ Redux Persist — Chờ rehydrated] ═══
   const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
   const userInfo = useSelector((state) => state.user.userInfo);
@@ -44,6 +55,7 @@ const AIChatbot = memo(() => {
 
   const [isOpen, setIsOpen] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
+  const [showScrollBtn, setShowScrollBtn] = useState(false);
   const submitLockRef = useRef(false);   // [Double Submit Mutex]
   const abortControllerRef = useRef(null); // [AbortController Inside Submit]
   const streamTextRef = useRef('');      // [Stream Text Buffer]
@@ -149,6 +161,25 @@ const AIChatbot = memo(() => {
   useEffect(() => {
     scrollToBottom();
   }, [messages, scrollToBottom]);
+
+
+  // ──── [Scroll-to-bottom FAB — Show/Hide Logic] ────
+  const handleChatScroll = useCallback(() => {
+    if (chatBodyRef.current) {
+      const el = chatBodyRef.current;
+      const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+      setShowScrollBtn(distanceFromBottom > 120);
+    }
+  }, []);
+
+  const handleScrollToBottomClick = useCallback(() => {
+    if (chatBodyRef.current) {
+      chatBodyRef.current.scrollTo({
+        top: chatBodyRef.current.scrollHeight,
+        behavior: 'smooth',
+      });
+    }
+  }, []);
 
   // ──── [Guard: Mobile Viewport Fix — iOS Safari 100dvh] ────
   useEffect(() => {
@@ -374,6 +405,18 @@ const AIChatbot = memo(() => {
     [messages, language, addMessage, setMessages, saveMessages]
   );
 
+  // Lắng nghe event click "Tư vấn AI" từ doctor card
+  useEffect(() => {
+    const handleOpenChat = (e) => {
+      setIsOpen(true);
+      if (e.detail?.prompt) {
+        handleSubmit(e.detail.prompt);
+      }
+    };
+    window.addEventListener('open-ai-chat', handleOpenChat);
+    return () => window.removeEventListener('open-ai-chat', handleOpenChat);
+  }, [handleSubmit]);
+
   // ═══ [Chặn onCopy — Copy Plaintext] ═══
   const handleCopy = useCallback((e) => {
     const selection = window.getSelection()?.toString() || '';
@@ -383,8 +426,9 @@ const AIChatbot = memo(() => {
     }
   }, []);
 
-  // ═══ [Auto-minimize Modal] ═══
-  if (!isLoggedIn) return null;
+  const clearHistoryTitle = intl.formatMessage({ id: 'chatbot.btn-clear-history' });
+  const closeTitle = intl.formatMessage({ id: 'chatbot.btn-close' });
+  const scrollDownTitle = intl.formatMessage({ id: 'chatbot.btn-scroll-down' });
 
   return (
     <ChatErrorBoundary>
@@ -392,46 +436,123 @@ const AIChatbot = memo(() => {
       <button
         className="chat-toggle-btn"
         onClick={() => setIsOpen((prev) => !prev)}
-        style={{ zIndex: 9999 }}
         aria-label="Toggle AI Chat"
       >
-        💬
+        <MessageCircle />
       </button>
 
       {isOpen && (
         <div
           className="chat-container"
-          style={{ zIndex: 9999 }}
           onCopy={handleCopy}
           translate="no"
         >
-          {/* Header */}
+          {/* ═══ Header — Premium Design ═══ */}
           <div className="chat-header">
-            <span>🤖 Trợ lý AI BookingCare</span>
-            <button onClick={clearMessages} title="Xóa lịch sử">
-              🗑️
-            </button>
-            <button onClick={() => setIsOpen(false)} title="Đóng">
-              ✕
-            </button>
+            <div className="header-avatar">
+              🤖
+              <span className="status-dot" />
+            </div>
+            <div className="header-info">
+              <div className="header-title">
+                <FormattedMessage id="chatbot.header-title" />
+              </div>
+              <div className="header-subtitle">
+                <FormattedMessage id="chatbot.header-subtitle" />
+              </div>
+            </div>
+            <div className="header-actions">
+              {isLoggedIn && (
+                <button
+                  className="header-btn header-btn-trash"
+                  onClick={clearMessages}
+                  title={clearHistoryTitle}
+                  type="button"
+                >
+                  <Trash2 />
+                </button>
+              )}
+              <button
+                className="header-btn header-btn-close"
+                onClick={() => setIsOpen(false)}
+                title={closeTitle}
+                type="button"
+              >
+                <X />
+              </button>
+            </div>
           </div>
 
-          {/* Messages */}
-          <div className="chat-body" ref={chatBodyRef}>
-            {messages.map((msg) => (
-              <MessageItem key={msg.id} msg={msg} />
-            ))}
-            {isThinking && (
-              <div className="typing-indicator">AI đang suy nghĩ...</div>
-            )}
-          </div>
+          {!isLoggedIn ? (
+            <div className="chat-login-prompt-body">
+              <div className="lock-icon-wrapper">
+                <div className="lock-icon">🔒</div>
+              </div>
+              <h3 className="login-prompt-title">
+                <FormattedMessage id="chatbot.login-prompt-title" />
+              </h3>
+              <p className="login-prompt-desc">
+                <FormattedMessage id="chatbot.login-prompt-desc" />
+              </p>
+              <button className="btn-login-now" onClick={handleLoginRedirect}>
+                <FormattedMessage id="chatbot.btn-login-now" />
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* ═══ Messages / Empty State ═══ */}
+              {messages.length === 0 && !isThinking ? (
+                <div className="chat-body" ref={chatBodyRef}>
+                  <SuggestionChips
+                    onSubmit={handleSubmit}
+                    disabled={!isLoggedIn || isThinking}
+                  />
+                </div>
+              ) : (
+                <div
+                  className="chat-body"
+                  ref={chatBodyRef}
+                  onScroll={handleChatScroll}
+                >
+                  {messages.map((msg) => (
+                    <MessageItem key={msg.id} msg={msg} />
+                  ))}
 
-          {/* Input — BẢO ĐẢM 3 */}
-          <ChatInput
-            onSubmit={handleSubmit}
-            disabled={!isLoggedIn || isThinking}
-            isThinking={isThinking}
-          />
+                  {/* Typing Indicator — Bouncing Dots */}
+                  {isThinking && (
+                    <div className="typing-indicator">
+                      <div className="ai-avatar-small">🤖</div>
+                      <div className="dots-bubble">
+                        <span className="dot" />
+                        <span className="dot" />
+                        <span className="dot" />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Scroll-to-bottom FAB */}
+                  {showScrollBtn && (
+                    <button
+                      className="scroll-to-bottom-btn"
+                      onClick={handleScrollToBottomClick}
+                      type="button"
+                      aria-label={scrollDownTitle}
+                      title={scrollDownTitle}
+                    >
+                      <ChevronDown />
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Input — BẢO ĐẢM 3 */}
+              <ChatInput
+                onSubmit={handleSubmit}
+                disabled={!isLoggedIn || isThinking}
+                isThinking={isThinking}
+              />
+            </>
+          )}
         </div>
       )}
     </ChatErrorBoundary>

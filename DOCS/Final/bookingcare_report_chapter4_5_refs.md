@@ -127,6 +127,25 @@ Hệ thống đã triển khai đầy đủ 31 chức năng chính phân bổ ch
 
 Hệ thống bảo mật được thiết kế với nhiều lớp: JWT authentication với token version revocation, bcrypt password hashing, rate limiting (auth: 100 req/15min, API: 10000 req/15min), CORS policy, XSS prevention (DOMPurify + sanitize-html), input validation, URI length guard, query parser protection, và timezone zero-trust boot check.
 
+### Kết quả đạt được trong quá trình làm đề tài
+
+**1. Học hỏi được những gì về Lý thuyết:**
+- Nắm vững kiến thức nền tảng về quy trình phát triển ứng dụng phần mềm, từ khâu phân tích yêu cầu (Use Case, Business Rules), thiết kế kiến trúc hệ thống, đến triển khai thực tiễn.
+- Hiểu sâu sắc về kiến trúc phần mềm Client-Server và mô hình MVC trong việc thiết kế Backend.
+- Vận dụng tốt các nguyên lý thiết kế cơ sở dữ liệu quan hệ (RDBMS), chuẩn hóa dữ liệu và xây dựng các mối quan hệ thực thể.
+- Nắm bắt và hiểu rõ các cơ chế bảo mật hệ thống web quan trọng như: Xác thực (Authentication - JWT), Phân quyền (Authorization), mã hóa mật khẩu, và cách phòng ngừa các lỗ hổng bảo mật phổ biến (XSS, CSRF, IDOR).
+
+**2. Học hỏi được những gì về ứng dụng công nghệ:**
+- Làm chủ và vận dụng thành thạo Framework React.js cùng Vite để xây dựng giao diện Frontend tương tác cao, mượt mà; sử dụng Redux Toolkit để quản lý trạng thái phức tạp.
+- Phát triển thành thạo hệ thống Backend RESTful API bằng Node.js và Express.js, tương tác với cơ sở dữ liệu MySQL thông qua Sequelize ORM một cách tối ưu.
+- Có khả năng tích hợp thực tế các thư viện và dịch vụ của bên thứ ba (Third-party Services) vào dự án: Tích hợp thành công cổng thanh toán trực tuyến VNPay (bao gồm xử lý IPN webhook và đối soát), hệ thống gửi Email xác thực tự động (Nodemailer), và xử lý đa ngôn ngữ (i18n).
+- Nâng cao kỹ năng sử dụng Git/GitHub để quản lý version code và tổ chức cấu trúc source code khoa học.
+
+**3. Học hỏi được những gì về AI:**
+- Ứng dụng rất hiệu quả các công cụ AI (Generative AI) vào công việc lập trình: từ việc hỗ trợ sinh mã (code generation), phát hiện lỗi (debug), giải thích logic phức tạp, đến soạn thảo tài liệu (viết báo cáo, đặc tả kỹ thuật nhanh chóng và chuẩn xác).
+- Rèn luyện tư duy và kỹ năng Prompt Engineering (Kỹ nghệ tạo câu lệnh): biết cách cung cấp ngữ cảnh (context) chặt chẽ và cấu trúc câu hỏi logic để khai thác tối đa câu trả lời chính xác từ AI.
+- Mở rộng tư duy về tiềm năng tích hợp AI vào sản phẩm thực tiễn: Lên ý tưởng và hiểu cách thức hoạt động của một AI Chatbot hỗ trợ y tế (dự định tích hợp vào hệ thống trong tương lai) giúp tự động hóa quá trình phân luồng bệnh nhân và tư vấn sức khỏe ban đầu.
+
 ## F5.2. ƯU ĐIỂM VÀ HẠN CHẾ
 
 ### F5.2.1. Ưu điểm

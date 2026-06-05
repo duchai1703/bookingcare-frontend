@@ -60,6 +60,20 @@ const Header = () => {
     }
   };
 
+  // Click nav item -> cuộn mượt hoặc về trang chủ rồi cuộn
+  const handleNavClick = (e, targetId) => {
+    e.preventDefault();
+    setIsMenuOpen(false); // Đóng menu mobile nếu có
+    if (window.location.pathname === '/') {
+      const element = document.getElementById(targetId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    } else {
+      navigate('/#' + targetId);
+    }
+  };
+
   // Lấy menu theo role
   const getMenuByRole = () => {
     if (!isLoggedIn || !userInfo) return [];
@@ -105,22 +119,22 @@ const Header = () => {
 
         {/* ===== CENTER: Navigation Links ===== */}
         <nav className={`header-nav ${isMenuOpen ? 'open' : ''}`}>
-          <Link to={path.HOME} className="nav-item">
+          <a href="/" className="nav-item" onClick={(e) => handleNavClick(e, 'section-specialty')}>
             <strong><FormattedMessage id="header.specialty" /></strong>
-            <span><FormattedMessage id="header.find-doctor" /></span>
-          </Link>
-          <Link to={path.HOME} className="nav-item">
+            <span><FormattedMessage id="header.sub-specialty" /></span>
+          </a>
+          <a href="/" className="nav-item" onClick={(e) => handleNavClick(e, 'section-facility')}>
             <strong><FormattedMessage id="header.health-facility" /></strong>
-            <span><FormattedMessage id="header.find-doctor" /></span>
-          </Link>
-          <Link to={path.HOME} className="nav-item">
+            <span><FormattedMessage id="header.sub-health-facility" /></span>
+          </a>
+          <a href="/" className="nav-item" onClick={(e) => handleNavClick(e, 'section-top-doctor')}>
             <strong><FormattedMessage id="header.doctor" /></strong>
-            <span><FormattedMessage id="header.find-doctor" /></span>
-          </Link>
-          <Link to={path.HOME} className="nav-item">
+            <span><FormattedMessage id="header.sub-doctor" /></span>
+          </a>
+          <a href="/" className="nav-item" onClick={(e) => handleNavClick(e, 'section-top-doctor')}>
             <strong><FormattedMessage id="header.fee" /></strong>
-            <span><FormattedMessage id="header.find-doctor" /></span>
-          </Link>
+            <span><FormattedMessage id="header.sub-fee" /></span>
+          </a>
         </nav>
 
         {/* ===== RIGHT: Language + Auth ===== */}

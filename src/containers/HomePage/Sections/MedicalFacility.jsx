@@ -41,7 +41,7 @@ const MedicalFacility = () => {
   };
 
   return (
-    <div className="section-facility">
+    <div className="section-facility" id="section-facility">
       <div className="section-content">
         <div className="section-header">
           <h2 className="section-title">

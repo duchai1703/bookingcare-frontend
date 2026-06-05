@@ -43,7 +43,7 @@ const Specialty = () => {
   };
 
   return (
-    <div className="section-specialty">
+    <div className="section-specialty" id="section-specialty">
       <div className="section-content">
         {/* Title + See more */}
         <div className="section-header">
