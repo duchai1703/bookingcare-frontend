@@ -16,6 +16,10 @@ import ResetPassword from './Auth/ResetPassword';
 import DoctorDetail from './Patient/DoctorDetail';
 import SpecialtyDetail from './Patient/SpecialtyDetail';
 import ClinicDetail from './Patient/ClinicDetail';
+import SpecialtyList from './Patient/SpecialtyList';
+import ClinicList from './Patient/ClinicList';
+import DoctorList from './Patient/DoctorList';
+import ExaminationFee from './Patient/ExaminationFee';
 import VerifyEmail from './Patient/VerifyEmail';
 import PaymentResult from './PatientPortal/PaymentResult';
 
@@ -100,6 +104,49 @@ const App = () => {
             <>
               <Header />
               <ClinicDetail />
+              <Footer />
+            </>
+          }
+        />
+
+        {/* Trang tổng hợp danh sách — Public */}
+        <Route
+          path={path.SPECIALTY_LIST}
+          element={
+            <>
+              <Header />
+              <SpecialtyList />
+              <Footer />
+            </>
+          }
+        />
+        <Route
+          path={path.CLINIC_LIST}
+          element={
+            <>
+              <Header />
+              <ClinicList />
+              <Footer />
+            </>
+          }
+        />
+        <Route
+          path={path.DOCTOR_LIST}
+          element={
+            <>
+              <Header />
+              <DoctorList />
+              <Footer />
+            </>
+          }
+        />
+
+        <Route
+          path={path.EXAMINATION_FEE}
+          element={
+            <>
+              <Header />
+              <ExaminationFee />
               <Footer />
             </>
           }

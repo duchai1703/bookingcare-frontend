@@ -51,7 +51,7 @@ const TopDoctor = () => {
           <h2 className="section-title">
             <FormattedMessage id="homepage.outstanding-doctor" />
           </h2>
-          <button className="see-more-btn">
+          <button className="see-more-btn" onClick={() => navigate('/doctors')}>
             <FormattedMessage id="homepage.see-more" />
           </button>
         </div>

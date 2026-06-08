@@ -1,0 +1,318 @@
+// src/containers/Patient/ClinicList.scss
+// Trang tổng hợp cơ sở y tế — Premium Design
+
+.clinic-list-page {
+  min-height: 60vh;
+
+  // ====== HERO ======
+  &__hero {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 60px 0 50px;
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: -40px;
+      right: -80px;
+      width: 280px;
+      height: 280px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -60px;
+      left: -30px;
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.04);
+    }
+  }
+
+  &__hero-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  &__hero-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 10px;
+    letter-spacing: -0.5px;
+  }
+
+  &__hero-subtitle {
+    font-size: 1.05rem;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 0;
+    font-weight: 400;
+  }
+
+  // ====== FILTER BAR ======
+  &__filters {
+    background: #fff;
+    padding: 20px 0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  &__container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  &__filter-row {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+
+    @media (max-width: 640px) {
+      flex-direction: column;
+    }
+  }
+
+  &__search-wrapper {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  &__search-icon {
+    position: absolute;
+    left: 16px;
+    color: #999;
+    font-size: 0.9rem;
+  }
+
+  &__search-input {
+    width: 100%;
+    padding: 12px 40px 12px 42px;
+    border: 1.5px solid #e8e8e8;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fafafa;
+
+    &::placeholder {
+      color: #aaa;
+    }
+
+    &:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      background: #fff;
+    }
+  }
+
+  &__search-clear {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    padding: 4px;
+
+    &:hover {
+      color: #333;
+    }
+  }
+
+  &__filter-select-wrapper {
+    position: relative;
+    min-width: 220px;
+
+    @media (max-width: 640px) {
+      width: 100%;
+    }
+  }
+
+  &__filter-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #667eea;
+    font-size: 0.85rem;
+    z-index: 1;
+  }
+
+  &__filter-select {
+    width: 100%;
+    padding: 12px 16px 12px 36px;
+    border: 1.5px solid #e8e8e8;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    outline: none;
+    background: #fafafa;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+
+    &:focus {
+      border-color: #667eea;
+      background-color: #fff;
+    }
+  }
+
+  // ====== BODY ======
+  &__body {
+    padding: 30px 0 60px;
+    background: #f7f8fc;
+    min-height: 400px;
+  }
+
+  &__results-info {
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    color: #666;
+    font-weight: 500;
+  }
+
+  // ====== GRID ======
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+
+    @media (max-width: 992px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: 576px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  // ====== CARD ======
+  &__card {
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+
+    &:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 12px 36px rgba(102, 126, 234, 0.15);
+
+      .clinic-list-page__card-image {
+        transform: scale(1.08);
+      }
+    }
+  }
+
+  &__card-image-wrapper {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #e8eaf6 0%, #c5cae9 100%);
+  }
+
+  &__card-image {
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  &__card-info {
+    padding: 18px 20px 22px;
+  }
+
+  &__card-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0 0 8px;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  &__card-address {
+    font-size: 0.85rem;
+    color: #888;
+    margin: 0;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+
+    i {
+      color: #667eea;
+      margin-right: 4px;
+      font-size: 0.8rem;
+    }
+  }
+
+  // ====== EMPTY ======
+  &__empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: #888;
+  }
+
+  &__empty-icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+  }
+
+  &__empty p {
+    font-size: 1.05rem;
+    color: #666;
+  }
+}
+
+// ====== SKELETON ======
+.clinic-list-page .skeleton-card {
+  pointer-events: none;
+
+  .skeleton-image {
+    width: 100%;
+    height: 200px;
+    background: linear-gradient(90deg, #eee 25%, #f5f5f5 50%, #eee 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  }
+
+  .skeleton-info {
+    padding: 18px 20px 22px;
+  }
+
+  .skeleton-text {
+    height: 16px;
+    border-radius: 8px;
+    background: linear-gradient(90deg, #eee 25%, #f5f5f5 50%, #eee 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+    margin-bottom: 10px;
+
+    &--long { width: 80%; }
+    &--short { width: 55%; }
+  }
+}

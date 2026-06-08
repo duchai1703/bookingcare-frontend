@@ -119,22 +119,22 @@ const Header = () => {
 
         {/* ===== CENTER: Navigation Links ===== */}
         <nav className={`header-nav ${isMenuOpen ? 'open' : ''}`}>
-          <a href="/" className="nav-item" onClick={(e) => handleNavClick(e, 'section-specialty')}>
+          <Link to={path.SPECIALTY_LIST} className="nav-item" onClick={() => setIsMenuOpen(false)}>
             <strong><FormattedMessage id="header.specialty" /></strong>
             <span><FormattedMessage id="header.sub-specialty" /></span>
-          </a>
-          <a href="/" className="nav-item" onClick={(e) => handleNavClick(e, 'section-facility')}>
+          </Link>
+          <Link to={path.CLINIC_LIST} className="nav-item" onClick={() => setIsMenuOpen(false)}>
             <strong><FormattedMessage id="header.health-facility" /></strong>
             <span><FormattedMessage id="header.sub-health-facility" /></span>
-          </a>
-          <a href="/" className="nav-item" onClick={(e) => handleNavClick(e, 'section-top-doctor')}>
+          </Link>
+          <Link to={path.DOCTOR_LIST} className="nav-item" onClick={() => setIsMenuOpen(false)}>
             <strong><FormattedMessage id="header.doctor" /></strong>
             <span><FormattedMessage id="header.sub-doctor" /></span>
-          </a>
-          <a href="/" className="nav-item" onClick={(e) => handleNavClick(e, 'section-top-doctor')}>
+          </Link>
+          <Link to={path.EXAMINATION_FEE} className="nav-item" onClick={() => setIsMenuOpen(false)}>
             <strong><FormattedMessage id="header.fee" /></strong>
             <span><FormattedMessage id="header.sub-fee" /></span>
-          </a>
+          </Link>
         </nav>
 
         {/* ===== RIGHT: Language + Auth ===== */}

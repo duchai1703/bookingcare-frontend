@@ -572,5 +572,38 @@
   "dashboard.loading": "Đang tải dữ liệu...",
   "dashboard.error": "Lỗi khi tải dữ liệu thống kê",
   "menu.admin.dashboard": "Bảng điều khiển",
-  "admin.layout.toggle-sidebar": "Đóng/Mở sidebar"
+  "admin.layout.toggle-sidebar": "Đóng/Mở sidebar",
+
+  "list-page.specialty.title": "Chuyên Khoa Y Tế",
+  "list-page.specialty.subtitle": "Tìm kiếm và khám phá các chuyên khoa y tế hàng đầu",
+  "list-page.specialty.search-placeholder": "Tìm kiếm chuyên khoa...",
+
+  "list-page.clinic.title": "Cơ Sở Y Tế",
+  "list-page.clinic.subtitle": "Khám phá các bệnh viện và phòng khám uy tín trên toàn quốc",
+  "list-page.clinic.search-placeholder": "Tìm theo tên hoặc địa chỉ phòng khám...",
+
+  "list-page.doctor.title": "Bác Sĩ Nổi Bật",
+  "list-page.doctor.subtitle": "Đội ngũ bác sĩ giỏi, giàu kinh nghiệm sẵn sàng phục vụ bạn",
+  "list-page.doctor.search-placeholder": "Tìm kiếm bác sĩ theo tên...",
+  "list-page.doctor.btn-detail": "Đặt lịch khám",
+  "list-page.doctor.btn-ai": "Tư vấn AI",
+
+  "list-page.filter-all-provinces": "Tất cả tỉnh/thành phố",
+  "list-page.filter-all-specialties": "Tất cả chuyên khoa",
+  "list-page.results-count": "Hiển thị {count}/{total} kết quả",
+  "list-page.no-results": "Không tìm thấy kết quả phù hợp.",
+
+  "list-page.fee.title": "Bảng Giá Dịch Vụ Khám Bệnh",
+  "list-page.fee.subtitle": "Thông tin chi phí khám của các bác sĩ đầu ngành được công khai minh bạch",
+  "list-page.fee.search-placeholder": "Tìm kiếm theo tên bác sĩ...",
+  "list-page.fee.table-doctor": "Bác sĩ",
+  "list-page.fee.table-specialty": "Chuyên khoa",
+  "list-page.fee.table-clinic": "Cơ sở y tế",
+  "list-page.fee.table-price": "Giá dịch vụ",
+  "list-page.fee.table-action": "Thảo tác",
+  "list-page.fee.book-now": "Đặt lịch khám",
+  "list-page.fee.filter-price-all": "Tất cả mức giá",
+  "list-page.fee.filter-price-low": "Dưới 300.000đ",
+  "list-page.fee.filter-price-high": "Từ 300.000đ trở lên",
+  "list-page.fee.no-results": "Không tìm thấy thông tin giá khám phù hợp!"
 }

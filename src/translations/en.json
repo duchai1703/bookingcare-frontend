@@ -572,5 +572,38 @@
   "dashboard.loading": "Loading statistics...",
   "dashboard.error": "Error loading statistics",
   "menu.admin.dashboard": "Dashboard",
-  "admin.layout.toggle-sidebar": "Toggle sidebar"
+  "admin.layout.toggle-sidebar": "Toggle sidebar",
+
+  "list-page.specialty.title": "Medical Specialties",
+  "list-page.specialty.subtitle": "Search and explore top medical specialties",
+  "list-page.specialty.search-placeholder": "Search specialties...",
+
+  "list-page.clinic.title": "Health Facilities",
+  "list-page.clinic.subtitle": "Explore trusted hospitals and clinics nationwide",
+  "list-page.clinic.search-placeholder": "Search by clinic name or address...",
+
+  "list-page.doctor.title": "Outstanding Doctors",
+  "list-page.doctor.subtitle": "Experienced and dedicated doctors ready to serve you",
+  "list-page.doctor.search-placeholder": "Search doctors by name...",
+  "list-page.doctor.btn-detail": "Book Appointment",
+  "list-page.doctor.btn-ai": "AI Consult",
+
+  "list-page.filter-all-provinces": "All provinces/cities",
+  "list-page.filter-all-specialties": "All specialties",
+  "list-page.results-count": "Showing {count}/{total} results",
+  "list-page.no-results": "No matching results found.",
+
+  "list-page.fee.title": "Medical Examination Fees",
+  "list-page.fee.subtitle": "Transparent pricing of leading doctors and medical services",
+  "list-page.fee.search-placeholder": "Search by doctor name...",
+  "list-page.fee.table-doctor": "Doctor",
+  "list-page.fee.table-specialty": "Specialty",
+  "list-page.fee.table-clinic": "Clinic / Facility",
+  "list-page.fee.table-price": "Examination Fee",
+  "list-page.fee.table-action": "Action",
+  "list-page.fee.book-now": "Book Now",
+  "list-page.fee.filter-price-all": "All prices",
+  "list-page.fee.filter-price-low": "Under 300,000 VND",
+  "list-page.fee.filter-price-high": "300,000 VND & above",
+  "list-page.fee.no-results": "No examination fee information found!"
 }

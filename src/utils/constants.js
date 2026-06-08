@@ -33,6 +33,12 @@ export const path = {
   VERIFY_BOOKING: '/verify-booking',
   PAYMENT_RESULT: '/payment-result',
 
+  // Trang danh sách tổng hợp (Public)
+  SPECIALTY_LIST: '/specialties',
+  CLINIC_LIST: '/clinics',
+  DOCTOR_LIST: '/doctors',
+  EXAMINATION_FEE: '/examination-fee',
+
   // [Phase 9.3] Auth Pages
   REGISTER: '/register',
   FORGOT_PASSWORD: '/forgot-password',
