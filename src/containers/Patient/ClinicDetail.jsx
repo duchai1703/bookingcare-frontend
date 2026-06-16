@@ -23,6 +23,7 @@ const ClinicDetail = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [clinicData, setClinicData] = useState(null);
   const [doctorList, setDoctorList] = useState([]);
+  const [showFullDescription, setShowFullDescription] = useState(false);
   const [expandedDoctors, setExpandedDoctors] = useState({});
 
   const toggleDoctorExpand = (doctorId) => {
@@ -33,10 +34,11 @@ const ClinicDetail = () => {
   };
 
   const handleAIConsult = (doctor) => {
-    const doctorName = getDoctorName(doctor);
+    const doctorName = getDoctorName(doctor).trim().replace(/\s+/g, ' ');
+    const hasTitle = /^(bác\s*sĩ|bs|tiến\s*sĩ|ts|thạc\s*sĩ|ths|pgs|gs|dr\.?|giáo\s*sư|phó\s*giáo\s*sư)/i.test(doctorName);
     const promptText = language === LANGUAGES.VI
-      ? `Tôi muốn tư vấn triệu chứng với bác sĩ ${doctorName}`
-      : `I want to consult symptoms with doctor ${doctorName}`;
+      ? `Tôi muốn tư vấn triệu chứng với ${hasTitle ? '' : 'bác sĩ '}${doctorName}`
+      : `I want to consult symptoms with ${/^(doctor|dr\.?|prof\.?|assoc\.?\s*prof\.?|master)/i.test(doctorName) ? '' : 'doctor '}${doctorName}`;
     const event = new CustomEvent('open-ai-chat', {
       detail: { prompt: promptText }
     });
@@ -141,7 +143,11 @@ const ClinicDetail = () => {
 
           {/* ====== PHẦN 2: MÔ TẢ PHÒNG KHÁM ====== */}
           {clinicData.descriptionHTML && (
-            <div className="clinic-detail__description">
+            <div
+              className={`clinic-detail__description ${
+                showFullDescription ? 'clinic-detail__description--expanded' : ''
+              }`}
+            >
               <div className="clinic-detail__description-container">
                 {/* ⚠️ BẮT BUỘC dùng dangerouslySetInnerHTML */}
                 <div
@@ -151,6 +157,19 @@ const ClinicDetail = () => {
                     __html: DOMPurify.sanitize(clinicData.descriptionHTML),
                   }}
                 />
+              </div>
+
+              {/* Nút Xem thêm / Thu gọn */}
+              <div className="clinic-detail__description-toggle">
+                <span onClick={() => setShowFullDescription(!showFullDescription)}>
+                  {showFullDescription
+                    ? language === LANGUAGES.VI
+                      ? '▲ Thu gọn'
+                      : '▲ Collapse'
+                    : language === LANGUAGES.VI
+                    ? '▼ Xem thêm'
+                    : '▼ See more'}
+                </span>
               </div>
             </div>
           )}
@@ -241,13 +260,6 @@ const ClinicDetail = () => {
                             ? doctor.Doctor_Info?.provinceData?.valueVi || 'Toàn quốc'
                             : doctor.Doctor_Info?.provinceData?.valueEn || 'National'}
                         </div>
-                        <button
-                          type="button"
-                          className="clinic-detail__ai-btn"
-                          onClick={() => handleAIConsult(doctor)}
-                        >
-                          🤖 {language === LANGUAGES.VI ? 'Tư vấn AI' : 'AI Consultation'}
-                        </button>
                       </div>
                     </div>
 

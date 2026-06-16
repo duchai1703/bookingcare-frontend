@@ -1,0 +1,155 @@
+@startuml UC12_Review_Doctor_Flow
+!theme plain
+title **SƠ ĐỒ TUẦN TỰ – LUỒNG 5: BỆNH NHÂN ĐÁNH GIÁ BÁC SĨ**\n(UC12 – Review Doctor Flow)
+
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 220
+skinparam responseMessageBelowArrow true
+
+actor "Bệnh nhân\n(Patient – R3)" as Patient #LightBlue
+participant "Frontend UI\n(PatientHistory +\nReviewModal)" as FE #E3F2FD
+participant "AuthMiddleware\n(verifyToken +\ncheckPatientRole)" as Auth #E8F5E9
+participant "ReviewController\n(submitReview)" as RC #BBDEFB
+participant "ReviewService\n(submitReview)" as RS #FFF3E0
+database "MySQL\n(Review, Booking)" as DB #FCE4EC
+
+== Bước 1: Bệnh nhân xem lịch sử khám ==
+
+Patient -> FE : 1. Truy cập /patient/history
+activate FE
+
+FE -> Auth : **GET /api/v1/patient/bookings**\n?status=S3&page=1&limit=5\n+ Header: Authorization: Bearer <JWT>
+activate Auth
+Auth -> Auth : verifyToken() → checkPatientRole()
+Auth --> FE : **HTTP 200** { data: {\n  bookings: [...],\n  totalPages, currentPage\n} }
+deactivate Auth
+
+FE -> FE : Hiển thị tab "Đã khám" (S3)\n→ Bảng: STT, Bác sĩ, Ngày,\nKhung giờ, Lý do, Trạng thái,\nHành động
+
+FE -> Patient : Hiển thị nút "Đánh giá"\ntrên các booking S3\n(chưa được review)
+
+== Bước 2: Mở Modal đánh giá ==
+
+Patient -> FE : 2. Click nút "Đánh giá"\ntrên booking S3
+
+FE -> FE : Mở ReviewModal:\n• Thông tin bác sĩ (tên, chuyên khoa)\n• Rating: 5 ngôi sao (1-5)\n• Ô nhập bình luận (textarea)
+
+Patient -> FE : 3. Chọn số sao (ví dụ: ⭐⭐⭐⭐ = 4 sao)
+Patient -> FE : 4. Nhập bình luận:\n"Bác sĩ rất tận tâm..."
+Patient -> FE : 5. Bấm "Gửi đánh giá"
+
+== Bước 3: Validate phía Client ==
+
+FE -> FE : Validate:\n• rating: 1-5 (bắt buộc)\n• bookingId: có giá trị\n• doctorId: có giá trị
+
+alt #FFEBEE Chưa chọn số sao
+  FE -> Patient : Toast: "Vui lòng chọn số sao đánh giá!"
+else Input hợp lệ
+
+  == Bước 4: Gửi API lên Backend ==
+
+  FE -> Auth : **POST /api/v1/reviews**\n{ bookingId, doctorId,\nrating: 4, comment: "..." }\n+ Header: Authorization: Bearer <JWT>
+  activate Auth
+
+  Auth -> Auth : verifyToken()\n→ Xác thực JWT hợp lệ\n→ Kiểm tra tokenVersion khớp DB
+  Auth -> Auth : checkPatientRole()\n→ roleId === 'R3'
+
+  alt #FFEBEE JWT hết hạn hoặc không hợp lệ
+    Auth --> FE : **HTTP 401** { message: "Unauthorized" }
+    FE -> Patient : Toast: "Phiên đăng nhập hết hạn"\n→ processLogout() → /login
+  else Token hợp lệ, Role R3
+    Auth -> RC : Cho phép request\n(req.user.id = patientId)
+    activate RC
+  end
+
+  == Bước 5: Controller xử lý ==
+
+  RC -> RC : patientId = req.user.id\n(IDOR Prevention:\nlấy từ JWT, KHÔNG từ body)
+  RC -> RS : reviewService.submitReview(\n  { bookingId, doctorId,\n    rating, comment },\n  patientId\n)
+  activate RS
+
+  == Bước 6: Service kiểm tra nghiệp vụ ==
+
+  note over RS
+    **Bước 6a: Validate input**
+  end note
+
+  RS -> RS : Kiểm tra:\n• bookingId, doctorId, rating\nkhông rỗng\n• rating: 1 ≤ rating ≤ 5
+
+  alt #FFEBEE Thiếu trường bắt buộc
+    RS --> RC : { errCode: 1,\n  message: "Thiếu thông tin!" }
+    RC --> FE : **HTTP 400**
+    FE -> Patient : Toast lỗi
+  else Input hợp lệ
+
+    note over RS
+      **Bước 6b: Kiểm tra booking**
+    end note
+
+    RS -> DB : Booking.findOne({\n  where: {\n    id: bookingId,\n    patientId: patientId,\n    statusId: 'S3'\n  }\n})
+    activate DB
+    DB --> RS : booking
+    deactivate DB
+
+    alt #FFEBEE Booking không tồn tại, không thuộc BN, hoặc không phải S3
+      RS --> RC : { errCode: 2,\n  message: "Booking không hợp lệ!\n  Chỉ được đánh giá booking\n  đã hoàn thành (S3)" }
+      RC --> FE : **HTTP 400**
+      FE -> Patient : Toast lỗi:\n"Chỉ được đánh giá\nlịch hẹn đã hoàn thành"
+    else Booking hợp lệ (S3, thuộc BN)
+
+      note over RS
+        **Bước 6c: Kiểm tra đã review chưa**
+      end note
+
+      RS -> DB : Review.findOne({\n  where: { bookingId }\n})
+      activate DB
+      DB --> RS : existingReview
+      deactivate DB
+
+      alt #FFEBEE Đã review rồi (UNIQUE bookingId)
+        RS --> RC : { errCode: 3,\n  message: "Bạn đã đánh giá\n  lịch hẹn này rồi!" }
+        RC --> FE : **HTTP 409** (Conflict)
+        FE -> Patient : Toast: "Bạn đã đánh giá\nlịch hẹn này trước đó"
+
+      else #E8F5E9 Chưa review → Tạo mới
+
+        == Bước 7: Lưu đánh giá vào Database ==
+
+        RS -> DB : Review.create({\n  doctorId: doctorId,\n  patientId: patientId,\n  bookingId: bookingId,\n  rating: 4,\n  comment: "Bác sĩ rất tận tâm..."\n})
+        activate DB
+        DB --> RS : newReview\n(id, doctorId, patientId,\nbookingId, rating, comment)
+        deactivate DB
+
+        RS --> RC : { errCode: 0,\n  message: "Đánh giá thành công!",\n  data: newReview }
+        deactivate RS
+
+        RC --> FE : **HTTP 201** (Created)\n{ errCode: 0, data: review }
+        deactivate RC
+        deactivate Auth
+
+        == Bước 8: Cập nhật UI ==
+
+        FE -> FE : Đóng ReviewModal
+        FE -> FE : Fetch lại danh sách bookings\n→ Ẩn nút "Đánh giá"\ntrên booking đã review
+
+        FE -> Patient : Toast: "Đánh giá thành công!\nCảm ơn bạn đã góp ý"
+      end
+    end
+  end
+end
+
+deactivate FE
+
+note over Patient, DB
+  **Business Rules:**
+  • BR07: Chỉ đánh giá booking S3 (Đã hoàn thành)
+  • BR08: Rating phải nằm trong khoảng 1–5
+  • BR07: Mỗi booking chỉ review 1 lần (UNIQUE bookingId)
+  • IDOR: patientId từ JWT, đảm bảo BN chỉ review booking của mình
+  
+  **Ảnh hưởng:**
+  • Rating trung bình bác sĩ được cập nhật
+  • Hiển thị trên trang chi tiết bác sĩ (DoctorReview component)
+end note
+
+@enduml

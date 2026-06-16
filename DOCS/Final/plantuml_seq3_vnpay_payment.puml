@@ -1,0 +1,173 @@
+@startuml UC08_VNPay_Payment_Flow
+!theme plain
+title **SƠ ĐỒ TUẦN TỰ – LUỒNG 3: THANH TOÁN TRỰC TUYẾN QUA VNPAY**\n(UC08 – VNPay Payment Integration Flow)
+
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 220
+skinparam responseMessageBelowArrow true
+
+actor "Bệnh nhân\n(Patient – R3)" as Patient #LightBlue
+participant "Frontend UI\n(React)" as FE #E3F2FD
+participant "PaymentController" as PMC #BBDEFB
+participant "PaymentService" as PMS #FFF3E0
+database "MySQL\n(Booking Model)" as DB #FCE4EC
+participant "VNPay\nPayment Gateway" as VNPay #FFE0B2
+
+' ═══════════════════════════════════════════════════════════════════════
+' PHẦN A: TẠO LINK THANH TOÁN
+' ═══════════════════════════════════════════════════════════════════════
+
+== PHẦN A: Tạo link thanh toán VNPay ==
+
+Patient -> FE : 1. Bấm "Thanh toán bằng VNPay"\n(sau khi verify booking thành công\ntại trang /verify-booking)
+activate FE
+
+opt Giá khám = 0 đồng (Miễn phí)
+  FE -> FE : Bypass VNPay\n→ Tự động chuyển S2/paid
+  FE -> Patient : Hiển thị: "Lịch hẹn đã xác nhận\n(Miễn phí khám)"
+end
+
+FE -> PMC : **POST /api/v1/payment/create-payment-url-by-token**\n{ paymentToken }\n(Public endpoint – không cần JWT)
+activate PMC
+
+PMC -> PMS : paymentService.\ncreatePaymentUrlByToken({ paymentToken })
+activate PMS
+
+PMS -> DB : Booking.findOne({\n  where: {\n    paymentToken,\n    statusId: 'S1.5',\n    paymentStatus: 'unpaid'\n  }\n})
+activate DB
+DB --> PMS : booking
+deactivate DB
+
+alt #FFEBEE Booking không tồn tại hoặc đã thanh toán
+  PMS --> PMC : { errCode: 2,\n  message: "Booking không hợp lệ!" }
+  PMC --> FE : **HTTP 400**
+  FE -> Patient : Toast lỗi: "Link thanh toán\nkhông hợp lệ hoặc đã hết hạn"
+
+else #E8F5E9 Booking hợp lệ (S1.5, unpaid)
+  PMS -> PMS : Tạo VNPay Parameters:\n• vnp_TxnRef = bookingId + timestamp\n• vnp_Amount = bookingPrice × 100\n• vnp_OrderInfo = "Thanh toan lich kham #ID"\n• vnp_ReturnUrl = "/payment-result"\n• vnp_IpAddr = clientIP
+
+  PMS -> PMS : **Ký chữ ký HMAC-SHA512**\nvnp_SecureHash = HMAC(\n  sortedParams,\n  VNP_HASH_SECRET\n)
+
+  PMS -> PMS : Sinh URL:\nvnp_Url + "?" + queryString\n+ "&vnp_SecureHash=" + hash
+
+  PMS --> PMC : { errCode: 0,\n  paymentUrl: "https://sandbox.vnpayment.vn/...\n    ?vnp_Amount=...&vnp_SecureHash=..." }
+  deactivate PMS
+  PMC --> FE : **HTTP 200** { paymentUrl: "..." }
+  deactivate PMC
+
+  FE -> FE : window.location.href = paymentUrl
+  FE -> VNPay : **Redirect** → Trang thanh toán VNPay\n(Browser chuyển hướng)
+end
+
+deactivate FE
+
+' ═══════════════════════════════════════════════════════════════════════
+' PHẦN B: BỆNH NHÂN THANH TOÁN TRÊN VNPAY
+' ═══════════════════════════════════════════════════════════════════════
+
+== PHẦN B: Bệnh nhân thao tác trên VNPay ==
+
+Patient -> VNPay : 2. Chọn phương thức thanh toán\n(ATM/Visa/QR Code/Ví điện tử)
+activate VNPay
+Patient -> VNPay : 3. Nhập thông tin thẻ/tài khoản
+Patient -> VNPay : 4. Xác nhận OTP
+VNPay -> VNPay : Xử lý giao dịch
+
+' ═══════════════════════════════════════════════════════════════════════
+' PHẦN C: IPN CALLBACK (Server-to-Server)
+' ═══════════════════════════════════════════════════════════════════════
+
+== PHẦN C: VNPay gửi IPN Callback ngầm (Server-to-Server) ==
+
+VNPay -> PMC : **GET /api/v1/payment/vnpay-ipn**\n?vnp_TxnRef=...&vnp_Amount=...\n&vnp_ResponseCode=00\n&vnp_SecureHash=...
+activate PMC
+
+PMC -> PMS : paymentService.vnpayIPN(vnpParams)
+activate PMS
+
+== Bước 5: Verify chữ ký bảo mật ==
+
+PMS -> PMS : Tách vnp_SecureHash\ntừ params
+PMS -> PMS : Sắp xếp params theo alphabet\n(bỏ vnp_SecureHash, vnp_SecureHashType)
+PMS -> PMS : Tính lại HMAC-SHA512\nvới VNP_HASH_SECRET
+PMS -> PMS : **crypto.timingSafeEqual(\n  calculatedHash,\n  receivedHash\n)**\n(Chống timing attack)
+
+alt #FFEBEE Chữ ký KHÔNG hợp lệ
+  PMS --> PMC : { RspCode: '97',\n  Message: 'Fail checksum' }
+  PMC --> VNPay : **HTTP 200** { RspCode: '97' }
+
+else Chữ ký hợp lệ
+  PMS -> DB : Booking.findOne({\n  where: { id: txnRef } })
+  activate DB
+  DB --> PMS : booking
+  deactivate DB
+
+  alt #FFEBEE Booking không tồn tại
+    PMS --> PMC : { RspCode: '01',\n  Message: 'Order not found' }
+    PMC --> VNPay : **HTTP 200** { RspCode: '01' }
+
+  else #FFEBEE Số tiền không khớp
+    PMS --> PMC : { RspCode: '04',\n  Message: 'Invalid amount' }
+    PMC --> VNPay : **HTTP 200** { RspCode: '04' }
+
+  else #FFEBEE Booking đã xử lý rồi (idempotency)
+    PMS --> PMC : { RspCode: '02',\n  Message: 'Already confirmed' }
+    PMC --> VNPay : **HTTP 200** { RspCode: '02' }
+
+  else Tất cả kiểm tra đều OK
+    == Bước 6: Cập nhật trạng thái Booking ==
+
+    alt vnp_ResponseCode === '00' (Thành công)
+      PMS -> DB : Booking.update({\n  statusId: 'S2',\n  paymentStatus: 'paid',\n  vnpayTransactionNo: vnp_TransactionNo,\n  vnp_PayDate: vnp_PayDate\n})
+      activate DB
+      DB --> PMS : [1] updated
+      deactivate DB
+      PMS --> PMC : { RspCode: '00',\n  Message: 'Confirm Success' }
+
+    else vnp_ResponseCode !== '00' (Thất bại)
+      PMS -> DB : Booking.update({\n  statusId: 'S4',\n  paymentStatus: 'failed'\n})
+      activate DB
+      DB --> PMS : [1] updated
+      deactivate DB
+      PMS --> PMC : { RspCode: '00',\n  Message: 'Confirm Success' }
+    end
+
+    deactivate PMS
+    PMC --> VNPay : **HTTP 200** { RspCode: '00' }
+    deactivate PMC
+  end
+end
+
+' ═══════════════════════════════════════════════════════════════════════
+' PHẦN D: REDIRECT VỀ FRONTEND
+' ═══════════════════════════════════════════════════════════════════════
+
+== PHẦN D: VNPay redirect Patient về Frontend ==
+
+VNPay -> FE : **Redirect** → /payment-result\n?vnp_ResponseCode=00\n&vnp_TxnRef=...\n&vnp_Amount=...
+deactivate VNPay
+activate FE
+
+FE -> FE : Đọc query params\ntừ URL redirect
+
+alt vnp_ResponseCode === '00'
+  FE -> Patient : ✅ Hiển thị: "Thanh toán thành công!"\n• Mã giao dịch: vnp_TxnRef\n• Số tiền: vnp_Amount\n• Trạng thái: Đã thanh toán
+else vnp_ResponseCode !== '00'
+  FE -> Patient : ❌ Hiển thị: "Thanh toán thất bại!"\n• Mã lỗi: vnp_ResponseCode\n• Vui lòng thử lại
+end
+
+deactivate FE
+
+note over Patient, VNPay
+  **Bảo mật VNPay:**
+  • HMAC-SHA512 cho chữ ký bảo mật
+  • timingSafeEqual chống timing attack
+  • Idempotency: IPN có thể gọi nhiều lần, chỉ xử lý 1 lần
+  • Auto-cancel: Cronjob hủy booking S1.5 chưa TT sau 20 phút
+  
+  **State Transition:**
+  S1.5 (Chờ TT) → TT thành công → S2 (Đã xác nhận/Đã TT)
+  S1.5 (Chờ TT) → TT thất bại → S4 (Đã hủy)
+end note
+
+@enduml

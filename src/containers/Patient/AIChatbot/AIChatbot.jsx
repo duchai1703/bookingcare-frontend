@@ -63,6 +63,7 @@ const AIChatbot = memo(() => {
   const chatBodyRef = useRef(null);      // [Smart Scroll]
   const tokenRef = useRef(accessToken);  // [useRef Token — Chống Stale Closure]
   const latestMessagesRef = useRef([]);  // [Stale Closure Breaker — finally dùng ref này]
+  const activeRequestIdRef = useRef(null); // [Active Request ID Ref — Chống Race Condition]
 
   // ──── [Guard: useRef Stale Closure] — Sync token ────
   useEffect(() => {
@@ -198,11 +199,14 @@ const AIChatbot = memo(() => {
   // SUBMIT HANDLER — TRÁI TIM FRONTEND
   // ═══════════════════════════════════════════════════════════════════
   const handleSubmit = useCallback(
-    async (text) => {
+    async (text, force = false) => {
       console.log('🔵 [FE_STREAM] 1. Bắt đầu gửi câu hỏi. Đã gọi e.preventDefault() chưa?');
       // [Double Submit Mutex]
-      if (submitLockRef.current) return;
+      if (submitLockRef.current && !force) return;
       submitLockRef.current = true;
+
+      const requestId = crypto.randomUUID?.() || Date.now().toString();
+      activeRequestIdRef.current = requestId;
 
       // Reset stream buffer for new request
       streamTextRef.current = '';
@@ -391,10 +395,12 @@ const AIChatbot = memo(() => {
         if (reader) {
           try { await reader.cancel(); } catch (e) { console.error('Reader cancel fail:', e); }
         }
-        if (isMountedRef.current) {
-          setIsThinking(false);
+        if (activeRequestIdRef.current === requestId) {
+          if (isMountedRef.current) {
+            setIsThinking(false);
+          }
+          submitLockRef.current = false;
         }
-        submitLockRef.current = false;
 
         // ĐỌC TỪ REF MỚI NHẤT, TUYỆT ĐỐI KHÔNG ĐỌC TỪ BIẾN 'messages' BỊ ĐÓNG BĂNG
         if (latestMessagesRef.current.length > 0 && typeof saveMessages === 'function') {
@@ -409,13 +415,13 @@ const AIChatbot = memo(() => {
   useEffect(() => {
     const handleOpenChat = (e) => {
       setIsOpen(true);
-      if (e.detail?.prompt) {
-        handleSubmit(e.detail.prompt);
+      if (isLoggedIn && e.detail?.prompt) {
+        handleSubmit(e.detail.prompt, true);
       }
     };
     window.addEventListener('open-ai-chat', handleOpenChat);
     return () => window.removeEventListener('open-ai-chat', handleOpenChat);
-  }, [handleSubmit]);
+  }, [handleSubmit, isLoggedIn]);
 
   // ═══ [Chặn onCopy — Copy Plaintext] ═══
   const handleCopy = useCallback((e) => {
@@ -519,7 +525,7 @@ const AIChatbot = memo(() => {
                   ))}
 
                   {/* Typing Indicator — Bouncing Dots */}
-                  {isThinking && (
+                  {isThinking && (!messages.length || messages[messages.length - 1].role !== 'model' || !messages[messages.length - 1].text) && (
                     <div className="typing-indicator">
                       <div className="ai-avatar-small">🤖</div>
                       <div className="dots-bubble">

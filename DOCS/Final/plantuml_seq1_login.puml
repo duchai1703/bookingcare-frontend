@@ -1,0 +1,107 @@
+@startuml UC01_Login_Flow
+!theme plain
+title **SƠ ĐỒ TUẦN TỰ – LUỒNG 1: XÁC THỰC & ĐĂNG NHẬP**\n(UC01 – Login Flow)
+
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 200
+skinparam responseMessageBelowArrow true
+skinparam sequenceParticipantPadding 10
+
+actor "Người dùng\n(Patient/Doctor/Admin)" as User #LightBlue
+participant "Frontend UI\n(React + Redux)" as FE #E3F2FD
+participant "RateLimiter\n(authLimiter)" as RL #E8F5E9
+participant "UserController\n(handleLogin)" as UC #BBDEFB
+participant "UserService\n(handleUserLogin)" as US #FFF3E0
+database "MySQL\n(User Model)" as DB #FCE4EC
+
+== Bước 1: Người dùng nhập thông tin đăng nhập ==
+
+User -> FE : Nhập email + password\ntại trang /login
+activate FE
+
+FE -> FE : Validate client-side\n(email format, password ≥ 6 ký tự)
+
+FE -> RL : **POST /api/v1/auth/login**\n{ email, password }
+activate RL
+
+alt #FFEBEE Rate Limit vượt quá (>100 req/15 phút)
+  RL --> FE : **HTTP 429**\n{ errCode: 429, message: "Too many login attempts" }
+  FE -> User : Toast lỗi: "Quá nhiều lần thử, vui lòng đợi 15 phút"
+else Rate Limit OK
+  RL -> UC : Cho phép request đi tiếp
+  activate UC
+end
+
+== Bước 2: Controller validate input ==
+
+UC -> UC : Kiểm tra email & password\nkhông rỗng
+
+alt #FFEBEE Thiếu email hoặc password
+  UC --> FE : **HTTP 400**\n{ errCode: 1, message: "Thiếu email hoặc mật khẩu!" }
+  FE -> User : Toast lỗi: "Vui lòng nhập đầy đủ thông tin"
+else Input hợp lệ
+  UC -> US : userService.handleUserLogin(email, password)
+  activate US
+end
+
+== Bước 3: Service xử lý Business Logic ==
+
+US -> DB : User.findOne({ where: { email } })
+activate DB
+DB --> US : user || null
+deactivate DB
+
+alt #FFEBEE Email không tồn tại (user === null)
+  US --> UC : { errCode: 1, message: "Email không tồn tại!" }
+  UC --> FE : **HTTP 401** { errCode: 1 }
+  FE -> User : Toast lỗi: "Email không tồn tại trong hệ thống!"
+
+else #FFEBEE Tài khoản chưa có mật khẩu (Guest cũ)
+  US --> UC : { errCode: 7, message: "Tài khoản chưa có mật khẩu" }
+  UC --> FE : **HTTP 401** { errCode: 7 }
+  FE -> User : Toast: "Vui lòng sử dụng Quên mật khẩu"
+
+else Email tồn tại
+  US -> US : bcrypt.compare(password, user.password)
+
+  alt #FFEBEE Mật khẩu sai (isMatch === false)
+    US --> UC : { errCode: 3, message: "Sai mật khẩu!" }
+    UC --> FE : **HTTP 401** { errCode: 3 }
+    FE -> User : Toast lỗi: "Sai mật khẩu!"
+  else #E8F5E9 Mật khẩu đúng (isMatch === true)
+
+    == Bước 4: Tạo JWT Token ==
+    US -> US : jwt.sign({\n  id, email, roleId,\n  tokenVersion: user.tokenVersion\n}, JWT_SECRET, { expiresIn: '2h' })
+    US --> UC : { errCode: 0,\n  user: { id, email, roleId, firstName, lastName, image },\n  accessToken: "JWT_TOKEN" }
+    deactivate US
+  end
+end
+
+== Bước 5: Trả kết quả về Client ==
+
+UC --> FE : **HTTP 200**\n{ errCode: 0, user: {...}, accessToken: "..." }
+deactivate UC
+deactivate RL
+
+== Bước 6: Lưu Redux & Chuyển hướng theo Role ==
+
+FE -> FE : dispatch(loginSuccess({\n  user, accessToken\n}))
+
+alt roleId === 'R1' (Admin)
+  FE -> User : Navigate → **/system/dashboard**
+else roleId === 'R2' (Doctor)
+  FE -> User : Navigate → **/doctor-dashboard**
+else roleId === 'R3' (Patient)
+  FE -> User : Navigate → **/** (Trang chủ)
+end
+deactivate FE
+
+note over User, DB
+  **Ghi chú bảo mật:**
+  • JWT chứa tokenVersion để hỗ trợ session revocation
+  • bcrypt.compare() so sánh mật khẩu async
+  • RateLimiter: 100 request / 15 phút cho auth endpoints
+  • Không leak thông tin cụ thể khi đăng nhập thất bại
+end note
+
+@enduml

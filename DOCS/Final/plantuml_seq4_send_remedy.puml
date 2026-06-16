@@ -1,0 +1,130 @@
+@startuml UC14_Send_Remedy_Flow
+!theme plain
+title **SƠ ĐỒ TUẦN TỰ – LUỒNG 4: BÁC SĨ GỬI KẾT QUẢ KHÁM**\n(UC14 – Send Remedy Result Flow)
+
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 220
+skinparam responseMessageBelowArrow true
+
+actor "Bác sĩ\n(Doctor – R2)" as Doctor #LightGreen
+participant "Frontend UI\n(RemedyModal)" as FE #E3F2FD
+participant "AuthMiddleware\n(verifyToken +\ncheckDoctorRole)" as Auth #E8F5E9
+participant "DoctorController\n(sendRemedy)" as DC #BBDEFB
+participant "DoctorService\n(sendRemedy)" as DS #FFF3E0
+database "MySQL\n(Booking Model)" as DB #FCE4EC
+participant "EmailService\n(Nodemailer)" as ES #F3E5F5
+participant "Gmail SMTP\nServer" as SMTP #E1BEE7
+
+== Bước 1: Bác sĩ xem danh sách bệnh nhân ==
+
+Doctor -> FE : 1. Truy cập trang\n/doctor-dashboard/manage-patient
+activate FE
+FE -> Auth : **GET /api/v1/doctors/:doctorId/patients**\n?date=timestamp&statusId=S2\n+ Header: Authorization: Bearer <JWT>
+activate Auth
+Auth -> Auth : verifyToken() → checkDoctorRole()
+Auth --> FE : **HTTP 200** { data: [bookings...] }
+deactivate Auth
+
+FE -> Doctor : Hiển thị bảng danh sách BN\n(Tên, SĐT, Địa chỉ, Khung giờ,\nLý do, Hành động)
+
+== Bước 2: Mở Modal gửi kết quả ==
+
+Doctor -> FE : 2. Click nút "Gửi kết quả"\ntrên bệnh nhân có booking S2
+FE -> FE : Mở RemedyModal\n(form upload ảnh kết quả)
+
+Doctor -> FE : 3. Upload ảnh hóa đơn/kết quả\n(FileReader → Base64, ≤ 5MB,\nJPEG/PNG/WebP)
+
+alt #FFEBEE Ảnh vượt 5MB
+  FE -> Doctor : Toast lỗi: "Ảnh vượt quá 5MB!"
+else Ảnh hợp lệ
+  FE -> FE : Preview ảnh trên modal
+end
+
+Doctor -> FE : 4. Bấm "Gửi kết quả"
+
+== Bước 3: Gửi API lên Backend ==
+
+FE -> Auth : **POST /api/v1/bookings/:bookingId/remedy**\n{ imageBase64 }\n+ Header: Authorization: Bearer <JWT>
+activate Auth
+
+Auth -> Auth : verifyToken()\n→ Xác thực JWT hợp lệ\n→ Kiểm tra tokenVersion
+Auth -> Auth : checkDoctorRole()\n→ roleId === 'R2'
+
+alt #FFEBEE JWT hết hạn hoặc không hợp lệ
+  Auth --> FE : **HTTP 401** { message: "Unauthorized" }
+  FE -> Doctor : Toast: "Phiên đăng nhập hết hạn"\n→ processLogout()
+else Token hợp lệ, Role R2
+  Auth -> DC : Cho phép request\n(req.user.id = doctorId)
+  activate DC
+end
+
+== Bước 4: Controller xử lý (IDOR Prevention) ==
+
+DC -> DC : doctorId = req.user.id\n(BẮT BUỘC từ JWT token,\nKHÔNG tin req.body)
+DC -> DC : bookingId = req.params.bookingId
+DC -> DC : delete data.email\n(Backend tự lấy email\ntừ DB khi query booking)
+
+DC -> DS : doctorService.sendRemedy({\n  bookingId, doctorId,\n  imageBase64\n})
+activate DS
+
+== Bước 5: Service kiểm tra nghiệp vụ ==
+
+DS -> DB : Booking.findOne({\n  where: {\n    id: bookingId,\n    doctorId: doctorId\n  },\n  include: [{\n    model: User,\n    as: 'patientData',\n    attributes: ['email', 'firstName']\n  }]\n})
+activate DB
+DB --> DS : booking (kèm patientData)
+deactivate DB
+
+alt #FFEBEE Booking không tồn tại hoặc không thuộc BS này
+  DS --> DC : { errCode: 1,\n  message: "Không tìm thấy lịch hẹn!" }
+  DC --> FE : **HTTP 400**
+  FE -> Doctor : Toast lỗi: "Không tìm thấy lịch hẹn"
+
+else #FFEBEE Booking không ở trạng thái S2
+  DS --> DC : { errCode: 3,\n  message: "Booking không ở trạng thái\ncó thể gửi kết quả!" }
+  DC --> FE : **HTTP 400**
+  FE -> Doctor : Toast lỗi
+
+else #E8F5E9 Booking hợp lệ (S2, thuộc BS)
+  == Bước 6: Cập nhật trạng thái & Gửi email ==
+
+  DS -> DB : Booking.update({\n  statusId: 'S3'\n}, { where: { id: bookingId } })
+  activate DB
+  DB --> DS : [1] updated\n(S2 → S3 Hoàn thành)
+  deactivate DB
+
+  DS -> ES : sendRemedyEmail({\n  email: booking.patientData.email,\n  patientName: booking.patientName,\n  doctorName: "...",\n  imageBase64: data.imageBase64\n})
+  activate ES
+
+  ES -> ES : Tạo email template HTML\n+ đính kèm ảnh kết quả\n(attachment: Buffer.from(\n  imageBase64, 'base64'))
+
+  ES -> SMTP : transporter.sendMail({\n  to: patientEmail,\n  subject: "Kết quả khám bệnh",\n  html: remedyTemplate,\n  attachments: [{\n    filename: "ket-qua-kham.jpg",\n    content: imageBuffer\n  }]\n})
+  activate SMTP
+  SMTP --> ES : Email sent OK
+  deactivate SMTP
+  ES --> DS : Done
+  deactivate ES
+
+  DS --> DC : { errCode: 0,\n  message: "Gửi kết quả thành công!" }
+  deactivate DS
+  DC --> FE : **HTTP 200** { errCode: 0 }
+  deactivate DC
+  deactivate Auth
+
+  FE -> FE : Đóng RemedyModal\n→ Fetch lại danh sách BN
+  FE -> Doctor : Toast: "Gửi hóa đơn thành công!"
+end
+
+deactivate FE
+
+note over Doctor, SMTP
+  **Ghi chú bảo mật:**
+  • IDOR Prevention: doctorId lấy từ JWT, không từ body
+  • Email lấy từ DB (patientData), không từ client gửi lên
+  • Image validate: ≤ 5MB, MIME type JPEG/PNG/WebP
+  
+  **State Transition:**
+  S2 (Đã xác nhận) → Gửi kết quả → S3 (Hoàn thành)
+  → Bệnh nhân có thể đánh giá bác sĩ (UC12)
+end note
+
+@enduml

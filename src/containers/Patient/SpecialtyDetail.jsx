@@ -39,10 +39,11 @@ const SpecialtyDetail = () => {
   };
 
   const handleAIConsult = (doctor) => {
-    const doctorName = getDoctorName(doctor);
+    const doctorName = getDoctorName(doctor).trim().replace(/\s+/g, ' ');
+    const hasTitle = /^(bác\s*sĩ|bs|tiến\s*sĩ|ts|thạc\s*sĩ|ths|pgs|gs|dr\.?|giáo\s*sư|phó\s*giáo\s*sư)/i.test(doctorName);
     const promptText = language === LANGUAGES.VI
-      ? `Tôi muốn tư vấn triệu chứng với bác sĩ ${doctorName}`
-      : `I want to consult symptoms with doctor ${doctorName}`;
+      ? `Tôi muốn tư vấn triệu chứng với ${hasTitle ? '' : 'bác sĩ '}${doctorName}`
+      : `I want to consult symptoms with ${/^(doctor|dr\.?|prof\.?|assoc\.?\s*prof\.?|master)/i.test(doctorName) ? '' : 'doctor '}${doctorName}`;
     const event = new CustomEvent('open-ai-chat', {
       detail: { prompt: promptText }
     });
@@ -262,13 +263,6 @@ const SpecialtyDetail = () => {
                         ? doctor.Doctor_Info?.provinceData?.valueVi || 'Toàn quốc'
                         : doctor.Doctor_Info?.provinceData?.valueEn || 'National'}
                     </div>
-                    <button
-                      type="button"
-                      className="specialty-detail__ai-btn"
-                      onClick={() => handleAIConsult(doctor)}
-                    >
-                      🤖 {language === LANGUAGES.VI ? 'Tư vấn AI' : 'AI Consultation'}
-                    </button>
                   </div>
                 </div>
 

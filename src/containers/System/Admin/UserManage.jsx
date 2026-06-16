@@ -101,9 +101,9 @@ const UserManage = () => {
       lastName: user.lastName || '',
       address: user.address || '',
       phoneNumber: user.phoneNumber || '',
-      gender: user.gender || 'M',
-      roleId: user.roleId || 'R3',
-      positionId: user.positionId || 'P0',
+      gender: user.gender || genders[0]?.keyMap || '',
+      roleId: user.roleId || roles[0]?.keyMap || 'R3',
+      positionId: user.positionId || positions[0]?.keyMap || 'P0',
       previewImgURL: user.image ? CommonUtils.decodeBase64Image(user.image) : '',
       imageBase64: '',
     });

@@ -1,0 +1,120 @@
+@startuml UC15_AI_Chatbot_Flow
+!theme plain
+title **SƠ ĐỒ TUẦN TỰ – LUỒNG 6: BỆNH NHÂN TRÒ CHUYỆN VỚI TRỢ LÝ AI**\n(UC15 – AI Chatbot Flow với SSE Streaming & Function Calling)
+
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 220
+skinparam responseMessageBelowArrow true
+
+actor "Bệnh nhân\n(Patient – R3)" as Patient #LightBlue
+participant "Frontend UI\n(Chatbot Widget)" as FE #E3F2FD
+participant "AuthMiddleware\n(verifyToken +\ncheckPatientRole)" as Auth #E8F5E9
+participant "AIController\n(streamChat)" as AIC #BBDEFB
+participant "AIFunctionHandlers\n(executeFunctionCall)" as AIF #FFF3E0
+database "MySQL\n(User, Booking, Doctor_Info, Allcode, etc.)" as DB #FCE4EC
+participant "Gemini API\n(External – Google)" as Gemini #F3E5F5
+
+== Bước 1: Gửi yêu cầu Chat (POST Request) ==
+
+Patient -> FE : 1. Nhập câu hỏi và gửi\n(VD: "Tìm bác sĩ chuyên khoa\nCơ xương khớp giỏi và giá khám")
+activate FE
+
+FE -> FE : Validate nội dung tin nhắn\n& gộp lịch sử hội thoại (history)
+
+FE -> AIC : **POST /api/v1/ai/chat**\n{ message, history }\n+ Header: Authorization: Bearer <JWT>
+activate AIC
+
+note over AIC : **[Pre-Check Guard]**\nContent-Length > 10kb?\n→ Nếu vượt quá, trả về HTTP 413
+
+AIC -> Auth : Đi qua verifyToken() & checkPatientRole()
+activate Auth
+Auth --> AIC : Xác thực hợp lệ (req.user.id)
+deactivate Auth
+
+== Bước 2: Thiết lập kết nối SSE (Server-Sent Events) ==
+
+AIC -> AIC : **[Guard]** activeStreams < 15?\n→ Nếu ≥ 15, trả về HTTP 503 (Server Busy)
+
+AIC -> FE : **HTTP 200** (Thiết lập kết nối SSE)\nHeaders: Content-Type: text/event-stream,\nCache-Control: no-cache, X-Accel-Buffering: no
+deactivate AIC
+activate FE
+
+par Chạy song song: Heartbeat & Timeout
+  AIC -> AIC : Khởi tạo Heartbeat Interval (15s)\n→ Mỗi 15s gửi chunk: `res.write(':heartbeat\\n\\n')`
+  AIC -> AIC : Khởi tạo Hard Timeout (60s)\n→ Quá 60s gửi `[TIMEOUT]` và đóng stream
+end
+
+== Bước 3: Gọi mô hình Gemini và xử lý Function Calling ==
+
+AIC -> AIC : Làm sạch tin nhắn (Zalgo Clean, Unicode slice)\nKhởi tạo model 'gemini-3.1-flash-lite'\n& nạp công cụ (Tools Declaration)
+
+AIC -> Gemini : **startChat({ history })**\n+ **sendMessageStream(cleanMessage)**
+activate Gemini
+Gemini --> AIC : Stream Result (chứa các chunks dữ liệu)
+deactivate Gemini
+
+loop Xử lý Stream Chunks & Gọi hàm hệ thống
+  AIC -> AIC : Lặp đọc từng chunk từ stream
+  
+  alt #E8F5E9 Scenario A: Chunk yêu cầu gọi hàm (Function Call)
+    AIC -> AIC : Nhận diện yêu cầu gọi hàm (VD: `universalSystemSearch`\nvới entityType="doctor", keyword="Cơ xương khớp")
+    
+    AIC -> AIF : **executeFunctionCall(name, args, userId, signal)**
+    activate AIF
+    
+    AIF -> AIF : Phân phối tham số & validate an toàn
+    
+    AIF -> DB : Thực hiện câu lệnh SQL (Sequelize ORM)\n(Truy vấn bác sĩ, chuyên khoa, giá khám, phòng khám...)
+    activate DB
+    DB --> AIF : Trả về dữ liệu thô (raw data)
+    deactivate DB
+    
+    AIF -> AIF : **maskPII()**: Che dấu thông tin nhạy cảm (email, sđt)\n**truncateResult()**: Cắt bớt dữ liệu nếu vượt quá 3000 ký tự
+    
+    AIF --> AIC : Trả về kết quả formatted dạng `---DB_RESULT---`
+    deactivate AIF
+    
+    AIC -> Gemini : Gửi ngược kết quả DB cho Gemini\n**sendMessageStream(functionResponse)**
+    activate Gemini
+    Gemini --> AIC : Stream Result mới (tóm tắt kết quả)
+    deactivate Gemini
+    
+  else #E3F2FD Scenario B: Chunk chứa dữ liệu văn bản (Text Content)
+    AIC -> AIC : Loại bỏ mã độc SSE Protocol Injection\nKiểm tra trạng thái socket (isClientConnected)
+    
+    AIC -> FE : Gửi chunk văn bản realtime\n`res.write('data: {"text": "chunk_data"}\\n\\n')`
+    
+    opt Nếu xảy ra nghẽn mạng (Backpressure - res.write trả về false)
+      AIC -> AIC : Chờ sự kiện 'drain' từ Socket của Client
+    end
+    
+    FE -> FE : Render chunk văn bản vào Chat widget
+  end
+end
+
+== Bước 4: Hoàn tất truyền dữ liệu (Stream Termination) ==
+
+AIC -> AIC : Dọn dẹp Heartbeat & Hard Timeout\nGiảm bộ đếm kết nối: activeStreams--
+
+AIC -> FE : Gửi tín hiệu hoàn thành: `data: [DONE]\n\n`
+AIC -> AIC : Kết thúc Response: `res.end()`
+
+FE -> FE : Đóng luồng đọc SSE (reader.cancel())\nHiển thị trạng thái Chatbot hoàn thành
+
+deactivate FE
+
+== Các luồng Ngoại lệ (Exceptional Flows) ==
+
+alt #FFEBEE Khách hàng đóng trình duyệt / ngắt kết nối đột ngột
+  Patient -> FE : Đóng tab / tắt kết nối mạng
+  FE -/ AIC : Socket closed
+  AIC -> AIC : Kích hoạt sự kiện req.on('close')\n→ Đặt isClientConnected = false\n→ Hủy stream Gemini (Abort Signal)\n→ Giải phóng bộ đếm activeStreams--
+end
+
+alt #FFEBEE Lỗi gọi dịch vụ Google Gemini (Ví dụ: Lỗi 429 quá tải)
+  Gemini -> AIC : Lỗi Resource Exhausted (429 Rate Limit)
+  AIC -> FE : Gửi chunk thông báo: `data: {"error": "AI đang quá tải..."}\\n\\n`
+  AIC -> AIC : res.end()
+end
+
+@enduml

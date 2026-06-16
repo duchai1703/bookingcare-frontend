@@ -107,31 +107,40 @@
   &__description {
     background-color: rgba($bg-white, 0.9);
     position: relative;
-    max-height: 200px;
-    overflow: hidden;
-    transition: max-height 0.4s ease;
-
-    &--expanded {
-      max-height: none;
-    }
-
-    // Gradient fade khi thu gọn
-    &:not(&--expanded)::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 60px;
-      background: linear-gradient(transparent, rgba($bg-white, 0.95));
-      pointer-events: none;
-    }
+    border-bottom: 1px solid $border-color;
   }
 
   &__description-container {
     max-width: $max-width;
     margin: 0 auto;
     padding: $spacing-lg $spacing-md;
+    max-height: 260px; // Tăng chiều cao lên 260px để hiển thị đầy đủ hơn
+    overflow-y: auto;
+    transition: max-height 0.4s ease;
+
+    // Custom sleek scrollbar
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+    &::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.03);
+      border-radius: 3px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.15);
+      border-radius: 3px;
+      transition: background 0.2s ease;
+      &:hover {
+        background: rgba(0, 0, 0, 0.3);
+      }
+    }
+  }
+
+  &__description--expanded {
+    .specialty-detail__description-container {
+      max-height: none;
+      overflow-y: visible;
+    }
   }
 
   &__description-content {

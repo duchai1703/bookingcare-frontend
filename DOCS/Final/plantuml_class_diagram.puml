@@ -1,0 +1,493 @@
+@startuml BookingCare_Class_Diagram
+!theme plain
+title **SƠ ĐỒ LỚP HỆ THỐNG BACKEND – BOOKINGCARE**\n(Class Diagram – Kiến trúc 3 Tầng: Controller – Service – Model)
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam classFontStyle bold
+skinparam packageFontSize 14
+skinparam packageFontStyle bold
+skinparam linetype ortho
+skinparam groupInheritance 2
+skinparam nodesep 40
+skinparam ranksep 50
+
+' ═══════════════════════════════════════════════════════════════════════
+' TẦNG 1: MIDDLEWARE
+' ═══════════════════════════════════════════════════════════════════════
+package "Middleware Layer" <<Rectangle>> #E8F5E9 {
+
+  class AuthMiddleware <<Middleware>> {
+    + verifyToken(req : Request, res : Response, next : NextFunction) : void
+    + checkAdminRole(req : Request, res : Response, next : NextFunction) : void
+    + checkDoctorRole(req : Request, res : Response, next : NextFunction) : void
+    + checkPatientRole(req : Request, res : Response, next : NextFunction) : void
+    + checkAdminOrDoctorRole(req : Request, res : Response, next : NextFunction) : void
+    --
+    + JWT_SECRET : String
+  }
+
+  class RateLimiter <<Middleware>> {
+    + authLimiter : Object
+    --
+    + windowMs : Integer = 900000
+    + max : Integer = 100
+  }
+}
+
+
+' ═══════════════════════════════════════════════════════════════════════
+' TẦNG 2: CONTROLLER (Presentation Layer)
+' ═══════════════════════════════════════════════════════════════════════
+package "Controller Layer (Presentation)" <<Rectangle>> #E3F2FD {
+
+  class UserController <<Controller>> {
+    + handleLogin(req : Request, res : Response) : Promise<Response>
+    + handleGetAllUsers(req : Request, res : Response) : Promise<Response>
+    + handleCreateNewUser(req : Request, res : Response) : Promise<Response>
+    + handleEditUser(req : Request, res : Response) : Promise<Response>
+    + handleDeleteUser(req : Request, res : Response) : Promise<Response>
+    + getAllCode(req : Request, res : Response) : Promise<Response>
+    + handleSearch(req : Request, res : Response) : Promise<Response>
+    + handleRegisterPatient(req : Request, res : Response) : Promise<Response>
+    + handleForgotPassword(req : Request, res : Response) : Promise<Response>
+    + handleResetPassword(req : Request, res : Response) : Promise<Response>
+  }
+
+  class DoctorController <<Controller>> {
+    + getTopDoctorHome(req : Request, res : Response) : Promise<Response>
+    + getDetailDoctorById(req : Request, res : Response) : Promise<Response>
+    + saveInfoDoctor(req : Request, res : Response) : Promise<Response>
+    + deleteDoctorInfo(req : Request, res : Response) : Promise<Response>
+    + bulkCreateSchedule(req : Request, res : Response) : Promise<Response>
+    + editSchedule(req : Request, res : Response) : Promise<Response>
+    + deleteSchedule(req : Request, res : Response) : Promise<Response>
+    + getScheduleByDate(req : Request, res : Response) : Promise<Response>
+    + getListPatientForDoctor(req : Request, res : Response) : Promise<Response>
+    + sendRemedy(req : Request, res : Response) : Promise<Response>
+    + cancelBooking(req : Request, res : Response) : Promise<Response>
+    + getPatientBookingHistory(req : Request, res : Response) : Promise<Response>
+  }
+
+  class PatientController <<Controller>> {
+    + postBookAppointment(req : Request, res : Response) : Promise<Response>
+    + postVerifyBookAppointment(req : Request, res : Response) : Promise<Response>
+    + getPatientProfile(req : Request, res : Response) : Promise<Response>
+    + editPatientProfile(req : Request, res : Response) : Promise<Response>
+    + handleChangePassword(req : Request, res : Response) : Promise<Response>
+    + getPatientBookings(req : Request, res : Response) : Promise<Response>
+    + handleCancelBooking(req : Request, res : Response) : Promise<Response>
+  }
+
+  class PaymentController <<Controller>> {
+    + createPaymentUrlByToken(req : Request, res : Response) : Promise<Response>
+    + vnpayIpn(req : Request, res : Response) : Promise<Response>
+    + bookingByToken(req : Request, res : Response) : Promise<Response>
+  }
+
+  class ReviewController <<Controller>> {
+    + submitReview(req : Request, res : Response) : Promise<Response>
+    + getDoctorReviews(req : Request, res : Response) : Promise<Response>
+  }
+
+  class StatisticController <<Controller>> {
+    + getOverviewStatistics(req : Request, res : Response) : Promise<Response>
+    + getBookingsByDay(req : Request, res : Response) : Promise<Response>
+    + getBookingsByStatus(req : Request, res : Response) : Promise<Response>
+    + getTopSpecialties(req : Request, res : Response) : Promise<Response>
+    + getTopDoctors(req : Request, res : Response) : Promise<Response>
+  }
+
+  class ClinicController <<Controller>> {
+    + getAllClinic(req : Request, res : Response) : Promise<Response>
+    + getDetailClinicById(req : Request, res : Response) : Promise<Response>
+    + createClinic(req : Request, res : Response) : Promise<Response>
+    + editClinic(req : Request, res : Response) : Promise<Response>
+    + deleteClinic(req : Request, res : Response) : Promise<Response>
+  }
+
+  class SpecialtyController <<Controller>> {
+    + getAllSpecialty(req : Request, res : Response) : Promise<Response>
+    + getDetailSpecialtyById(req : Request, res : Response) : Promise<Response>
+    + createSpecialty(req : Request, res : Response) : Promise<Response>
+    + editSpecialty(req : Request, res : Response) : Promise<Response>
+    + deleteSpecialty(req : Request, res : Response) : Promise<Response>
+  }
+
+  class AIController <<Controller>> {
+    + streamChat(req : Request, res : Response) : Promise<void>
+    --
+    - activeStreams : Integer = 0
+    - MAX_STREAMS : Integer = 15
+  }
+}
+
+
+' ═══════════════════════════════════════════════════════════════════════
+' TẦNG 3: SERVICE (Business Logic Layer) & UTILITIES
+' ═══════════════════════════════════════════════════════════════════════
+package "Service Layer (Business Logic)" <<Rectangle>> #FFF3E0 {
+
+  class UserService <<Service>> {
+    + handleUserLogin(email : String, password : String) : Promise<Object>
+    + getAllUsers(id : String) : Promise<Object>
+    + createNewUser(data : Object) : Promise<Object>
+    + editUser(data : Object) : Promise<Object>
+    + deleteUser(id : Integer, requesterId : Integer) : Promise<Object>
+    + getAllCodeService(type : String) : Promise<Object>
+    + searchService(keyword : String) : Promise<Object>
+  }
+
+  class AuthService <<Service>> {
+    + registerPatient(data : Object) : Promise<Object>
+    + forgotPassword(data : Object) : Promise<Object>
+    + resetPassword(data : Object) : Promise<Object>
+  }
+
+  class DoctorService <<Service>> {
+    + getTopDoctorHome(limit : Integer) : Promise<Object>
+    + getDetailDoctorById(id : Integer) : Promise<Object>
+    + saveInfoDoctor(data : Object) : Promise<Object>
+    + deleteDoctorInfo(doctorId : Integer) : Promise<Object>
+    + bulkCreateSchedule(data : Object) : Promise<Object>
+    + deleteSchedule(data : Object) : Promise<Object>
+    + getScheduleByDate(doctorId : Integer, date : String, includeAll : Boolean) : Promise<Object>
+    + getListPatientForDoctor(doctorId : Integer, date : String, statusId : String) : Promise<Object>
+    + sendRemedy(data : Object) : Promise<Object>
+    + cancelBooking(data : Object) : Promise<Object>
+    + getPatientBookingHistory(patientId : Integer, doctorId : Integer) : Promise<Object>
+  }
+
+  class PatientService <<Service>> {
+    + postBookAppointment(data : Object, patientId : Integer) : Promise<Object>
+    + postVerifyBookAppointment(data : Object) : Promise<Object>
+    + getPatientProfile(patientId : Integer) : Promise<Object>
+    + editPatientProfile(data : Object, patientId : Integer) : Promise<Object>
+    + changePassword(data : Object, patientId : Integer) : Promise<Object>
+    + getPatientBookings(patientId : Integer, query : Object) : Promise<Object>
+    + cancelBooking(data : Object, patientId : Integer) : Promise<Object>
+  }
+
+  class PaymentService <<Service>> {
+    + createPaymentUrlByToken(data : Object) : Promise<Object>
+    + vnpayIPN(vnpParams : Object) : Promise<Object>
+    + getBookingByToken(paymentToken : String) : Promise<Object>
+  }
+
+  class ReviewService <<Service>> {
+    + submitReview(data : Object, patientId : Integer) : Promise<Object>
+    + getDoctorReviews(doctorId : Integer, query : Object) : Promise<Object>
+  }
+
+  class StatisticService <<Service>> {
+    + getOverviewStatistics(startDate : String, endDate : String) : Promise<Object>
+    + getBookingsByDay(startDate : String, endDate : String) : Promise<Object>
+    + getBookingsByStatus(startDate : String, endDate : String) : Promise<Object>
+    + getTopSpecialties(startDate : String, endDate : String) : Promise<Object>
+    + getTopDoctors(startDate : String, endDate : String) : Promise<Object>
+  }
+
+  class EmailService <<Service>> {
+    + sendBookingConfirmation(dataSend : Object) : Promise<void>
+    + sendRemedyEmail(dataSend : Object) : Promise<void>
+    + sendForgotPasswordEmail(dataSend : Object) : Promise<void>
+  }
+
+  class ClinicService <<Service>> {
+    + getAllClinic() : Promise<Object>
+    + getDetailClinicById(id : Integer) : Promise<Object>
+    + createClinic(data : Object) : Promise<Object>
+    + editClinic(data : Object) : Promise<Object>
+    + deleteClinic(id : Integer) : Promise<Object>
+  }
+
+  class SpecialtyService <<Service>> {
+    + getAllSpecialty() : Promise<Object>
+    + getDetailSpecialtyById(id : Integer) : Promise<Object>
+    + createSpecialty(data : Object) : Promise<Object>
+    + editSpecialty(data : Object) : Promise<Object>
+    + deleteSpecialty(id : Integer) : Promise<Object>
+  }
+
+  class AIService <<Service>> {
+    + SYSTEM_PROMPT : String
+    - model : Object
+  }
+
+  class AIFunctionHandlers <<Service>> {
+    + aiFunctions : Object
+    + aiAuthFunctions : Object
+    + executeFunctionCall(functionName : String, args : Object, userId : Integer, signal : AbortSignal) : Promise<String>
+    - handleSearchDoctorsBySpecialty(args : Object, signal : AbortSignal) : Promise<Object>
+    - handleGetAvailableSchedules(args : Object, signal : AbortSignal) : Promise<Object>
+    - handleGetClinicInfo(args : Object, signal : AbortSignal) : Promise<Object>
+    - handleGetDoctorDetail(args : Object, signal : AbortSignal) : Promise<Object>
+    - handleGetMyBookings(args : Object, userId : Integer, signal : AbortSignal) : Promise<Object>
+    - handleGetMyPaymentStatus(args : Object, userId : Integer, signal : AbortSignal) : Promise<Object>
+    - handleUniversalSystemSearch(args : Object, signal : AbortSignal) : Promise<Object>
+    - sanitizeWildcard(input : String) : String
+    - maskPII(obj : Object) : Object
+    - truncateResult(str : String, max : Integer) : String
+    - safeJsonParse(str : String) : Object
+  }
+
+  class AIHistoryUtils <<Utility>> {
+    + prepareHistory(rawHistory : Array) : Array
+  }
+}
+
+
+' ═══════════════════════════════════════════════════════════════════════
+' TẦNG 4: MODEL (Data Access Layer – Sequelize ORM)
+' ═══════════════════════════════════════════════════════════════════════
+package "Model Layer (Data Access – Sequelize ORM)" <<Rectangle>> #FCE4EC {
+
+  class User <<Model>> {
+    + id : Integer {PK, AI}
+    + email : String(255) {unique, not null}
+    + password : String(255)
+    + firstName : String(255) {not null}
+    + lastName : String(255) {not null}
+    + address : String(255)
+    + phoneNumber : String(20)
+    + gender : String(10) {FK -> Allcode}
+    + roleId : String(10) {FK -> Allcode, not null}
+    + image : Blob
+    + positionId : String(10) {FK -> Allcode}
+    + tokenVersion : Integer = 0
+    --
+    + createdAt : Date
+    + updatedAt : Date
+  }
+
+  class Booking <<Model>> {
+    + id : Integer {PK, AI}
+    + statusId : String(10) {FK -> Allcode, not null}
+    + doctorId : Integer {FK -> User, not null}
+    + patientId : Integer {FK -> User, not null}
+    + date : String(20) {not null}
+    + timeType : String(10) {FK -> Allcode, not null}
+    + token : String(255) {not null}
+    + reason : Text
+    + patientName : String(255)
+    + patientPhoneNumber : String(20)
+    + patientAddress : String(255)
+    + patientGender : String(10)
+    + patientBirthday : String(20)
+    + paymentToken : String(255) {unique}
+    + paymentStatus : String(10) = "unpaid"
+    + bookingPrice : Integer = 0
+    + vnpayTransactionNo : String(50)
+    + vnp_PayDate : String(20)
+    --
+    + createdAt : Date
+    + updatedAt : Date
+  }
+
+  class Schedule <<Model>> {
+    + id : Integer {PK, AI}
+    + doctorId : Integer {FK -> User, not null}
+    + date : String(20) {not null}
+    + timeType : String(10) {FK -> Allcode, not null}
+    + maxNumber : Integer = 10
+    + currentNumber : Integer = 0
+    --
+    + createdAt : Date
+    + updatedAt : Date
+    --
+    {unique: (doctorId, date, timeType)}
+  }
+
+  class Doctor_Info <<Model>> {
+    + id : Integer {PK, AI}
+    + doctorId : Integer {FK -> User, not null}
+    + specialtyId : Integer {FK -> Specialty}
+    + clinicId : Integer {FK -> Clinic}
+    + priceId : String(10) {FK -> Allcode}
+    + provinceId : String(10) {FK -> Allcode}
+    + paymentId : String(10) {FK -> Allcode}
+    + contentHTML : Text
+    + contentMarkdown : Text
+    + description : Text
+    + note : Text
+    + count : Integer = 0
+    --
+    + createdAt : Date
+    + updatedAt : Date
+  }
+
+  class Specialty <<Model>> {
+    + id : Integer {PK, AI}
+    + name : String(255) {not null}
+    + image : Blob
+    + descriptionHTML : Text
+    + descriptionMarkdown : Text
+    --
+    + createdAt : Date
+    + updatedAt : Date
+  }
+
+  class Clinic <<Model>> {
+    + id : Integer {PK, AI}
+    + name : String(255) {not null}
+    + address : String(255) {not null}
+    + image : Blob
+    + descriptionHTML : Text
+    + descriptionMarkdown : Text
+    --
+    + createdAt : Date
+    + updatedAt : Date
+  }
+
+  class Allcode <<Model>> {
+    + id : Integer {PK, AI}
+    + type : String(50) {not null}
+    + keyMap : String(10) {unique, not null}
+    + valueVi : String(255) {not null}
+    + valueEn : String(255) {not null}
+    --
+    + createdAt : Date
+    + updatedAt : Date
+  }
+
+  class Review <<Model>> {
+    + id : Integer {PK, AI}
+    + doctorId : Integer {FK -> User, not null}
+    + patientId : Integer {FK -> User, not null}
+    + bookingId : Integer {FK -> Booking, unique, not null}
+    + rating : Integer {not null}
+    + comment : Text
+    --
+    + createdAt : Date
+    + updatedAt : Date
+  }
+
+  class Token <<Model>> {
+    + id : Integer {PK, AI}
+    + tokenHash : String(64) {unique, not null}
+    + userId : Integer {FK -> User, not null}
+    + type : String(20) {not null}
+    + isUsed : Boolean = false
+    + expiredAt : Date {not null}
+    --
+    + createdAt : Date
+    + updatedAt : Date
+  }
+}
+
+
+' ═══════════════════════════════════════════════════════════════════════
+' HỆ THỐNG & THƯ VIỆN BÊN NGOÀI
+' ═══════════════════════════════════════════════════════════════════════
+package "External Systems & Libraries" <<Rectangle>> #F3E5F5 {
+  class VNPay <<External>> {
+    + createPaymentURL() : URL
+    + processPayment() : Callback
+  }
+
+  class GmailSMTP <<External>> {
+    + sendMail(options : Object) : Promise<void>
+  }
+
+  class GoogleGenerativeAI <<Library>> {
+    + getGenerativeModel(config : Object) : Object
+  }
+}
+
+
+' ═══════════════════════════════════════════════════════════════════════
+' QUAN HỆ PHỤ THUỘC (Dependency): Controller → Service
+' ═══════════════════════════════════════════════════════════════════════
+UserController ..> UserService : <<use>>
+UserController ..> AuthService : <<use>>
+DoctorController ..> DoctorService : <<use>>
+PatientController ..> PatientService : <<use>>
+PaymentController ..> PaymentService : <<use>>
+ReviewController ..> ReviewService : <<use>>
+StatisticController ..> StatisticService : <<use>>
+ClinicController ..> ClinicService : <<use>>
+SpecialtyController ..> SpecialtyService : <<use>>
+AIController ..> AIService : <<use>>
+AIController ..> AIFunctionHandlers : <<use>>
+AIController ..> AIHistoryUtils : <<use>>
+
+' ═══════════════════════════════════════════════════════════════════════
+' QUAN HỆ PHỤ THUỘC (Dependency): Service → Model
+' ═══════════════════════════════════════════════════════════════════════
+UserService ..> User : <<use>>
+UserService ..> Allcode : <<use>>
+AuthService ..> User : <<use>>
+AuthService ..> Token : <<use>>
+DoctorService ..> User : <<use>>
+DoctorService ..> Doctor_Info : <<use>>
+DoctorService ..> Schedule : <<use>>
+DoctorService ..> Booking : <<use>>
+PatientService ..> User : <<use>>
+PatientService ..> Booking : <<use>>
+PatientService ..> Schedule : <<use>>
+PaymentService ..> Booking : <<use>>
+ReviewService ..> Review : <<use>>
+ReviewService ..> Booking : <<use>>
+StatisticService ..> Booking : <<use>>
+StatisticService ..> User : <<use>>
+ClinicService ..> Clinic : <<use>>
+SpecialtyService ..> Specialty : <<use>>
+
+AIFunctionHandlers ..> User : <<use>>
+AIFunctionHandlers ..> Specialty : <<use>>
+AIFunctionHandlers ..> Clinic : <<use>>
+AIFunctionHandlers ..> Doctor_Info : <<use>>
+AIFunctionHandlers ..> Schedule : <<use>>
+AIFunctionHandlers ..> Booking : <<use>>
+AIFunctionHandlers ..> Review : <<use>>
+AIFunctionHandlers ..> Allcode : <<use>>
+
+' ═══════════════════════════════════════════════════════════════════════
+' QUAN HỆ GIỮA CÁC SERVICE (Inter-Service Dependencies)
+' ═══════════════════════════════════════════════════════════════════════
+DoctorService ..> EmailService : <<use>>
+PatientService ..> EmailService : <<use>>
+AuthService ..> EmailService : <<use>>
+
+' ═══════════════════════════════════════════════════════════════════════
+' QUAN HỆ VỚI BÊN NGOÀI
+' ═══════════════════════════════════════════════════════════════════════
+PaymentService ..> VNPay : <<use>>
+EmailService ..> GmailSMTP : <<use>>
+AIController ..> GoogleGenerativeAI : <<use>>
+AIService ..> GoogleGenerativeAI : <<use>>
+
+' ═══════════════════════════════════════════════════════════════════════
+' QUAN HỆ CƠ SỞ DỮ LIỆU (Entity Associations)
+' ═══════════════════════════════════════════════════════════════════════
+User "1" -- "0..1" Doctor_Info : doctorId
+User "1" -- "*" Schedule : doctorId
+User "1" -- "*" Booking : doctorId\n(bác sĩ)
+User "1" -- "*" Booking : patientId\n(bệnh nhân)
+User "1" -- "*" Review : doctorId
+User "1" -- "*" Review : patientId
+User "1" -- "*" Token : userId
+Specialty "1" -- "*" Doctor_Info : specialtyId
+Clinic "1" -- "*" Doctor_Info : clinicId
+Booking "1" -- "0..1" Review : bookingId
+Allcode "1" -- "*" User : gender, roleId, positionId
+Allcode "1" -- "*" Doctor_Info : priceId, provinceId, paymentId
+Allcode "1" -- "*" Schedule : timeType
+Allcode "1" -- "*" Booking : statusId, timeType, patientGender
+
+' ═══════════════════════════════════════════════════════════════════════
+' GHI CHÚ
+' ═══════════════════════════════════════════════════════════════════════
+legend right
+  |= Ký hiệu |= Ý nghĩa |
+  | ..> | Dependency (phụ thuộc) |
+  | -- | Association (liên kết) |
+  | 1 -- * | Một - Nhiều (One-to-Many) |
+  | 1 -- 0..1 | Một - Không hoặc Một (One-to-Optional One) |
+  | {PK} | Primary Key (Khóa chính) |
+  | {FK} | Foreign Key (Khóa ngoại) |
+  | {AI} | Auto Increment (Tự tăng) |
+  | {unique} | Ràng buộc duy nhất (Unique Constraint) |
+endlegend
+
+@enduml

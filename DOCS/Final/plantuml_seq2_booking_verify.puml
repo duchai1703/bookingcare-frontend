@@ -1,0 +1,179 @@
+@startuml UC06_UC07_Booking_Verification_Flow
+!theme plain
+title **SƠ ĐỒ TUẦN TỰ – LUỒNG 2: ĐẶT LỊCH KHÁM & XÁC THỰC EMAIL**\n(UC06 + UC07 – Appointment Booking & Email Verification Flow)
+
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 220
+skinparam responseMessageBelowArrow true
+
+actor "Bệnh nhân\n(Patient – R3)" as Patient #LightBlue
+participant "Frontend UI\n(React + Redux)" as FE #E3F2FD
+participant "AuthMiddleware\n(verifyToken +\ncheckPatientRole)" as Auth #E8F5E9
+participant "PatientController" as PC #BBDEFB
+participant "PatientService" as PS #FFF3E0
+database "MySQL\n(Booking, Schedule)" as DB #FCE4EC
+participant "EmailService\n(Nodemailer)" as ES #F3E5F5
+participant "Gmail SMTP\nServer" as SMTP #E1BEE7
+
+' ═══════════════════════════════════════════════════════════════════════
+' PHẦN A: ĐẶT LỊCH KHÁM (UC06)
+' ═══════════════════════════════════════════════════════════════════════
+
+== PHẦN A: Đặt lịch khám (UC06) ==
+
+Patient -> FE : 1. Xem chi tiết bác sĩ\ntại /doctor/:id
+activate FE
+FE -> FE : 2. Chọn ngày khám + khung giờ (T1–T8)
+Patient -> FE : 3. Bấm "Đặt lịch" → Mở BookingModal
+FE -> FE : 4. Nhập thông tin BN:\n(tên, SĐT, email, giới tính,\nngày sinh, địa chỉ, lý do khám)
+Patient -> FE : 5. Bấm "Xác nhận đặt lịch"
+
+FE -> Auth : **POST /api/v1/bookings**\n{ doctorId, date, timeType,\npatientName, phoneNumber, ... }\n+ Header: Authorization: Bearer <JWT>
+activate Auth
+
+Auth -> Auth : verifyToken()\n→ Kiểm tra JWT hợp lệ\n→ Kiểm tra tokenVersion khớp DB
+Auth -> Auth : checkPatientRole()\n→ roleId === 'R3'
+
+alt #FFEBEE JWT không hợp lệ hoặc hết hạn
+  Auth --> FE : **HTTP 401** { message: "Unauthorized" }
+  FE -> Patient : Toast: "Phiên đăng nhập hết hạn"\n→ Redirect /login
+else Token hợp lệ, Role R3
+  Auth -> PC : Cho phép request\n(req.user.id = patientId)
+  activate PC
+end
+
+PC -> PC : patientId = req.user.id\n(IDOR Prevention: lấy từ JWT)
+PC -> PS : patientService.postBookAppointment(\n  req.body, patientId)
+activate PS
+
+== Bước 6: Kiểm tra slot trống ==
+
+PS -> DB : Schedule.findOne({\n  where: { doctorId, date, timeType } })
+activate DB
+DB --> PS : schedule
+deactivate DB
+
+alt #FFEBEE Không tìm thấy lịch khám
+  PS --> PC : { errCode: 3, message: "Không tìm thấy lịch khám!" }
+  PC --> FE : **HTTP 400**
+  FE -> Patient : Toast lỗi
+
+else #FFEBEE Slot đã đầy (currentNumber ≥ maxNumber)
+  PS --> PC : { errCode: 4, message: "Khung giờ đã đầy!" }
+  PC --> FE : **HTTP 400**
+  FE -> Patient : Toast: "Khung giờ này đã hết chỗ"
+
+else Slot còn trống
+  == Bước 7: Kiểm tra lịch trùng ==
+
+  PS -> DB : Booking.findOne({\n  where: { doctorId, patientId,\n  date, timeType,\n  statusId: NOT IN ['S4'] } })
+  activate DB
+  DB --> PS : existingBooking
+  deactivate DB
+
+  alt #FFEBEE Đã có booking trùng
+    PS --> PC : { errCode: 2, message: "Bạn đã đặt lịch này rồi!" }
+    PC --> FE : **HTTP 400**
+    FE -> Patient : Toast: "Bạn đã đặt lịch cho khung giờ này"
+
+  else #E8F5E9 Không trùng → Tạo Booking mới
+    == Bước 8: Tạo Booking & Gửi Email ==
+
+    PS -> PS : Sinh token ngẫu nhiên\n(UUID v4)
+
+    PS -> DB : Booking.create({\n  statusId: 'S1',\n  doctorId, patientId,\n  date, timeType,\n  token: generatedToken,\n  bookingPrice: priceValue,\n  patientName, patientPhoneNumber, ... })
+    activate DB
+    DB --> PS : newBooking (statusId='S1')
+    deactivate DB
+
+    PS -> DB : Schedule.update({\n  currentNumber: currentNumber + 1\n}, { where: { id: schedule.id } })
+    activate DB
+    DB --> PS : [1] (affected rows)
+    deactivate DB
+
+    PS -> ES : sendBookingConfirmation({\n  email, doctorName, date, time,\n  redirectLink: "/verify-booking\n    ?token=xxx&doctorId=yyy" })
+    activate ES
+    ES -> SMTP : transporter.sendMail({\n  to: patientEmail,\n  subject: "Xác nhận lịch khám",\n  html: emailTemplate })
+    activate SMTP
+    SMTP --> ES : Email sent OK
+    deactivate SMTP
+    ES --> PS : Done
+    deactivate ES
+
+    PS --> PC : { errCode: 0,\n  message: "Đặt lịch thành công!" }
+    deactivate PS
+    PC --> FE : **HTTP 200** { errCode: 0 }
+    deactivate PC
+    deactivate Auth
+    FE -> Patient : Toast: "Đặt lịch thành công!\nVui lòng kiểm tra email xác nhận"
+  end
+end
+
+|||
+
+' ═══════════════════════════════════════════════════════════════════════
+' PHẦN B: XÁC THỰC LỊCH HẸN QUA EMAIL (UC07)
+' ═══════════════════════════════════════════════════════════════════════
+
+== PHẦN B: Xác thực lịch hẹn qua Email (UC07) ==
+
+Patient -> Patient : 9. Mở email → Click link\n/verify-booking?token=xxx&doctorId=yyy
+Patient -> FE : 10. Mở trang /verify-booking\n(trạng thái: 'idle')
+FE -> Patient : 11. Hiển thị nút:\n"Bấm vào đây để Xác nhận\nLịch khám và Thanh toán"\n(Anti-Bot: KHÔNG tự động gọi API)
+
+Patient -> FE : 12. Bấm nút xác nhận thủ công
+FE -> PC : **POST /api/v1/verify-book-appointment**\n{ token, doctorId }\n(Public endpoint – không cần JWT)
+activate PC
+
+PC -> PS : patientService.\npostVerifyBookAppointment(\n  { token, doctorId })
+activate PS
+
+PS -> DB : Booking.findOne({\n  where: { token, doctorId,\n  statusId: 'S1' } })
+activate DB
+DB --> PS : booking
+deactivate DB
+
+alt #FFEBEE Token không hợp lệ hoặc booking không tồn tại
+  PS --> PC : { errCode: 2,\n  message: "Link xác nhận không hợp lệ!" }
+  PC --> FE : **HTTP 400**
+  FE -> Patient : Hiển thị: "Link xác nhận không hợp lệ\nhoặc đã được sử dụng"
+
+else #FFEBEE Booking đã xác nhận rồi (statusId ≠ 'S1')
+  PS --> PC : { errCode: 3,\n  message: "Lịch hẹn đã được xác nhận!" }
+  PC --> FE : **HTTP 400**
+  FE -> Patient : Hiển thị: "Lịch hẹn này đã được xác nhận trước đó"
+
+else #FFEBEE Slot đã đầy (kiểm tra lại)
+  PS --> PC : { errCode: 5,\n  message: "Khung giờ đã đầy!" }
+  PC --> FE : **HTTP 400**
+  FE -> Patient : Hiển thị: "Rất tiếc, khung giờ đã đầy"
+
+else #E8F5E9 Token hợp lệ, Booking S1
+  PS -> PS : Sinh paymentToken ngẫu nhiên
+
+  PS -> DB : Booking.update({\n  statusId: 'S1.5',\n  paymentToken: generatedToken\n}, { where: { id: booking.id } })
+  activate DB
+  DB --> PS : [1] (affected rows)
+  deactivate DB
+
+  PS --> PC : { errCode: 0,\n  bookingPrice: xxx,\n  paymentToken: "...",\n  message: "Xác nhận thành công!" }
+  deactivate PS
+  PC --> FE : **HTTP 200**
+  deactivate PC
+
+  FE -> FE : Chuyển trạng thái → 'verified'\nHiển thị phí khám + nút\n"Thanh toán bằng VNPay"
+  FE -> Patient : Hiển thị giao diện thanh toán\n→ Chuyển sang Luồng 3 (UC08)
+end
+
+deactivate FE
+
+note over Patient, SMTP
+  **State Machine Booking:**
+  S1 (Mới) → Email xác nhận → S1.5 (Chờ thanh toán)
+  → Thanh toán → S2 (Đã xác nhận) → S3 (Hoàn thành) / S4 (Hủy)
+  
+  **Auto-cancel:** Booking S1/S1.5 chưa thanh toán
+  sẽ tự động hủy (S4) sau 20 phút (cronjob)
+end note
+
+@enduml
