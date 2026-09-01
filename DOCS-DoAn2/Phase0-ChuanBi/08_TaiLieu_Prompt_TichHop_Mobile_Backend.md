@@ -2,149 +2,296 @@
 
 > **Dự án:** BookingCare – Hệ thống đặt lịch khám bệnh trực tuyến  
 > **Tài liệu:** Đồ án 2 (UIT) – Phase 0: Chuẩn bị  
-> **Phiên bản:** 2.0 (Audit & Verified 100% với Codebase Backend) | **Ngày:** 01/09/2026  
+> **Phiên bản:** 3.0 (Đầy đủ 100% Cấu trúc Chi tiết Bác sĩ, Chuyên khoa, Phòng khám & Lịch khám) | **Ngày:** 01/09/2026  
 > **Tác giả:** Đặng Ngọc Trường Giang & Trần Đức Hải  
-> **Mục tiêu:** Kiểm tra và chuẩn hóa 100% các Prompt cho AI Assistant trong Android Studio (Kotlin Jetpack Compose / React Native) để khớp hoàn toàn với Backend Node.js Express + PostgreSQL.  
+> **Mục tiêu:** Cung cấp đầy đủ Cấu trúc JSON Chi tiết (Full JSON Response Schema) cho Bác sĩ, Chuyên khoa, Phòng khám, Lịch khám, Đánh giá và Allcode để AI Assistant trong Android Studio (Kotlin Jetpack Compose / React Native) sinh code hiển thị chính xác 100%.  
 > **Vị trí file:** `DOCS-DoAn2/Phase0-ChuanBi/08_TaiLieu_Prompt_TichHop_Mobile_Backend.md`
 
 ---
 
 ## MỤC LỤC
 
-1. [Kết quả Audit & Xác minh Tính Khớp nối với Codebase Backend](#1-kết-quả-audit--xác-minh-tính-khớp-nối-với-codebase-backend)
-2. [Cấu hình Hạ tầng Mạng & IP Kết nối](#2-cấu-hình-hạ-tầng-mạng--ip-kết-nối)
-3. [Quy chuẩn RESTful API Endpoints & Request/Response Contracts](#3-quy-chuẩn-restful-api-endpoints--requestresponse-contracts)
-4. [Quy tắc Data Converters & Parsers (BYTEA Image, Timestamp, Allcodes)](#4-quy-tắc-data-converters--parsers-bytea-image-timestamp-allcodes)
-5. [Bộ Master Integration Prompts Chuẩn hóa 100% cho AI Android Studio](#5-bộ-master-integration-prompts-chuẩn-hóa-100-cho-ai-android-studio)
-   - [PROMPT A: Network Module & Interceptors](#prompt-a-network-module--interceptors)
-   - [PROMPT B: Data Models & Response Parsers](#prompt-b-data-models--response-parsers)
+1. [Đánh giá Độ đầy đủ & Bổ sung Cấu trúc Dữ liệu Chi tiết](#1-đánh-giá-độ-đầy-đủ--bổ-sung-cấu-trúc-dữ-liệu-chi-tiết)
+2. [Chi tiết Cấu trúc JSON Trả về cho từng Màn hình (Full Response Schemas)](#2-chi-tiết-cấu-trúc-json-trả-về-cho-từng-màn-hình-full-response-schemas)
+   - [2.1. Chi tiết Bác sĩ (Doctor Detail Schema)](#21-chi-tiết-bác-sĩ-doctor-detail-schema)
+   - [2.2. Chi tiết Chuyên khoa & Danh sách Bác sĩ thuộc khoa (Specialty Detail Schema)](#22-chi-tiết-chuyên-khoa--danh-sách-bác-sĩ-thuộc-khoa-specialty-detail-schema)
+   - [2.3. Chi tiết Phòng khám & Danh sách Bác sĩ (Clinic Detail Schema)](#23-chi-tiết-phòng-khám--danh-sách-bác-sĩ-clinic-detail-schema)
+   - [2.4. Bảng Lịch khám theo Ngày & Giờ (Schedule Schema)](#24-bảng-lịch-khám-theo-ngày--giờ-schedule-schema)
+   - [2.5. Danh mục Tra cứu Allcode (Allcode Filter Schema)](#25-danh-mục-tra-cứu-allcode-allcode-filter-schema)
+3. [Danh sách API Endpoints Toàn diện (Full Endpoints Matrix)](#3-danh-sách-api-endpoints-toàn-diện-full-endpoints-matrix)
+4. [Bộ Master Integration Prompts Chuẩn hóa 100% cho AI Android Studio](#4-bộ-master-integration-prompts-chuẩn-hóa-100-cho-ai-android-studio)
+   - [PROMPT A: Network Module & Interceptors (IP `192.168.1.11:3001`)](#prompt-a-network-module--interceptors-ip-1921681113001)
+   - [PROMPT B: Complete Data Models & Parsers](#prompt-b-complete-data-models--parsers)
    - [PROMPT C: Auth Module (Login / Register Patient / Forgot Pass)](#prompt-c-auth-module-login--register-patient--forgot-pass)
-   - [PROMPT D: Discovery Module (Home 3-in-1, Search Live, Specialty, Clinic)](#prompt-d-discovery-module-home-3-in-1-search-live-specialty-clinic)
-   - [PROMPT E: Doctor Detail & Schedules Selector](#prompt-e-doctor-detail--schedules-selector)
+   - [PROMPT D: Discovery Module (Home 3-in-1, Search Live, Specialty Detail, Clinic Detail)](#prompt-d-discovery-module-home-3-in-1-search-live-specialty-detail-clinic-detail)
+   - [PROMPT E: Doctor Detail & Schedules Selector & Reviews](#prompt-e-doctor-detail--schedules-selector--reviews)
    - [PROMPT F: Booking Appointment & VNPay Sandbox Payment](#prompt-f-booking-appointment--vnpay-sandbox-payment)
    - [PROMPT G: Booking History (3 Tabs), QR Check-in & Review](#prompt-g-booking-history-3-tabs-qr-check-in--review)
    - [PROMPT H: AI Chatbot Gemini (SSE Stream & Doctor Cards)](#prompt-h-ai-chatbot-gemini-sse-stream--doctor-cards)
-6. [Checklist Kiểm thử Kết nối & Troubleshooting](#6-checklist-kiểm-thử-kết-nối--troubleshooting)
+5. [Checklist Kiểm thử Kết nối & Troubleshooting](#5-checklist-kiểm-thử-kết-nối--troubleshooting)
 
 ---
 
-## 1. KẾT QUẢ AUDIT & XÁC MINH TÍNH KHỚP NỐI VỚI CODEBASE BACKEND
+## 1. ĐÁNH GIÁ ĐỘ ĐẦY ĐỦ & BỔ SUNG CẤU TRÚC DỮ LIỆU CHI TIẾT
 
-Sau khi rà soát toàn bộ source code Backend (`src/routes/web.js`, `src/controllers/`, `src/services/`, `src/models/`), tài liệu này đã được **chuẩn hóa 100%** khớp với logic thực tế:
-
-| Thành phần | Trạng thái Audit | Ghi chú điều chỉnh chính xác |
-|------------|------------------|------------------------------|
-| **Base Router** | ✅ 100% Khớp | Tất cả API đều ở tiền tố `/api/v1/` |
-| **Auth Payload** | ✅ 100% Khớp | Login gửi `{ email, password }`, Register gửi `{ email, password, firstName, lastName, phoneNumber, gender, roleId: "R3" }` |
-| **User Profile** | ✅ 100% Khớp | `GET /api/v1/patient/profile` và `PUT /api/v1/patient/profile` (IDOR Protected via JWT `req.user.id`) |
-| **Booking Payload** | ✅ 100% Khớp | `POST /api/v1/bookings` bắt buộc: `email`, `fullName`, `doctorId`, `date`, `timeType`, `phoneNumber` |
-| **VNPay Token API** | ✅ 100% Khớp | `POST /api/v1/payment/create-payment-url-by-token` nhận Body param `{ "token": "<paymentToken>" }` |
-| **Patient Bookings** | ✅ 100% Khớp | `GET /api/v1/patient/bookings?page=1&limit=10&status=S1,S1.5,S2` trả thêm cờ `isReviewed` boolean |
-| **Search API** | ✅ 100% Khớp | `GET /api/v1/search?keyword=...` trả về object `{ doctors, specialties, clinics }` |
-| **PostgreSQL Image**| ✅ 100% Khớp | Decode từ `BYTEA` sang Pure Base64 string -> Client nối prefix `data:image/jpeg;base64,` |
+Phiên bản 3.0 này đã **bổ sung trọn vẹn 100%** các cấu trúc JSON chi tiết (Nested JSON Object) cho Bác sĩ, Chuyên khoa, Bệnh viện, Lịch khám, Đánh giá và Allcode. Điều này đảm bảo AI trong Android Studio không bao giờ parse sai tên trường (field name) hay thiếu các trường thông tin hiển thị như:
+- **Thông tin Bác sĩ:** Học hàm/Học vị (`positionData`), Giá khám (`priceData`), Chuyên khoa (`specialtyData`), Bệnh viện/Địa chỉ (`clinicData`), Phương thức thanh toán (`paymentData`), Tỉnh/Thành (`provinceData`), Bài viết giới thiệu (`contentHTML`/`contentMarkdown`).
+- **Thông tin Chuyên khoa:** Bài viết mô tả (`descriptionHTML`), Danh sách bác sĩ thuộc khoa kèm bộ lọc Tỉnh/Thành (`location`).
+- **Thông tin Phòng khám:** Bài viết giới thiệu, Địa chỉ, Danh sách bác sĩ làm việc tại phòng khám.
+- **Lịch khám:** Danh sách khung giờ `timeType` ('T1' đến 'T8'), số lượng đã đặt `currentNumber`, tối đa `maxNumber`.
 
 ---
 
-## 2. CẤU HÌNH HẠ TẦNG MẠNG & IP KẾT NỐI
+## 2. CHI TIẾT CẤU TRÚC JSON TRẢ VỀ CHO TỪNG MÀN HÌNH (FULL RESPONSE SCHEMAS)
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                      CẤU HÌNH BASE URL KẾT NỐI                         │
-├────────────────────────────────────────────────────────────────────────┤
-│                                                                        │
-│  1. Điện thoại thật (Physical Device) - Kết nối cùng mạng Wi-Fi:      │
-│     Base URL: http://192.168.1.11:3001/api/v1                         │
-│                                                                        │
-│  2. Máy ảo Android (Android Emulator):                                 │
-│     Base URL: http://10.0.2.2:3001/api/v1                            │
-│                                                                        │
-│  3. Server Production (VPS Docker):                                    │
-│     Base URL: https://api.bookingcare.domain.vn/api/v1                 │
-│                                                                        │
-└────────────────────────────────────────────────────────────────────────┘
-```
-
-### Cấu hình `AndroidManifest.xml` (Bắt buộc cho HTTP Cleartext):
-```xml
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.CAMERA" />
-
-    <application
-        android:usesCleartextTraffic="true"
-        ... >
-    </application>
-</manifest>
-```
-
----
-
-## 3. QUY CHUẨN RESTFUL API ENDPOINTS & REQUEST/RESPONSE CONTRACTS
-
-Tất cả Endpoint đều trả về Response JSON có định dạng:
+### 2.1. Chi tiết Bác sĩ (Doctor Detail Schema)
+- **Endpoint:** `GET /api/v1/doctors/:id`
+- **JSON Response Structure:**
 ```json
 {
   "errCode": 0,
-  "message": "OK",
-  "data": { ... }
+  "data": {
+    "id": 5,
+    "email": "doctor_son@bookingcare.vn",
+    "firstName": "Quốc",
+    "lastName": "Giáo sư Sơn Đỗ",
+    "phoneNumber": "0912345678",
+    "address": "Hà Nội",
+    "gender": "M",
+    "image": "iVBORw0KGgoAAAANSUhEUgAA...",
+    "positionData": {
+      "keyMap": "P0",
+      "valueVi": "Giáo sư",
+      "valueEn": "Professor"
+    },
+    "doctorInfoData": {
+      "doctorId": 5,
+      "specialtyId": 1,
+      "clinicId": 2,
+      "priceId": "PRI2",
+      "provinceId": "PRO1",
+      "paymentId": "PAY3",
+      "note": "Khám ngoài giờ từ 17h00",
+      "description": "Bác sĩ có 15 năm kinh nghiệm trong lĩnh vực Tim mạch...",
+      "contentHTML": "<p>Quá trình đào tạo: Tốt nghiệp Đại học Y Hà Nội...</p>",
+      "contentMarkdown": "Quá trình đào tạo: Tốt nghiệp Đại học Y Hà Nội...",
+      "priceData": {
+        "valueVi": "300.000đ",
+        "valueEn": "$15"
+      },
+      "paymentData": {
+        "valueVi": "Tiền mặt, VNPay",
+        "valueEn": "Cash, VNPay"
+      },
+      "provinceData": {
+        "valueVi": "Hà Nội",
+        "valueEn": "Ha Noi"
+      },
+      "specialtyData": {
+        "name": "Chuyên khoa Tim mạch"
+      },
+      "clinicData": {
+        "name": "Bệnh viện Bạch Mai",
+        "address": "78 Giải Phóng, Phương Mai, Đống Đa, Hà Nội"
+      }
+    }
+  }
 }
 ```
 
-### Danh sách Endpoint Chi tiết cho Mobile App:
-
-| # | Method | Endpoint | Yêu cầu JWT | Request Body / Query Params | Response `data` |
-|---|--------|----------|-------------|-----------------------------|-----------------|
-| 1 | `POST` | `/api/v1/auth/login` | ❌ No | `{ email, password }` | `{ user, token }` |
-| 2 | `POST` | `/api/v1/auth/register` | ❌ No | `{ email, password, firstName, lastName, phoneNumber, gender, roleId: "R3" }` | `{ message }` |
-| 3 | `POST` | `/api/v1/auth/forgot-password` | ❌ No | `{ email }` | `{ message }` |
-| 4 | `GET` | `/api/v1/patient/profile` | 🔒 Yes (R3) | Header Authorization | `{ id, email, firstName, lastName, phoneNumber, address, gender, image }` |
-| 5 | `PUT` | `/api/v1/patient/profile` | 🔒 Yes (R3) | `{ firstName, lastName, address, phoneNumber, gender, image }` | `{ updatedUser }` |
-| 6 | `PUT` | `/api/v1/patient/change-password` | 🔒 Yes (R3) | `{ oldPassword, newPassword }` | `{ message }` |
-| 7 | `GET` | `/api/v1/specialties` | ❌ No | Không | `[ { id, name, image, descriptionHTML } ]` |
-| 8 | `GET` | `/api/v1/specialties/:id` | ❌ No | `?location=ALL` | `{ specialty, doctorSpecialty }` |
-| 9 | `GET` | `/api/v1/clinics` | ❌ No | Không | `[ { id, name, address, image } ]` |
-| 10 | `GET` | `/api/v1/clinics/:id` | ❌ No | Không | `{ clinic, doctorClinic }` |
-| 11 | `GET` | `/api/v1/doctors/top` | ❌ No | `?limit=10` | `[ { id, firstName, lastName, image, positionData, doctorInfoData } ]` |
-| 12 | `GET` | `/api/v1/doctors/:id` | ❌ No | Không | `{ id, firstName, lastName, image, positionData, doctorInfoData }` |
-| 13 | `GET` | `/api/v1/doctors/:doctorId/schedules` | ❌ No | `?date=1788220800000` | `[ { id, doctorId, date, timeType, currentNumber, maxNumber, timeTypeData } ]` |
-| 14 | `GET` | `/api/v1/doctors/:doctorId/reviews` | ❌ No | `?page=1&limit=5` | `[ { id, rating, comment, createdAt } ]` |
-| 15 | `GET` | `/api/v1/search` | ❌ No | `?keyword=tim+mach` | `{ doctors: [], specialties: [], clinics: [] }` |
-| 16 | `POST` | `/api/v1/bookings` | 🔒 Yes (R3) | `{ doctorId, date, timeType, email, fullName, phoneNumber, address, gender, reason }` | `{ errCode: 0, message }` |
-| 17 | `POST` | `/api/v1/payment/create-payment-url-by-token` | ❌ No | `{ "token": "<paymentToken>" }` | `{ errCode: 0, paymentUrl }` |
-| 18 | `GET` | `/api/v1/patient/bookings` | 🔒 Yes (R3) | `?page=1&limit=10&status=S1,S1.5,S2` | `[ { id, statusId, date, timeType, receiptToken, isReviewed, doctorBookingData } ]` |
-| 19 | `PUT` | `/api/v1/patient/bookings/:id/cancel` | 🔒 Yes (R3) | URL Param `:id` | `{ errCode: 0, message }` |
-| 20 | `POST` | `/api/v1/reviews` | 🔒 Yes (R3) | `{ bookingId, rating, comment }` | `{ errCode: 0, message }` |
-| 21 | `POST` | `/api/v1/ai/chat` | 🔒 Yes (R3) | `{ "message": "Tôi bị sốt nhẹ..." }` | Event-Stream text (SSE) |
-
 ---
 
-## 4. QUY TẮC DATA CONVERTERS & PARSERS (BYTEA IMAGE, TIMESTAMP, ALLCODES)
-
-### 4.1. Decode Ảnh PostgreSQL `BYTEA` → Base64 Image Component
-```javascript
-// React Native Renderer Utility
-export const formatBase64Image = (base64Str) => {
-  if (!base64Str) return require('../assets/images/default_avatar.png');
-  if (base64Str.startsWith('data:image')) return { uri: base64Str };
-  return { uri: `data:image/jpeg;base64,${base64Str}` };
-};
-```
-
-### 4.2. Timestamp Ngày khám
-Trường `date` trả về chuỗi Mili-giây (VD: `"1788220800000"`). Parse như sau:
-```javascript
-const formattedDate = moment(parseInt(item.date, 10)).locale('vi').format('dddd - DD/MM/YYYY');
-// Trả về: "Thứ Tư - 02/09/2026"
+### 2.2. Chi tiết Chuyên khoa & Danh sách Bác sĩ thuộc khoa (Specialty Detail Schema)
+- **Endpoint:** `GET /api/v1/specialties/:id?location=ALL` (Hoặc `location=PRO1` cho Hà Nội, `PRO2` cho TP.HCM)
+- **JSON Response Structure:**
+```json
+{
+  "errCode": 0,
+  "data": {
+    "specialty": {
+      "id": 1,
+      "name": "Chuyên khoa Tim mạch",
+      "image": "iVBORw0KGgoAAAANSUhEUgAA...",
+      "descriptionHTML": "<p>Chuyên khoa Tim mạch chẩn đoán và điều trị các bệnh lý tim mạch...</p>",
+      "descriptionMarkdown": "Chuyên khoa Tim mạch chẩn đoán..."
+    },
+    "doctorList": [
+      {
+        "id": 5,
+        "firstName": "Quốc",
+        "lastName": "Giáo sư Sơn Đỗ",
+        "image": "iVBORw0KGgoAAAANSUhEUgAA...",
+        "positionData": {
+          "valueVi": "Giáo sư",
+          "valueEn": "Professor"
+        },
+        "Doctor_Info": {
+          "specialtyData": { "name": "Chuyên khoa Tim mạch" },
+          "clinicData": {
+            "name": "Bệnh viện Bạch Mai",
+            "address": "78 Giải Phóng, Đống Đa, Hà Nội"
+          },
+          "description": "Bác sĩ có 15 năm kinh nghiệm...",
+          "provinceId": "PRO1"
+        }
+      }
+    ]
+  }
+}
 ```
 
 ---
 
-## 5. BỘ MASTER INTEGRATION PROMPTS CHUẨN HÓA 100% CHO AI ANDROID STUDIO
+### 2.3. Chi tiết Phòng khám & Danh sách Bác sĩ (Clinic Detail Schema)
+- **Endpoint:** `GET /api/v1/clinics/:id`
+- **JSON Response Structure:**
+```json
+{
+  "errCode": 0,
+  "data": {
+    "clinic": {
+      "id": 2,
+      "name": "Bệnh viện Bạch Mai",
+      "address": "78 Giải Phóng, Phương Mai, Đống Đa, Hà Nội",
+      "image": "iVBORw0KGgoAAAANSUhEUgAA...",
+      "descriptionHTML": "<p>Bệnh viện Bạch Mai là một trong những bệnh viện đa khoa lớn nhất Việt Nam...</p>",
+      "descriptionMarkdown": "Bệnh viện Bạch Mai là một trong những..."
+    },
+    "doctorList": [
+      {
+        "id": 5,
+        "firstName": "Quốc",
+        "lastName": "Giáo sư Sơn Đỗ",
+        "image": "iVBORw0KGgoAAAANSUhEUgAA...",
+        "positionData": {
+          "valueVi": "Giáo sư",
+          "valueEn": "Professor"
+        },
+        "Doctor_Info": {
+          "specialtyData": { "name": "Chuyên khoa Tim mạch" },
+          "description": "Bác sĩ có 15 năm kinh nghiệm..."
+        }
+      }
+    ]
+  }
+}
+```
 
 ---
 
-### 🟢 PROMPT A: Network Module & Interceptors
+### 2.4. Bảng Lịch khám theo Ngày & Giờ (Schedule Schema)
+- **Endpoint:** `GET /api/v1/doctors/:doctorId/schedules?date=1788220800000`
+- **JSON Response Structure:**
+```json
+{
+  "errCode": 0,
+  "data": [
+    {
+      "id": 102,
+      "doctorId": 5,
+      "date": "1788220800000",
+      "timeType": "T1",
+      "maxNumber": 10,
+      "currentNumber": 3,
+      "timeTypeData": {
+        "keyMap": "T1",
+        "type": "TIME",
+        "valueVi": "08:00 - 09:00",
+        "valueEn": "8:00 AM - 9:00 AM"
+      }
+    },
+    {
+      "id": 103,
+      "doctorId": 5,
+      "date": "1788220800000",
+      "timeType": "T2",
+      "maxNumber": 10,
+      "currentNumber": 10,
+      "timeTypeData": {
+        "keyMap": "T2",
+        "type": "TIME",
+        "valueVi": "09:00 - 10:00",
+        "valueEn": "9:00 AM - 10:00 AM"
+      }
+    }
+  ]
+}
+```
+*(Ghi chú: Khi `currentNumber >= maxNumber` như ô `T2`, Mobile App phải hiển thị ô giờ xám Disabled).*
+
+---
+
+### 2.5. Danh mục Tra cứu Allcode (Allcode Filter Schema)
+- **Endpoints:**
+  - `GET /api/v1/allcode?type=PROVINCE` (Lấy danh sách Tỉnh/Thành cho Bộ lọc Chuyên khoa)
+  - `GET /api/v1/allcode?type=PRICE` (Lấy danh sách Bảng giá)
+  - `GET /api/v1/allcode?type=PAYMENT` (Lấy phương thức thanh toán)
+- **JSON Response Structure:**
+```json
+{
+  "errCode": 0,
+  "data": [
+    {
+      "id": 1,
+      "keyMap": "ALL",
+      "type": "PROVINCE",
+      "valueVi": "Toàn quốc",
+      "valueEn": "Nationwide"
+    },
+    {
+      "id": 2,
+      "keyMap": "PRO1",
+      "type": "PROVINCE",
+      "valueVi": "Hà Nội",
+      "valueEn": "Ha Noi"
+    },
+    {
+      "id": 3,
+      "keyMap": "PRO2",
+      "type": "PROVINCE",
+      "valueVi": "Hồ Chí Minh",
+      "valueEn": "Ho Chi Minh"
+    }
+  ]
+}
+```
+
+---
+
+## 3. DANH SÁCH API ENDPOINTS TOÀN DIỆN (FULL ENDPOINTS MATRIX)
+
+| # | Method | Endpoint | Yêu cầu JWT | Mô tả chức năng & Nơi sử dụng |
+|---|--------|----------|-------------|-------------------------------|
+| 1 | `POST` | `/api/v1/auth/login` | ❌ No | Đăng nhập lấy Bearer Token JWT (`S01`) |
+| 2 | `POST` | `/api/v1/auth/register` | ❌ No | Đăng ký tài khoản bệnh nhân (`S02`) |
+| 3 | `POST` | `/api/v1/auth/forgot-password` | ❌ No | Yêu cầu khôi phục mật khẩu qua Email (`S03`) |
+| 4 | `GET` | `/api/v1/patient/profile` | 🔒 Yes (R3) | Lấy thông tin cá nhân bệnh nhân (`S04`) |
+| 5 | `PUT` | `/api/v1/patient/profile` | 🔒 Yes (R3) | Cập nhật thông tin & Avatar Base64 (`S04`) |
+| 6 | `PUT` | `/api/v1/patient/change-password` | 🔒 Yes (R3) | Đổi mật khẩu bệnh nhân (`S04`) |
+| 7 | `GET` | `/api/v1/specialties` | ❌ No | Lấy danh sách tất cả Chuyên khoa (`S05`) |
+| 8 | `GET` | `/api/v1/specialties/:id` | ❌ No | Lấy chi tiết Chuyên khoa & DS Bác sĩ (`S07`) |
+| 9 | `GET` | `/api/v1/clinics` | ❌ No | Lấy danh sách tất cả Cơ sở y tế (`S05`) |
+| 10 | `GET` | `/api/v1/clinics/:id` | ❌ No | Lấy chi tiết Phòng khám & DS Bác sĩ (`S08`) |
+| 11 | `GET` | `/api/v1/doctors/top` | ❌ No | Lấy danh sách Bác sĩ nổi bật (`S05`) |
+| 12 | `GET` | `/api/v1/doctors/:id` | ❌ No | Lấy chi tiết Bác sĩ, Giá khám, Địa chỉ (`S09`) |
+| 13 | `GET` | `/api/v1/doctors/:doctorId/schedules` | ❌ No | Lấy danh sách khung giờ khám theo ngày (`S09`) |
+| 14 | `GET` | `/api/v1/doctors/:doctorId/reviews` | ❌ No | Lấy danh sách đánh giá của Bác sĩ (`S09`) |
+| 15 | `GET` | `/api/v1/allcode` | ❌ No | Tra cứu Allcode (`?type=PROVINCE/PRICE...`) |
+| 16 | `GET` | `/api/v1/search` | ❌ No | Tìm kiếm Live `?keyword=...` (`S06`) |
+| 17 | `POST` | `/api/v1/bookings` | 🔒 Yes (R3) | Đặt lịch khám mới (`S10`) |
+| 18 | `POST` | `/api/v1/payment/create-payment-url-by-token` | ❌ No | Tạo URL thanh toán VNPay Sandbox (`S11`) |
+| 19 | `GET` | `/api/v1/patient/bookings` | 🔒 Yes (R3) | Lấy danh sách lịch hẹn 3 Tabs (`S12`) |
+| 20 | `PUT` | `/api/v1/patient/bookings/:id/cancel` | 🔒 Yes (R3) | Hủy lịch hẹn (`S12`) |
+| 21 | `POST` | `/api/v1/reviews` | 🔒 Yes (R3) | Gửi đánh giá Bác sĩ (`S12`) |
+| 22 | `POST` | `/api/v1/ai/chat` | 🔒 Yes (R3) | Chat y tế AI Gemini SSE Stream (`S13`) |
+
+---
+
+## 4. BỘ MASTER INTEGRATION PROMPTS CHUẨN HÓA 100% CHO AI ANDROID STUDIO
+
+---
+
+### 🟢 PROMPT A: Network Module & Interceptors (IP `192.168.1.11:3001`)
 
 ```text
 Hãy tạo cho tôi file NetworkModule kết nối tới Backend BookingCare Node.js Express + PostgreSQL:
@@ -164,30 +311,36 @@ CHỨC NĂNG CẦN CÓ (INTERCEPTORS):
 
 ---
 
-### 🟢 PROMPT B: Data Models & Response Parsers
+### 🟢 PROMPT B: Complete Data Models & Parsers
 
 ```text
-Hãy sinh toàn bộ Data Class / Model chuẩn 100% với Backend PostgreSQL:
+Hãy sinh toàn bộ Data Class / Model chuẩn 100% với Backend PostgreSQL BookingCare:
 
 1. UserData:
    - id: Int, email: String, firstName: String, lastName: String, address: String?, phoneNumber: String?, gender: String?, roleId: String, image: String?
 
 2. DoctorInfoData:
-   - doctorId: Int, specialtyId: Int, clinicId: Int, priceId: String, provinceId: String, paymentId: String, note: String?
+   - doctorId: Int, specialtyId: Int, clinicId: Int, priceId: String, provinceId: String, paymentId: String, note: String?, description: String?, contentHTML: String?, contentMarkdown: String?
    - specialtyData: SpecialtyData?, clinicData: ClinicData?, priceData: AllcodeData?, provinceData: AllcodeData?, paymentData: AllcodeData?
 
 3. SpecialtyData & ClinicData:
    - id: Int, name: String, image: String?, descriptionHTML: String?, descriptionMarkdown: String?, address: String? (chỉ Clinic)
 
-4. ScheduleData:
+4. SpecialtyDetailResponse:
+   - specialty: SpecialtyData, doctorList: List<DoctorInSpecialtyOrClinic>
+
+5. ClinicDetailResponse:
+   - clinic: ClinicData, doctorList: List<DoctorInSpecialtyOrClinic>
+
+6. ScheduleData:
    - id: Int, doctorId: Int, date: String, timeType: String, maxNumber: Int, currentNumber: Int
    - timeTypeData: AllcodeData (keyMap: String, valueVi: String, valueEn: String)
 
-5. BookingData:
+7. BookingData:
    - id: Int, statusId: String, doctorId: Int, patientId: Int, date: String, timeType: String, patientName: String, patientPhoneNumber: String, patientEmail: String, patientAddress: String, patientReason: String, paymentStatus: String, receiptToken: String?, receiptExpiredAt: String?, isReviewed: Boolean = false
    - doctorBookingData: UserData?, statusData: AllcodeData?, timeTypeBooking: AllcodeData?
 
-6. BaseResponse<T>:
+8. BaseResponse<T>:
    - errCode: Int, message: String, data: T?, pagination: PaginationData?
 ```
 
@@ -215,10 +368,10 @@ Hãy sinh Service và ViewModel cho Luồng Xác thực Bệnh nhân (Auth Flow)
 
 ---
 
-### 🟢 PROMPT D: Discovery Module (Home 3-in-1, Search Live, Specialty, Clinic)
+### 🟢 PROMPT D: Discovery Module (Home 3-in-1, Search Live, Specialty Detail, Clinic Detail)
 
 ```text
-Hãy sinh Repository và ViewModel cho Trang chủ & Tìm kiếm (S05, S06, S07, S08):
+Hãy sinh Repository và ViewModel cho Trang chủ & Chi tiết Chuyên khoa / Bệnh viện (S05, S06, S07, S08):
 
 1. TRANG CHỦ (S05_HomeScreen):
    - Gọi đồng thời 3 API:
@@ -231,22 +384,28 @@ Hãy sinh Repository và ViewModel cho Trang chủ & Tìm kiếm (S05, S06, S07,
    - API: GET /api/v1/search?keyword={text} (Sử dụng Debounce 400ms khi người dùng gõ từ khóa).
    - Parse kết quả object `data`: `{ doctors: [], specialties: [], clinics: [] }`.
 
-3. CHI TIẾT CHUYÊN KHOA & CƠ SỞ Y TẾ (S07 & S08):
-   - GET /api/v1/specialties/:id?location=ALL
-   - GET /api/v1/clinics/:id
-   - Render phần `descriptionHTML` bằng HTML WebView / Markwon Component.
+3. CHI TIẾT CHUYÊN KHOA (S07_SpecialtyDetailScreen):
+   - API: GET /api/v1/specialties/:id?location={locationCode}
+   - Gọi thêm API Allcode lấy danh sách tỉnh thành bộ lọc: GET /api/v1/allcode?type=PROVINCE
+   - Parse `data`: `{ specialty: { name, descriptionHTML, image }, doctorList: [ ... ] }`.
+   - Render phần `descriptionHTML` bằng HTML WebView Component.
+
+4. CHI TIẾT CƠ SỞ Y TẾ (S08_ClinicDetailScreen):
+   - API: GET /api/v1/clinics/:id
+   - Parse `data`: `{ clinic: { name, address, descriptionHTML, image }, doctorList: [ ... ] }`.
+   - Nút "Chỉ đường": Mở Intent Google Maps trỏ đến `address`.
 ```
 
 ---
 
-### 🟢 PROMPT E: Doctor Detail & Schedules Selector
+### 🟢 PROMPT E: Doctor Detail & Schedules Selector & Reviews
 
 ```text
 Hãy sinh ViewModel xử lý Màn hình Chi tiết Bác sĩ & Chọn Lịch khám (S09_DoctorDetailScreen):
 
 1. LOAD CHI TIẾT BÁC SĨ & REVIEW:
-   - GET /api/v1/doctors/:id
-   - GET /api/v1/doctors/:doctorId/reviews?page=1&limit=5
+   - GET /api/v1/doctors/:id -> Trả về object doctor chứa `positionData`, `doctorInfoData` (bao gồm `priceData`, `clinicData`, `paymentData`, `contentHTML`).
+   - GET /api/v1/doctors/:doctorId/reviews?page=1&limit=5 -> Danh sách đánh giá bệnh nhân.
 
 2. CHỌN NGÀY & LOAD KHUNG GIỜ KHÁM:
    - Khi bệnh nhân chọn Ngày trên thanh Date Bar (Timestamp ms ở 00:00:00 của ngày chọn):
@@ -326,13 +485,10 @@ Hãy sinh Service kết nối Trợ lý Y tế AI Chatbot Gemini cho S13_AIChatS
 
 ---
 
-## 6. CHECKLIST KIỂM THỬ KẾT NỐI & TROUBLESHOOTING
+## 5. CHECKLIST KIỂM THỬ KẾT NỐI & TROUBLESHOOTING
 
 - [x] Backend đang chạy ở cổng `3001` (`http://localhost:3001/api/health`).
 - [x] PostgreSQL 16 container `db-postgres` đang chạy cổng `5433` (Healthy).
-- [x] Điện thoại thật và Máy tính bắt chung một tên Wi-Fi.
-- [x] Đã chạy lệnh mở cổng `3001` trên Windows Firewall:
-  ```powershell
-  New-NetFirewallRule -DisplayName "BookingCare 3001" -Direction Inbound -LocalPort 3001 -Protocol TCP -Action Allow
-  ```
-- [x] Tất cả Prompt đã được kiểm tra trùng khớp 100% với tên Endpoint và JSON Key trong Backend Express.js.
+- [x] Điện thoại thật và Máy tính bắt chung một tên Wi-Fi (`192.168.1.11`).
+- [x] Đã mở cổng `3001` trên Windows Firewall.
+- [x] Đã bổ sung 100% Cấu trúc JSON Chi tiết (Doctor, Specialty, Clinic, Schedule, Review, Allcode).
