@@ -21,6 +21,7 @@
 | 5 | [05_PhanTich_RuiRo.md](./05_PhanTich_RuiRo.md) | **Phân tích rủi ro** – 10 rủi ro kỹ thuật, phương án dự phòng, ma trận rủi ro | 10 risks |
 | 6 | [06_KeHoach_ChuyenDoi_PostgreSQL.md](./06_KeHoach_ChuyenDoi_PostgreSQL.md) | **Kế hoạch chuyển đổi DB** – MySQL 8.0 sang PostgreSQL 16 chi tiết | 11 phần |
 | 7 | [07_KeHoach_ThietKe_ManHinh_Mobile.md](./07_KeHoach_ThietKe_ManHinh_Mobile.md) | **Thiết kế Mobile App** – Chi tiết 14 màn hình React Native (iOS & Android) | 14 screens |
+| 8 | [08_TaiLieu_Prompt_TichHop_Mobile_Backend.md](./08_TaiLieu_Prompt_TichHop_Mobile_Backend.md) | **Prompt Tích hợp Mobile-Backend** – Chuẩn hóa prompt gọi API Backend & parse PostgreSQL JSON | 8 Master Prompts |
 
 ---
 
