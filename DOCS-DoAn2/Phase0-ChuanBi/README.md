@@ -19,6 +19,8 @@
 | 3 | [03_PhanCong_NhiemVu.md](./03_PhanCong_NhiemVu.md) | **Phân công nhiệm vụ** – Bảng task theo sprint, Owner/Reviewer, effort, cân bằng 51/49 | ~158 task-days |
 | 4 | [04_Milestones_Deliverables.md](./04_Milestones_Deliverables.md) | **Milestones & Deliverables** – 9 mốc (M0-M8), tiêu chí, sản phẩm, scope MVP vs Full | 9 milestones |
 | 5 | [05_PhanTich_RuiRo.md](./05_PhanTich_RuiRo.md) | **Phân tích rủi ro** – 10 rủi ro kỹ thuật, phương án dự phòng, ma trận rủi ro | 10 risks |
+| 6 | [06_KeHoach_ChuyenDoi_PostgreSQL.md](./06_KeHoach_ChuyenDoi_PostgreSQL.md) | **Kế hoạch chuyển đổi DB** – MySQL 8.0 sang PostgreSQL 16 chi tiết | 11 phần |
+| 7 | [07_KeHoach_ThietKe_ManHinh_Mobile.md](./07_KeHoach_ThietKe_ManHinh_Mobile.md) | **Thiết kế Mobile App** – Chi tiết 14 màn hình React Native (iOS & Android) | 14 screens |
 
 ---
 
