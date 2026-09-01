@@ -139,7 +139,7 @@ Gửi từng Prompt dưới đây vào AI Assistant trong Android Studio để t
 Hãy tạo cho tôi file NetworkModule kết nối tới Backend BookingCare Node.js Express:
 
 CẤU HÌNH KẾT NỐI:
-- Base URL: http://10.0.2.2:3001/api/v1 (Cho Android Emulator)
+- Base URL: http://192.168.1.11:3001/api/v1 (Điện thoại thật kết nối chung Wi-Fi) hoặc http://10.0.2.2:3001/api/v1 (Android Emulator)
 - Timeout: Connect 10 giây, Read 30 giây.
 - Header mặc định: Content-Type: application/json
 
