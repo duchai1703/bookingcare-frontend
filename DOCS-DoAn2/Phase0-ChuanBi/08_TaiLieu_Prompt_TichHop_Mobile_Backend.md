@@ -2,56 +2,77 @@
 
 > **Dự án:** BookingCare – Hệ thống đặt lịch khám bệnh trực tuyến  
 > **Tài liệu:** Đồ án 2 (UIT) – Phase 0: Chuẩn bị  
-> **Phiên bản:** 1.0 | **Ngày tạo:** 01/09/2026  
+> **Phiên bản:** 2.0 (Audit & Verified 100% với Codebase Backend) | **Ngày:** 01/09/2026  
 > **Tác giả:** Đặng Ngọc Trường Giang & Trần Đức Hải  
-> **Mục tiêu:** Hướng dẫn sinh Prompt chuẩn xác cho AI trong Android Studio (Kotlin / Jetpack Compose / React Native) để gọi đúng API, parse đúng JSON & hiển thị chuẩn dữ liệu từ Backend Express.js + PostgreSQL.  
+> **Mục tiêu:** Kiểm tra và chuẩn hóa 100% các Prompt cho AI Assistant trong Android Studio (Kotlin Jetpack Compose / React Native) để khớp hoàn toàn với Backend Node.js Express + PostgreSQL.  
 > **Vị trí file:** `DOCS-DoAn2/Phase0-ChuanBi/08_TaiLieu_Prompt_TichHop_Mobile_Backend.md`
 
 ---
 
 ## MỤC LỤC
 
-1. [Cấu hình Hạ tầng Mạng & Kết nối Android Emulator](#1-cấu-hình-hạ-tầng-mạng--kết-nối-android-emulator)
-2. [Quy chuẩn Cấu trúc Dữ liệu API (API Schema Contract)](#2-quy-chuẩn-cấu-trúc-dữ-liệu-api-api-schema-contract)
-3. [Quy tắc Xử lý Dữ liệu Đặc thù (Data Converters & Parsers)](#3-quy-tắc-xử-lý-dữ-liệu-đặc-thù-data-converters--parsers)
-4. [Bộ Prompt Mẫu Tích hợp Backend (Master Integration Prompts)](#4-bộ-prompt-mẫu-tích-hợp-backend-master-integration-prompts)
-   - [PROMPT A: Khởi tạo Network Module & Axios/Retrofit Client](#prompt-a-khởi-tạo-network-module--axiosretrofit-client)
+1. [Kết quả Audit & Xác minh Tính Khớp nối với Codebase Backend](#1-kết-quả-audit--xác-minh-tính-khớp-nối-với-codebase-backend)
+2. [Cấu hình Hạ tầng Mạng & IP Kết nối](#2-cấu-hình-hạ-tầng-mạng--ip-kết-nối)
+3. [Quy chuẩn RESTful API Endpoints & Request/Response Contracts](#3-quy-chuẩn-restful-api-endpoints--requestresponse-contracts)
+4. [Quy tắc Data Converters & Parsers (BYTEA Image, Timestamp, Allcodes)](#4-quy-tắc-data-converters--parsers-bytea-image-timestamp-allcodes)
+5. [Bộ Master Integration Prompts Chuẩn hóa 100% cho AI Android Studio](#5-bộ-master-integration-prompts-chuẩn-hóa-100-cho-ai-android-studio)
+   - [PROMPT A: Network Module & Interceptors](#prompt-a-network-module--interceptors)
    - [PROMPT B: Data Models & Response Parsers](#prompt-b-data-models--response-parsers)
-   - [PROMPT C: Tích hợp Xác thực Auth (Login / Register / JWT Token Store)](#prompt-c-tích-hợp-xác-thực-auth-login--register--jwt-token-store)
-   - [PROMPT D: Tích hợp Màn hình Trang chủ, Chuyên khoa & Cơ sở Y tế](#prompt-d-tích-hợp-màn-hình-trang-chủ-chuyên-khoa--cơ-sở-y-tế)
-   - [PROMPT E: Tích hợp Chi tiết Bác sĩ & Selector Lịch khám theo Ngày](#prompt-e-tích-hợp-chi-tiết-bác-sĩ--selector-lịch-khám-theo-ngày)
-   - [PROMPT F: Tích hợp Luồng Đặt lịch Khám & Thanh toán VNPay Sandbox](#prompt-f-tích-hợp-luồng-đặt-lịch-khám--thanh-toán-vnpay-sandbox)
-   - [PROMPT G: Tích hợp Màn hình Quản lý Lịch hẹn & Render QR Code Check-in](#prompt-g-tích-hợp-màn-hình-quản-lý-lịch-hẹn--render-qr-code-check-in)
-   - [PROMPT H: Tích hợp Trợ lý Y tế AI Chatbot Gemini (SSE Stream text)](#prompt-h-tích-hợp-trợ-lý-y-tế-ai-chatbot-gemini-sse-stream-text)
-5. [Checklist Kiểm tra Tích hợp Mạng & Khắc phục Lỗi Thường gặp](#5-checklist-kiểm-tra-tích-hợp-mạng--khắc-phục-lỗi-thường-gặp)
+   - [PROMPT C: Auth Module (Login / Register Patient / Forgot Pass)](#prompt-c-auth-module-login--register-patient--forgot-pass)
+   - [PROMPT D: Discovery Module (Home 3-in-1, Search Live, Specialty, Clinic)](#prompt-d-discovery-module-home-3-in-1-search-live-specialty-clinic)
+   - [PROMPT E: Doctor Detail & Schedules Selector](#prompt-e-doctor-detail--schedules-selector)
+   - [PROMPT F: Booking Appointment & VNPay Sandbox Payment](#prompt-f-booking-appointment--vnpay-sandbox-payment)
+   - [PROMPT G: Booking History (3 Tabs), QR Check-in & Review](#prompt-g-booking-history-3-tabs-qr-check-in--review)
+   - [PROMPT H: AI Chatbot Gemini (SSE Stream & Doctor Cards)](#prompt-h-ai-chatbot-gemini-sse-stream--doctor-cards)
+6. [Checklist Kiểm thử Kết nối & Troubleshooting](#6-checklist-kiểm-thử-kết-nối--troubleshooting)
 
 ---
 
-## 1. CẤU HÌNH HẠ TẦNG MẠNG & KẾ NỐI ANDROID EMULATOR
+## 1. KẾT QUẢ AUDIT & XÁC MINH TÍNH KHỚP NỐI VỚI CODEBASE BACKEND
 
-### 1.1. Địa chỉ IP & Cổng kết nối (Network Endpoints)
+Sau khi rà soát toàn bộ source code Backend (`src/routes/web.js`, `src/controllers/`, `src/services/`, `src/models/`), tài liệu này đã được **chuẩn hóa 100%** khớp với logic thực tế:
 
-| Môi trường | Base URL Backend | Ghi chú |
-|------------|------------------|---------|
-| **Android Emulator (Default)** | `http://10.0.2.2:3001/api/v1` | `10.0.2.2` trỏ tới `localhost` của máy tính Host |
-| **Thiết bị thật Android (Cùng WiFi)** | `http://<IP_MAY_TINH>:3001/api/v1` | Ví dụ: `http://192.168.1.15:3001/api/v1` |
-| **Production Server** | `https://api.bookingcare.domain.vn/api/v1` | Khi deploy Docker VPS |
+| Thành phần | Trạng thái Audit | Ghi chú điều chỉnh chính xác |
+|------------|------------------|------------------------------|
+| **Base Router** | ✅ 100% Khớp | Tất cả API đều ở tiền tố `/api/v1/` |
+| **Auth Payload** | ✅ 100% Khớp | Login gửi `{ email, password }`, Register gửi `{ email, password, firstName, lastName, phoneNumber, gender, roleId: "R3" }` |
+| **User Profile** | ✅ 100% Khớp | `GET /api/v1/patient/profile` và `PUT /api/v1/patient/profile` (IDOR Protected via JWT `req.user.id`) |
+| **Booking Payload** | ✅ 100% Khớp | `POST /api/v1/bookings` bắt buộc: `email`, `fullName`, `doctorId`, `date`, `timeType`, `phoneNumber` |
+| **VNPay Token API** | ✅ 100% Khớp | `POST /api/v1/payment/create-payment-url-by-token` nhận Body param `{ "token": "<paymentToken>" }` |
+| **Patient Bookings** | ✅ 100% Khớp | `GET /api/v1/patient/bookings?page=1&limit=10&status=S1,S1.5,S2` trả thêm cờ `isReviewed` boolean |
+| **Search API** | ✅ 100% Khớp | `GET /api/v1/search?keyword=...` trả về object `{ doctors, specialties, clinics }` |
+| **PostgreSQL Image**| ✅ 100% Khớp | Decode từ `BYTEA` sang Pure Base64 string -> Client nối prefix `data:image/jpeg;base64,` |
 
-> ⚠️ **LƯU Ý QUAN TRỌNG:** Trên Android OS từ phiên bản 9.0 (API 28) trở lên, hệ thống mặc định **CHẶN** kết nối `http://` (Cleartext HTTP). Phải bật quyền Cleartext Traffic trong `AndroidManifest.xml`.
+---
 
-### 1.2. Cấu hình `AndroidManifest.xml`
+## 2. CẤU HÌNH HẠ TẦNG MẠNG & IP KẾT NỐI
 
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                      CẤU HÌNH BASE URL KẾT NỐI                         │
+├────────────────────────────────────────────────────────────────────────┤
+│                                                                        │
+│  1. Điện thoại thật (Physical Device) - Kết nối cùng mạng Wi-Fi:      │
+│     Base URL: http://192.168.1.11:3001/api/v1                         │
+│                                                                        │
+│  2. Máy ảo Android (Android Emulator):                                 │
+│     Base URL: http://10.0.2.2:3001/api/v1                            │
+│                                                                        │
+│  3. Server Production (VPS Docker):                                    │
+│     Base URL: https://api.bookingcare.domain.vn/api/v1                 │
+│                                                                        │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+### Cấu hình `AndroidManifest.xml` (Bắt buộc cho HTTP Cleartext):
 ```xml
-<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Cấp quyền Internet -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CAMERA" />
 
     <application
         android:usesCleartextTraffic="true"
-        android:networkSecurityConfig="@xml/network_security_config"
         ... >
     </application>
 </manifest>
@@ -59,97 +80,86 @@
 
 ---
 
-## 2. QUY CHUẨN CẤU TRÚC DỮ LIỆU API (API SCHEMA CONTRACT)
+## 3. QUY CHUẨN RESTFUL API ENDPOINTS & REQUEST/RESPONSE CONTRACTS
 
-Toàn bộ các Endpoint của Backend Express.js trả về dữ liệu theo cấu trúc chuẩn:
-
+Tất cả Endpoint đều trả về Response JSON có định dạng:
 ```json
 {
   "errCode": 0,
   "message": "OK",
-  "data": { ... } // Hoặc danh sách array [ ... ]
+  "data": { ... }
 }
 ```
 
-### 2.1. Quy chuẩn Mã lỗi `errCode`
+### Danh sách Endpoint Chi tiết cho Mobile App:
 
-| `errCode` | Ý nghĩa | Hành động hiển thị trên Mobile App |
-|-----------|---------|------------------------------------|
-| `0` | Thành công | Parse dữ liệu trong trường `data` và render UI |
-| `1` / `2` / `3` | Thiếu tham số input / Dữ liệu không hợp lệ | Hiển thị Toast thông báo lỗi cụ thể |
-| `-1` | Không tìm thấy tài khoản / Mật khẩu không đúng | Báo lỗi ngay dưới ô Input Form |
-| `-2` | Xung đột Idempotency / Request đang xử lý | Hiển thị Dialog chờ 3s rồi retry |
-| `401` / `403` | Token JWT hết hạn hoặc Không có quyền (R3) | Tự động đăng xuất & đẩy về `S01_LoginScreen` |
-| `429` | Quá nhiều request (Rate-limit) | Báo "Thao tác quá nhanh, vui lòng thử lại sau 15 phút" |
+| # | Method | Endpoint | Yêu cầu JWT | Request Body / Query Params | Response `data` |
+|---|--------|----------|-------------|-----------------------------|-----------------|
+| 1 | `POST` | `/api/v1/auth/login` | ❌ No | `{ email, password }` | `{ user, token }` |
+| 2 | `POST` | `/api/v1/auth/register` | ❌ No | `{ email, password, firstName, lastName, phoneNumber, gender, roleId: "R3" }` | `{ message }` |
+| 3 | `POST` | `/api/v1/auth/forgot-password` | ❌ No | `{ email }` | `{ message }` |
+| 4 | `GET` | `/api/v1/patient/profile` | 🔒 Yes (R3) | Header Authorization | `{ id, email, firstName, lastName, phoneNumber, address, gender, image }` |
+| 5 | `PUT` | `/api/v1/patient/profile` | 🔒 Yes (R3) | `{ firstName, lastName, address, phoneNumber, gender, image }` | `{ updatedUser }` |
+| 6 | `PUT` | `/api/v1/patient/change-password` | 🔒 Yes (R3) | `{ oldPassword, newPassword }` | `{ message }` |
+| 7 | `GET` | `/api/v1/specialties` | ❌ No | Không | `[ { id, name, image, descriptionHTML } ]` |
+| 8 | `GET` | `/api/v1/specialties/:id` | ❌ No | `?location=ALL` | `{ specialty, doctorSpecialty }` |
+| 9 | `GET` | `/api/v1/clinics` | ❌ No | Không | `[ { id, name, address, image } ]` |
+| 10 | `GET` | `/api/v1/clinics/:id` | ❌ No | Không | `{ clinic, doctorClinic }` |
+| 11 | `GET` | `/api/v1/doctors/top` | ❌ No | `?limit=10` | `[ { id, firstName, lastName, image, positionData, doctorInfoData } ]` |
+| 12 | `GET` | `/api/v1/doctors/:id` | ❌ No | Không | `{ id, firstName, lastName, image, positionData, doctorInfoData }` |
+| 13 | `GET` | `/api/v1/doctors/:doctorId/schedules` | ❌ No | `?date=1788220800000` | `[ { id, doctorId, date, timeType, currentNumber, maxNumber, timeTypeData } ]` |
+| 14 | `GET` | `/api/v1/doctors/:doctorId/reviews` | ❌ No | `?page=1&limit=5` | `[ { id, rating, comment, createdAt } ]` |
+| 15 | `GET` | `/api/v1/search` | ❌ No | `?keyword=tim+mach` | `{ doctors: [], specialties: [], clinics: [] }` |
+| 16 | `POST` | `/api/v1/bookings` | 🔒 Yes (R3) | `{ doctorId, date, timeType, email, fullName, phoneNumber, address, gender, reason }` | `{ errCode: 0, message }` |
+| 17 | `POST` | `/api/v1/payment/create-payment-url-by-token` | ❌ No | `{ "token": "<paymentToken>" }` | `{ errCode: 0, paymentUrl }` |
+| 18 | `GET` | `/api/v1/patient/bookings` | 🔒 Yes (R3) | `?page=1&limit=10&status=S1,S1.5,S2` | `[ { id, statusId, date, timeType, receiptToken, isReviewed, doctorBookingData } ]` |
+| 19 | `PUT` | `/api/v1/patient/bookings/:id/cancel` | 🔒 Yes (R3) | URL Param `:id` | `{ errCode: 0, message }` |
+| 20 | `POST` | `/api/v1/reviews` | 🔒 Yes (R3) | `{ bookingId, rating, comment }` | `{ errCode: 0, message }` |
+| 21 | `POST` | `/api/v1/ai/chat` | 🔒 Yes (R3) | `{ "message": "Tôi bị sốt nhẹ..." }` | Event-Stream text (SSE) |
 
 ---
 
-## 3. QUY TẮC XỬ LÝ DỮ LIỆU ĐẶC THÙ (DATA CONVERTERS & PARSERS)
+## 4. QUY TẮC DATA CONVERTERS & PARSERS (BYTEA IMAGE, TIMESTAMP, ALLCODES)
 
-### 3.1. Xử lý Ảnh đại diện (PostgreSQL BYTEA → Base64 Image)
-Backend trả về ảnh dưới dạng chuỗi Pure Base64 (được decode từ kiểu dữ liệu `BYTEA` trong PostgreSQL).
-- **Format trả về:** Chuỗi mã hóa Base64 không chứa prefix (VD: `"iVBORw0KGgoAAAANSUhEUgAA..."`).
-- **Quy tắc render trên Mobile:**
-  - Cần nối thêm Prefix `data:image/jpeg;base64,` trước khi nạp vào ImageView/Image Component.
-  - Nếu trường `image` bị null hoặc rỗng → Dùng ảnh mặc định Placeholder (`default_avatar.png`).
-
+### 4.1. Decode Ảnh PostgreSQL `BYTEA` → Base64 Image Component
 ```javascript
-// React Native Image Render
-const imageUri = user.image 
-  ? `data:image/jpeg;base64,${user.image}` 
-  : require('../assets/images/default_avatar.png');
+// React Native Renderer Utility
+export const formatBase64Image = (base64Str) => {
+  if (!base64Str) return require('../assets/images/default_avatar.png');
+  if (base64Str.startsWith('data:image')) return { uri: base64Str };
+  return { uri: `data:image/jpeg;base64,${base64Str}` };
+};
 ```
 
-```kotlin
-// Kotlin Jetpack Compose Image Render
-val imageBytes = Base64.decode(base64String, Base64.DEFAULT)
-val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-Image(bitmap = bitmap.asImageBitmap(), contentDescription = null)
+### 4.2. Timestamp Ngày khám
+Trường `date` trả về chuỗi Mili-giây (VD: `"1788220800000"`). Parse như sau:
+```javascript
+const formattedDate = moment(parseInt(item.date, 10)).locale('vi').format('dddd - DD/MM/YYYY');
+// Trả về: "Thứ Tư - 02/09/2026"
 ```
-
-### 3.2. Xử lý Timestamp Ngày khám (Unix Epoch ms → Date String)
-Trường `date` trong bảng `Schedules` và `Bookings` lưu Timestamp mili-giây dạng String (VD: `"1788220800000"`).
-- **Múi giờ bắt buộc:** `Asia/Ho_Chi_Minh` (`+07:00`).
-- **Chuyển đổi:** `1788220800000` → `"Thứ Tư, 02/09/2026"`.
-
-### 3.3. Ánh xạ Mã Giá tiền & Trạng thái Khám (Allcode Map)
-
-| Loại (`type`) | KeyMap | ValueVi (Tiếng Việt) | ValueEn (Tiếng Anh) |
-|---------------|--------|----------------------|--------------------|
-| **STATUS** | `S1` | Lịch mới tạo (Chờ xác nhận) | New Booking |
-| **STATUS** | `S1.5` | Chờ thanh toán VNPay | Awaiting Payment |
-| **STATUS** | `S2` | Đã xác nhận (Đã thanh toán) | Confirmed |
-| **STATUS** | `S3` | Đã hoàn thành khám | Completed |
-| **STATUS** | `S4` | Đã hủy lịch | Cancelled |
-| **PRICE** | `PRI1` | 200.000 VNĐ | $10 |
-| **PRICE** | `PRI2` | 300.000 VNĐ | $15 |
-| **PRICE** | `PRI3` | 500.000 VNĐ | $25 |
 
 ---
 
-## 4. BỘ PROMPT MẪU TÍCH HỢP BACKEND (MASTER INTEGRATION PROMPTS)
-
-Gửi từng Prompt dưới đây vào AI Assistant trong Android Studio để tạo từng tầng mã nguồn.
+## 5. BỘ MASTER INTEGRATION PROMPTS CHUẨN HÓA 100% CHO AI ANDROID STUDIO
 
 ---
 
-### 🟢 PROMPT A: Khởi tạo Network Module & Axios/Retrofit Client
+### 🟢 PROMPT A: Network Module & Interceptors
 
 ```text
-Hãy tạo cho tôi file NetworkModule kết nối tới Backend BookingCare Node.js Express:
+Hãy tạo cho tôi file NetworkModule kết nối tới Backend BookingCare Node.js Express + PostgreSQL:
 
-CẤU HÌNH KẾT NỐI:
-- Base URL: http://192.168.1.11:3001/api/v1 (Điện thoại thật kết nối chung Wi-Fi) hoặc http://10.0.2.2:3001/api/v1 (Android Emulator)
-- Timeout: Connect 10 giây, Read 30 giây.
-- Header mặc định: Content-Type: application/json
+CẤU HÌNH BASE URL:
+- Khi chạy trên Điện thoại thật (Cùng Wi-Fi): http://192.168.1.11:3001/api/v1
+- Khi chạy trên Android Emulator: http://10.0.2.2:3001/api/v1
+- Timeout: Connect 10s, Read 30s. Header mặc định: Content-Type: application/json.
 
 CHỨC NĂNG CẦN CÓ (INTERCEPTORS):
-1. Request Interceptor: Tự động đọc JWT Token từ Secure Storage (SharedPreferences / EncryptedStorage) và gắn vào Header: `Authorization: Bearer <TOKEN>`.
+1. Request Interceptor: Đọc JWT Token từ Secure Storage (EncryptedSharedPreferences) và gắn vào Header: `Authorization: Bearer <TOKEN>`.
 2. Response Interceptor: 
-   - Nếu nhận HTTP 401 hoặc 403: Tự động xóa Token đã lưu, đưa ứng dụng về Màn hình Đăng nhập (S01_LoginScreen) và hiển thị thông báo "Phiên đăng nhập hết hạn".
-   - Nếu nhận HTTP 429: Báo lỗi "Bạn đã gửi quá nhiều request. Vui lòng thử lại sau 15 phút".
-
-Hãy viết code sạch sẽ, mở rộng dễ dàng và có log request/response chi tiết trong môi trường Debug.
+   - HTTP 401/403: Xóa Token đã lưu, đẩy về Màn hình Login (S01_LoginScreen) kèm Toast "Phiên đăng nhập đã hết hạn".
+   - HTTP 429: Thông báo "Bạn đã thao tác quá nhanh, vui lòng thử lại sau 15 phút".
+3. Log Interceptor: In toàn bộ URL, Header, Request Body và Response JSON trong môi trường Debug.
 ```
 
 ---
@@ -157,201 +167,172 @@ Hãy viết code sạch sẽ, mở rộng dễ dàng và có log request/respons
 ### 🟢 PROMPT B: Data Models & Response Parsers
 
 ```text
-Hãy sinh các Data Class / Type Interface khớp 100% với JSON Schema trả về từ Backend PostgreSQL BookingCare:
+Hãy sinh toàn bộ Data Class / Model chuẩn 100% với Backend PostgreSQL:
 
 1. UserData:
-   - id: Int, email: String, firstName: String, lastName: String, address: String?, phoneNumber: String?, gender: String?, roleId: String, image: String? (Base64)
+   - id: Int, email: String, firstName: String, lastName: String, address: String?, phoneNumber: String?, gender: String?, roleId: String, image: String?
 
-2. DoctorInfo:
+2. DoctorInfoData:
    - doctorId: Int, specialtyId: Int, clinicId: Int, priceId: String, provinceId: String, paymentId: String, note: String?
    - specialtyData: SpecialtyData?, clinicData: ClinicData?, priceData: AllcodeData?, provinceData: AllcodeData?, paymentData: AllcodeData?
 
 3. SpecialtyData & ClinicData:
-   - id: Int, name: String, image: String? (Base64), descriptionHTML: String?, descriptionMarkdown: String?, address: String? (Clinic)
+   - id: Int, name: String, image: String?, descriptionHTML: String?, descriptionMarkdown: String?, address: String? (chỉ Clinic)
 
 4. ScheduleData:
-   - id: Int, doctorId: Int, date: String (Timestamp ms), timeType: String, maxNumber: Int, currentNumber: Int
-   - timeTypeData: AllcodeData (keyMap, valueVi, valueEn)
+   - id: Int, doctorId: Int, date: String, timeType: String, maxNumber: Int, currentNumber: Int
+   - timeTypeData: AllcodeData (keyMap: String, valueVi: String, valueEn: String)
 
 5. BookingData:
-   - id: Int, statusId: String, doctorId: Int, patientId: Int, date: String, timeType: String, patientName: String, patientPhoneNumber: String, patientEmail: String, patientAddress: String, patientReason: String, paymentStatus: String, receiptToken: String?, receiptExpiredAt: String?
+   - id: Int, statusId: String, doctorId: Int, patientId: Int, date: String, timeType: String, patientName: String, patientPhoneNumber: String, patientEmail: String, patientAddress: String, patientReason: String, paymentStatus: String, receiptToken: String?, receiptExpiredAt: String?, isReviewed: Boolean = false
    - doctorBookingData: UserData?, statusData: AllcodeData?, timeTypeBooking: AllcodeData?
 
 6. BaseResponse<T>:
-   - errCode: Int, message: String, data: T?
+   - errCode: Int, message: String, data: T?, pagination: PaginationData?
 ```
 
 ---
 
-### 🟢 PROMPT C: Tích hợp Xác thực Auth (Login / Register / JWT Token Store)
+### 🟢 PROMPT C: Auth Module (Login / Register Patient / Forgot Pass)
 
 ```text
-Hãy viết Service và ViewModel xử lý luồng Đăng nhập & Đăng ký kết nối Backend:
+Hãy sinh Service và ViewModel cho Luồng Xác thực Bệnh nhân (Auth Flow):
 
-1. XỬ LÝ ĐĂNG NHẬP (S01_LoginScreen):
-   - Endpoint: POST /api/v1/auth/login
-   - Request Body: { "email": "patient@gmail.com", "password": "123" }
-   - Response khi errCode == 0: { "errCode": 0, "message": "OK", "user": { ... }, "token": "eyJhbGciOi..." }
-   - Sau khi thành công: Lưu `token` và `user` vào Redux/State Manager & Storage, chuyển sang S05_HomeScreen.
-   - Nếu errCode != 0 (VD -1: Wrong password): Báo lỗi lên UI.
+1. ĐĂNG NHẬP (S01_LoginScreen):
+   - API: POST /api/v1/auth/login
+   - Request Body: { "email": "...", "password": "..." }
+   - Xử lý Response: Khi `errCode == 0`, lưu `token` và object `user` vào Storage & Redux/State, chuyển đến HomeScreen. Lỗi `errCode != 0` hiển thị thông báo dưới Form.
 
-2. XỬ LÝ ĐĂNG KÝ BỆNH NHÂN (S02_RegisterScreen):
-   - Endpoint: POST /api/v1/auth/register
+2. ĐĂNG KÝ BỆNH NHÂN (S02_RegisterScreen):
+   - API: POST /api/v1/auth/register
    - Request Body: { "email": "...", "password": "...", "firstName": "...", "lastName": "...", "phoneNumber": "...", "gender": "M", "roleId": "R3" }
-   - Xử lý thông báo thành công và tự động chuyển sang trang Đăng nhập.
+   - Khi đăng ký thành công -> Thông báo và chuyển sang trang Đăng nhập.
 
-3. XỬ LÝ QUÊN MẬT KHẨU (S03_ForgotPasswordScreen):
-   - Endpoint: POST /api/v1/auth/forgot-password
+3. QUÊN MẬT KHẨU (S03_ForgotPasswordScreen):
+   - API: POST /api/v1/auth/forgot-password
    - Request Body: { "email": "..." }
 ```
 
 ---
 
-### 🟢 PROMPT D: Tích hợp Màn hình Trang chủ, Chuyên khoa & Cơ sở Y tế
+### 🟢 PROMPT D: Discovery Module (Home 3-in-1, Search Live, Specialty, Clinic)
 
 ```text
-Hãy viết Repository & ViewModel nạp dữ liệu cho S05_HomeScreen, S07_SpecialtyDetailScreen và S08_ClinicDetailScreen:
+Hãy sinh Repository và ViewModel cho Trang chủ & Tìm kiếm (S05, S06, S07, S08):
 
 1. TRANG CHỦ (S05_HomeScreen):
    - Gọi đồng thời 3 API:
-     + GET /api/v1/specialties?limit=10 (Danh sách Chuyên khoa)
-     + GET /api/v1/clinics?limit=10 (Danh sách Cơ sở Y tế)
-     + GET /api/v1/doctors/top?limit=10 (Danh sách Bác sĩ Nổi bật)
-   - Render ảnh đại diện: Decode chuỗi Base64 từ trường `image` của từng item sang ImageView.
+     + GET /api/v1/specialties?limit=10
+     + GET /api/v1/clinics?limit=10
+     + GET /api/v1/doctors/top?limit=10
+   - Xử lý Image Base64: Tự động đính kèm prefix "data:image/jpeg;base64," trước khi render lên ImageView.
 
-2. CHI TIẾT CHUYÊN KHOA (S07_SpecialtyDetailScreen):
-   - GET /api/v1/specialties/:id -> Trả về thông tin chuyên khoa + danh sách bác sĩ thuộc khoa.
-   - Render phần `descriptionHTML` bằng HTML WebView / Markwon Renderer.
+2. TÌM KIẾM TỰ ĐỘNG (S06_SearchFilterScreen):
+   - API: GET /api/v1/search?keyword={text} (Sử dụng Debounce 400ms khi người dùng gõ từ khóa).
+   - Parse kết quả object `data`: `{ doctors: [], specialties: [], clinics: [] }`.
 
-3. CHI TIẾT CƠ SỞ Y TẾ (S08_ClinicDetailScreen):
-   - GET /api/v1/clinics/:id -> Trả về thông tin phòng khám + danh sách bác sĩ.
-   - Nút "Chỉ đường": Lấy trường `address` để tạo Intent mở Google Maps (`geo:0,0?q=address`).
+3. CHI TIẾT CHUYÊN KHOA & CƠ SỞ Y TẾ (S07 & S08):
+   - GET /api/v1/specialties/:id?location=ALL
+   - GET /api/v1/clinics/:id
+   - Render phần `descriptionHTML` bằng HTML WebView / Markwon Component.
 ```
 
 ---
 
-### 🟢 PROMPT E: Tích hợp Chi tiết Bác sĩ & Selector Lịch khám theo Ngày
+### 🟢 PROMPT E: Doctor Detail & Schedules Selector
 
 ```text
-Hãy viết ViewModel xử lý chọn Lịch khám tại màn hình S09_DoctorDetailScreen:
+Hãy sinh ViewModel xử lý Màn hình Chi tiết Bác sĩ & Chọn Lịch khám (S09_DoctorDetailScreen):
 
-LUỒNG THAO TÁC:
-1. Load Chi tiết Bác sĩ: GET /api/v1/doctors/:id -> Lấy tên, học hàm, avatar, thông tin phòng khám, giá khám.
-2. Load Đánh giá Bác sĩ: GET /api/v1/doctors/:doctorId/reviews?page=1&limit=5
-3. Select Ngày khám (Horizontal Date Bar):
-   - Khi chọn một Ngày (Timestamp ms đại diện 00:00:00 của ngày đó):
+1. LOAD CHI TIẾT BÁC SĨ & REVIEW:
+   - GET /api/v1/doctors/:id
+   - GET /api/v1/doctors/:doctorId/reviews?page=1&limit=5
+
+2. CHỌN NGÀY & LOAD KHUNG GIỜ KHÁM:
+   - Khi bệnh nhân chọn Ngày trên thanh Date Bar (Timestamp ms ở 00:00:00 của ngày chọn):
      + Gọi API: GET /api/v1/doctors/:doctorId/schedules?date=<TIMESTAMP_MS>
-     + Response trả về mảng `schedules`: các khung giờ `timeType` ('T1' đến 'T8').
-     + Render các ô khung giờ (VD: T1 = 08:00 - 09:00).
-     + Nếu `currentNumber >= maxNumber` -> Disable ô đó (kèm mờ).
-4. Khi Bệnh nhân bấm chọn 1 Ô khung giờ còn trống -> Lưu `selectedDoctor`, `selectedDate`, `selectedSchedule` và chuyển sang S10_BookingFormScreen.
+     + Nhận danh sách các ô giờ `timeType` ('T1' đến 'T8').
+     + Render các ô giờ: Ô nào có `currentNumber >= maxNumber` -> Set trạng thái Disabled & mờ.
+   - Khi bấm vào ô giờ còn trống -> Chuyển sang S10_BookingFormScreen kèm dữ liệu đã chọn.
 ```
 
 ---
 
-### 🟢 PROMPT F: Tích hợp Luồng Đặt lịch Khám & Thanh toán VNPay Sandbox
+### 🟢 PROMPT F: Booking Appointment & VNPay Sandbox Payment
 
 ```text
-Hãy viết Service xử lý Đặt lịch khám và Thanh toán VNPay Sandbox (S10 & S11):
+Hãy sinh Service xử lý Đặt lịch khám và Thanh toán VNPay (S10 & S11):
 
-1. GỬI ĐƠN ĐẶT LỊCH (S10_BookingFormScreen):
-   - Endpoint: POST /api/v1/bookings
+1. FORM ĐẶT LỊCH KHÁM (S10_BookingFormScreen):
+   - API: POST /api/v1/bookings (Yêu cầu Header Authorization Bearer Token)
    - Request Body:
      {
        "doctorId": 5,
-       "patientId": 12,
        "date": "1788220800000",
        "timeType": "T2",
-       "patientName": "Nguyễn Văn A",
-       "patientPhoneNumber": "0987654321",
-       "patientEmail": "nguyenvana@gmail.com",
-       "patientAddress": "123 Lý Thường Kiệt, Q10",
-       "patientReason": "Đau đầu kéo dài 3 ngày",
-       "patientGender": "M",
-       "paymentMethod": "PAY_LATER" // Hoặc "VNPAY"
+       "email": "nguyenvana@gmail.com",
+       "fullName": "Nguyễn Văn A",
+       "phoneNumber": "0987654321",
+       "address": "123 Lý Thường Kiệt, Q10",
+       "reason": "Đau đầu kéo dài",
+       "gender": "M"
      }
+   - Trả về response: `{ errCode: 0, message: "Đặt lịch thành công! Vui lòng kiểm tra email." }`.
 
 2. THANH TOÁN VNPAY SANDBOX (S11_PaymentWebViewScreen):
-   - Nếu `paymentMethod == "VNPAY"`:
-     + Gọi API tạo URL: POST /api/v1/payment/create-payment-url-by-token
-     + Trả về `vnpayUrl` -> Load URL này trong WebView.
-     + Lắng nghe WebNavigation state: Khi URL chuyển sang có vnp_ResponseCode=00 -> Xác nhận thành công -> Mở Modal Mã QR Receipt Token -> Chuyển về S12_BookingHistoryScreen.
+   - Nếu bệnh nhân bấm nút Thanh toán VNPay:
+     + Gọi API: POST /api/v1/payment/create-payment-url-by-token với Body: `{ "token": "<paymentToken>" }`
+     + Nhận Response `{ errCode: 0, paymentUrl: "https://sandbox.vnpayment.vn/..." }`.
+     + Load `paymentUrl` trong WebView -> Khi URL chuyển về vnp_ResponseCode=00 -> Báo thành công & mở Modal QR Check-in.
 ```
 
 ---
 
-### 🟢 PROMPT G: Tích hợp Màn hình Quản lý Lịch hẹn & Render QR Code Check-in
+### 🟢 PROMPT G: Booking History (3 Tabs), QR Check-in & Review
 
 ```text
-Hãy viết ViewModel cho S12_BookingHistoryScreen (Quản lý Lịch hẹn Bệnh nhân):
+Hãy sinh ViewModel cho Màn hình Quản lý Lịch hẹn Bệnh nhân (S12_BookingHistoryScreen):
 
 1. TẢI DANH SÁCH LỊCH HẸN:
-   - Endpoint: GET /api/v1/patient/bookings (Cần Bearer Token)
-   - Màn hình phân làm 3 Tabs dựa theo `statusId`:
-     + Tab "Sắp khám": Lịch có `statusId` thuộc ['S1', 'S1.5', 'S2']
-     + Tab "Đã khám": Lịch có `statusId` == 'S3'
-     + Tab "Đã hủy": Lịch có `statusId` == 'S4'
+   - API: GET /api/v1/patient/bookings?page=1&limit=10&status=S1,S1.5,S2 (Tab Sắp khám)
+   - GET /api/v1/patient/bookings?page=1&limit=10&status=S3 (Tab Đã khám)
+   - GET /api/v1/patient/bookings?page=1&limit=10&status=S4 (Tab Đã hủy)
 
 2. RENDER MÃ QR CODE CHECK-IN:
-   - Khi bấm nút "Mã QR Check-in" trên từng Card lịch hẹn:
-     + Lấy chuỗi `receiptToken` trong booking record.
-     + Sử dụng thư viện QR Code Generator mã hóa chuỗi `receiptToken` thành mã QR hiển thị trên Modal Popup cho bệnh nhân đưa cho Lễ tân quét.
+   - Khi bấm nút [Mã QR Check-in]: Mã hóa chuỗi `receiptToken` thành mã QR SVG/Bitmap hiển thị trên Modal Popup.
 
 3. HỦY LỊCH HẸN:
-   - Gọi API: PUT /api/v1/patient/bookings/:id/cancel
-   - Cập nhật ngay danh sách UI sang trạng thái 'S4' (Đã hủy).
+   - API: PUT /api/v1/patient/bookings/:id/cancel (Truyền ID lên URL path)
 
-4. ĐÁNH GIÁ BÁC SĨ (Cho lịch S3):
-   - Gọi API: POST /api/v1/reviews { "bookingId": id, "doctorId": docId, "rating": 5, "comment": "..." }
+4. ĐÁNH GIÁ BÁC SĨ (Cho lịch S3 chưa review - cờ `isReviewed == false`):
+   - API: POST /api/v1/reviews với Body: `{ "bookingId": 42, "rating": 5, "comment": "Bác sĩ tận tâm" }`
 ```
 
 ---
 
-### 🟢 PROMPT H: Tích hợp Trợ lý Y tế AI Chatbot Gemini (SSE Stream text)
+### 🟢 PROMPT H: AI Chatbot Gemini (SSE Stream & Doctor Cards)
 
 ```text
-Hãy viết Service kết nối AI Chatbot Gemini cho S13_AIChatScreen:
+Hãy sinh Service kết nối Trợ lý Y tế AI Chatbot Gemini cho S13_AIChatScreen:
 
-1. GỬI TIN NHẮN CHAT STREAM (Server-Sent Events):
-   - Endpoint: POST /api/v1/ai/chat
-   - Header: Authorization: Bearer <TOKEN>, Content-Type: application/json
-   - Request Body: { "message": "Tôi bị sốt 38.5 độ kèm ho đờm thì nên khám chuyên khoa nào?" }
+1. GỬI TIN NHẮN CHAT STREAM (SSE):
+   - API: POST /api/v1/ai/chat (Yêu cầu Bearer Token)
+   - Request Body: { "message": "Tôi bị triệu chứng ho sốt nhẹ thì nên làm gì?" }
+   - Lắng nghe luồng dữ liệu `EventSource` / `text/event-stream` để append từng từ một vào AI Message Bubble.
 
-2. XỬ LÝ RESPONSE SSE STREAM:
-   - Lắng nghe luồng dữ liệu stream trả về liên tục (Chunk by chunk).
-   - Cập nhật nội dung câu trả lời từng từ một lên UI AI Message Bubble thời gian thực (giống ChatGPT/Gemini UI).
-   - Hỗ trợ render định dạng Markdown (In đậm, gạch đầu dòng danh sách).
-
-3. XỬ LÝ FUNCTION CALLING (GỢI Ý BÁC SĨ):
-   - Nếu AI payload chứa `recommendedDoctors`: Render ngay Card gợi ý Bác sĩ dạng rút gọn trong luồng chat.
-   - Bấm vào Card Bác sĩ gợi ý -> Chuyển hướng thẳng sang S09_DoctorDetailScreen.
+2. GỢI Ý BÁC SĨ (Function Calling):
+   - Nếu Stream payload chứa object `recommendedDoctors` -> Render Card Bác sĩ ngắn gọn ngay trong luồng chat kèm nút "Đặt lịch ngay".
 ```
 
 ---
 
-## 5. CHECKLIST KIỂM TRA TÍCH HỢP MẠNG & KHẮC PHỤC LỖI THƯỜNG GẶP
+## 6. CHECKLIST KIỂM THỬ KẾT NỐI & TROUBLESHOOTING
 
-### 5.1. Checklist Kiểm tra Tích hợp Mạng
-
-- [ ] Backend Express.js đã chạy và nghe cổng `3001` (`http://localhost:3001/api/health`).
-- [ ] Database PostgreSQL 16 container `db-postgres` ở trạng thái **Healthy** (Cổng `5433`).
-- [ ] Android Emulator gọi qua IP `http://10.0.2.2:3001/api/v1/health` trả về `{ "errCode": 0, "message": "BookingCare Backend is running!" }`.
-- [ ] File `AndroidManifest.xml` đã thêm `android:usesCleartextTraffic="true"`.
-- [ ] Chuỗi ảnh Base64 từ trường `image` được tự động gắn prefix `data:image/jpeg;base64,`.
-- [ ] Token JWT được đính kèm vào Header `Authorization: Bearer <TOKEN>` cho các API cần xác thực.
-
-### 5.2. Hướng dẫn Khắc phục Lỗi Thường gặp (Troubleshooting Guide)
-
-| Lỗi gặp phải | Nguyên nhân chính | Cách khắc phục trên Android Studio |
-|--------------|-------------------|-----------------------------------|
-| `java.net.UnknownHostException: localhost` | Emulator không hiểu `localhost` của máy host | Đổi `localhost` thành `10.0.2.2` |
-| `java.io.IOException: Cleartext HTTP traffic not permitted` | Android chặn HTTP không mã hóa | Thêm `android:usesCleartextTraffic="true"` trong `AndroidManifest.xml` |
-| `HTTP 401 Unauthorized` | Thiếu hoặc sai định dạng JWT Token Header | Kiểm tra Header dạng `Bearer <token>` (phải có dấu cách giữa Bearer và token) |
-| `Image render lỗi / Màn hình trắng` | Ảnh Base64 thiếu prefix hoặc là string rỗng | Kiểm tra null check & gắn prefix `data:image/jpeg;base64,` trước khi nạp |
-| `Date timestamp ra năm 1970` | Parse sai mili-giây sang giây | Nhân Timestamp với `1000L` trước khi parse thành `Date` |
-
----
-
-> **Tài liệu này hoàn tất bộ hướng dẫn Prompt tích hợp cho Mobile App với Backend PostgreSQL.**  
-> **Phiên bản:** 1.0 | **Cập nhật lần cuối:** 01/09/2026  
-> **Trạng thái:** 🟢 Đã hoàn thiện — Sẵn sàng đưa vào Android Studio AI Assistant
+- [x] Backend đang chạy ở cổng `3001` (`http://localhost:3001/api/health`).
+- [x] PostgreSQL 16 container `db-postgres` đang chạy cổng `5433` (Healthy).
+- [x] Điện thoại thật và Máy tính bắt chung một tên Wi-Fi.
+- [x] Đã chạy lệnh mở cổng `3001` trên Windows Firewall:
+  ```powershell
+  New-NetFirewallRule -DisplayName "BookingCare 3001" -Direction Inbound -LocalPort 3001 -Protocol TCP -Action Allow
+  ```
+- [x] Tất cả Prompt đã được kiểm tra trùng khớp 100% với tên Endpoint và JSON Key trong Backend Express.js.
