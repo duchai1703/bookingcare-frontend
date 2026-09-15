@@ -22,6 +22,8 @@ import DoctorList from './Patient/DoctorList';
 import ExaminationFee from './Patient/ExaminationFee';
 import VerifyEmail from './Patient/VerifyEmail';
 import PaymentResult from './PatientPortal/PaymentResult';
+import ClinicSpecialtyBridge from './Patient/ClinicSpecialtyBridge'; // [Phase D.1]
+import SpecialtyDoctorBridge from './Patient/SpecialtyDoctorBridge'; // [Phase D.1]
 
 // ===== Protected Pages =====
 import SystemLayout from './System/SystemLayout';
@@ -32,6 +34,15 @@ import SpecialtyManage from './System/Admin/SpecialtyManage';
 import ScheduleManage from './System/Admin/ScheduleManage';
 import Dashboard from './System/Admin/Dashboard';
 import ManagePatient from './System/Doctor/ManagePatient';
+
+// [Phase C] Doctor new pages
+import DoctorProfile  from './System/Doctor/DoctorProfile';
+import DoctorRevenue  from './System/Doctor/DoctorRevenue';
+
+// [Phase C] Admin new pages
+import MedicalCatalogManage from './System/Admin/MedicalCatalogManage';
+import MedicineManage       from './System/Admin/MedicineManage';
+import SystemSettings       from './System/Admin/SystemSettings';
 
 // [Phase 9.4] Patient Portal
 import PatientLayout from './PatientPortal/PatientLayout';
@@ -158,6 +169,16 @@ const App = () => {
         {/* Kết quả thanh toán VNPay */}
         <Route path={path.PAYMENT_RESULT} element={<PaymentResult />} />
 
+        {/* [Phase D.1] Clinic → Specialty → Doctor bridge */}
+        <Route
+          path="/clinics/:clinicId/specialties"
+          element={<><Header /><ClinicSpecialtyBridge /><Footer /></>}
+        />
+        <Route
+          path="/clinics/:clinicId/specialties/:specialtyId/doctors"
+          element={<><Header /><SpecialtyDoctorBridge /><Footer /></>}
+        />
+
         {/* ===== ADMIN ROUTES — Chỉ Admin R1 (SRS REQ-AU-005) ===== */}
         <Route element={<PrivateRoute allowedRoles={[USER_ROLE.ADMIN]} />}>
           <Route path={path.SYSTEM} element={<SystemLayout />}>
@@ -168,7 +189,11 @@ const App = () => {
             <Route path="doctor-manage" element={<DoctorManage />} />
             <Route path="clinic-manage" element={<ClinicManage />} />
             <Route path="specialty-manage" element={<SpecialtyManage />} />
-            <Route path="schedule-manage" element={<ScheduleManage />} />
+            <Route path="schedule-manage"         element={<ScheduleManage />} />
+            {/* [Phase C] Admin new pages */}
+            <Route path="medical-catalog-manage"  element={<MedicalCatalogManage />} />
+            <Route path="medicine-manage"          element={<MedicineManage />} />
+            <Route path="system-settings"          element={<SystemSettings />} />
           </Route>
         </Route>
 
@@ -176,8 +201,11 @@ const App = () => {
         <Route element={<PrivateRoute allowedRoles={[USER_ROLE.DOCTOR]} />}>
           <Route path={path.DOCTOR_DASHBOARD} element={<SystemLayout />}>
             <Route index element={<Navigate to="manage-patient" replace />} />
-            <Route path="manage-patient" element={<ManagePatient />} />
+            <Route path="manage-patient"  element={<ManagePatient />} />
             <Route path="manage-schedule" element={<ScheduleManage />} />
+            {/* [Phase C] Doctor new pages */}
+            <Route path="doctor-profile"  element={<DoctorProfile />} />
+            <Route path="doctor-revenue"  element={<DoctorRevenue />} />
           </Route>
         </Route>
 

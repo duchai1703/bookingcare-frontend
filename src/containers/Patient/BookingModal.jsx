@@ -17,6 +17,7 @@ import { FormattedMessage, useIntl } from 'react-intl';
 import { fetchAllcodeByType } from '../../redux/slices/appSlice';
 import { LANGUAGES, ALLCODE_TYPES } from '../../utils/constants';
 import { postBookAppointment } from '../../services/patientService';
+import { getSystemSettings } from '../../services/catalogService';
 import './BookingModal.scss';
 
 // [Fix Bug 9.7] Triệt tiêu email khỏi state — email lấy từ userInfo.email trực tiếp
@@ -51,12 +52,31 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price }) => {
   const [errors, setErrors] = useState(INITIAL_ERRORS);
   const [uiState, setUiState] = useState('idle');
 
+  // [Phase D.3] Bank info + Refund policy
+  const [bankInfo, setBankInfo] = useState({ number: '', name: '', bank: '' });
+  const [refundPolicy, setRefundPolicy] = useState({ before24h: '100', after24h: '50' });
+
   // Fetch gender allcode on mount
   useEffect(() => {
     if (!genders || genders.length === 0) {
       dispatch(fetchAllcodeByType(ALLCODE_TYPES.GENDER));
     }
   }, [dispatch, genders]);
+
+  // [Phase D.3] Fetch refund policy from system settings
+  useEffect(() => {
+    getSystemSettings()
+      .then(res => {
+        if (res?.data?.errCode === 0) {
+          const settings = res.data.data || [];
+          setRefundPolicy({
+            before24h: settings.find(s => s.key === 'refund_rate_cancel_before_24h')?.value || '100',
+            after24h:  settings.find(s => s.key === 'refund_rate_cancel_after_24h')?.value  || '50',
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // ═══════════════════════════════════════════════════════════════════════
   // [Phase 9.5] Auto-fill: Khi modal mở hoặc userInfo thay đổi,
@@ -170,6 +190,10 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price }) => {
         birthday: formData.birthday,
         gender: formData.gender,
         language: language,
+        // [Phase D.3] Bank info
+        bankAccountNumber: bankInfo.number || undefined,
+        bankAccountName:   bankInfo.name   || undefined,
+        bankName:          bankInfo.bank   || undefined,
       });
 
       if (response && response.errCode === 0) {
@@ -361,6 +385,52 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price }) => {
               )}
             </div>
           </div>
+
+          {/* [Phase D.3] ── Refund Policy Box ── */}
+          <div className="booking-modal__refund-policy">
+            <h4>📋 Chính sách hoàn tiền</h4>
+            <p>✅ Hủy trước 24 giờ: hoàn <strong>{refundPolicy.before24h}%</strong> phí khám</p>
+            <p>⚠️ Hủy sau 24 giờ: hoàn <strong>{refundPolicy.after24h}%</strong> phí khám</p>
+          </div>
+
+          {/* [Phase D.3] ── Bank Info Section ── */}
+          <div className="booking-modal__bank-info">
+            <h4>💳 Thông tin hoàn tiền <span className="optional-tag">(tùy chọn)</span></h4>
+            <p className="bank-info-note">Điền nếu bạn muốn hoàn tiền về tài khoản khi hủy lịch</p>
+            <div className="booking-modal__row">
+              <div className="booking-modal__field">
+                <label className="booking-modal__label">Số tài khoản</label>
+                <input
+                  type="text"
+                  className="booking-modal__input"
+                  placeholder="VD: 0123456789"
+                  value={bankInfo.number}
+                  onChange={e => setBankInfo(p => ({ ...p, number: e.target.value }))}
+                />
+              </div>
+              <div className="booking-modal__field">
+                <label className="booking-modal__label">Tên chủ tài khoản</label>
+                <input
+                  type="text"
+                  className="booking-modal__input"
+                  placeholder="VD: NGUYEN VAN A"
+                  value={bankInfo.name}
+                  onChange={e => setBankInfo(p => ({ ...p, name: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="booking-modal__field">
+              <label className="booking-modal__label">Ngân hàng</label>
+              <input
+                type="text"
+                className="booking-modal__input"
+                placeholder="VD: Vietcombank, Techcombank..."
+                value={bankInfo.bank}
+                onChange={e => setBankInfo(p => ({ ...p, bank: e.target.value }))}
+              />
+            </div>
+          </div>
+
         </div>
 
         {/* ===== FOOTER — [Phase 11] Submit Button ===== */}

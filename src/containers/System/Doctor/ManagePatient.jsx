@@ -13,7 +13,8 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { getListPatientForDoctor, cancelBooking } from '../../../services/doctorService';
 import { processLogout } from '../../../redux/slices/userSlice';
 import { LANGUAGES, BOOKING_STATUS } from '../../../utils/constants';
-import RemedyModal from './RemedyModal';
+import RemedyModal     from './RemedyModal';
+import MedicalInfoModal from './MedicalInfoModal'; // [Phase D.5]
 import './ManagePatient.scss';
 
 const ManagePatient = () => {
@@ -37,6 +38,9 @@ const ManagePatient = () => {
 
   // RÀNG BUỘC #7: Loading state
   const [isLoading, setIsLoading] = useState(false);
+
+  // [Phase D.5] Medical info modal
+  const [medicalModal, setMedicalModal] = useState(null); // booking object
 
   // ===== GỌI API LẦN ĐẦU + MỖI KHI currentDate HOẶC statusFilter THAY ĐỔI =====
   useEffect(() => {
@@ -245,6 +249,14 @@ const ManagePatient = () => {
                           >
                             📧 {intl.formatMessage({ id: 'doctor.manage-patient.btn-send-remedy' })}
                           </button>
+                          {/* [Phase D.5] Nút Ghi chú khám */}
+                          <button
+                            className="tw-px-3 tw-py-1.5 tw-bg-purple-50 tw-text-purple-700 tw-rounded-md tw-text-xs tw-font-medium tw-border tw-border-purple-200 tw-cursor-pointer hover:tw-bg-purple-100 tw-transition-colors"
+                            onClick={() => setMedicalModal(item)}
+                            title="Ghi nhận thông tin khám"
+                          >
+                            📝 Ghi chú khám
+                          </button>
                           <button
                             className="tw-px-3 tw-py-1.5 tw-bg-red-50 tw-text-red-600 tw-rounded-md tw-text-xs tw-font-medium tw-border tw-border-red-200 tw-cursor-pointer hover:tw-bg-red-100 tw-transition-colors"
                             onClick={() => handleCancelBooking(item)}
@@ -286,6 +298,18 @@ const ManagePatient = () => {
           dataModal={dataModal}
           onClose={handleCloseRemedyModal}
           onSendSuccess={handleSendRemedySuccess}
+        />
+      )}
+
+      {/* [Phase D.5] ===== MEDICAL INFO MODAL ===== */}
+      {medicalModal && (
+        <MedicalInfoModal
+          booking={medicalModal}
+          onClose={() => setMedicalModal(null)}
+          onSaved={() => {
+            setMedicalModal(null);
+            fetchPatientList(currentDate, statusFilter);
+          }}
         />
       )}
     </div>

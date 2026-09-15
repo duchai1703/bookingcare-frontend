@@ -605,5 +605,42 @@
   "list-page.fee.filter-price-all": "Tất cả mức giá",
   "list-page.fee.filter-price-low": "Dưới 300.000đ",
   "list-page.fee.filter-price-high": "Từ 300.000đ trở lên",
-  "list-page.fee.no-results": "Không tìm thấy thông tin giá khám phù hợp!"
+  "list-page.fee.no-results": "Không tìm thấy thông tin giá khám phù hợp!",
+
+  "menu.admin.medical-catalog":  "Danh mục y khoa",
+  "menu.admin.medicine":         "Danh mục thuốc",
+  "menu.admin.system-settings":  "Cài đặt hệ thống",
+  "menu.doctor.revenue":         "Doanh thu",
+  "menu.doctor.profile":         "Hồ sơ cá nhân",
+  "menu.doctor.manage-schedule": "Quản lý lịch khám",
+
+  "doctor.revenue.title":        "Doanh thu của tôi",
+  "doctor.profile.title":        "Hồ sơ cá nhân",
+  "doctor.medical-info.title":   "Ghi nhận thông tin khám",
+  "doctor.medical-info.symptoms":         "Triệu chứng",
+  "doctor.medical-info.clinical-notes":   "Ghi chú lâm sàng",
+  "doctor.medical-info.diagnosis":        "Chẩn đoán",
+  "doctor.medical-info.follow-up-date":   "Ngày tái khám",
+  "doctor.medical-info.care-instructions":"Hướng dẫn chăm sóc",
+  "doctor.medical-info.medicines":        "Đơn thuốc",
+
+  "patient.history.detail":              "Xem chi tiết",
+  "patient.history.symptoms":            "Triệu chứng",
+  "patient.history.diagnosis":           "Chẩn đoán",
+  "patient.history.prescription":        "Đơn thuốc",
+  "patient.history.follow-up":           "Ngày tái khám",
+  "patient.history.care-instructions":   "Hướng dẫn chăm sóc",
+
+  "booking.refund-policy.title":         "Chính sách hoàn tiền",
+  "booking.refund-policy.before-24h":    "Hủy trước 24 giờ: hoàn {rate}%",
+  "booking.refund-policy.after-24h":     "Hủy sau 24 giờ: hoàn {rate}%",
+  "booking.bank-info.title":             "Thông tin hoàn tiền (tùy chọn)",
+  "booking.bank-info.account-number":    "Số tài khoản",
+  "booking.bank-info.account-name":      "Tên chủ tài khoản",
+  "booking.bank-info.bank-name":         "Ngân hàng",
+
+  "admin.medical-catalog.title":         "Danh mục y khoa",
+  "admin.medicine.title":                "Danh mục thuốc",
+  "admin.system-settings.title":         "Cài đặt hệ thống"
 }
+

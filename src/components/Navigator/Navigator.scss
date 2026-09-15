@@ -19,6 +19,24 @@ $primary: #45c3d2;
     margin: 2px 8px;
   }
 
+  // [Phase C] Group label — phân nhóm sidebar
+  .nav-group-label {
+    list-style: none;
+    padding: 14px 22px 4px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.35);
+    user-select: none;
+
+    &:not(:first-child) {
+      margin-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.07);
+      padding-top: 12px;
+    }
+  }
+
   .nav-link {
     display: flex;
     align-items: center;

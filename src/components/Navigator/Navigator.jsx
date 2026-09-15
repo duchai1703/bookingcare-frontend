@@ -1,5 +1,5 @@
 // src/components/Navigator/Navigator.jsx
-// Sidebar navigation — menu theo role (REQ-AU-005)
+// [Phase C] Sidebar phân nhóm master-detail — type:'group' support
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -11,13 +11,23 @@ import './Navigator.scss';
 
 // Icon mapping cho từng menu item
 const MENU_ICONS = {
-  'menu.admin.dashboard': '📊',
-  'menu.admin.manage-user': '👥',
-  'menu.admin.manage-doctor': '🩺',
-  'menu.admin.manage-schedule': '📅',
+  // Admin
+  'menu.admin.dashboard':        '📊',
+  'menu.admin.manage-user':      '👥',
+  'menu.admin.manage-doctor':    '🩺',
+  'menu.admin.manage-schedule':  '📅',
   'menu.admin.manage-specialty': '🔬',
-  'menu.admin.manage-clinic': '🏥',
-  'menu.doctor.manage-patient': '🗓️',
+  'menu.admin.manage-clinic':    '🏥',
+  // [Phase C] Admin new
+  'menu.admin.medical-catalog':  '📋',
+  'menu.admin.medicine':         '💊',
+  'menu.admin.system-settings':  '⚙️',
+  // Doctor
+  'menu.doctor.manage-patient':  '🗓️',
+  'menu.doctor.manage-schedule': '📅',
+  // [Phase C] Doctor new
+  'menu.doctor.revenue':         '💰',
+  'menu.doctor.profile':         '👤',
 };
 
 const Navigator = () => {
@@ -42,19 +52,30 @@ const Navigator = () => {
   return (
     <nav className="navigator">
       <ul className="nav-list">
-        {menuItems.map((item, index) => (
-          <li key={index} className="nav-item">
-            <NavLink
-              to={item.link}
-              className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
-            >
-              <span className="nav-icon">{MENU_ICONS[item.name] || '⚙️'}</span>
-              <span className="nav-label">
-                {formatMessage({ id: item.name })}
-              </span>
-            </NavLink>
-          </li>
-        ))}
+        {menuItems.map((item, index) => {
+          // [Phase C] Render group header label
+          if (item.type === 'group') {
+            return (
+              <li key={`group-${index}`} className="nav-group-label">
+                <span>{item.label}</span>
+              </li>
+            );
+          }
+          // Render normal link (giữ nguyên behavior cũ)
+          return (
+            <li key={index} className="nav-item">
+              <NavLink
+                to={item.link}
+                className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+              >
+                <span className="nav-icon">{MENU_ICONS[item.name] || '⚙️'}</span>
+                <span className="nav-label">
+                  {formatMessage({ id: item.name })}
+                </span>
+              </NavLink>
+            </li>
+          );
+        })}
       </ul>
 
       <div className="nav-footer">

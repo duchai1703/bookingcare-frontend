@@ -605,5 +605,42 @@
   "list-page.fee.filter-price-all": "All prices",
   "list-page.fee.filter-price-low": "Under 300,000 VND",
   "list-page.fee.filter-price-high": "300,000 VND & above",
-  "list-page.fee.no-results": "No examination fee information found!"
+  "list-page.fee.no-results": "No examination fee information found!",
+
+  "menu.admin.medical-catalog":  "Medical Catalog",
+  "menu.admin.medicine":         "Medicine Catalog",
+  "menu.admin.system-settings":  "System Settings",
+  "menu.doctor.revenue":         "Revenue",
+  "menu.doctor.profile":         "My Profile",
+  "menu.doctor.manage-schedule": "Manage Schedule",
+
+  "doctor.revenue.title":        "My Revenue",
+  "doctor.profile.title":        "My Profile",
+  "doctor.medical-info.title":   "Record Medical Info",
+  "doctor.medical-info.symptoms":         "Symptoms",
+  "doctor.medical-info.clinical-notes":   "Clinical Notes",
+  "doctor.medical-info.diagnosis":        "Diagnosis",
+  "doctor.medical-info.follow-up-date":   "Follow-up Date",
+  "doctor.medical-info.care-instructions":"Care Instructions",
+  "doctor.medical-info.medicines":        "Prescription",
+
+  "patient.history.detail":              "View Details",
+  "patient.history.symptoms":            "Symptoms",
+  "patient.history.diagnosis":           "Diagnosis",
+  "patient.history.prescription":        "Prescription",
+  "patient.history.follow-up":           "Follow-up Date",
+  "patient.history.care-instructions":   "Care Instructions",
+
+  "booking.refund-policy.title":         "Refund Policy",
+  "booking.refund-policy.before-24h":    "Cancel before 24h: {rate}% refund",
+  "booking.refund-policy.after-24h":     "Cancel after 24h: {rate}% refund",
+  "booking.bank-info.title":             "Refund Account (optional)",
+  "booking.bank-info.account-number":    "Account Number",
+  "booking.bank-info.account-name":      "Account Holder Name",
+  "booking.bank-info.bank-name":         "Bank Name",
+
+  "admin.medical-catalog.title":         "Medical Catalog",
+  "admin.medicine.title":                "Medicine Catalog",
+  "admin.system-settings.title":         "System Settings"
 }
+

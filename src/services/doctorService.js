@@ -85,3 +85,36 @@ export const cancelBooking = (bookingId, data) => {
 export const getPatientBookingHistory = (patientId) => {
   return axiosInstance.get(`/api/v1/patients/${patientId}/bookings`);
 };
+
+// ═══════════════════════════════════════════════════════
+// [Phase C] Doctor APIs mới
+// ═══════════════════════════════════════════════════════
+
+// Public — Danh sách bác sĩ có filter clinic/specialty
+export const getAllDoctors = (params = {}) => {
+  return axiosInstance.get('/api/v1/doctors/list', { params });
+};
+
+// Doctor — Ghi nhận thông tin khám bệnh + đơn thuốc
+export const updateMedicalInfo = (bookingId, data) => {
+  return axiosInstance.put(`/api/v1/bookings/${bookingId}/medical-info`, data);
+};
+
+// Doctor — Hồ sơ cá nhân
+export const getDoctorOwnProfile = () => {
+  return axiosInstance.get('/api/v1/doctor/profile');
+};
+export const updateDoctorOwnProfile = (data) => {
+  return axiosInstance.put('/api/v1/doctor/profile', data);
+};
+
+// Doctor — Doanh thu
+export const getDoctorRevenue = (year) => {
+  return axiosInstance.get('/api/v1/doctor/revenue', { params: { year } });
+};
+
+// Lấy bệnh nhân với filter từ-đến
+export const getListPatientWithRange = (doctorId, params = {}) => {
+  return axiosInstance.get(`/api/v1/doctors/${doctorId}/patients`, { params });
+};
+

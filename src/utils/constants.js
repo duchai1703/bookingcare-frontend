@@ -58,7 +58,19 @@ export const path = {
 
   // Doctor (R2)
   DOCTOR_DASHBOARD: '/doctor-dashboard',
-  MANAGE_PATIENT: '/doctor-dashboard/manage-patient',
+  MANAGE_PATIENT:   '/doctor-dashboard/manage-patient',
+  // [Phase C] Doctor self-service pages
+  DOCTOR_PROFILE:   '/doctor-dashboard/doctor-profile',
+  DOCTOR_REVENUE:   '/doctor-dashboard/doctor-revenue',
+
+  // [Phase C] Admin new pages
+  MEDICAL_CATALOG_MANAGE: '/system/medical-catalog-manage',
+  MEDICINE_MANAGE:        '/system/medicine-manage',
+  SYSTEM_SETTINGS:        '/system/system-settings',
+
+  // [Phase C] Public — Clinic → Specialty → Doctor bridge
+  CLINIC_SPECIALTY_BRIDGE: '/clinics/:clinicId/specialties',
+  SPECIALTY_DOCTOR_BRIDGE: '/clinics/:clinicId/specialties/:specialtyId/doctors',
 };
 
 // ===== ALLCODE TYPES — SRS Section 4.2 =====

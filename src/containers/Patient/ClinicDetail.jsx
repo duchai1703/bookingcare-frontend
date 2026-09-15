@@ -137,6 +137,27 @@ const ClinicDetail = () => {
                     {clinicData.address}
                   </p>
                 )}
+                <div style={{ marginTop: '14px' }}>
+                  <a
+                    href={`/clinics/${id}/specialties`}
+                    className="btn-clinic-specialties"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      background: '#45c3d2',
+                      color: '#ffffff',
+                      padding: '8px 18px',
+                      borderRadius: '6px',
+                      fontWeight: '600',
+                      fontSize: '14px',
+                      textDecoration: 'none',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+                    }}
+                  >
+                    🔬 {language === LANGUAGES.VI ? 'Xem chuyên khoa khám bệnh' : 'View Clinic Specialties'}
+                  </a>
+                </div>
               </div>
             </div>
           </div>

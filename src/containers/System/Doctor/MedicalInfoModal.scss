@@ -1,0 +1,200 @@
+// MedicalInfoModal.scss
+.medical-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.medical-modal {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 680px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  animation: slideUp 0.25s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f0f0f0;
+
+  h3 { margin: 0 0 4px; font-size: 1.1rem; }
+  .patient-name { font-size: 0.82rem; color: #666; margin: 0; }
+
+  .btn-close {
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    color: #888;
+    padding: 4px;
+    border-radius: 6px;
+    transition: all 0.2s;
+    &:hover { background: #f0f0f0; color: #333; }
+  }
+}
+
+.modal-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.error-banner {
+  background: #fff5f5;
+  border: 1px solid #ffcccc;
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #e53e3e;
+  font-size: 0.85rem;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #444;
+  }
+
+  textarea, input[type="date"] {
+    border: 1.5px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.88rem;
+    font-family: inherit;
+    resize: vertical;
+    transition: border-color 0.2s;
+
+    &:focus {
+      outline: none;
+      border-color: #45c3d2;
+    }
+
+    &::placeholder { color: #bbb; }
+  }
+}
+
+.field-row { display: flex; gap: 16px; .field-group { flex: 1; } }
+
+.medicine-section {
+  border: 1.5px solid #e8e8e8;
+  border-radius: 10px;
+  padding: 14px;
+
+  .medicine-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+
+    label { font-size: 0.82rem; font-weight: 600; color: #444; }
+
+    .btn-add-medicine {
+      font-size: 0.8rem;
+      padding: 5px 12px;
+      background: #45c3d2;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+      &:hover { background: #2a9bb5; }
+    }
+  }
+
+  .empty-medicines {
+    font-size: 0.82rem;
+    color: #aaa;
+    text-align: center;
+    font-style: italic;
+    padding: 8px;
+  }
+
+  .medicine-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+
+    select, input {
+      border: 1.5px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 7px 10px;
+      font-size: 0.83rem;
+      font-family: inherit;
+      &:focus { outline: none; border-color: #45c3d2; }
+    }
+
+    select { flex: 2; }
+    input:not([style]) { flex: 3; }
+
+    .btn-remove {
+      background: none;
+      border: none;
+      color: #ccc;
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 4px 8px;
+      border-radius: 6px;
+      &:hover { background: #fff5f5; color: #e53e3e; }
+    }
+  }
+}
+
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+
+  .btn-cancel {
+    padding: 10px 20px;
+    border: 1.5px solid #e0e0e0;
+    background: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    transition: all 0.2s;
+    &:hover { background: #f8f8f8; }
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
+  }
+
+  .btn-save {
+    padding: 10px 24px;
+    background: #45c3d2;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 600;
+    transition: background 0.2s;
+    &:hover:not(:disabled) { background: #2a9bb5; }
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
+  }
+}

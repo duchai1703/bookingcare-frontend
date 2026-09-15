@@ -46,6 +46,9 @@ const AppointmentHistory = () => {
     bookingData: null, // { bookingId, doctorId }
   });
 
+  // [Phase D.4] Detail booking modal
+  const [detailBooking, setDetailBooking] = useState(null);
+
   // ═══════════════════════════════════════════════════════════
   // Fetch bookings khi tab hoặc page thay đổi
   // ═══════════════════════════════════════════════════════════
@@ -199,6 +202,14 @@ const AppointmentHistory = () => {
                     <td className="tw-px-4 tw-py-3 tw-text-text-sub tw-max-w-[150px] tw-truncate">{b.reason || '--'}</td>
                     <td className="tw-px-4 tw-py-3">{renderStatusBadge(b.statusId)}</td>
                     <td className="tw-px-4 tw-py-3">
+                      {/* [Phase D.4] Nút Xem chi tiết — hiện với tất cả trạng thái */}
+                      <button
+                        className="tw-px-3 tw-py-1.5 tw-bg-blue-50 tw-text-blue-600 tw-rounded-md tw-text-xs tw-font-medium tw-border tw-border-blue-200 tw-cursor-pointer hover:tw-bg-blue-100 tw-transition-colors tw-flex tw-items-center tw-gap-1"
+                        onClick={() => setDetailBooking(b)}
+                      >
+                        🔍 Xem chi tiết
+                      </button>
+
                       {/* Tab Sắp tới: Nút Hủy lịch */}
                       {activeTab === 'upcoming' && (b.statusId === 'S1' || b.statusId === 'S2') && (
                         <button
@@ -307,6 +318,72 @@ const AppointmentHistory = () => {
         bookingData={ratingModal.bookingData}
         onSuccess={() => fetchBookings()}
       />
+
+      {/* [Phase D.4] ===== BOOKING DETAIL MODAL ===== */}
+      {detailBooking && (
+        <div className="bdetail-overlay" onClick={() => setDetailBooking(null)}>
+          <div className="bdetail-modal" onClick={e => e.stopPropagation()}>
+            <div className="bdetail-header">
+              <h3>Chi tiết phiếu khám</h3>
+              <button className="bdetail-close" onClick={() => setDetailBooking(null)}>✕</button>
+            </div>
+            <div className="bdetail-body">
+              <div className="bdetail-section">
+                <h4>🏥 Thông tin bác sĩ</h4>
+                <p>{detailBooking.doctorBookingData?.lastName} {detailBooking.doctorBookingData?.firstName}</p>
+                <p className="bdetail-sub">{detailBooking.date} · {detailBooking.timeTypeBooking?.valueVi}</p>
+              </div>
+
+              <div className="bdetail-section">
+                <h4>🤒 Triệu chứng</h4>
+                <p>{detailBooking.symptoms || <em>Chưa có</em>}</p>
+              </div>
+
+              <div className="bdetail-section">
+                <h4>🔬 Ghi chú lâm sàng</h4>
+                <p>{detailBooking.clinicalNotes || <em>Chưa có</em>}</p>
+              </div>
+
+              <div className="bdetail-section">
+                <h4>📋 Chẩn đoán</h4>
+                <p>{detailBooking.diagnosis || <em>Chưa có</em>}</p>
+              </div>
+
+              <div className="bdetail-section">
+                <h4>💊 Đơn thuốc</h4>
+                {detailBooking.bookingMedicines?.length > 0 ? (
+                  <table className="bdetail-table">
+                    <thead><tr><th>Thuốc</th><th>Số lượng</th><th>Liều dùng</th></tr></thead>
+                    <tbody>
+                      {detailBooking.bookingMedicines.map(bm => (
+                        <tr key={bm.id}>
+                          <td>{bm.medicineData?.name || `#${bm.medicineId}`}</td>
+                          <td>{bm.quantity}</td>
+                          <td>{bm.dosage || '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : <p><em>Không có đơn thuốc</em></p>}
+              </div>
+
+              {detailBooking.followUpDate && (
+                <div className="bdetail-section">
+                  <h4>📅 Tái khám</h4>
+                  <p>{detailBooking.followUpDate}</p>
+                </div>
+              )}
+
+              {detailBooking.careInstructions && (
+                <div className="bdetail-section">
+                  <h4>🏠 Hướng dẫn chăm sóc</h4>
+                  <p>{detailBooking.careInstructions}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
