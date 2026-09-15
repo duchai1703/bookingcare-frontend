@@ -1,7 +1,10 @@
 // src/containers/Patient/DoctorList.jsx
-// Trang tổng hợp danh sách Bác sĩ nổi bật — Public
+// Trang tổng hợp danh sách Bác sĩ nổi bật & Bảng giá khám bệnh minh bạch
+// ✅ Tích hợp Bảng chi phí khám, bộ lọc giá và chuyển đổi chế độ xem (Thẻ / Bảng giá)
+// ✅ Hỗ trợ Breadcrumb chuẩn hóa navigation
+
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { FormattedMessage, useIntl } from 'react-intl';
 import { getTopDoctors } from '../../services/doctorService';
@@ -9,14 +12,26 @@ import { getAllSpecialty } from '../../services/specialtyService';
 import { fetchAllcodeByType } from '../../redux/slices/appSlice';
 import { LANGUAGES, ALLCODE_TYPES } from '../../utils/constants';
 import CommonUtils from '../../utils/CommonUtils';
+import Breadcrumb from '../../components/Common/Breadcrumb';
 import './DoctorList.scss';
+
+// Parse price helper
+const parsePrice = (priceStr) => {
+  if (!priceStr) return 0;
+  return parseInt(priceStr.replace(/\D/g, ''), 10) || 0;
+};
 
 const DoctorList = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const dispatch = useDispatch();
   const intl = useIntl();
   const language = useSelector((state) => state.app.language);
   const provinces = useSelector((state) => state.app.provinces);
+
+  // View mode: 'grid' (thẻ) hoặc 'table' (bảng giá)
+  const initialView = searchParams.get('view') === 'fee' ? 'table' : 'grid';
+  const [viewMode, setViewMode] = useState(initialView);
 
   const [doctors, setDoctors] = useState([]);
   const [specialties, setSpecialties] = useState([]);
@@ -24,6 +39,7 @@ const DoctorList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSpecialty, setSelectedSpecialty] = useState('ALL');
   const [selectedProvince, setSelectedProvince] = useState('ALL');
+  const [selectedPriceRange, setSelectedPriceRange] = useState('ALL');
 
   // Fetch provinces for dropdown
   useEffect(() => {
@@ -47,7 +63,7 @@ const DoctorList = () => {
           setSpecialties(specRes.data);
         }
       } catch (err) {
-        /* silent */
+        console.error('Error fetching doctors:', err);
       } finally {
         setIsLoading(false);
       }
@@ -58,9 +74,15 @@ const DoctorList = () => {
   // Display doctor name by language
   const getDoctorName = (doctor) => {
     if (language === LANGUAGES.VI) {
-      return `${doctor.positionData?.valueVi || ''} ${doctor.lastName || ''} ${doctor.firstName || ''}`;
+      return `${doctor.positionData?.valueVi || ''} ${doctor.lastName || ''} ${doctor.firstName || ''}`.trim();
     }
-    return `${doctor.positionData?.valueEn || ''} ${doctor.firstName || ''} ${doctor.lastName || ''}`;
+    return `${doctor.positionData?.valueEn || ''} ${doctor.firstName || ''} ${doctor.lastName || ''}`.trim();
+  };
+
+  const getPriceLabel = (doc) => {
+    const pd = doc.doctorInfoData?.priceData;
+    if (!pd) return '—';
+    return language === LANGUAGES.VI ? (pd.valueVi || '—') : (pd.valueEn || '—');
   };
 
   // Client-side filtering
@@ -76,25 +98,28 @@ const DoctorList = () => {
 
     let matchProvince = true;
     if (selectedProvince !== 'ALL') {
-      matchProvince =
-        doc.doctorInfoData?.provinceId === selectedProvince;
+      matchProvince = doc.doctorInfoData?.provinceId === selectedProvince;
     }
 
-    return matchSearch && matchSpecialty && matchProvince;
+    let matchPrice = true;
+    if (selectedPriceRange !== 'ALL') {
+      const priceVi = doc.doctorInfoData?.priceData?.valueVi || '';
+      const priceNum = parsePrice(priceVi);
+      if (selectedPriceRange === 'LOW' && priceNum >= 300000) matchPrice = false;
+      if (selectedPriceRange === 'HIGH' && priceNum < 300000) matchPrice = false;
+    }
+
+    return matchSearch && matchSpecialty && matchProvince && matchPrice;
   });
 
-  // Open AI Chatbot with doctor consultation
-  const handleAIConsult = (doctor) => {
-    const doctorName = getDoctorName(doctor).trim().replace(/\s+/g, ' ');
-    const hasTitle = /^(bác\s*sĩ|bs|tiến\s*sĩ|ts|thạc\s*sĩ|ths|pgs|gs|dr\.?|giáo\s*sư|phó\s*giáo\s*sư)/i.test(doctorName);
-    const promptText =
-      language === LANGUAGES.VI
-        ? `Tôi muốn tư vấn triệu chứng với ${hasTitle ? '' : 'bác sĩ '}${doctorName}`
-        : `I want to consult symptoms with ${/^(doctor|dr\.?|prof\.?|assoc\.?\s*prof\.?|master)/i.test(doctorName) ? '' : 'doctor '}${doctorName}`;
-    const event = new CustomEvent('open-ai-chat', {
-      detail: { prompt: promptText },
-    });
-    window.dispatchEvent(event);
+  // Switch view handler
+  const handleViewChange = (mode) => {
+    setViewMode(mode);
+    if (mode === 'table') {
+      setSearchParams({ view: 'fee' });
+    } else {
+      setSearchParams({});
+    }
   };
 
   // Skeleton loading
@@ -133,9 +158,22 @@ const DoctorList = () => {
 
   return (
     <div className="doctor-list-page">
+      {/* ====== BREADCRUMB ====== */}
+      <Breadcrumb
+        items={[
+          {
+            label: language === LANGUAGES.VI ? 'Bác sĩ & Bảng giá khám' : 'Doctors & Consultation Fees',
+          },
+        ]}
+      />
+
       {/* ====== HERO ====== */}
       <div className="doctor-list-page__hero">
         <div className="doctor-list-page__hero-container">
+          <div className="doctor-list-page__hero-badge">
+            <i className="fas fa-stethoscope" />{' '}
+            {language === LANGUAGES.VI ? 'Đặt lịch trực tuyến & Bảng giá công khai' : 'Online Booking & Transparent Pricing'}
+          </div>
           <h1 className="doctor-list-page__hero-title">
             <FormattedMessage id="list-page.doctor.title" />
           </h1>
@@ -164,6 +202,7 @@ const DoctorList = () => {
                 <button
                   className="doctor-list-page__search-clear"
                   onClick={() => setSearchTerm('')}
+                  title="Xóa tìm kiếm"
                 >
                   <i className="fas fa-times" />
                 </button>
@@ -208,85 +247,217 @@ const DoctorList = () => {
                   ))}
               </select>
             </div>
+
+            {/* Price filter */}
+            <div className="doctor-list-page__filter-select-wrapper">
+              <select
+                className="doctor-list-page__filter-select"
+                value={selectedPriceRange}
+                onChange={(e) => setSelectedPriceRange(e.target.value)}
+                id="doctor-price-filter"
+              >
+                <option value="ALL">
+                  {language === LANGUAGES.VI ? 'Tất cả mức giá' : 'All Price Ranges'}
+                </option>
+                <option value="LOW">
+                  {language === LANGUAGES.VI ? 'Dưới 300.000đ' : 'Under 300,000 VND'}
+                </option>
+                <option value="HIGH">
+                  {language === LANGUAGES.VI ? 'Từ 300.000đ trở lên' : '300,000 VND & Above'}
+                </option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* ====== GRID ====== */}
+      {/* ====== BODY & CONTROLS ====== */}
       <div className="doctor-list-page__body">
         <div className="doctor-list-page__container">
-          <div className="doctor-list-page__results-info">
-            <FormattedMessage
-              id="list-page.results-count"
-              values={{ count: filteredDoctors.length, total: doctors.length }}
-            />
+          {/* Controls row: Result count + View switch */}
+          <div className="doctor-list-page__controls-row">
+            <div className="doctor-list-page__results-info">
+              <FormattedMessage
+                id="list-page.results-count"
+                values={{ count: filteredDoctors.length, total: doctors.length }}
+              />
+            </div>
+
+            <div className="doctor-list-page__view-switch">
+              <button
+                className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                onClick={() => handleViewChange('grid')}
+                title="Dạng thẻ"
+              >
+                <i className="fas fa-th-large" />{' '}
+                <span>{language === LANGUAGES.VI ? 'Dạng thẻ' : 'Cards'}</span>
+              </button>
+              <button
+                className={`view-btn ${viewMode === 'table' ? 'active' : ''}`}
+                onClick={() => handleViewChange('table')}
+                title="Bảng chi phí khám"
+              >
+                <i className="fas fa-table" />{' '}
+                <span>{language === LANGUAGES.VI ? 'Bảng giá khám' : 'Fee Table'}</span>
+              </button>
+            </div>
           </div>
 
           {filteredDoctors.length > 0 ? (
-            <div className="doctor-list-page__grid">
-              {filteredDoctors.map((doctor) => (
-                <div
-                  key={doctor.id}
-                  className="doctor-list-page__card"
-                  id={`doctor-list-card-${doctor.id}`}
-                >
-                  {/* Avatar section */}
-                  <div className="doctor-list-page__card-avatar-section">
-                    <div
-                      className="doctor-list-page__card-avatar"
-                      onClick={() => navigate(`/doctor/${doctor.id}`)}
-                    >
-                      <img
-                        src={
-                          doctor.image
-                            ? CommonUtils.decodeBase64Image(doctor.image)
-                            : ''
-                        }
-                        alt={getDoctorName(doctor)}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Info section */}
-                  <div className="doctor-list-page__card-info">
-                    <h3
-                      className="doctor-list-page__card-name"
-                      onClick={() => navigate(`/doctor/${doctor.id}`)}
-                    >
-                      {getDoctorName(doctor)}
-                    </h3>
-
-                    <p className="doctor-list-page__card-specialty">
-                      {doctor.doctorInfoData?.specialtyData?.name || ''}
-                    </p>
-
-                    {doctor.doctorInfoData?.clinicData?.name && (
-                      <p className="doctor-list-page__card-clinic">
-                        <i className="fas fa-hospital" />{' '}
-                        {doctor.doctorInfoData.clinicData.name}
-                      </p>
-                    )}
-
-                    {doctor.doctorInfoData?.description && (
-                      <p className="doctor-list-page__card-desc">
-                        {doctor.doctorInfoData.description}
-                      </p>
-                    )}
-
-                    {/* Action buttons */}
-                    <div className="doctor-list-page__card-actions">
-                      <button
-                        className="doctor-list-page__btn-detail"
+            viewMode === 'grid' ? (
+              /* ===== VIEW 1: GRID THẺ BÁC SĨ ===== */
+              <div className="doctor-list-page__grid">
+                {filteredDoctors.map((doctor) => (
+                  <div
+                    key={doctor.id}
+                    className="doctor-list-page__card"
+                    id={`doctor-list-card-${doctor.id}`}
+                  >
+                    {/* Avatar section */}
+                    <div className="doctor-list-page__card-avatar-section">
+                      <div
+                        className="doctor-list-page__card-avatar"
                         onClick={() => navigate(`/doctor/${doctor.id}`)}
                       >
-                        <i className="fas fa-calendar-check" />{' '}
-                        <FormattedMessage id="list-page.doctor.btn-detail" />
-                      </button>
+                        <img
+                          src={
+                            doctor.image
+                              ? CommonUtils.decodeBase64Image(doctor.image)
+                              : ''
+                          }
+                          alt={getDoctorName(doctor)}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Info section */}
+                    <div className="doctor-list-page__card-info">
+                      <h3
+                        className="doctor-list-page__card-name"
+                        onClick={() => navigate(`/doctor/${doctor.id}`)}
+                      >
+                        {getDoctorName(doctor)}
+                      </h3>
+
+                      {doctor.doctorInfoData?.specialtyData?.name && (
+                        <p className="doctor-list-page__card-specialty">
+                          <i className="fas fa-stethoscope" />{' '}
+                          {doctor.doctorInfoData.specialtyData.name}
+                        </p>
+                      )}
+
+                      {doctor.doctorInfoData?.clinicData?.name && (
+                        <p className="doctor-list-page__card-clinic">
+                          <i className="fas fa-hospital" />{' '}
+                          <Link to={`/clinics/${doctor.doctorInfoData.clinicId}`}>
+                            {doctor.doctorInfoData.clinicData.name}
+                          </Link>
+                        </p>
+                      )}
+
+                      {/* Consultation Fee Badge */}
+                      <div className="doctor-list-page__card-price">
+                        <span className="price-tag">
+                          💰 {language === LANGUAGES.VI ? 'Phí khám: ' : 'Fee: '}
+                          <strong>{getPriceLabel(doctor)}</strong>
+                        </span>
+                      </div>
+
+                      {doctor.doctorInfoData?.description && (
+                        <p className="doctor-list-page__card-desc">
+                          {doctor.doctorInfoData.description}
+                        </p>
+                      )}
+
+                      {/* Action buttons */}
+                      <div className="doctor-list-page__card-actions">
+                        <button
+                          className="doctor-list-page__btn-detail"
+                          onClick={() => navigate(`/doctor/${doctor.id}`)}
+                        >
+                          <i className="fas fa-calendar-check" />{' '}
+                          <FormattedMessage id="list-page.doctor.btn-detail" />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              /* ===== VIEW 2: BẢNG GIÁ KHÁM BỆNH CÔNG KHAI ===== */
+              <div className="doctor-list-page__table-wrapper">
+                <table className="doctor-fee-table">
+                  <thead>
+                    <tr>
+                      <th>{language === LANGUAGES.VI ? 'Bác sĩ' : 'Doctor'}</th>
+                      <th>{language === LANGUAGES.VI ? 'Chuyên khoa' : 'Specialty'}</th>
+                      <th>{language === LANGUAGES.VI ? 'Cơ sở y tế' : 'Clinic'}</th>
+                      <th className="text-right">{language === LANGUAGES.VI ? 'Phí khám' : 'Fee'}</th>
+                      <th className="text-center">{language === LANGUAGES.VI ? 'Thao tác' : 'Action'}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredDoctors.map((doc) => (
+                      <tr key={doc.id}>
+                        <td>
+                          <div className="table-doctor-cell">
+                            <img
+                              src={doc.image ? CommonUtils.decodeBase64Image(doc.image) : ''}
+                              alt={getDoctorName(doc)}
+                              className="table-avatar"
+                            />
+                            <div>
+                              <div
+                                className="table-doctor-name"
+                                onClick={() => navigate(`/doctor/${doc.id}`)}
+                              >
+                                {getDoctorName(doc)}
+                              </div>
+                              <span className="table-doctor-province">
+                                📍 {language === LANGUAGES.VI
+                                  ? doc.doctorInfoData?.provinceData?.valueVi || 'Toàn quốc'
+                                  : doc.doctorInfoData?.provinceData?.valueEn || 'National'}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <span className="table-badge-specialty">
+                            {doc.doctorInfoData?.specialtyData?.name || '—'}
+                          </span>
+                        </td>
+                        <td>
+                          {doc.doctorInfoData?.clinicData?.name ? (
+                            <Link
+                              to={`/clinics/${doc.doctorInfoData.clinicId}`}
+                              className="table-clinic-link"
+                            >
+                              🏥 {doc.doctorInfoData.clinicData.name}
+                            </Link>
+                          ) : (
+                            '—'
+                          )}
+                        </td>
+                        <td className="text-right">
+                          <span className="table-price-highlight">
+                            {getPriceLabel(doc)}
+                          </span>
+                        </td>
+                        <td className="text-center">
+                          <button
+                            className="table-btn-book"
+                            onClick={() => navigate(`/doctor/${doc.id}`)}
+                          >
+                            <i className="fas fa-calendar-alt" />{' '}
+                            {language === LANGUAGES.VI ? 'Đặt khám' : 'Book'}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
           ) : (
             <div className="doctor-list-page__empty">
               <div className="doctor-list-page__empty-icon">👨‍⚕️</div>

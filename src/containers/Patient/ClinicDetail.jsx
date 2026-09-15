@@ -1,16 +1,17 @@
 // src/containers/Patient/ClinicDetail.jsx
 // Chi Tiết Phòng Khám — SRS 3.7 (REQ-PT-006, REQ-AM-014)
-// Hiển thị Banner phòng khám + mô tả + danh sách bác sĩ
-// [DEEP-SCAN FIX-2] Skeleton Loading khi fetch data
-// ✅ [SECURITY-FIX] DOMPurify làm sạch HTML trước khi render (Defense-in-Depth Layer 2)
+// Phân cấp: Cơ sở y tế -> Chuyên khoa tại cơ sở -> Bác sĩ thuộc chuyên khoa
+// ✅ Giữ flat list bác sĩ bên dưới kèm bộ lọc chuyên khoa linh hoạt
+// ✅ [SECURITY-FIX] DOMPurify làm sạch HTML trước khi render
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import DOMPurify from 'dompurify';
 import { getDetailClinicById } from '../../services/clinicService';
 import { LANGUAGES } from '../../utils/constants';
 import CommonUtils from '../../utils/CommonUtils';
+import Breadcrumb from '../../components/Common/Breadcrumb';
 import DoctorSchedule from './DoctorSchedule';
 import DoctorExtraInfo from './DoctorExtraInfo';
 import './ClinicDetail.scss';
@@ -23,6 +24,8 @@ const ClinicDetail = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [clinicData, setClinicData] = useState(null);
   const [doctorList, setDoctorList] = useState([]);
+  const [specialties, setSpecialties] = useState([]);
+  const [selectedSpecialtyId, setSelectedSpecialtyId] = useState('ALL');
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [expandedDoctors, setExpandedDoctors] = useState({});
 
@@ -31,18 +34,6 @@ const ClinicDetail = () => {
       ...prev,
       [doctorId]: !prev[doctorId],
     }));
-  };
-
-  const handleAIConsult = (doctor) => {
-    const doctorName = getDoctorName(doctor).trim().replace(/\s+/g, ' ');
-    const hasTitle = /^(bác\s*sĩ|bs|tiến\s*sĩ|ts|thạc\s*sĩ|ths|pgs|gs|dr\.?|giáo\s*sư|phó\s*giáo\s*sư)/i.test(doctorName);
-    const promptText = language === LANGUAGES.VI
-      ? `Tôi muốn tư vấn triệu chứng với ${hasTitle ? '' : 'bác sĩ '}${doctorName}`
-      : `I want to consult symptoms with ${/^(doctor|dr\.?|prof\.?|assoc\.?\s*prof\.?|master)/i.test(doctorName) ? '' : 'doctor '}${doctorName}`;
-    const event = new CustomEvent('open-ai-chat', {
-      detail: { prompt: promptText }
-    });
-    window.dispatchEvent(event);
   };
 
   // Gọi API getDetailClinicById khi mount hoặc khi id thay đổi
@@ -55,8 +46,10 @@ const ClinicDetail = () => {
         if (res && res.errCode === 0) {
           setClinicData(res.data?.clinic || null);
           setDoctorList(res.data?.doctorList || []);
+          setSpecialties(res.data?.specialties || []);
         }
       } catch (err) {
+        console.error('Error fetching clinic detail:', err);
       } finally {
         setIsLoading(false);
       }
@@ -73,12 +66,16 @@ const ClinicDetail = () => {
     return `${doctor.positionData?.valueEn || ''} ${doctor.firstName || ''} ${doctor.lastName || ''}`;
   };
 
-  // ✅ [DEEP-SCAN FIX-2] SKELETON LOADING
+  // Filtered doctors based on selected specialty
+  const filteredDoctors = selectedSpecialtyId === 'ALL'
+    ? doctorList
+    : doctorList.filter((doc) => String(doc.Doctor_Info?.specialtyId) === String(selectedSpecialtyId));
+
+  // SKELETON LOADING
   if (isLoading) {
     return (
       <div className="clinic-detail-skeleton">
         <div className="skeleton-container">
-          {/* Skeleton Banner */}
           <div className="skeleton-banner">
             <div className="skeleton-banner-img" />
             <div className="skeleton-banner-info">
@@ -86,13 +83,11 @@ const ClinicDetail = () => {
               <div className="skeleton-text medium" />
             </div>
           </div>
-          {/* Skeleton Description */}
           <div className="skeleton-description">
             <div className="skeleton-text long" />
             <div className="skeleton-text long" />
             <div className="skeleton-text medium" />
           </div>
-          {/* Skeleton Doctor Cards */}
           {[1, 2].map((i) => (
             <div key={i} className="skeleton-doctor-card">
               <div className="skeleton-doctor-left">
@@ -117,6 +112,19 @@ const ClinicDetail = () => {
     <div className="clinic-detail" id="clinic-detail-page">
       {clinicData && (
         <>
+          {/* ====== BREADCRUMB ====== */}
+          <Breadcrumb
+            items={[
+              {
+                label: language === LANGUAGES.VI ? 'Cơ sở y tế' : 'Health Facilities',
+                path: '/clinics',
+              },
+              {
+                label: clinicData.name || (language === LANGUAGES.VI ? 'Chi tiết' : 'Detail'),
+              },
+            ]}
+          />
+
           {/* ====== PHẦN 1: BANNER PHÒNG KHÁM ====== */}
           <div
             className="clinic-detail__banner"
@@ -137,26 +145,15 @@ const ClinicDetail = () => {
                     {clinicData.address}
                   </p>
                 )}
-                <div style={{ marginTop: '14px' }}>
-                  <a
-                    href={`/clinics/${id}/specialties`}
-                    className="btn-clinic-specialties"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      background: '#45c3d2',
-                      color: '#ffffff',
-                      padding: '8px 18px',
-                      borderRadius: '6px',
-                      fontWeight: '600',
-                      fontSize: '14px',
-                      textDecoration: 'none',
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
-                    }}
-                  >
-                    🔬 {language === LANGUAGES.VI ? 'Xem chuyên khoa khám bệnh' : 'View Clinic Specialties'}
-                  </a>
+                <div className="clinic-detail__banner-stats">
+                  <span className="stat-pill">
+                    <i className="fas fa-stethoscope" /> {specialties.length}{' '}
+                    {language === LANGUAGES.VI ? 'Chuyên khoa' : 'Specialties'}
+                  </span>
+                  <span className="stat-pill">
+                    <i className="fas fa-user-md" /> {doctorList.length}{' '}
+                    {language === LANGUAGES.VI ? 'Bác sĩ' : 'Doctors'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -170,17 +167,14 @@ const ClinicDetail = () => {
               }`}
             >
               <div className="clinic-detail__description-container">
-                {/* ⚠️ BẮT BUỘC dùng dangerouslySetInnerHTML */}
                 <div
                   className="clinic-detail__description-content"
                   dangerouslySetInnerHTML={{
-                    // ✅ [SECURITY-FIX] DOMPurify làm sạch HTML (Defense-in-Depth Layer 2)
                     __html: DOMPurify.sanitize(clinicData.descriptionHTML),
                   }}
                 />
               </div>
 
-              {/* Nút Xem thêm / Thu gọn */}
               <div className="clinic-detail__description-toggle">
                 <span onClick={() => setShowFullDescription(!showFullDescription)}>
                   {showFullDescription
@@ -195,23 +189,119 @@ const ClinicDetail = () => {
             </div>
           )}
 
-          {/* ====== PHẦN 3: DANH SÁCH BÁC SĨ ====== */}
-          <div className="clinic-detail__doctors">
-            <div className="clinic-detail__doctors-container">
-              <h2 className="clinic-detail__doctors-title">
-                {language === LANGUAGES.VI
-                  ? 'Đội ngũ bác sĩ'
-                  : 'Our Doctors'}
-              </h2>
+          {/* ====== PHẦN 3: GRID CHUYÊN KHOA TẠI CƠ SỞ ====== */}
+          {specialties && specialties.length > 0 && (
+            <section className="clinic-detail__specialties">
+              <div className="clinic-detail__specialties-container">
+                <div className="clinic-detail__section-header">
+                  <div>
+                    <h2 className="clinic-detail__section-title">
+                      <i className="fas fa-hospital-user text-teal" />{' '}
+                      {language === LANGUAGES.VI
+                        ? 'Chuyên khoa khám bệnh tại cơ sở'
+                        : 'Specialties at this Facility'}
+                    </h2>
+                    <p className="clinic-detail__section-subtitle">
+                      {language === LANGUAGES.VI
+                        ? 'Chọn chuyên khoa để lọc nhanh bác sĩ chuyên khoa bên dưới'
+                        : 'Click a specialty to quickly filter doctors below'}
+                    </p>
+                  </div>
+                  {selectedSpecialtyId !== 'ALL' && (
+                    <button
+                      className="clinic-detail__clear-filter-btn"
+                      onClick={() => setSelectedSpecialtyId('ALL')}
+                    >
+                      ✕ {language === LANGUAGES.VI ? 'Xem tất cả chuyên khoa' : 'View all specialties'}
+                    </button>
+                  )}
+                </div>
 
-              {doctorList && doctorList.length > 0 ? (
-                doctorList.map((doctor) => (
+                <div className="clinic-detail__specialties-grid">
+                  {specialties.map((sp) => {
+                    const isSelected = String(selectedSpecialtyId) === String(sp.id);
+                    return (
+                      <div
+                        key={sp.id}
+                        className={`clinic-specialty-card ${isSelected ? 'is-selected' : ''}`}
+                        onClick={() => {
+                          setSelectedSpecialtyId(isSelected ? 'ALL' : sp.id);
+                          const el = document.getElementById('clinic-doctors-section');
+                          if (el) el.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                      >
+                        <div className="clinic-specialty-card__icon-box">
+                          {sp.image ? (
+                            <img
+                              src={sp.image.startsWith('data:') ? sp.image : `data:image/jpeg;base64,${sp.image}`}
+                              alt={sp.name}
+                              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                            />
+                          ) : (
+                            <span className="fallback-emoji">🩺</span>
+                          )}
+                        </div>
+                        <div className="clinic-specialty-card__info">
+                          <h3 className="clinic-specialty-card__name">{sp.name}</h3>
+                          <span className="clinic-specialty-card__badge">
+                            {sp.doctorCount || 1} {language === LANGUAGES.VI ? 'bác sĩ' : 'doctors'}
+                          </span>
+                        </div>
+                        <span className="clinic-specialty-card__arrow">
+                          {isSelected ? '✓' : '›'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* ====== PHẦN 4: DANH SÁCH BÁC SĨ (FLAT LIST + FILTER) ====== */}
+          <section className="clinic-detail__doctors" id="clinic-doctors-section">
+            <div className="clinic-detail__doctors-container">
+              <div className="clinic-detail__doctors-header">
+                <div className="clinic-detail__doctors-heading">
+                  <h2 className="clinic-detail__doctors-title">
+                    <i className="fas fa-user-md text-teal" />{' '}
+                    {language === LANGUAGES.VI ? 'Đội ngũ bác sĩ' : 'Our Doctors'}
+                  </h2>
+                  <span className="clinic-detail__doctors-badge">
+                    {filteredDoctors.length} {language === LANGUAGES.VI ? 'bác sĩ' : 'doctors'}
+                  </span>
+                </div>
+
+                {/* Filter chips */}
+                {specialties && specialties.length > 0 && (
+                  <div className="clinic-detail__filter-chips">
+                    <button
+                      className={`filter-chip ${selectedSpecialtyId === 'ALL' ? 'active' : ''}`}
+                      onClick={() => setSelectedSpecialtyId('ALL')}
+                    >
+                      {language === LANGUAGES.VI ? 'Tất cả' : 'All'} ({doctorList.length})
+                    </button>
+                    {specialties.map((sp) => (
+                      <button
+                        key={sp.id}
+                        className={`filter-chip ${String(selectedSpecialtyId) === String(sp.id) ? 'active' : ''}`}
+                        onClick={() => setSelectedSpecialtyId(sp.id)}
+                      >
+                        {sp.name} ({sp.doctorCount})
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {filteredDoctors && filteredDoctors.length > 0 ? (
+                filteredDoctors.map((doctor) => (
                   <div
                     key={doctor.id}
                     className="clinic-detail__doctor-card"
                     id={`clinic-doctor-${doctor.id}`}
                   >
-                    {/* Cột trái: Avatar + Tên + Mô tả bác sĩ + Tư vấn AI */}
+                    {/* Cột trái: Avatar + Tên + Mô tả bác sĩ */}
                     <div className="clinic-detail__doctor-left">
                       <div className="clinic-detail__doctor-avatar-side">
                         <div className="clinic-detail__doctor-avatar">
@@ -224,31 +314,31 @@ const ClinicDetail = () => {
                             alt={getDoctorName(doctor)}
                           />
                         </div>
-                        <span
+                        <Link
+                          to={`/doctor/${doctor.id}`}
                           className="clinic-detail__avatar-more"
-                          onClick={() =>
-                            (window.location.href = `/doctor/${doctor.id}`)
-                          }
                         >
                           {language === LANGUAGES.VI ? 'Xem thêm' : 'See more'}
-                        </span>
+                        </Link>
                       </div>
 
                       <div className="clinic-detail__doctor-intro-side">
-                        <h3
-                          className="clinic-detail__doctor-name"
-                          onClick={() =>
-                            (window.location.href = `/doctor/${doctor.id}`)
-                          }
-                        >
-                          <span className="clinic-detail__favorite-badge">
-                            ❤️ {language === LANGUAGES.VI ? 'Yêu thích' : 'Favorite'}
-                          </span>{' '}
-                          {getDoctorName(doctor)}
+                        <h3 className="clinic-detail__doctor-name">
+                          <Link to={`/doctor/${doctor.id}`}>
+                            <span className="clinic-detail__favorite-badge">
+                              ❤️ {language === LANGUAGES.VI ? 'Yêu thích' : 'Favorite'}
+                            </span>{' '}
+                            {getDoctorName(doctor)}
+                          </Link>
                         </h3>
-                        <p className="clinic-detail__doctor-specialty">
-                          {doctor.Doctor_Info?.specialtyData?.name || ''}
-                        </p>
+
+                        {doctor.Doctor_Info?.specialtyData?.name && (
+                          <p className="clinic-detail__doctor-specialty">
+                            <i className="fas fa-stethoscope" />{' '}
+                            {doctor.Doctor_Info.specialtyData.name}
+                          </p>
+                        )}
+
                         {doctor.Doctor_Info?.description && (
                           <div className="clinic-detail__doctor-desc-wrapper">
                             <p
@@ -278,8 +368,8 @@ const ClinicDetail = () => {
                         <div className="clinic-detail__doctor-location">
                           <i className="fas fa-map-marker-alt"></i>{' '}
                           {language === LANGUAGES.VI
-                            ? doctor.Doctor_Info?.provinceData?.valueVi || 'Toàn quốc'
-                            : doctor.Doctor_Info?.provinceData?.valueEn || 'National'}
+                            ? doctor.Doctor_Info?.provinceData?.valueVi || clinicData.address || 'Toàn quốc'
+                            : doctor.Doctor_Info?.provinceData?.valueEn || clinicData.address || 'National'}
                         </div>
                       </div>
                     </div>
@@ -299,13 +389,20 @@ const ClinicDetail = () => {
                 <div className="clinic-detail__empty">
                   <p>
                     {language === LANGUAGES.VI
-                      ? 'Chưa có bác sĩ nào thuộc phòng khám này.'
-                      : 'No doctors available at this clinic.'}
+                      ? 'Không có bác sĩ nào thuộc chuyên khoa đã chọn.'
+                      : 'No doctors available for this specialty.'}
                   </p>
+                  <button
+                    className="clinic-detail__clear-filter-btn"
+                    onClick={() => setSelectedSpecialtyId('ALL')}
+                    style={{ marginTop: '12px' }}
+                  >
+                    {language === LANGUAGES.VI ? 'Xem tất cả bác sĩ' : 'View all doctors'}
+                  </button>
                 </div>
               )}
             </div>
-          </div>
+          </section>
         </>
       )}
 

@@ -3,7 +3,7 @@
 // [Phase 9.4] Thêm Avatar dropdown cho Patient (R3)
 import React, { useState, useRef, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, NavLink } from 'react-router-dom';
 import { FormattedMessage } from 'react-intl';
 
 import { changeLanguage } from '../../redux/slices/appSlice';
@@ -119,22 +119,29 @@ const Header = () => {
 
         {/* ===== CENTER: Navigation Links ===== */}
         <nav className={`header-nav ${isMenuOpen ? 'open' : ''}`}>
-          <Link to={path.SPECIALTY_LIST} className="nav-item" onClick={() => setIsMenuOpen(false)}>
+          <NavLink to={path.SPECIALTY_LIST} className={({ isActive }) => `nav-item${isActive ? ' nav-item--active' : ''}`} onClick={() => setIsMenuOpen(false)}>
             <strong><FormattedMessage id="header.specialty" /></strong>
             <span><FormattedMessage id="header.sub-specialty" /></span>
-          </Link>
-          <Link to={path.CLINIC_LIST} className="nav-item" onClick={() => setIsMenuOpen(false)}>
+          </NavLink>
+          <NavLink to={path.CLINIC_LIST} className={({ isActive }) => `nav-item${isActive ? ' nav-item--active' : ''}`} onClick={() => setIsMenuOpen(false)}>
             <strong><FormattedMessage id="header.health-facility" /></strong>
             <span><FormattedMessage id="header.sub-health-facility" /></span>
-          </Link>
-          <Link to={path.DOCTOR_LIST} className="nav-item" onClick={() => setIsMenuOpen(false)}>
+          </NavLink>
+          <NavLink to={path.DOCTOR_LIST} className={({ isActive }) => `nav-item${isActive ? ' nav-item--active' : ''}`} onClick={() => setIsMenuOpen(false)}>
             <strong><FormattedMessage id="header.doctor" /></strong>
             <span><FormattedMessage id="header.sub-doctor" /></span>
-          </Link>
-          <Link to={path.EXAMINATION_FEE} className="nav-item" onClick={() => setIsMenuOpen(false)}>
-            <strong><FormattedMessage id="header.fee" /></strong>
-            <span><FormattedMessage id="header.sub-fee" /></span>
-          </Link>
+          </NavLink>
+          {/* ===== [Phase D.8] Tab Trang cá nhân — chỉ hiện khi Patient đã đăng nhập ===== */}
+          {isLoggedIn && userInfo?.roleId === USER_ROLE.PATIENT && (
+            <NavLink
+              to="/patient/profile"
+              className={({ isActive }) => `nav-item nav-item--profile${isActive ? ' nav-item--active' : ''}`}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <strong><FormattedMessage id="header.patient-portal" /></strong>
+              <span><FormattedMessage id="header.sub-patient-portal" /></span>
+            </NavLink>
+          )}
         </nav>
 
         {/* ===== RIGHT: Language + Auth ===== */}

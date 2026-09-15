@@ -13,6 +13,11 @@ export const getDetailClinicById = (id) => {
   return axiosInstance.get(`/api/v1/clinics/${id}`);
 };
 
+// Lấy danh sách chuyên khoa thực tế tại cơ sở y tế
+export const getClinicSpecialties = (clinicId) => {
+  return axiosInstance.get(`/api/v1/clinics/${clinicId}/specialties`);
+};
+
 // ===== ADMIN (SRS 3.4) =====
 
 // REQ-AM-011: Tạo phòng khám

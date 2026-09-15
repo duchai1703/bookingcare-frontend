@@ -15,6 +15,11 @@ export const getDetailSpecialtyById = (id, location = 'ALL') => {
   });
 };
 
+// Lấy danh sách cơ sở y tế có tiếp nhận khám chuyên khoa này
+export const getSpecialtyClinics = (specialtyId) => {
+  return axiosInstance.get(`/api/v1/specialties/${specialtyId}/clinics`);
+};
+
 // ===== ADMIN (SRS 3.5) =====
 
 // REQ-AM-015: Tạo chuyên khoa

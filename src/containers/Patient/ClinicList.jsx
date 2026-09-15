@@ -8,6 +8,7 @@ import { getAllClinic } from '../../services/clinicService';
 import { fetchAllcodeByType } from '../../redux/slices/appSlice';
 import { LANGUAGES, ALLCODE_TYPES } from '../../utils/constants';
 import CommonUtils from '../../utils/CommonUtils';
+import Breadcrumb from '../../components/Common/Breadcrumb';
 import './ClinicList.scss';
 
 const ClinicList = () => {
@@ -114,6 +115,15 @@ const ClinicList = () => {
 
   return (
     <div className="clinic-list-page">
+      {/* ====== BREADCRUMB ====== */}
+      <Breadcrumb
+        items={[
+          {
+            label: language === LANGUAGES.VI ? 'Cơ sở y tế' : 'Health Facilities',
+          },
+        ]}
+      />
+
       {/* ====== HERO SECTION ====== */}
       <div className="clinic-list-page__hero">
         <div className="clinic-list-page__hero-container">

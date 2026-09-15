@@ -92,6 +92,17 @@
 
   .dp-row { display: flex; gap: 14px; .dp-field { flex: 1; } }
 
+  .dp-section-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #45c3d2;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #e8f8fa;
+    margin-top: 6px;
+  }
+
   .dp-field {
     display: flex;
     flex-direction: column;
@@ -99,18 +110,20 @@
 
     label { font-size: 0.82rem; font-weight: 600; color: #444; }
 
-    input, textarea {
+    input, textarea, select {
       border: 1.5px solid #e0e0e0;
       border-radius: 8px;
       padding: 10px 12px;
       font-size: 0.88rem;
       font-family: inherit;
       transition: border-color 0.2s;
+      background: #fff;
       &:focus { outline: none; border-color: #45c3d2; }
       &::placeholder { color: #bbb; }
     }
 
     textarea { resize: vertical; }
+    select { cursor: pointer; }
     .markdown-input { font-family: 'Courier New', monospace; font-size: 0.82rem; }
   }
 

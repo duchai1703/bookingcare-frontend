@@ -55,20 +55,52 @@
       padding: $spacing-xs $spacing-sm;
       cursor: pointer;
       transition: color $transition-fast;
+      position: relative;
 
       strong {
         display: block;
         font-size: $font-size-sm;
         color: $text-primary;
+        transition: color $transition-fast;
       }
 
       span {
         font-size: $font-size-xs;
         color: $text-light;
+        transition: color $transition-fast;
       }
 
       &:hover {
         strong { color: $primary; }
+        span { color: $primary; }
+      }
+
+      // Active state — tab đang được chọn
+      &--active {
+        strong { color: $primary !important; }
+        span { color: $primary !important; }
+
+        &::after {
+          content: '';
+          position: absolute;
+          bottom: -2px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 80%;
+          height: 2px;
+          background: $primary;
+          border-radius: 2px;
+        }
+      }
+
+      // Tab "Trang cá nhân" — accent màu teal để phân biệt
+      &--profile {
+        strong { color: $text-primary; }
+        &:hover strong,
+        &:hover span { color: $primary; }
+        &.nav-item--active {
+          strong { color: $primary !important; }
+        }
       }
     }
 

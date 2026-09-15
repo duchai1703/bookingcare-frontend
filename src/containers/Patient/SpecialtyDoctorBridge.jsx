@@ -11,6 +11,7 @@ import { LANGUAGES } from '../../utils/constants';
 import CommonUtils from '../../utils/CommonUtils';
 import DoctorSchedule from './DoctorSchedule';
 import DoctorExtraInfo from './DoctorExtraInfo';
+import Breadcrumb from '../../components/Common/Breadcrumb';
 import './SpecialtyDoctorBridge.scss';
 
 const SpecialtyDoctorBridge = () => {
@@ -60,17 +61,13 @@ const SpecialtyDoctorBridge = () => {
   return (
     <div className="sdb-page">
       {/* Breadcrumb phân cấp */}
-      <nav className="sdb-breadcrumb" aria-label="breadcrumb">
-        <Link to="/">Trang chủ</Link>
-        <span>›</span>
-        <Link to="/clinics">Cơ sở y tế</Link>
-        <span>›</span>
-        <Link to={`/clinics/${clinicId}/specialties`}>
-          {clinic?.name || `Cơ sở y tế #${clinicId}`}
-        </Link>
-        <span>›</span>
-        <span className="current">{specialty?.name || `Chuyên khoa #${specialtyId}`}</span>
-      </nav>
+      <Breadcrumb
+        items={[
+          { label: 'Cơ sở y tế', path: '/clinics' },
+          { label: clinic?.name || `Cơ sở y tế #${clinicId}`, path: `/clinics/${clinicId}` },
+          { label: specialty?.name || `Chuyên khoa #${specialtyId}` },
+        ]}
+      />
 
       {/* Header tóm tắt Cơ sở y tế & Chuyên khoa */}
       <div className="sdb-header-card">

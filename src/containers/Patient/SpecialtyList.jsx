@@ -7,6 +7,7 @@ import { FormattedMessage, useIntl } from 'react-intl';
 import { getAllSpecialty } from '../../services/specialtyService';
 import { LANGUAGES } from '../../utils/constants';
 import CommonUtils from '../../utils/CommonUtils';
+import Breadcrumb from '../../components/Common/Breadcrumb';
 import './SpecialtyList.scss';
 
 const SpecialtyList = () => {
@@ -72,6 +73,15 @@ const SpecialtyList = () => {
 
   return (
     <div className="specialty-list-page">
+      {/* ====== BREADCRUMB ====== */}
+      <Breadcrumb
+        items={[
+          {
+            label: language === LANGUAGES.VI ? 'Danh sách chuyên khoa' : 'Specialties',
+          },
+        ]}
+      />
+
       {/* ====== HERO SECTION ====== */}
       <div className="specialty-list-page__hero">
         <div className="specialty-list-page__hero-container">

@@ -16,6 +16,7 @@ import DoctorSchedule from "./DoctorSchedule";
 import DoctorExtraInfo from "./DoctorExtraInfo";
 import DoctorReviewList from "./DoctorReviewList";
 import SocialPlugin from "./SocialPlugin";
+import Breadcrumb from "../../components/Common/Breadcrumb";
 import "./DoctorDetail.scss";
 
 const DoctorDetail = () => {
@@ -125,11 +126,33 @@ const DoctorDetail = () => {
   }
 
   // ===== RENDER CHÍNH =====
+  const breadcrumbItems = [];
+  if (doctorInfo?.doctorInfoData?.clinicData?.name) {
+    breadcrumbItems.push({
+      label: doctorInfo.doctorInfoData.clinicData.name,
+      path: `/clinics/${doctorInfo.doctorInfoData.clinicId}`,
+    });
+  } else {
+    breadcrumbItems.push({
+      label: language === LANGUAGES.VI ? 'Bác sĩ' : 'Doctors',
+      path: '/doctors',
+    });
+  }
+  if (doctorInfo?.doctorInfoData?.specialtyData?.name) {
+    breadcrumbItems.push({
+      label: doctorInfo.doctorInfoData.specialtyData.name,
+      path: `/specialty/${doctorInfo.doctorInfoData.specialtyId}`,
+    });
+  }
+  breadcrumbItems.push({
+    label: getDoctorName(),
+  });
+
   return (
     <div className="doctor-detail" id="doctor-detail-page">
       {doctorInfo && (
         <>
-          {console.log("DoctorDetail Rendered with doctorInfo:", doctorInfo)}
+          <Breadcrumb items={breadcrumbItems} />
           {/** ====== PHẦN 1: HEADER — Thông tin bác sĩ ======  */}
           <div className="doctor-detail__header">
             <div className="doctor-detail__header-container">

@@ -1,5 +1,4 @@
 # BÁO CÁO ĐỒ ÁN 1 – BOOKINGCARE
-# CHƯƠNG 2 – CƠ SỞ LÝ THUYẾT
 
 ---
 

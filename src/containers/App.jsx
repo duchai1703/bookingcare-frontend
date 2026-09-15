@@ -154,13 +154,7 @@ const App = () => {
 
         <Route
           path={path.EXAMINATION_FEE}
-          element={
-            <>
-              <Header />
-              <ExaminationFee />
-              <Footer />
-            </>
-          }
+          element={<Navigate to="/doctors?view=fee" replace />}
         />
 
         {/* Xác thực email — SRS 3.10 */}
