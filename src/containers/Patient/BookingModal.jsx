@@ -8,8 +8,9 @@
 // [Phase 9.7] Triệt tiêu formData.email, isLoading UX guard
 // [CTO-FIX-4] Dọn rác khi đóng modal (chống data leak)
 // [Phase 11 — GĐ 11.4] VNPay Payment Flow: callWithRetry + idempotency
+// [Redesign] Modern 2-column layout, clean form, dynamic refund policy
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import moment from 'moment';
 import { toast } from 'react-toastify';
@@ -46,7 +47,6 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price }) => {
   const genders = useSelector((state) => state.app.genders);
   // [Phase 9.5] Lấy userInfo từ Redux — email lấy TRỰC TIẾP từ đây
   const userInfo = useSelector((state) => state.user.userInfo);
-  const accessToken = useSelector((state) => state.user.accessToken);
 
   const [formData, setFormData] = useState(INITIAL_FORM);
   const [errors, setErrors] = useState(INITIAL_ERRORS);
@@ -55,6 +55,7 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price }) => {
   // [Phase D.3] Bank info + Refund policy
   const [bankInfo, setBankInfo] = useState({ number: '', name: '', bank: '' });
   const [refundPolicy, setRefundPolicy] = useState({ before24h: '100', after24h: '50' });
+  const [showBankInfo, setShowBankInfo] = useState(false);
 
   // Fetch gender allcode on mount
   useEffect(() => {
@@ -104,6 +105,7 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price }) => {
     setFormData(INITIAL_FORM);
     setErrors(INITIAL_ERRORS);
     setUiState('idle');
+    setShowBankInfo(false);
     onClose();
   };
 
@@ -124,38 +126,32 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price }) => {
     const newErrors = { ...INITIAL_ERRORS };
     let isValid = true;
 
-    // fullName: required, trim(), length >= 2
     if (!formData.fullName || formData.fullName.trim().length < 2) {
       newErrors.fullName = intl.formatMessage({ id: 'booking-modal.err-fullname' });
       isValid = false;
     }
 
-    // phoneNumber: required, VN format 10 digits
     const phoneRegex = /^(0[3|5|7|8|9])\d{8}$/;
     if (!formData.phoneNumber || !phoneRegex.test(formData.phoneNumber)) {
       newErrors.phoneNumber = intl.formatMessage({ id: 'booking-modal.err-phone' });
       isValid = false;
     }
 
-    // address: required
     if (!formData.address || formData.address.trim().length === 0) {
       newErrors.address = intl.formatMessage({ id: 'booking-modal.err-address' });
       isValid = false;
     }
 
-    // reason: required
     if (!formData.reason || formData.reason.trim().length === 0) {
       newErrors.reason = intl.formatMessage({ id: 'booking-modal.err-reason' });
       isValid = false;
     }
 
-    // birthday: required, valid date
     if (!formData.birthday) {
       newErrors.birthday = intl.formatMessage({ id: 'booking-modal.err-birthday' });
       isValid = false;
     }
 
-    // gender: required, must be G1|G2|G3
     if (!formData.gender || !['G1', 'G2', 'G3'].includes(formData.gender)) {
       newErrors.gender = intl.formatMessage({ id: 'booking-modal.err-gender' });
       isValid = false;
@@ -199,12 +195,12 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price }) => {
       if (response && response.errCode === 0) {
         toast.success(
           language === LANGUAGES.VI
-            ? "Đặt lịch thành công! Vui lòng kiểm tra email để xác nhận và thanh toán."
-            : "Booking successful! Please check your email to confirm and pay."
+            ? 'Đặt lịch thành công! Vui lòng kiểm tra email để xác nhận và thanh toán.'
+            : 'Booking successful! Please check your email to confirm and pay.'
         );
         handleCloseModal();
       } else {
-        toast.error(response?.errMessage || "Lỗi đặt lịch khám!");
+        toast.error(response?.errMessage || 'Lỗi đặt lịch khám!');
         setUiState('idle');
       }
     } catch (err) {
@@ -215,234 +211,244 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price }) => {
 
   if (!isOpen) return null;
 
+  const formattedDate = moment(parseInt(date, 10)).format(
+    language === LANGUAGES.VI ? 'dddd, DD/MM/YYYY' : 'dddd, MM/DD/YYYY'
+  );
+  const timeLabel = language === LANGUAGES.VI
+    ? timeSlot.timeTypeData?.valueVi
+    : timeSlot.timeTypeData?.valueEn;
+
   return (
-    <div className="booking-modal__overlay" onClick={handleCloseModal}>
-      <div className="booking-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="bm-overlay" onClick={handleCloseModal}>
+      <div className="bm" onClick={(e) => e.stopPropagation()}>
+
         {/* ===== HEADER ===== */}
-        <div className="booking-modal__header">
-          <h2 className="booking-modal__title">
-            <FormattedMessage id="booking-modal.title" />
-          </h2>
-          <button
-            className="booking-modal__close-btn"
-            onClick={handleCloseModal}
-          >
-            ✕
+        <div className="bm__header">
+          <div className="bm__header-title">
+            <span className="bm__header-icon">📋</span>
+            <h2><FormattedMessage id="booking-modal.title" /></h2>
+          </div>
+          <button className="bm__close" onClick={handleCloseModal} aria-label="Đóng">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M15 5L5 15M5 5l10 10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+            </svg>
           </button>
         </div>
 
+        {/* ===== BODY ===== */}
+        <div className="bm__body">
 
-
-        {/* ===== INFO SECTION — Thông tin lịch khám đã chọn ===== */}
-        <div className="booking-modal__info">
-          <div className="booking-modal__info-row">
-            <span className="booking-modal__info-icon">🕐</span>
-            <span>
-              {language === LANGUAGES.VI
-                ? timeSlot.timeTypeData?.valueVi
-                : timeSlot.timeTypeData?.valueEn}{' '}
-              -{' '}
-              {moment(parseInt(date, 10)).format(
-                language === LANGUAGES.VI ? 'DD/MM/YYYY' : 'MM/DD/YYYY'
-              )}
-            </span>
-          </div>
-          <div className="booking-modal__info-row">
-            <span className="booking-modal__info-label">
-              <FormattedMessage id="booking-modal.free-booking" />
-            </span>
-          </div>
-        </div>
-
-        {/* ===== FORM — 6 fields (email disabled riêng) — 100% i18n ===== */}
-        <div className="booking-modal__form">
-          {/* Full Name */}
-          <div className="booking-modal__field">
-            <label className="booking-modal__label">
-              <FormattedMessage id="booking-modal.fullname-label" /> *
-            </label>
-            <input
-              type="text"
-              name="fullName"
-              className={`booking-modal__input ${errors.fullName ? 'input-error' : ''}`}
-              value={formData.fullName}
-              onChange={handleInputChange}
-              placeholder={intl.formatMessage({ id: 'booking-modal.fullname-placeholder' })}
-            />
-            {errors.fullName && (
-              <span className="error-text">{errors.fullName}</span>
-            )}
-          </div>
-
-          {/* Email — [Fix Bug 9.7] HOÀN TOÀN từ userInfo, KHÔNG dùng state */}
-          <div className="booking-modal__field">
-            <label className="booking-modal__label">
-              <FormattedMessage id="booking-modal.email-label" /> *
-            </label>
-            <input
-              type="email"
-              name="email"
-              className="booking-modal__input booking-modal__input--disabled"
-              value={userInfo && userInfo.email ? userInfo.email : ''}
-              disabled={true}
-            />
-          </div>
-
-          {/* Phone + Address */}
-          <div className="booking-modal__row">
-            <div className="booking-modal__field">
-              <label className="booking-modal__label">
-                <FormattedMessage id="booking-modal.phone-label" /> *
-              </label>
-              <input
-                type="tel"
-                name="phoneNumber"
-                className={`booking-modal__input ${errors.phoneNumber ? 'input-error' : ''}`}
-                value={formData.phoneNumber}
-                onChange={handleInputChange}
-                placeholder={intl.formatMessage({ id: 'booking-modal.phone-placeholder' })}
-              />
-              {errors.phoneNumber && (
-                <span className="error-text">{errors.phoneNumber}</span>
-              )}
+          {/* --- LEFT: Appointment Summary --- */}
+          <div className="bm__summary">
+            <div className="bm__summary-section">
+              <p className="bm__summary-label">Thời gian khám</p>
+              <p className="bm__summary-value bm__summary-value--highlight">{timeLabel}</p>
+              <p className="bm__summary-date">{formattedDate}</p>
             </div>
-            <div className="booking-modal__field">
-              <label className="booking-modal__label">
-                <FormattedMessage id="booking-modal.address-label" /> *
+
+            <div className="bm__summary-divider" />
+
+            <div className="bm__summary-section">
+              <p className="bm__summary-label">Chi phí</p>
+              <p className="bm__summary-value">
+                <FormattedMessage id="booking-modal.free-booking" />
+              </p>
+            </div>
+
+            <div className="bm__summary-divider" />
+
+            {/* Refund Policy — Single Source of Truth from DB */}
+            <div className="bm__summary-section">
+              <p className="bm__summary-label">Chính sách hoàn tiền</p>
+              <div className="bm__refund-item bm__refund-item--ok">
+                <span className="bm__refund-dot" />
+                <span>Hủy trước 24h: hoàn <strong>{refundPolicy.before24h}%</strong></span>
+              </div>
+              <div className="bm__refund-item bm__refund-item--warn">
+                <span className="bm__refund-dot" />
+                <span>Hủy sau 24h: hoàn <strong>{refundPolicy.after24h}%</strong></span>
+              </div>
+            </div>
+          </div>
+
+          {/* --- RIGHT: Form --- */}
+          <div className="bm__form">
+
+            {/* Full Name */}
+            <div className="bm__field">
+              <label className="bm__label">
+                <FormattedMessage id="booking-modal.fullname-label" /> <span className="bm__required">*</span>
               </label>
               <input
                 type="text"
-                name="address"
-                className={`booking-modal__input ${errors.address ? 'input-error' : ''}`}
-                value={formData.address}
+                name="fullName"
+                className={`bm__input${errors.fullName ? ' bm__input--error' : ''}`}
+                value={formData.fullName}
                 onChange={handleInputChange}
-                placeholder={intl.formatMessage({ id: 'booking-modal.address-placeholder' })}
+                placeholder={intl.formatMessage({ id: 'booking-modal.fullname-placeholder' })}
               />
-              {errors.address && (
-                <span className="error-text">{errors.address}</span>
-              )}
+              {errors.fullName && <span className="bm__error">{errors.fullName}</span>}
             </div>
-          </div>
 
-          {/* Reason */}
-          <div className="booking-modal__field">
-            <label className="booking-modal__label">
-              <FormattedMessage id="booking-modal.reason-label" /> *
-            </label>
-            <textarea
-              name="reason"
-              className={`booking-modal__textarea ${errors.reason ? 'input-error' : ''}`}
-              value={formData.reason}
-              onChange={handleInputChange}
-              rows={3}
-              placeholder={intl.formatMessage({ id: 'booking-modal.reason-placeholder' })}
-            />
-            {errors.reason && (
-              <span className="error-text">{errors.reason}</span>
-            )}
-          </div>
-
-          {/* Birthday + Gender */}
-          <div className="booking-modal__row">
-            <div className="booking-modal__field">
-              <label className="booking-modal__label">
-                <FormattedMessage id="booking-modal.birthday-label" /> *
+            {/* Email — disabled, from account */}
+            <div className="bm__field">
+              <label className="bm__label">
+                <FormattedMessage id="booking-modal.email-label" /> <span className="bm__required">*</span>
               </label>
               <input
-                type="date"
-                name="birthday"
-                className={`booking-modal__input ${errors.birthday ? 'input-error' : ''}`}
-                value={formData.birthday}
-                onChange={handleInputChange}
+                type="email"
+                className="bm__input bm__input--readonly"
+                value={userInfo?.email || ''}
+                disabled
               />
-              {errors.birthday && (
-                <span className="error-text">{errors.birthday}</span>
-              )}
             </div>
-            <div className="booking-modal__field">
-              <label className="booking-modal__label">
-                <FormattedMessage id="booking-modal.gender-label" /> *
+
+            {/* Phone + Address */}
+            <div className="bm__row">
+              <div className="bm__field">
+                <label className="bm__label">
+                  <FormattedMessage id="booking-modal.phone-label" /> <span className="bm__required">*</span>
+                </label>
+                <input
+                  type="tel"
+                  name="phoneNumber"
+                  className={`bm__input${errors.phoneNumber ? ' bm__input--error' : ''}`}
+                  value={formData.phoneNumber}
+                  onChange={handleInputChange}
+                  placeholder={intl.formatMessage({ id: 'booking-modal.phone-placeholder' })}
+                />
+                {errors.phoneNumber && <span className="bm__error">{errors.phoneNumber}</span>}
+              </div>
+              <div className="bm__field">
+                <label className="bm__label">
+                  <FormattedMessage id="booking-modal.address-label" /> <span className="bm__required">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="address"
+                  className={`bm__input${errors.address ? ' bm__input--error' : ''}`}
+                  value={formData.address}
+                  onChange={handleInputChange}
+                  placeholder={intl.formatMessage({ id: 'booking-modal.address-placeholder' })}
+                />
+                {errors.address && <span className="bm__error">{errors.address}</span>}
+              </div>
+            </div>
+
+            {/* Reason */}
+            <div className="bm__field">
+              <label className="bm__label">
+                <FormattedMessage id="booking-modal.reason-label" /> <span className="bm__required">*</span>
               </label>
-              <select
-                name="gender"
-                className={`booking-modal__select ${errors.gender ? 'input-error' : ''}`}
-                value={formData.gender}
+              <textarea
+                name="reason"
+                className={`bm__textarea${errors.reason ? ' bm__input--error' : ''}`}
+                value={formData.reason}
                 onChange={handleInputChange}
-              >
-                <option value="">
-                  {intl.formatMessage({ id: 'booking-modal.gender-select' })}
-                </option>
-                {genders &&
-                  genders.length > 0 &&
-                  genders.map((g) => (
+                rows={3}
+                placeholder={intl.formatMessage({ id: 'booking-modal.reason-placeholder' })}
+              />
+              {errors.reason && <span className="bm__error">{errors.reason}</span>}
+            </div>
+
+            {/* Birthday + Gender */}
+            <div className="bm__row">
+              <div className="bm__field">
+                <label className="bm__label">
+                  <FormattedMessage id="booking-modal.birthday-label" /> <span className="bm__required">*</span>
+                </label>
+                <input
+                  type="date"
+                  name="birthday"
+                  className={`bm__input${errors.birthday ? ' bm__input--error' : ''}`}
+                  value={formData.birthday}
+                  onChange={handleInputChange}
+                />
+                {errors.birthday && <span className="bm__error">{errors.birthday}</span>}
+              </div>
+              <div className="bm__field">
+                <label className="bm__label">
+                  <FormattedMessage id="booking-modal.gender-label" /> <span className="bm__required">*</span>
+                </label>
+                <select
+                  name="gender"
+                  className={`bm__select${errors.gender ? ' bm__input--error' : ''}`}
+                  value={formData.gender}
+                  onChange={handleInputChange}
+                >
+                  <option value="">
+                    {intl.formatMessage({ id: 'booking-modal.gender-select' })}
+                  </option>
+                  {genders && genders.length > 0 && genders.map((g) => (
                     <option key={g.keyMap} value={g.keyMap}>
                       {language === LANGUAGES.VI ? g.valueVi : g.valueEn}
                     </option>
                   ))}
-              </select>
-              {errors.gender && (
-                <span className="error-text">{errors.gender}</span>
-              )}
-            </div>
-          </div>
-
-          {/* [Phase D.3] ── Refund Policy Box ── */}
-          <div className="booking-modal__refund-policy">
-            <h4>📋 Chính sách hoàn tiền</h4>
-            <p>✅ Hủy trước 24 giờ: hoàn <strong>{refundPolicy.before24h}%</strong> phí khám</p>
-            <p>⚠️ Hủy sau 24 giờ: hoàn <strong>{refundPolicy.after24h}%</strong> phí khám</p>
-          </div>
-
-          {/* [Phase D.3] ── Bank Info Section ── */}
-          <div className="booking-modal__bank-info">
-            <h4>💳 Thông tin hoàn tiền <span className="optional-tag">(tùy chọn)</span></h4>
-            <p className="bank-info-note">Điền nếu bạn muốn hoàn tiền về tài khoản khi hủy lịch</p>
-            <div className="booking-modal__row">
-              <div className="booking-modal__field">
-                <label className="booking-modal__label">Số tài khoản</label>
-                <input
-                  type="text"
-                  className="booking-modal__input"
-                  placeholder="VD: 0123456789"
-                  value={bankInfo.number}
-                  onChange={e => setBankInfo(p => ({ ...p, number: e.target.value }))}
-                />
-              </div>
-              <div className="booking-modal__field">
-                <label className="booking-modal__label">Tên chủ tài khoản</label>
-                <input
-                  type="text"
-                  className="booking-modal__input"
-                  placeholder="VD: NGUYEN VAN A"
-                  value={bankInfo.name}
-                  onChange={e => setBankInfo(p => ({ ...p, name: e.target.value }))}
-                />
+                </select>
+                {errors.gender && <span className="bm__error">{errors.gender}</span>}
               </div>
             </div>
-            <div className="booking-modal__field">
-              <label className="booking-modal__label">Ngân hàng</label>
-              <input
-                type="text"
-                className="booking-modal__input"
-                placeholder="VD: Vietcombank, Techcombank..."
-                value={bankInfo.bank}
-                onChange={e => setBankInfo(p => ({ ...p, bank: e.target.value }))}
-              />
-            </div>
-          </div>
 
+            {/* [Phase D.3] Bank Info — Collapsible */}
+            <div className="bm__bank-toggle">
+              <button
+                type="button"
+                className="bm__bank-toggle-btn"
+                onClick={() => setShowBankInfo(v => !v)}
+              >
+                <span>💳 Thêm thông tin tài khoản hoàn tiền</span>
+                <span className={`bm__bank-arrow${showBankInfo ? ' bm__bank-arrow--open' : ''}`}>▼</span>
+              </button>
+              <p className="bm__bank-hint">Điền nếu muốn nhận hoàn tiền về tài khoản khi hủy lịch</p>
+            </div>
+
+            {showBankInfo && (
+              <div className="bm__bank-fields">
+                <div className="bm__row">
+                  <div className="bm__field">
+                    <label className="bm__label">Số tài khoản</label>
+                    <input
+                      type="text"
+                      className="bm__input"
+                      placeholder="VD: 0123456789"
+                      value={bankInfo.number}
+                      onChange={e => setBankInfo(p => ({ ...p, number: e.target.value }))}
+                    />
+                  </div>
+                  <div className="bm__field">
+                    <label className="bm__label">Tên chủ tài khoản</label>
+                    <input
+                      type="text"
+                      className="bm__input"
+                      placeholder="VD: NGUYEN VAN A"
+                      value={bankInfo.name}
+                      onChange={e => setBankInfo(p => ({ ...p, name: e.target.value }))}
+                    />
+                  </div>
+                </div>
+                <div className="bm__field">
+                  <label className="bm__label">Ngân hàng</label>
+                  <input
+                    type="text"
+                    className="bm__input"
+                    placeholder="VD: Vietcombank, Techcombank..."
+                    value={bankInfo.bank}
+                    onChange={e => setBankInfo(p => ({ ...p, bank: e.target.value }))}
+                  />
+                </div>
+              </div>
+            )}
+
+          </div>
         </div>
 
-        {/* ===== FOOTER — [Phase 11] Submit Button ===== */}
-        <div className="booking-modal__footer">
-          <button
-            className="booking-modal__btn booking-modal__btn--cancel"
-            onClick={handleCloseModal}
-          >
+        {/* ===== FOOTER ===== */}
+        <div className="bm__footer">
+          <button className="bm__btn bm__btn--cancel" onClick={handleCloseModal}>
             <FormattedMessage id="booking-modal.cancel-btn" />
           </button>
           <button
-            className="booking-modal__btn booking-modal__btn--confirm"
+            className="bm__btn bm__btn--confirm"
             onClick={handleSubmit}
             disabled={uiState === 'loading'}
           >
