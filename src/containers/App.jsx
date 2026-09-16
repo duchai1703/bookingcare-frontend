@@ -46,6 +46,7 @@ import SystemSettings       from './System/Admin/SystemSettings';
 
 // [Phase 9.4] Patient Portal
 import PatientLayout from './PatientPortal/PatientLayout';
+import PatientOverview from './PatientPortal/PatientOverview';
 import PatientProfile from './PatientPortal/PatientProfile';
 import AppointmentHistory from './PatientPortal/AppointmentHistory';
 
@@ -206,8 +207,9 @@ const App = () => {
         {/* ===== PATIENT ROUTES — Chỉ Patient R3 (Phase 9.4) ===== */}
         <Route element={<PrivateRoute allowedRoles={[USER_ROLE.PATIENT]} />}>
           <Route path={path.PATIENT_PORTAL} element={<PatientLayout />}>
-            {/* /patient → redirect /patient/profile */}
-            <Route index element={<Navigate to="profile" replace />} />
+            {/* /patient → redirect /patient/overview */}
+            <Route index element={<Navigate to="overview" replace />} />
+            <Route path="overview" element={<PatientOverview />} />
             <Route path="profile" element={<PatientProfile />} />
             <Route path="history" element={<AppointmentHistory />} />
           </Route>

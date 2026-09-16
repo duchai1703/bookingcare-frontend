@@ -134,7 +134,7 @@ const Header = () => {
           {/* ===== [Phase D.8] Tab Trang cá nhân — chỉ hiện khi Patient đã đăng nhập ===== */}
           {isLoggedIn && userInfo?.roleId === USER_ROLE.PATIENT && (
             <NavLink
-              to="/patient/profile"
+              to="/patient/overview"
               className={({ isActive }) => `nav-item nav-item--profile${isActive ? ' nav-item--active' : ''}`}
               onClick={() => setIsMenuOpen(false)}
             >
@@ -191,12 +191,28 @@ const Header = () => {
                       </div>
                       <div className="dropdown-divider" />
                       <Link
+                        to="/patient/overview"
+                        className="dropdown-item"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        <i className="fas fa-th-large" />
+                        <span>Tổng quan</span>
+                      </Link>
+                      <Link
+                        to="/patient/history"
+                        className="dropdown-item"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        <i className="far fa-calendar-alt" />
+                        <span>Lịch khám của tôi</span>
+                      </Link>
+                      <Link
                         to="/patient/profile"
                         className="dropdown-item"
                         onClick={() => setIsDropdownOpen(false)}
                       >
-                        <i className="fas fa-user" />
-                        <FormattedMessage id="header.patient-portal" />
+                        <i className="far fa-user-circle" />
+                        <span>Hồ sơ cá nhân</span>
                       </Link>
                       <button className="dropdown-item dropdown-item--danger" onClick={handleLogout}>
                         <i className="fas fa-sign-out-alt" />

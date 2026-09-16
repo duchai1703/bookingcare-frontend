@@ -1,94 +1,122 @@
 // src/containers/PatientPortal/PatientLayout.jsx
-// Layout giao diện Patient Portal — Sidebar trái + Outlet phải
-// [Phase 9.4] Tương tự SystemLayout nhưng dành riêng cho bệnh nhân (R3)
-// [Phase 11 — v19.0] Xóa badge, thay Link "Trang chủ" bằng nút Logout
+// [Redesign] Patient Portal Layout đồng bộ Design System BookingCare
+// Tích hợp Header/Footer công khai, loại bỏ dark navy sidebar, layout thẻ y tế trang nhã
 import React from 'react';
-import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { FormattedMessage, useIntl } from 'react-intl';
 import { processLogout } from '../../redux/slices/userSlice';
 import { persistor } from '../../redux/store';
+import Header from '../../components/Header/Header';
+import Footer from '../../components/Footer/Footer';
+import Breadcrumb from '../../components/Common/Breadcrumb';
 import './PatientLayout.scss';
 
 const PatientLayout = () => {
   const { userInfo } = useSelector((state) => state.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  // Fix i18n: useIntl cho thuộc tính title
-  const intl = useIntl();
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // [Phase 11 — v20.6 Sec 3.4] handleLogout
-  // Tuần tự: dispatch(processLogout()) → persistor.flush() → navigate("/login")
-  // CẤM persistor.purge() — CẤM localStorage.removeItem('persist:user')
-  // ═══════════════════════════════════════════════════════════════════════
   const handleLogout = async () => {
-    dispatch(processLogout()); // Reset userSlice → initialState
-    await persistor.flush(); // Ghi vào persist:root (app/language giữ nguyên)
+    dispatch(processLogout());
+    await persistor.flush();
     navigate('/login');
-    // CẤM persistor.purge() — CẤM localStorage.removeItem('persist:user')
+  };
+
+  const renderAvatar = () => {
+    const img = userInfo?.image;
+    if (img) {
+      const src = typeof img === 'string' && img.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`;
+      return <img src={src} alt="Avatar" className="pl-avatar-img" />;
+    }
+    return <div className="pl-avatar-fallback">{userInfo?.firstName ? userInfo.firstName.charAt(0).toUpperCase() : '👤'}</div>;
   };
 
   return (
-    <div className="patient-layout">
-      {/* ===== SIDEBAR TRÁI ===== */}
-      <aside className="patient-sidebar">
-        <NavLink to="/" className="sidebar-logo" title={intl.formatMessage({ id: 'patient-portal.layout.back-to-home' })}>
-          {/* [Fix Bug 9.5] Chuỗi "BookingCare" phải dùng i18n */}
-          <span className="logo-text"><FormattedMessage id="common.brand-name" /></span>
-          <span className="logo-sub"><FormattedMessage id="patient-portal.sidebar.title" /></span>
-        </NavLink>
+    <div className="patient-portal-root">
+      {/* 1. Header chung của BookingCare */}
+      <Header />
 
-        {/* Menu */}
-        <nav className="sidebar-nav">
-          {/* NavLink active class tự động khi URL match */}
-          <NavLink
-            to="/patient/profile"
-            className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
-          >
-            <i className="fas fa-user" />
-            <FormattedMessage id="patient-portal.sidebar.profile" />
-          </NavLink>
-
-          <NavLink
-            to="/patient/history"
-            className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
-          >
-            <i className="fas fa-calendar-alt" />
-            <FormattedMessage id="patient-portal.sidebar.appointments" />
-          </NavLink>
-        </nav>
-
-        {/* ✅ [v19.0] Xóa Link "Trang chủ" cũ, thay bằng nút Đăng xuất */}
-        <div className="sidebar-footer">
-          <button
-            className="sidebar-item sidebar-item--logout"
-            onClick={handleLogout}
-          >
-            <i className="fas fa-sign-out-alt" />
-            <FormattedMessage id="patient-portal.sidebar.logout" defaultMessage="Đăng xuất" />
-          </button>
+      {/* 2. Breadcrumb / Banner định hướng */}
+      <div className="patient-portal-breadcrumb-bar">
+        <div className="portal-container">
+          <Breadcrumb
+            items={[
+              { label: 'Trang chủ', link: '/' },
+              { label: 'Cổng bệnh nhân' },
+            ]}
+          />
         </div>
-      </aside>
+      </div>
 
-      {/* ===== NỘI DUNG PHẢI ===== */}
-      <main className="patient-content">
-        <div className="patient-header">
-          <div className="header-left" />
+      {/* 3. Nội dung chính: 2 Cột chuẩn mực */}
+      <div className="patient-portal-body">
+        <div className="portal-container">
+          <div className="portal-grid">
+            {/* CỘT TRÁI: Patient Navigation Card */}
+            <aside className="portal-sidebar-card">
+              <div className="patient-mini-profile">
+                <div className="patient-avatar-box">{renderAvatar()}</div>
+                <div className="patient-text-box">
+                  <h3 className="patient-fullname">
+                    {userInfo?.lastName} {userInfo?.firstName}
+                  </h3>
+                  <span className="patient-role-pill">Bệnh nhân</span>
+                  {userInfo?.email && <span className="patient-email-text">{userInfo.email}</span>}
+                </div>
+              </div>
 
-          <div className="header-right">
-            <span className="patient-name">
-              {userInfo?.lastName} {userInfo?.firstName}
-            </span>
+              <div className="sidebar-menu-divider" />
+
+              <nav className="portal-nav-list">
+                <NavLink
+                  to="/patient/overview"
+                  className={({ isActive }) => `portal-nav-item ${isActive ? 'active' : ''}`}
+                >
+                  <i className="fas fa-th-large" />
+                  <span>Tổng quan</span>
+                </NavLink>
+
+                <NavLink
+                  to="/patient/history"
+                  className={({ isActive }) => `portal-nav-item ${isActive ? 'active' : ''}`}
+                >
+                  <i className="far fa-calendar-alt" />
+                  <span>Lịch khám của tôi</span>
+                </NavLink>
+
+                <NavLink
+                  to="/patient/profile"
+                  className={({ isActive }) => `portal-nav-item ${isActive ? 'active' : ''}`}
+                >
+                  <i className="far fa-user-circle" />
+                  <span>Hồ sơ cá nhân</span>
+                </NavLink>
+
+                <button type="button" className="portal-nav-item portal-nav-item--logout" onClick={handleLogout}>
+                  <i className="fas fa-sign-out-alt" />
+                  <span>Đăng xuất</span>
+                </button>
+              </nav>
+
+              <div className="sidebar-extra-tip">
+                <p>
+                  Cần hỗ trợ y tế khẩn cấp?
+                  <br />
+                  <strong>Hotline: 1900-2805</strong>
+                </p>
+              </div>
+            </aside>
+
+            {/* CỘT PHẢI: Nội dung trang con */}
+            <main className="portal-main-content">
+              <Outlet />
+            </main>
           </div>
         </div>
+      </div>
 
-        {/* Trang con render ở đây */}
-        <div className="patient-body">
-          <Outlet />
-        </div>
-      </main>
+      {/* 4. Footer chung của BookingCare */}
+      <Footer />
     </div>
   );
 };

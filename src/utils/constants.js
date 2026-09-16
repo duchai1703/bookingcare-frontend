@@ -45,7 +45,10 @@ export const path = {
   RESET_PASSWORD: '/reset-password',
 
   // [Phase 9.4] Patient Portal
-  PATIENT_PORTAL: '/patient',
+  PATIENT_PORTAL:          '/patient',
+  PATIENT_PORTAL_OVERVIEW: '/patient/overview',
+  PATIENT_PORTAL_HISTORY:  '/patient/history',
+  PATIENT_PORTAL_PROFILE:  '/patient/profile',
 
   // Admin (R1)
   SYSTEM: '/system',
