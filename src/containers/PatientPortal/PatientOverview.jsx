@@ -7,6 +7,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import moment from 'moment';
 import { getPatientBookings, cancelBooking } from '../../services/patientService';
 import { path, LANGUAGES } from '../../utils/constants';
+import CommonUtils from '../../utils/CommonUtils';
 import { toast } from 'react-toastify';
 import './PatientOverview.scss';
 
@@ -207,7 +208,7 @@ const PatientOverview = () => {
               <div className="hl-doctor-block">
                 <div className="doctor-avatar">
                   {nearestBooking.doctorBookingData?.image ? (
-                    <img src={nearestBooking.doctorBookingData.image} alt="Doctor" />
+                    <img src={CommonUtils.decodeBase64Image(nearestBooking.doctorBookingData.image)} alt="Doctor" />
                   ) : (
                     <i className="fas fa-user-md" />
                   )}

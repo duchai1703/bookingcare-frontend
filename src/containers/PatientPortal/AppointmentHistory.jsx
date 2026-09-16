@@ -12,6 +12,7 @@ import 'moment/locale/vi';
 
 import { getPatientBookings, cancelBooking } from '../../services/patientService';
 import { LANGUAGES, path } from '../../utils/constants';
+import CommonUtils from '../../utils/CommonUtils';
 import RatingModal from './RatingModal';
 import './AppointmentHistory.scss';
 
@@ -317,7 +318,7 @@ const AppointmentHistory = () => {
                 <div className="card-doctor-info">
                   <div className="doctor-avatar-circle">
                     {b.doctorBookingData?.image ? (
-                      <img src={b.doctorBookingData.image} alt="Doctor" />
+                      <img src={CommonUtils.decodeBase64Image(b.doctorBookingData.image)} alt="Doctor" />
                     ) : (
                       <i className="fas fa-user-md" />
                     )}

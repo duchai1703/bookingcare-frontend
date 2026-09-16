@@ -219,6 +219,7 @@
   "auth.register.guest-warning": "This email was used for booking. Please use Forgot Password to set a password.",
 
   "header.patient-portal": "My Profile",
+  "header.sub-patient-portal": "Appointments & records",
   "header.patient-logout": "Logout",
 
   "patient-portal.sidebar.profile": "Personal Information",

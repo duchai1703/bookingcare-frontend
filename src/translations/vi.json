@@ -219,6 +219,7 @@
   "auth.register.guest-warning": "Email này đã được dùng để đặt lịch. Vui lòng dùng chức năng Quên mật khẩu để thiết lập mật khẩu.",
 
   "header.patient-portal": "Trang cá nhân",
+  "header.sub-patient-portal": "Lịch khám & hồ sơ",
   "header.patient-logout": "Đăng xuất",
 
   "patient-portal.sidebar.profile": "Thông tin cá nhân",
