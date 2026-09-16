@@ -27,7 +27,8 @@ const MedicalInfoModal = ({ booking, onClose, onSaved }) => {
   useEffect(() => {
     getAllMedicines({ isActive: true })
       .then(res => {
-        if (res?.data?.errCode === 0) setAllMedicines(res.data.data || []);
+        const list = Array.isArray(res?.data) ? res.data : (Array.isArray(res?.data?.data) ? res.data.data : []);
+        if (res?.errCode === 0 || res?.data?.errCode === 0) setAllMedicines(list);
       })
       .catch(console.error);
   }, []);
@@ -59,10 +60,10 @@ const MedicalInfoModal = ({ booking, onClose, onSaved }) => {
         ...form,
         medicines: validMedicines,
       });
-      if (res?.data?.errCode === 0) {
+      if (res?.errCode === 0 || res?.data?.errCode === 0) {
         onSaved();
       } else {
-        setError(res?.data?.message || 'Có lỗi xảy ra');
+        setError(res?.message || res?.data?.message || 'Có lỗi xảy ra');
       }
     } catch (err) {
       setError('Không thể lưu. Vui lòng thử lại.');

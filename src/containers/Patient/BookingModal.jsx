@@ -54,7 +54,7 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price }) => {
 
   // [Phase D.3] Bank info + Refund policy
   const [bankInfo, setBankInfo] = useState({ number: '', name: '', bank: '' });
-  const [refundPolicy, setRefundPolicy] = useState({ before24h: '100', after24h: '50' });
+  const [refundPolicy, setRefundPolicy] = useState({ before24h: '100', after24h: '50', thresholdHours: '24' });
   const [showBankInfo, setShowBankInfo] = useState(false);
 
   // Fetch gender allcode on mount
@@ -68,11 +68,13 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price }) => {
   useEffect(() => {
     getSystemSettings()
       .then(res => {
-        if (res?.data?.errCode === 0) {
-          const settings = res.data.data || [];
+        const data = Array.isArray(res?.data) ? res.data : (Array.isArray(res?.data?.data) ? res.data.data : null);
+        const errCode = res?.errCode !== undefined ? res.errCode : res?.data?.errCode;
+        if (errCode === 0 && Array.isArray(data)) {
           setRefundPolicy({
-            before24h: settings.find(s => s.key === 'refund_rate_cancel_before_24h')?.value || '100',
-            after24h:  settings.find(s => s.key === 'refund_rate_cancel_after_24h')?.value  || '50',
+            before24h: data.find(s => s.key === 'refund_rate_cancel_before_24h')?.value || '100',
+            after24h:  data.find(s => s.key === 'refund_rate_cancel_after_24h')?.value  || '50',
+            thresholdHours: data.find(s => s.key === 'refund_threshold_hours')?.value || '24',
           });
         }
       })
@@ -262,11 +264,11 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price }) => {
               <p className="bm__summary-label">Chính sách hoàn tiền</p>
               <div className="bm__refund-item bm__refund-item--ok">
                 <span className="bm__refund-dot" />
-                <span>Hủy trước 24h: hoàn <strong>{refundPolicy.before24h}%</strong></span>
+                <span>Hủy trước {refundPolicy.thresholdHours || 24}h: hoàn <strong>{refundPolicy.before24h}%</strong></span>
               </div>
               <div className="bm__refund-item bm__refund-item--warn">
                 <span className="bm__refund-dot" />
-                <span>Hủy sau 24h: hoàn <strong>{refundPolicy.after24h}%</strong></span>
+                <span>Hủy sau {refundPolicy.thresholdHours || 24}h: hoàn <strong>{refundPolicy.after24h}%</strong></span>
               </div>
             </div>
           </div>

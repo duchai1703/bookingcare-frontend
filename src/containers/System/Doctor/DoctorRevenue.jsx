@@ -17,7 +17,10 @@ const DoctorRevenue = () => {
     setLoading(true);
     getDoctorRevenue(year)
       .then(res => {
-        if (res?.data?.errCode === 0) setData(res.data.data);
+        const payload = res?.data?.data || res?.data;
+        if (res?.errCode === 0 || res?.data?.errCode === 0) {
+          if (payload) setData(payload);
+        }
       })
       .catch(console.error)
       .finally(() => setLoading(false));

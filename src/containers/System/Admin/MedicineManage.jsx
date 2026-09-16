@@ -18,7 +18,8 @@ const MedicineManage = () => {
   const fetchItems = async () => {
     setLoading(true);
     const res = await getAllMedicines(search ? { search } : {});
-    if (res?.data?.errCode === 0) setItems(res.data.data || []);
+    const list = Array.isArray(res?.data) ? res.data : (Array.isArray(res?.data?.data) ? res.data.data : []);
+    if (res?.errCode === 0 || res?.data?.errCode === 0) setItems(list);
     setLoading(false);
   };
 
@@ -31,7 +32,7 @@ const MedicineManage = () => {
     }
     try {
       const res = editId ? await editMedicine(editId, form) : await createMedicine(form);
-      if (res?.data?.errCode === 0) {
+      if (res?.errCode === 0 || res?.data?.errCode === 0) {
         setMsg({ type: 'success', text: editId ? 'Cập nhật thành công!' : 'Thêm thành công!' });
         setShowForm(false); setEditId(null); setForm(emptyForm);
         fetchItems();

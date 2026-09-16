@@ -39,3 +39,10 @@ export const getSystemSettings = () => {
 export const updateSystemSetting = (key, value, description) => {
   return axiosInstance.put(`/api/v1/system-settings/${key}`, { value, description });
 };
+export const updateBulkSystemSettings = (settings) => {
+  return axiosInstance.post('/api/v1/system-settings/bulk', { settings });
+};
+export const resetSystemSettings = () => {
+  return axiosInstance.post('/api/v1/system-settings/reset');
+};
+
