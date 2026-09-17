@@ -47,3 +47,28 @@ export const postBookAppointment = (data) => {
 export const postVerifyBookAppointment = (data) => {
   return axiosInstance.post('/api/v1/verify-book-appointment', data); // FINAL FIX 9.7
 };
+
+// ===== PATIENT ATTACHMENTS (Tài liệu đính kèm y tế) =====
+
+// Lấy danh sách tệp đính kèm của lịch hẹn
+export const getBookingAttachments = (bookingId) => {
+  return axiosInstance.get(`/api/v1/patient/bookings/${bookingId}/attachments`);
+};
+
+// Tải lên tệp đính kèm mới (PDF, PNG, JPG, WEBP)
+export const uploadBookingAttachment = (bookingId, data) => {
+  return axiosInstance.post(`/api/v1/patient/bookings/${bookingId}/attachments`, data);
+};
+
+// Tải về tệp đính kèm an toàn dạng Blob
+export const downloadBookingAttachment = (bookingId, attachmentId, mode = 'attachment') => {
+  return axiosInstance.get(`/api/v1/patient/bookings/${bookingId}/attachments/${attachmentId}/download?mode=${mode}`, {
+    responseType: 'blob',
+  });
+};
+
+// Xóa tệp đính kèm
+export const deleteBookingAttachment = (bookingId, attachmentId) => {
+  return axiosInstance.delete(`/api/v1/patient/bookings/${bookingId}/attachments/${attachmentId}`);
+};
+

@@ -10,10 +10,18 @@ import { Link } from 'react-router-dom';
 import moment from 'moment';
 import 'moment/locale/vi';
 
-import { getPatientBookings, cancelBooking } from '../../services/patientService';
+import {
+  getPatientBookings,
+  cancelBooking,
+  getBookingAttachments,
+  uploadBookingAttachment,
+  downloadBookingAttachment,
+  deleteBookingAttachment,
+} from '../../services/patientService';
 import { LANGUAGES, path } from '../../utils/constants';
 import CommonUtils from '../../utils/CommonUtils';
 import RatingModal from './RatingModal';
+import AppointmentQrModal from './AppointmentQrModal';
 import './AppointmentHistory.scss';
 
 // Bộ lọc trạng thái
@@ -43,6 +51,147 @@ const AppointmentHistory = () => {
   const [cancelModal, setCancelModal]   = useState({ isOpen: false, bookingId: null, isCancelling: false });
   const [ratingModal, setRatingModal]   = useState({ isOpen: false, bookingData: null });
   const [detailBooking, setDetailBooking] = useState(null);
+  const [showQrModal, setShowQrModal]   = useState(false);
+
+  // Attachments state
+  const [attachmentsList, setAttachmentsList] = useState([]);
+  const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
+  const fileInputRef = React.useRef(null);
+
+  // Sync attachments khi mở detailBooking
+  useEffect(() => {
+    if (detailBooking) {
+      if (detailBooking.attachments && Array.isArray(detailBooking.attachments)) {
+        setAttachmentsList(detailBooking.attachments);
+      } else {
+        setAttachmentsList([]);
+      }
+      getBookingAttachments(detailBooking.id)
+        .then((res) => {
+          if (res && res.errCode === 0 && res.data) {
+            setAttachmentsList(res.data);
+          }
+        })
+        .catch(() => {});
+    } else {
+      setAttachmentsList([]);
+    }
+  }, [detailBooking]);
+
+  const formatFileSize = (bytes) => {
+    if (!bytes || bytes <= 0) return '0 KB';
+    if (bytes >= 1024 * 1024) {
+      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    }
+    return `${Math.round(bytes / 1024)} KB`;
+  };
+
+  const getFileTypeLabel = (type) => {
+    if (!type) return 'FILE';
+    if (type.includes('pdf')) return 'PDF';
+    if (type.includes('image')) return 'IMG';
+    return 'FILE';
+  };
+
+  const getFileTypeClass = (type) => {
+    if (!type) return '';
+    if (type.includes('pdf')) return 'att-type-pill--pdf';
+    if (type.includes('image')) return 'att-type-pill--img';
+    return '';
+  };
+
+  const handleFileSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !detailBooking) return;
+    e.target.value = '';
+
+    const MAX_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      toast.error('Dung lượng tệp vượt quá giới hạn 10 MB!');
+      return;
+    }
+
+    const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+    if (!ALLOWED_TYPES.includes(file.type.toLowerCase())) {
+      toast.error('Chỉ chấp nhận các tệp định dạng PDF, JPG, PNG, WEBP!');
+      return;
+    }
+
+    setIsUploadingAttachment(true);
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const base64Data = reader.result;
+        const res = await uploadBookingAttachment(detailBooking.id, {
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+          fileData: base64Data,
+        });
+
+        if (res && res.errCode === 0) {
+          toast.success('Đính kèm tài liệu thành công!');
+          if (res.data) {
+            setAttachmentsList((prev) => [res.data, ...prev]);
+          }
+        } else {
+          toast.error(res?.message || 'Không thể tải lên tài liệu!');
+        }
+      } catch (err) {
+        toast.error('Lỗi khi tải lên tài liệu!');
+      } finally {
+        setIsUploadingAttachment(false);
+      }
+    };
+    reader.onerror = () => {
+      toast.error('Lỗi khi đọc tệp từ máy tính!');
+      setIsUploadingAttachment(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleViewAttachment = async (att) => {
+    try {
+      const res = await downloadBookingAttachment(detailBooking.id, att.id, 'inline');
+      const blob = new Blob([res], { type: att.fileType });
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank');
+    } catch (err) {
+      toast.error('Không thể mở tệp xem trước!');
+    }
+  };
+
+  const handleDownloadAttachment = async (att) => {
+    try {
+      const res = await downloadBookingAttachment(detailBooking.id, att.id, 'attachment');
+      const blob = new Blob([res], { type: att.fileType });
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = att.fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      toast.error('Không thể tải xuống tệp!');
+    }
+  };
+
+  const handleDeleteAttachment = async (attachmentId) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa tài liệu này không?')) return;
+    try {
+      const res = await deleteBookingAttachment(detailBooking.id, attachmentId);
+      if (res && res.errCode === 0) {
+        toast.success('Đã xóa tệp đính kèm!');
+        setAttachmentsList((prev) => prev.filter((a) => a.id !== attachmentId));
+      } else {
+        toast.error(res?.message || 'Không thể xóa tệp!');
+      }
+    } catch (err) {
+      toast.error('Lỗi khi xóa tệp!');
+    }
+  };
 
   // Fetch bookings
   const fetchBookings = useCallback(async () => {
@@ -522,7 +671,18 @@ const AppointmentHistory = () => {
             <div className="modal-top-header">
               <div className="modal-header-titles">
                 <h3>Chi tiết lịch khám</h3>
-                <span className="modal-booking-id">Mã lịch hẹn: #BK-{detailBooking.id}</span>
+                <div className="modal-ref-strip">
+                  <span className="modal-booking-id">Mã lịch hẹn: <strong>#BK-{detailBooking.id}</strong></span>
+                  <button
+                    type="button"
+                    className="btn-modal-qr"
+                    onClick={() => setShowQrModal(true)}
+                    title="Xem mã QR tiếp nhận khám bệnh"
+                  >
+                    <i className="fas fa-qrcode" />
+                    <span>Mã QR</span>
+                  </button>
+                </div>
               </div>
               <button
                 type="button"
@@ -551,7 +711,7 @@ const AppointmentHistory = () => {
               {/* ═════ KHỐI 1: THÔNG TIN LỊCH HẸN ═════ */}
               <div className="detail-section-block">
                 <div className="block-title">
-                  <span className="block-icon">📅</span>
+                  <i className="fas fa-calendar-alt block-icon" />
                   <h4>Thông tin lịch hẹn</h4>
                 </div>
 
@@ -600,10 +760,113 @@ const AppointmentHistory = () => {
                 </div>
               </div>
 
-              {/* ═════ KHỐI 2: THÔNG TIN KHÁM BỆNH & LÂM SÀNG ═════ */}
+              {/* ═════ KHỐI 2: TÀI LIỆU ĐÍNH KÈM Y TẾ ═════ */}
+              <div className="detail-section-block">
+                <div className="block-title block-title--split">
+                  <div className="title-left">
+                    <i className="fas fa-paperclip block-icon" />
+                    <h4>Tài liệu đính kèm</h4>
+                  </div>
+                  {attachmentsList && attachmentsList.length > 0 && attachmentsList.length < 5 && detailBooking.statusId !== 'S3' && detailBooking.statusId !== 'S4' && (
+                    <button
+                      type="button"
+                      className="btn-add-more-att"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploadingAttachment}
+                    >
+                      <i className="fas fa-plus" /> Thêm tệp
+                    </button>
+                  )}
+                </div>
+
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  style={{ display: 'none' }}
+                  accept=".pdf,.png,.jpg,.jpeg,.webp"
+                  onChange={handleFileSelect}
+                />
+
+                {isUploadingAttachment && (
+                  <div className="att-uploading-bar">
+                    <i className="fas fa-spinner fa-spin" /> Đang tải lên tài liệu...
+                  </div>
+                )}
+
+                {attachmentsList && attachmentsList.length > 0 ? (
+                  <div className="attachments-list">
+                    {attachmentsList.map((att) => (
+                      <div className="att-item-row" key={att.id}>
+                        <div className="att-info-main">
+                          <span className={`att-type-pill ${getFileTypeClass(att.fileType)}`}>
+                            {getFileTypeLabel(att.fileType)}
+                          </span>
+                          <div className="att-texts">
+                            <span className="att-name" title={att.fileName}>{att.fileName}</span>
+                            <span className="att-meta">
+                              {formatFileSize(att.fileSize)} • {att.createdAt ? moment(att.createdAt).format('DD/MM/YYYY HH:mm') : ''}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="att-actions">
+                          <button
+                            type="button"
+                            className="btn-att-action"
+                            onClick={() => handleViewAttachment(att)}
+                            title="Xem tệp"
+                          >
+                            Xem
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-att-action"
+                            onClick={() => handleDownloadAttachment(att)}
+                            title="Tải xuống tệp"
+                          >
+                            Tải xuống
+                          </button>
+                          {detailBooking.statusId !== 'S3' && detailBooking.statusId !== 'S4' && (
+                            <button
+                              type="button"
+                              className="btn-att-action btn-att-action--delete"
+                              onClick={() => handleDeleteAttachment(att.id)}
+                              title="Xóa tệp"
+                            >
+                              Xóa
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="attachments-empty-state">
+                    <p className="empty-text">Chưa có tài liệu được đính kèm cho lịch khám này.</p>
+                    {detailBooking.statusId !== 'S3' && detailBooking.statusId !== 'S4' ? (
+                      <div className="empty-action-wrap">
+                        <button
+                          type="button"
+                          className="btn-att-upload-primary"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isUploadingAttachment}
+                        >
+                          <i className="fas fa-plus" /> Thêm tài liệu
+                        </button>
+                        <span className="upload-hint">
+                          Hỗ trợ định dạng PDF, JPG, PNG, WEBP • Tối đa 10 MB/tệp
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="upload-hint">Lịch khám đã hoàn tất hoặc đã hủy, không thể bổ sung thêm tệp.</span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* ═════ KHỐI 3: THÔNG TIN KHÁM BỆNH & LÂM SÀNG ═════ */}
               <div className="detail-section-block">
                 <div className="block-title">
-                  <span className="block-icon">🩺</span>
+                  <i className="fas fa-notes-medical block-icon" />
                   <h4>Thông tin khám bệnh & Kết quả lâm sàng</h4>
                 </div>
 
@@ -760,6 +1023,15 @@ const AppointmentHistory = () => {
         onClose={() => setRatingModal({ isOpen: false, bookingData: null })}
         bookingData={ratingModal.bookingData}
         onSuccess={() => fetchBookings()}
+      />
+
+      {/* ═══════════════════════════════════════════════════════════
+          MODAL MÃ QR KHÁM BỆNH BẢO MẬT
+      ═══════════════════════════════════════════════════════════ */}
+      <AppointmentQrModal
+        isOpen={showQrModal}
+        onClose={() => setShowQrModal(false)}
+        booking={detailBooking}
       />
     </div>
   );

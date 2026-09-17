@@ -1,0 +1,283 @@
+// src/containers/PatientPortal/AppointmentQrModal.scss
+// [Enterprise Medical UI] Phong cách phòng khám / bệnh viện chuyên nghiệp, không lạm dụng hiệu ứng
+
+.appointment-qr-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(3px);
+  z-index: 10050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: qrFadeIn 0.2s ease;
+}
+
+@keyframes qrFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.appointment-qr-card {
+  width: 100%;
+  max-width: 410px;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  .qr-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    background: #ffffff;
+
+    .qr-card-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      i {
+        font-size: 1.15rem;
+        color: #0e7490;
+      }
+
+      h3 {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #0f172a;
+      }
+    }
+
+    .btn-close-qr {
+      background: none;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      color: #94a3b8;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.15s, color 0.15s;
+
+      &:hover {
+        background: #f1f5f9;
+        color: #334155;
+      }
+    }
+  }
+
+  .qr-card-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    .qr-status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      .status-label {
+        font-size: 0.85rem;
+        color: #64748b;
+        font-weight: 500;
+      }
+
+      .qr-badge {
+        font-size: 0.78rem;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 9999px;
+
+        &--pending {
+          background: #fffbeb;
+          color: #b45309;
+          border: 1px solid #fde68a;
+        }
+
+        &--confirmed {
+          background: #f0fdf4;
+          color: #15803d;
+          border: 1px solid #bbf7d0;
+        }
+
+        &--done {
+          background: #f1f5f9;
+          color: #475569;
+          border: 1px solid #cbd5e1;
+        }
+
+        &--cancelled {
+          background: #fef2f2;
+          color: #b91c1c;
+          border: 1px solid #fecaca;
+        }
+      }
+    }
+
+    .qr-visual-wrapper {
+      display: flex;
+      justify-content: center;
+      padding: 10px 0;
+
+      .qr-frame {
+        padding: 14px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+
+    .qr-code-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 14px;
+
+      .code-text-group {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+
+        .code-label {
+          font-size: 0.7rem;
+          color: #64748b;
+          font-weight: 700;
+          letter-spacing: 0.05em;
+        }
+
+        .code-val {
+          font-size: 1.15rem;
+          color: #0f172a;
+          font-weight: 800;
+          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+      }
+
+      .btn-copy-code {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #334155;
+        cursor: pointer;
+        transition: all 0.15s ease;
+
+        &:hover {
+          background: #f1f5f9;
+          border-color: #94a3b8;
+          color: #0f172a;
+        }
+
+        &.copied {
+          background: #f0fdf4;
+          border-color: #86efac;
+          color: #166534;
+        }
+      }
+    }
+
+    .qr-meta-summary {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 10px 12px;
+      background: #f8fafc;
+      border-radius: 6px;
+
+      .meta-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+
+        .meta-k {
+          color: #64748b;
+        }
+
+        .meta-v {
+          color: #1e293b;
+        }
+      }
+    }
+
+    .qr-notice-box {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 10px 12px;
+      background: #f0fdfa;
+      border: 1px solid #ccfbf1;
+      border-radius: 8px;
+
+      i {
+        font-size: 0.95rem;
+        color: #0d9488;
+        margin-top: 2px;
+        flex-shrink: 0;
+      }
+
+      p {
+        margin: 0;
+        font-size: 0.8rem;
+        line-height: 1.45;
+        color: #134e4a;
+
+        strong {
+          color: #115e59;
+        }
+      }
+    }
+  }
+
+  .qr-card-footer {
+    padding: 12px 20px 16px;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: flex-end;
+
+    .btn-qr-done {
+      padding: 8px 24px;
+      background: #0e7490;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.15s;
+
+      &:hover {
+        background: #155e75;
+      }
+    }
+  }
+}
