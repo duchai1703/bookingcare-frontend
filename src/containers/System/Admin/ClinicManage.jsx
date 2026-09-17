@@ -141,34 +141,34 @@ const ClinicManage = () => {
       {/* ===== CLINIC LIST ===== */}
       <div className="tw-bg-white tw-rounded-2xl tw-shadow-card tw-overflow-hidden">
         {isLoading ? <p className="tw-text-center tw-py-8 tw-text-text-sub"><FormattedMessage id="admin.manage.clinic.loading" /></p> :
-         clinics.length === 0 ? <p className="tw-text-center tw-py-12 tw-text-text-light"><FormattedMessage id="admin.manage.clinic.no-data" /></p> : (
-          <div className="tw-divide-y tw-divide-gray-100">
-            {clinics.map((clinic) => (
-              <div key={clinic.id} className="tw-flex tw-items-center tw-gap-4 tw-px-5 tw-py-4 hover:tw-bg-gray-50/60 tw-transition-colors">
-                <div className="tw-w-14 tw-h-14 tw-rounded-xl tw-overflow-hidden tw-flex-shrink-0 tw-bg-gray-100 tw-flex tw-items-center tw-justify-center">
-                  {clinic.image && typeof clinic.image === 'string'
-                    ? <img src={CommonUtils.decodeBase64Image(clinic.image)} alt={clinic.name} className="tw-w-full tw-h-full tw-object-cover" />
-                    : <Building2 size={24} className="tw-text-gray-400" />
-                  }
+          clinics.length === 0 ? <p className="tw-text-center tw-py-12 tw-text-text-light"><FormattedMessage id="admin.manage.clinic.no-data" /></p> : (
+            <div className="tw-divide-y tw-divide-gray-100">
+              {clinics.map((clinic) => (
+                <div key={clinic.id} className="tw-flex tw-items-center tw-gap-4 tw-px-5 tw-py-4 hover:tw-bg-gray-50/60 tw-transition-colors">
+                  <div className="tw-w-14 tw-h-14 tw-rounded-xl tw-overflow-hidden tw-flex-shrink-0 tw-bg-gray-100 tw-flex tw-items-center tw-justify-center">
+                    {clinic.image && typeof clinic.image === 'string'
+                      ? <img src={CommonUtils.decodeBase64Image(clinic.image)} alt={clinic.name} className="tw-w-full tw-h-full tw-object-cover" />
+                      : <Building2 size={24} className="tw-text-gray-400" />
+                    }
+                  </div>
+                  <div className="tw-flex-1 tw-min-w-0">
+                    <h4 className="tw-font-semibold tw-text-text-main tw-text-sm">{clinic.name}</h4>
+                    <p className="tw-text-xs tw-text-text-sub tw-mt-0.5 tw-flex tw-items-center tw-gap-1">
+                      <MapPin size={12} className="tw-text-gray-400" /> {clinic.address}
+                    </p>
+                  </div>
+                  <div className="tw-flex tw-items-center tw-gap-1 tw-flex-shrink-0">
+                    <button className="tw-p-2 tw-rounded-lg tw-text-blue-500 hover:tw-bg-blue-50 tw-transition-colors tw-border-0 tw-bg-transparent tw-cursor-pointer" title={intl.formatMessage({ id: 'admin.manage.clinic.btn-edit' })} onClick={() => handleEdit(clinic)}>
+                      <Pencil size={16} />
+                    </button>
+                    <button className="tw-p-2 tw-rounded-lg tw-text-red-400 hover:tw-bg-red-50 tw-transition-colors tw-border-0 tw-bg-transparent tw-cursor-pointer" title={intl.formatMessage({ id: 'admin.manage.clinic.btn-delete' })} onClick={() => handleDeleteClinic(clinic)}>
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
-                <div className="tw-flex-1 tw-min-w-0">
-                  <h4 className="tw-font-semibold tw-text-text-main tw-text-sm">{clinic.name}</h4>
-                  <p className="tw-text-xs tw-text-text-sub tw-mt-0.5 tw-flex tw-items-center tw-gap-1">
-                    <MapPin size={12} className="tw-text-gray-400" /> {clinic.address}
-                  </p>
-                </div>
-                <div className="tw-flex tw-items-center tw-gap-1 tw-flex-shrink-0">
-                  <button className="tw-p-2 tw-rounded-lg tw-text-blue-500 hover:tw-bg-blue-50 tw-transition-colors tw-border-0 tw-bg-transparent tw-cursor-pointer" title={intl.formatMessage({ id: 'admin.manage.clinic.btn-edit' })} onClick={() => handleEdit(clinic)}>
-                    <Pencil size={16} />
-                  </button>
-                  <button className="tw-p-2 tw-rounded-lg tw-text-red-400 hover:tw-bg-red-50 tw-transition-colors tw-border-0 tw-bg-transparent tw-cursor-pointer" title={intl.formatMessage({ id: 'admin.manage.clinic.btn-delete' })} onClick={() => handleDeleteClinic(clinic)}>
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
       </div>
     </div>
   );

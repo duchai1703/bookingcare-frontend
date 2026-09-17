@@ -136,26 +136,26 @@ const SpecialtyManage = () => {
       {/* ===== SPECIALTY GRID ===== */}
       <div className="tw-grid tw-grid-cols-2 md:tw-grid-cols-3 lg:tw-grid-cols-4 tw-gap-4">
         {isLoading ? <p className="tw-col-span-full tw-text-center tw-py-8 tw-text-text-sub"><FormattedMessage id="admin.manage.specialty.loading" /></p> :
-         specialties.length === 0 ? <p className="tw-col-span-full tw-text-center tw-py-12 tw-text-text-light"><FormattedMessage id="admin.manage.specialty.no-data" /></p> :
-         specialties.map((spec) => (
-          <div key={spec.id} className="tw-bg-white tw-rounded-2xl tw-shadow-card tw-p-5 tw-text-center hover:tw-shadow-lg tw-transition-all tw-group">
-            <div className="tw-w-16 tw-h-16 tw-rounded-full tw-overflow-hidden tw-mx-auto tw-mb-3 tw-bg-gray-100 tw-flex tw-items-center tw-justify-center">
-              {spec.image && typeof spec.image === 'string'
-                ? <img src={CommonUtils.decodeBase64Image(spec.image)} alt={spec.name} className="tw-w-full tw-h-full tw-object-cover" />
-                : <Microscope size={24} className="tw-text-gray-400" />
-              }
-            </div>
-            <h5 className="tw-font-semibold tw-text-text-main tw-text-sm tw-mb-3 tw-truncate">{spec.name}</h5>
-            <div className="tw-flex tw-justify-center tw-gap-1 tw-opacity-0 group-hover:tw-opacity-100 tw-transition-opacity">
-              <button className="tw-p-2 tw-rounded-lg tw-text-blue-500 hover:tw-bg-blue-50 tw-transition-colors tw-border-0 tw-bg-transparent tw-cursor-pointer" onClick={() => handleEdit(spec)} title={intl.formatMessage({ id: 'common.edit' })}>
-                <Pencil size={15} />
-              </button>
-              <button className="tw-p-2 tw-rounded-lg tw-text-red-400 hover:tw-bg-red-50 tw-transition-colors tw-border-0 tw-bg-transparent tw-cursor-pointer" onClick={() => handleDeleteSpec(spec)} title={intl.formatMessage({ id: 'common.delete' })}>
-                <Trash2 size={15} />
-              </button>
-            </div>
-          </div>
-        ))}
+          specialties.length === 0 ? <p className="tw-col-span-full tw-text-center tw-py-12 tw-text-text-light"><FormattedMessage id="admin.manage.specialty.no-data" /></p> :
+            specialties.map((spec) => (
+              <div key={spec.id} className="tw-bg-white tw-rounded-2xl tw-shadow-card tw-p-5 tw-text-center hover:tw-shadow-lg tw-transition-all tw-group">
+                <div className="tw-w-16 tw-h-16 tw-rounded-full tw-overflow-hidden tw-mx-auto tw-mb-3 tw-bg-gray-100 tw-flex tw-items-center tw-justify-center">
+                  {spec.image && typeof spec.image === 'string'
+                    ? <img src={CommonUtils.decodeBase64Image(spec.image)} alt={spec.name} className="tw-w-full tw-h-full tw-object-cover" />
+                    : <Microscope size={24} className="tw-text-gray-400" />
+                  }
+                </div>
+                <h5 className="tw-font-semibold tw-text-text-main tw-text-sm tw-mb-3 tw-truncate">{spec.name}</h5>
+                <div className="tw-flex tw-justify-center tw-gap-1 tw-opacity-0 group-hover:tw-opacity-100 tw-transition-opacity">
+                  <button className="tw-p-2 tw-rounded-lg tw-text-blue-500 hover:tw-bg-blue-50 tw-transition-colors tw-border-0 tw-bg-transparent tw-cursor-pointer" onClick={() => handleEdit(spec)} title={intl.formatMessage({ id: 'common.edit' })}>
+                    <Pencil size={15} />
+                  </button>
+                  <button className="tw-p-2 tw-rounded-lg tw-text-red-400 hover:tw-bg-red-50 tw-transition-colors tw-border-0 tw-bg-transparent tw-cursor-pointer" onClick={() => handleDeleteSpec(spec)} title={intl.formatMessage({ id: 'common.delete' })}>
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              </div>
+            ))}
       </div>
     </div>
   );

@@ -3,16 +3,21 @@
 // Thêm type: 'group' để Navigator.jsx render group label
 import { path } from '../../utils/constants';
 
-// ===== ADMIN MENU (R1) — phân nhóm 5 nhóm =====
+// ===== ADMIN MENU (R1) — phân nhóm 4 nhóm Master-Detail tinh gọn =====
 export const adminMenu = [
-  // ── Nhóm 1: Tổng quan & Báo cáo điều hành ──
+  // ── Nhóm 1: Tổng quan & Báo cáo điều hành (Master - Detail) ──
   { type: 'group', label: 'Báo cáo & Phân tích' },
-  { name: 'menu.admin.dashboard',             link: '/system/dashboard' },
-  { name: 'menu.admin.analytics-bookings',    link: path.ANALYTICS_BOOKINGS },
-  { name: 'menu.admin.analytics-revenue',     link: path.ANALYTICS_REVENUE },
-  { name: 'menu.admin.analytics-doctors',     link: path.ANALYTICS_DOCTORS },
-  { name: 'menu.admin.analytics-patients',    link: path.ANALYTICS_PATIENTS },
-  { name: 'menu.admin.analytics-specialties', link: path.ANALYTICS_SPECIALTIES },
+  {
+    name: 'menu.admin.dashboard',
+    link: '/system/dashboard',
+    subMenus: [
+      { name: 'menu.admin.analytics-bookings',    link: path.ANALYTICS_BOOKINGS },
+      { name: 'menu.admin.analytics-revenue',     link: path.ANALYTICS_REVENUE },
+      { name: 'menu.admin.analytics-doctors',     link: path.ANALYTICS_DOCTORS },
+      { name: 'menu.admin.analytics-patients',    link: path.ANALYTICS_PATIENTS },
+      { name: 'menu.admin.analytics-specialties', link: path.ANALYTICS_SPECIALTIES },
+    ],
+  },
 
   // ── Nhóm 2: Quản trị Vận hành & Bệnh nhân ──
   { type: 'group', label: 'Vận hành Y tế' },

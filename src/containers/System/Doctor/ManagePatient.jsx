@@ -13,7 +13,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { getListPatientForDoctor, cancelBooking } from '../../../services/doctorService';
 import { processLogout } from '../../../redux/slices/userSlice';
 import { LANGUAGES, BOOKING_STATUS } from '../../../utils/constants';
-import RemedyModal     from './RemedyModal';
+import RemedyModal from './RemedyModal';
 import MedicalInfoModal from './MedicalInfoModal'; // [Phase D.5]
 import './ManagePatient.scss';
 

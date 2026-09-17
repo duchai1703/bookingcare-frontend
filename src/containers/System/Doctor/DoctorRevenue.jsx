@@ -5,12 +5,12 @@ import { useSelector } from 'react-redux';
 import { getDoctorRevenue } from '../../../services/doctorService';
 import './DoctorRevenue.scss';
 
-const MONTHS = ['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'];
+const MONTHS = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'];
 
 const DoctorRevenue = () => {
   const currentYear = new Date().getFullYear();
-  const [year, setYear]   = useState(currentYear);
-  const [data, setData]   = useState({ monthly: [], total: 0 });
+  const [year, setYear] = useState(currentYear);
+  const [data, setData] = useState({ monthly: [], total: 0 });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {

@@ -51,7 +51,7 @@ const ScheduleManage = () => {
       fetchDoctorList(controller.signal);
       return () => controller.abort();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDoctor]);
 
   useEffect(() => {
@@ -63,7 +63,7 @@ const ScheduleManage = () => {
       setExistingSchedules([]);
       setSelectedTimes([]);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDoctorId, selectedDate]);
 
   const fetchDoctorList = async (signal) => {

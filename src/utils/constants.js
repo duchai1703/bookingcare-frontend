@@ -87,6 +87,7 @@ export const path = {
   SPECIALTY_DOCTOR_BRIDGE: '/clinics/:clinicId/specialties/:specialtyId/doctors',
 };
 
+
 // ===== ALLCODE TYPES — SRS Section 4.2 =====
 export const ALLCODE_TYPES = {
   ROLE: 'ROLE',

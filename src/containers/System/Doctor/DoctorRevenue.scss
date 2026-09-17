@@ -9,8 +9,16 @@
     align-items: flex-start;
     margin-bottom: 24px;
 
-    h2 { margin: 0 0 4px; font-size: 1.4rem; }
-    .subtitle { color: #888; font-size: 0.85rem; margin: 0; }
+    h2 {
+      margin: 0 0 4px;
+      font-size: 1.4rem;
+    }
+
+    .subtitle {
+      color: #888;
+      font-size: 0.85rem;
+      margin: 0;
+    }
 
     .year-select {
       padding: 8px 14px;
@@ -19,7 +27,11 @@
       background: #fff;
       font-size: 0.95rem;
       cursor: pointer;
-      &:focus { outline: none; border-color: #45c3d2; }
+
+      &:focus {
+        outline: none;
+        border-color: #45c3d2;
+      }
     }
   }
 
@@ -33,17 +45,41 @@
       background: #fff;
       border-radius: 12px;
       padding: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
       display: flex;
       flex-direction: column;
       gap: 8px;
 
-      .card-label { font-size: 0.8rem; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-      .card-value { font-size: 1.5rem; font-weight: 700; color: #1a1a2e; small { font-size: 0.75rem; color: #888; } }
+      .card-label {
+        font-size: 0.8rem;
+        color: #888;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
 
-      &.card--total { border-left: 4px solid #45c3d2; }
-      &.card--count { border-left: 4px solid #6c63ff; }
-      &.card--avg   { border-left: 4px solid #ffa726; }
+      .card-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1a1a2e;
+
+        small {
+          font-size: 0.75rem;
+          color: #888;
+        }
+      }
+
+      &.card--total {
+        border-left: 4px solid #45c3d2;
+      }
+
+      &.card--count {
+        border-left: 4px solid #6c63ff;
+      }
+
+      &.card--avg {
+        border-left: 4px solid #ffa726;
+      }
     }
   }
 
@@ -58,7 +94,7 @@
     background: #fff;
     border-radius: 12px;
     padding: 24px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
     margin-bottom: 24px;
 
     .chart-bars {
@@ -76,7 +112,10 @@
       gap: 6px;
       position: relative;
 
-      &:hover .bar-tooltip { opacity: 1; transform: translateY(-4px); }
+      &:hover .bar-tooltip {
+        opacity: 1;
+        transform: translateY(-4px);
+      }
 
       .bar-tooltip {
         position: absolute;
@@ -96,7 +135,10 @@
         flex-direction: column;
         gap: 2px;
         z-index: 10;
-        strong { font-size: 0.85rem; }
+
+        strong {
+          font-size: 0.85rem;
+        }
       }
 
       .bar-wrap {
@@ -130,7 +172,7 @@
     background: #fff;
     border-radius: 12px;
     padding: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
     overflow-x: auto;
   }
 
@@ -153,13 +195,26 @@
       border-bottom: 1px solid #f0f0f0;
     }
 
-    .row--active td { color: #1a1a2e; }
-    .row--active td:last-child { color: #45c3d2; font-weight: 600; }
+    .row--active td {
+      color: #1a1a2e;
+    }
+
+    .row--active td:last-child {
+      color: #45c3d2;
+      font-weight: 600;
+    }
 
     .row--total {
       background: #f8f9fa;
-      td { border-top: 2px solid #e0e0e0; font-weight: 700; }
-      td:last-child { color: #45c3d2; }
+
+      td {
+        border-top: 2px solid #e0e0e0;
+        font-weight: 700;
+      }
+
+      td:last-child {
+        color: #45c3d2;
+      }
     }
   }
 }

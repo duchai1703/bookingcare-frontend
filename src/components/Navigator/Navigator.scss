@@ -75,6 +75,125 @@ $primary: #45c3d2;
     }
   }
 
+  // Master-Detail Submenu Row
+  .nav-master-row {
+    display: flex;
+    align-items: center;
+    position: relative;
+
+    .master-link {
+      flex: 1;
+    }
+
+    .btn-submenu-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      margin-right: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      color: rgba(255, 255, 255, 0.6);
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: rgba(69, 195, 210, 0.2);
+        color: #fff;
+        border-color: rgba(69, 195, 210, 0.4);
+      }
+
+      &.expanded {
+        background: rgba(69, 195, 210, 0.15);
+        color: $primary;
+      }
+    }
+  }
+
+  .nav-item.child-active {
+    .master-link:not(.active) {
+      background: rgba(69, 195, 210, 0.08);
+      color: rgba(255, 255, 255, 0.9);
+    }
+  }
+
+  // Nested Sub-reports List (Tree indentation)
+  .nav-sub-list {
+    list-style: none;
+    margin: 4px 0 6px 20px;
+    padding: 0 0 0 10px;
+    border-left: 1.5px solid rgba(69, 195, 210, 0.25);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    animation: fadeInSubmenu 0.2s ease;
+
+    .nav-sub-item {
+      margin: 0;
+    }
+
+    .nav-sub-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 10px;
+      border-radius: 6px;
+      text-decoration: none;
+      color: rgba(255, 255, 255, 0.65);
+      font-size: 0.82rem;
+      transition: all 0.2s ease;
+
+      .nav-sub-icon {
+        width: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0.75;
+      }
+
+      .nav-sub-label {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      &:hover {
+        background: rgba(69, 195, 210, 0.12);
+        color: $primary;
+        transform: translateX(2px);
+
+        .nav-sub-icon {
+          opacity: 1;
+        }
+      }
+
+      &.active {
+        background: rgba(69, 195, 210, 0.22);
+        color: #45c3d2;
+        font-weight: 600;
+        border-left: 2px solid $primary;
+
+        .nav-sub-icon {
+          opacity: 1;
+          color: $primary;
+        }
+      }
+    }
+  }
+
+  @keyframes fadeInSubmenu {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   .nav-footer {
     padding: 16px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);

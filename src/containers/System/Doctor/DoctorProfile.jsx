@@ -9,20 +9,20 @@ import { getAllClinic } from '../../../services/clinicService';
 import './DoctorProfile.scss';
 
 const DoctorProfile = () => {
-  const [profile, setProfile]     = useState(null);
-  const [form, setForm]           = useState({});
-  const [loading, setLoading]     = useState(true);
-  const [saving, setSaving]       = useState(false);
-  const [success, setSuccess]     = useState('');
-  const [error, setError]         = useState('');
-  const fileInputRef              = useRef(null);
+  const [profile, setProfile] = useState(null);
+  const [form, setForm] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [success, setSuccess] = useState('');
+  const [error, setError] = useState('');
+  const fileInputRef = useRef(null);
 
   // Lookup data for dropdowns
   const [specialties, setSpecialties] = useState([]);
-  const [clinics, setClinics]         = useState([]);
-  const [prices, setPrices]           = useState([]);
-  const [provinces, setProvinces]     = useState([]);
-  const [payments, setPayments]       = useState([]);
+  const [clinics, setClinics] = useState([]);
+  const [prices, setPrices] = useState([]);
+  const [provinces, setProvinces] = useState([]);
+  const [payments, setPayments] = useState([]);
 
   // Load profile + all dropdown data in parallel
   useEffect(() => {
@@ -40,30 +40,30 @@ const DoctorProfile = () => {
 
         // axiosConfig interceptor returns response.data directly → res.errCode (flat)
         if (specialtyRes?.errCode === 0) setSpecialties(specialtyRes.data || []);
-        if (clinicRes?.errCode    === 0) setClinics(clinicRes.data        || []);
-        if (priceRes?.errCode     === 0) setPrices(priceRes.data          || []);
-        if (provinceRes?.errCode  === 0) setProvinces(provinceRes.data    || []);
-        if (paymentRes?.errCode   === 0) setPayments(paymentRes.data      || []);
+        if (clinicRes?.errCode === 0) setClinics(clinicRes.data || []);
+        if (priceRes?.errCode === 0) setPrices(priceRes.data || []);
+        if (provinceRes?.errCode === 0) setProvinces(provinceRes.data || []);
+        if (paymentRes?.errCode === 0) setPayments(paymentRes.data || []);
 
         // Load doctor profile
         if (profileRes?.errCode === 0) {
           const d = profileRes.data;
           setProfile(d);
           setForm({
-            firstName:       d.firstName       || '',
-            lastName:        d.lastName        || '',
-            address:         d.address         || '',
-            phoneNumber:     d.phoneNumber     || '',
-            description:     d.doctorInfoData?.description     || '',
+            firstName: d.firstName || '',
+            lastName: d.lastName || '',
+            address: d.address || '',
+            phoneNumber: d.phoneNumber || '',
+            description: d.doctorInfoData?.description || '',
             contentMarkdown: d.doctorInfoData?.contentMarkdown || '',
-            image:           d.image           || null,
+            image: d.image || null,
             // Professional fields
-            specialtyId:     d.doctorInfoData?.specialtyId  || '',
-            clinicId:        d.doctorInfoData?.clinicId     || '',
-            priceId:         d.doctorInfoData?.priceId      || '',
-            provinceId:      d.doctorInfoData?.provinceId   || '',
-            paymentId:       d.doctorInfoData?.paymentId    || '',
-            note:            d.doctorInfoData?.note         || '',
+            specialtyId: d.doctorInfoData?.specialtyId || '',
+            clinicId: d.doctorInfoData?.clinicId || '',
+            priceId: d.doctorInfoData?.priceId || '',
+            provinceId: d.doctorInfoData?.provinceId || '',
+            paymentId: d.doctorInfoData?.paymentId || '',
+            note: d.doctorInfoData?.note || '',
           });
         }
       } catch (err) {
@@ -123,7 +123,7 @@ const DoctorProfile = () => {
       <h2>👤 Hồ sơ cá nhân</h2>
 
       {success && <div className="alert alert--success">{success}</div>}
-      {error   && <div className="alert alert--error">{error}</div>}
+      {error && <div className="alert alert--error">{error}</div>}
 
       <div className="dp-layout">
         {/* ── Avatar & Readonly info ── */}
@@ -136,9 +136,9 @@ const DoctorProfile = () => {
             {avatarSrc
               ? <img src={avatarSrc} alt="Avatar" />
               : <div className="dp-avatar-placeholder">
-                  <span>🩺</span>
-                  <small>Nhấn để thêm ảnh</small>
-                </div>
+                <span>🩺</span>
+                <small>Nhấn để thêm ảnh</small>
+              </div>
             }
             <div className="dp-avatar-overlay">📷 Đổi ảnh</div>
           </div>

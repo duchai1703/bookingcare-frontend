@@ -9,8 +9,16 @@
     align-items: flex-start;
     margin-bottom: 20px;
 
-    h2 { margin: 0 0 4px; font-size: 1.4rem; }
-    p  { margin: 0; color: #888; font-size: 0.85rem; }
+    h2 {
+      margin: 0 0 4px;
+      font-size: 1.4rem;
+    }
+
+    p {
+      margin: 0;
+      color: #888;
+      font-size: 0.85rem;
+    }
 
     .btn-add {
       padding: 10px 20px;
@@ -23,7 +31,10 @@
       font-weight: 600;
       white-space: nowrap;
       transition: background 0.2s;
-      &:hover { background: #2a9bb5; }
+
+      &:hover {
+        background: #2a9bb5;
+      }
     }
   }
 
@@ -32,8 +43,18 @@
     border-radius: 8px;
     margin-bottom: 14px;
     font-size: 0.85rem;
-    &--success { background: #f0fff4; border: 1px solid #68d391; color: #276749; }
-    &--error   { background: #fff5f5; border: 1px solid #fc8181; color: #c53030; }
+
+    &--success {
+      background: #f0fff4;
+      border: 1px solid #68d391;
+      color: #276749;
+    }
+
+    &--error {
+      background: #fff5f5;
+      border: 1px solid #fc8181;
+      color: #c53030;
+    }
   }
 
   .cm-filters {
@@ -42,17 +63,24 @@
     margin-bottom: 16px;
     align-items: center;
 
-    select, input {
+    select,
+    input {
       padding: 8px 12px;
       border: 1.5px solid #e0e0e0;
       border-radius: 8px;
       font-size: 0.85rem;
       background: #fff;
       transition: border-color 0.2s;
-      &:focus { outline: none; border-color: #45c3d2; }
+
+      &:focus {
+        outline: none;
+        border-color: #45c3d2;
+      }
     }
 
-    input { min-width: 260px; }
+    input {
+      min-width: 260px;
+    }
 
     .btn-search {
       padding: 8px 16px;
@@ -62,7 +90,12 @@
       font-size: 0.85rem;
       cursor: pointer;
       transition: all 0.2s;
-      &:hover { background: #45c3d2; color: #fff; border-color: #45c3d2; }
+
+      &:hover {
+        background: #45c3d2;
+        color: #fff;
+        border-color: #45c3d2;
+      }
     }
   }
 
@@ -74,12 +107,23 @@
     margin-bottom: 20px;
     animation: fadeIn 0.2s ease;
 
-    h4 { margin: 0 0 16px; font-size: 1rem; color: #333; }
+    h4 {
+      margin: 0 0 16px;
+      font-size: 1rem;
+      color: #333;
+    }
   }
 
   @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-6px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .cm-form-grid {
@@ -93,11 +137,19 @@
     flex-direction: column;
     gap: 5px;
 
-    &.full-width { grid-column: 1 / -1; }
+    &.full-width {
+      grid-column: 1 / -1;
+    }
 
-    label { font-size: 0.8rem; font-weight: 600; color: #555; }
+    label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #555;
+    }
 
-    input, select, textarea {
+    input,
+    select,
+    textarea {
       border: 1.5px solid #e0e0e0;
       border-radius: 8px;
       padding: 9px 12px;
@@ -105,9 +157,16 @@
       font-family: inherit;
       background: #fff;
       transition: border-color 0.2s;
-      &:focus { outline: none; border-color: #45c3d2; }
+
+      &:focus {
+        outline: none;
+        border-color: #45c3d2;
+      }
     }
-    textarea { resize: vertical; }
+
+    textarea {
+      resize: vertical;
+    }
   }
 
   .form-actions {
@@ -124,7 +183,10 @@
       cursor: pointer;
       font-size: 0.85rem;
       transition: all 0.2s;
-      &:hover { background: #f0f0f0; }
+
+      &:hover {
+        background: #f0f0f0;
+      }
     }
 
     .btn-save {
@@ -137,7 +199,10 @@
       font-size: 0.85rem;
       font-weight: 600;
       transition: background 0.2s;
-      &:hover { background: #2a9bb5; }
+
+      &:hover {
+        background: #2a9bb5;
+      }
     }
   }
 
@@ -151,7 +216,7 @@
   .cm-table-wrap {
     background: #fff;
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     overflow: hidden;
     overflow-x: auto;
   }
@@ -161,7 +226,9 @@
     border-collapse: collapse;
     font-size: 0.85rem;
 
-    thead tr { background: #f8f9fa; }
+    thead tr {
+      background: #f8f9fa;
+    }
 
     th {
       padding: 12px 16px;
@@ -178,7 +245,9 @@
       vertical-align: middle;
     }
 
-    tbody tr:hover { background: #f9fffe; }
+    tbody tr:hover {
+      background: #f9fffe;
+    }
 
     code {
       background: #f0f0f0;
@@ -200,11 +269,18 @@
     .status {
       font-size: 0.8rem;
       font-weight: 500;
-      &--active   { color: #38a169; }
-      &--inactive { color: #a0aec0; }
+
+      &--active {
+        color: #38a169;
+      }
+
+      &--inactive {
+        color: #a0aec0;
+      }
     }
 
-    .btn-edit, .btn-delete {
+    .btn-edit,
+    .btn-delete {
       background: none;
       border: none;
       cursor: pointer;
@@ -213,7 +289,13 @@
       font-size: 1rem;
       transition: background 0.2s;
     }
-    .btn-edit:hover   { background: #e8f4f8; }
-    .btn-delete:hover { background: #fff5f5; }
+
+    .btn-edit:hover {
+      background: #e8f4f8;
+    }
+
+    .btn-delete:hover {
+      background: #fff5f5;
+    }
   }
 }
