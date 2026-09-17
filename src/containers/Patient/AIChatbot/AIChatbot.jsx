@@ -325,9 +325,9 @@ const AIChatbot = memo(() => {
                       const nextState = prev.map((m) =>
                         m.id === aiMsgId
                           ? {
-                              ...m,
-                              text: parsed.text || 'Lỗi hệ thống.',
-                            }
+                            ...m,
+                            text: parsed.text || 'Lỗi hệ thống.',
+                          }
                           : m
                       );
                       latestMessagesRef.current = nextState;
@@ -381,11 +381,11 @@ const AIChatbot = memo(() => {
               prev.map((m) =>
                 m.id === aiMsgId
                   ? {
-                      ...m,
-                      text:
-                        m.text ||
-                        'Không thể kết nối AI. Vui lòng thử lại.',
-                    }
+                    ...m,
+                    text:
+                      m.text ||
+                      'Không thể kết nối AI. Vui lòng thử lại.',
+                  }
                   : m
               )
             );

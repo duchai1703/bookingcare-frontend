@@ -7,22 +7,22 @@ import './MedicalInfoModal.scss';
 
 const MedicalInfoModal = ({ booking, onClose, onSaved }) => {
   const [form, setForm] = useState({
-    symptoms:         booking?.symptoms         || '',
-    clinicalNotes:    booking?.clinicalNotes    || '',
-    diagnosis:        booking?.diagnosis        || '',
-    followUpDate:     booking?.followUpDate     || '',
+    symptoms: booking?.symptoms || '',
+    clinicalNotes: booking?.clinicalNotes || '',
+    diagnosis: booking?.diagnosis || '',
+    followUpDate: booking?.followUpDate || '',
     careInstructions: booking?.careInstructions || '',
   });
-  const [medicines, setMedicines]       = useState(
+  const [medicines, setMedicines] = useState(
     (booking?.bookingMedicines || []).map(bm => ({
       medicineId: bm.medicineId || '',
-      quantity:   bm.quantity   || 1,
-      dosage:     bm.dosage     || '',
+      quantity: bm.quantity || 1,
+      dosage: bm.dosage || '',
     }))
   );
   const [allMedicines, setAllMedicines] = useState([]);
-  const [saving, setSaving]             = useState(false);
-  const [error, setError]               = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     getAllMedicines({ isActive: true })

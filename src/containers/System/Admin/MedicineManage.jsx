@@ -7,13 +7,13 @@ import './CatalogManage.scss';
 const emptyForm = { name: '', activeIngredient: '', unit: '', dosageForm: '', concentration: '', isActive: true };
 
 const MedicineManage = () => {
-  const [items, setItems]       = useState([]);
-  const [loading, setLoading]   = useState(false);
-  const [form, setForm]         = useState(emptyForm);
-  const [editId, setEditId]     = useState(null);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState(emptyForm);
+  const [editId, setEditId] = useState(null);
   const [showForm, setShowForm] = useState(false);
-  const [search, setSearch]     = useState('');
-  const [msg, setMsg]           = useState({ type: '', text: '' });
+  const [search, setSearch] = useState('');
+  const [msg, setMsg] = useState({ type: '', text: '' });
 
   const fetchItems = async () => {
     setLoading(true);
@@ -98,8 +98,8 @@ const MedicineManage = () => {
                 <tr key={item.id}>
                   <td><strong>{item.name}</strong></td>
                   <td>{item.activeIngredient || '—'}</td>
-                  <td>{item.concentration   || '—'}</td>
-                  <td>{item.unit            || '—'}</td>
+                  <td>{item.concentration || '—'}</td>
+                  <td>{item.unit || '—'}</td>
                   <td><span className={`status ${item.isActive ? 'status--active' : 'status--inactive'}`}>{item.isActive ? '● Hoạt động' : '○ Ngừng'}</span></td>
                   <td>
                     <button className="btn-edit" onClick={() => handleEdit(item)}>✏️</button>

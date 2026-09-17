@@ -5,9 +5,14 @@ import { path } from '../../utils/constants';
 
 // ===== ADMIN MENU (R1) — phân nhóm 5 nhóm =====
 export const adminMenu = [
-  // ── Nhóm 1: Tổng quan ──
-  { type: 'group', label: 'Tổng quan' },
-  { name: 'menu.admin.dashboard',        link: '/system/dashboard' },
+  // ── Nhóm 1: Tổng quan & Báo cáo điều hành ──
+  { type: 'group', label: 'Báo cáo & Phân tích' },
+  { name: 'menu.admin.dashboard',             link: '/system/dashboard' },
+  { name: 'menu.admin.analytics-bookings',    link: path.ANALYTICS_BOOKINGS },
+  { name: 'menu.admin.analytics-revenue',     link: path.ANALYTICS_REVENUE },
+  { name: 'menu.admin.analytics-doctors',     link: path.ANALYTICS_DOCTORS },
+  { name: 'menu.admin.analytics-patients',    link: path.ANALYTICS_PATIENTS },
+  { name: 'menu.admin.analytics-specialties', link: path.ANALYTICS_SPECIALTIES },
 
   // ── Nhóm 2: Người dùng ──
   { type: 'group', label: 'Người dùng' },

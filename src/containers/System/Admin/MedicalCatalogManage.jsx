@@ -10,23 +10,23 @@ import {
 import './CatalogManage.scss';
 
 const CATALOG_TYPES = [
-  { value: 'xray',       label: 'X-Quang' },
-  { value: 'mri',        label: 'MRI' },
+  { value: 'xray', label: 'X-Quang' },
+  { value: 'mri', label: 'MRI' },
   { value: 'ultrasound', label: 'Siêu âm' },
   { value: 'blood_test', label: 'Xét nghiệm máu' },
   { value: 'urine_test', label: 'Xét nghiệm nước tiểu' },
-  { value: 'other',      label: 'Khác' },
+  { value: 'other', label: 'Khác' },
 ];
 
 const emptyForm = { name: '', code: '', type: 'other', description: '', isActive: true };
 
 const MedicalCatalogManage = () => {
-  const [items, setItems]       = useState([]);
-  const [loading, setLoading]   = useState(false);
-  const [form, setForm]         = useState(emptyForm);
-  const [editId, setEditId]     = useState(null);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState(emptyForm);
+  const [editId, setEditId] = useState(null);
   const [showForm, setShowForm] = useState(false);
-  const [msg, setMsg]           = useState({ type: '', text: '' });
+  const [msg, setMsg] = useState({ type: '', text: '' });
   const [filterType, setFilterType] = useState('');
 
   const fetchItems = async () => {

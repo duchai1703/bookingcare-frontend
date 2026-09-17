@@ -44,6 +44,13 @@ import MedicalCatalogManage from './System/Admin/MedicalCatalogManage';
 import MedicineManage       from './System/Admin/MedicineManage';
 import SystemSettings       from './System/Admin/SystemSettings';
 
+// [Phase E] Admin Detail Analytics pages
+import BookingAnalytics         from './System/Admin/Analytics/BookingAnalytics';
+import RevenueAnalytics         from './System/Admin/Analytics/RevenueAnalytics';
+import DoctorAnalytics          from './System/Admin/Analytics/DoctorAnalytics';
+import PatientAnalytics         from './System/Admin/Analytics/PatientAnalytics';
+import SpecialtyClinicAnalytics from './System/Admin/Analytics/SpecialtyClinicAnalytics';
+
 // [Phase 9.4] Patient Portal
 import PatientLayout from './PatientPortal/PatientLayout';
 import PatientOverview from './PatientPortal/PatientOverview';
@@ -189,6 +196,12 @@ const App = () => {
             <Route path="medical-catalog-manage"  element={<MedicalCatalogManage />} />
             <Route path="medicine-manage"          element={<MedicineManage />} />
             <Route path="system-settings"          element={<SystemSettings />} />
+            {/* [Phase E] Admin Detail Analytics pages */}
+            <Route path="analytics/bookings"            element={<BookingAnalytics />} />
+            <Route path="analytics/revenue"             element={<RevenueAnalytics />} />
+            <Route path="analytics/doctors"             element={<DoctorAnalytics />} />
+            <Route path="analytics/patients"            element={<PatientAnalytics />} />
+            <Route path="analytics/specialties-clinics" element={<SpecialtyClinicAnalytics />} />
           </Route>
         </Route>
 

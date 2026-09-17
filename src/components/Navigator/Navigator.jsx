@@ -7,27 +7,51 @@ import { FormattedMessage, useIntl } from 'react-intl';
 import { path } from '../../utils/constants';
 import { processLogout } from '../../redux/slices/userSlice';
 import { adminMenu, doctorMenu } from '../Header/MenuData';
+import {
+  LayoutDashboard,
+  CalendarCheck,
+  CircleDollarSign,
+  UserCheck,
+  Users,
+  Building2,
+  Stethoscope,
+  Calendar,
+  Layers,
+  ClipboardList,
+  Pill,
+  Settings,
+  LogOut,
+  CalendarDays,
+  User,
+  Wallet
+} from 'lucide-react';
 import './Navigator.scss';
 
-// Icon mapping cho từng menu item
+// Icon mapping cho từng menu item (Lucide icons)
 const MENU_ICONS = {
-  // Admin
-  'menu.admin.dashboard':        '📊',
-  'menu.admin.manage-user':      '👥',
-  'menu.admin.manage-doctor':    '🩺',
-  'menu.admin.manage-schedule':  '📅',
-  'menu.admin.manage-specialty': '🔬',
-  'menu.admin.manage-clinic':    '🏥',
-  // [Phase C] Admin new
-  'menu.admin.medical-catalog':  '📋',
-  'menu.admin.medicine':         '💊',
-  'menu.admin.system-settings':  '⚙️',
+  // Admin Analytics & Master
+  'menu.admin.dashboard': LayoutDashboard,
+  'menu.admin.analytics-bookings': CalendarCheck,
+  'menu.admin.analytics-revenue': CircleDollarSign,
+  'menu.admin.analytics-doctors': UserCheck,
+  'menu.admin.analytics-patients': Users,
+  'menu.admin.analytics-specialties': Building2,
+
+  // Admin Operations
+  'menu.admin.manage-user': Users,
+  'menu.admin.manage-doctor': Stethoscope,
+  'menu.admin.manage-schedule': Calendar,
+  'menu.admin.manage-specialty': Layers,
+  'menu.admin.manage-clinic': Building2,
+  'menu.admin.medical-catalog': ClipboardList,
+  'menu.admin.medicine': Pill,
+  'menu.admin.system-settings': Settings,
+
   // Doctor
-  'menu.doctor.manage-patient':  '🗓️',
-  'menu.doctor.manage-schedule': '📅',
-  // [Phase C] Doctor new
-  'menu.doctor.revenue':         '💰',
-  'menu.doctor.profile':         '👤',
+  'menu.doctor.manage-patient': CalendarDays,
+  'menu.doctor.manage-schedule': Calendar,
+  'menu.doctor.revenue': Wallet,
+  'menu.doctor.profile': User,
 };
 
 const Navigator = () => {
@@ -41,8 +65,8 @@ const Navigator = () => {
     userInfo?.roleId === 'R1'
       ? adminMenu
       : userInfo?.roleId === 'R2'
-      ? doctorMenu
-      : [];
+        ? doctorMenu
+        : [];
 
   const handleLogout = () => {
     dispatch(processLogout());
@@ -61,14 +85,17 @@ const Navigator = () => {
               </li>
             );
           }
-          // Render normal link (giữ nguyên behavior cũ)
+          const IconComponent = MENU_ICONS[item.name] || Settings;
           return (
             <li key={index} className="nav-item">
               <NavLink
                 to={item.link}
+                end={item.link === '/system/dashboard'}
                 className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
               >
-                <span className="nav-icon">{MENU_ICONS[item.name] || '⚙️'}</span>
+                <span className="nav-icon">
+                  <IconComponent size={17} strokeWidth={2} />
+                </span>
                 <span className="nav-label">
                   {formatMessage({ id: item.name })}
                 </span>
@@ -80,7 +107,7 @@ const Navigator = () => {
 
       <div className="nav-footer">
         <button className="btn-logout" onClick={handleLogout}>
-          <span>🚪</span>
+          <LogOut size={16} strokeWidth={2} />
           <span><FormattedMessage id="common.logout" /></span>
         </button>
       </div>

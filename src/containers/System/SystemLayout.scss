@@ -33,7 +33,10 @@ $sidebar-bg: #1a1a2e;
       flex-shrink: 0;
       text-decoration: none;
       transition: opacity 0.2s;
-      &:hover { opacity: 0.85; }
+
+      &:hover {
+        opacity: 0.85;
+      }
 
       .logo-icon {
         font-size: 2rem;
@@ -166,10 +169,12 @@ $sidebar-bg: #1a1a2e;
       position: fixed;
       transform: translateX(-100%);
       transition: transform 0.3s;
+
       &:not(.collapsed) {
         transform: translateX(0);
       }
     }
+
     .system-content {
       margin-left: 0;
     }

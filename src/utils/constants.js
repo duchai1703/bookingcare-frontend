@@ -71,10 +71,18 @@ export const path = {
   MEDICINE_MANAGE:        '/system/medicine-manage',
   SYSTEM_SETTINGS:        '/system/system-settings',
 
+  // [Phase E] Admin Detail Analytics pages
+  ANALYTICS_BOOKINGS:     '/system/analytics/bookings',
+  ANALYTICS_REVENUE:      '/system/analytics/revenue',
+  ANALYTICS_DOCTORS:      '/system/analytics/doctors',
+  ANALYTICS_PATIENTS:     '/system/analytics/patients',
+  ANALYTICS_SPECIALTIES:  '/system/analytics/specialties-clinics',
+
   // [Phase C] Public — Clinic → Specialty → Doctor bridge
   CLINIC_SPECIALTY_BRIDGE: '/clinics/:clinicId/specialties',
   SPECIALTY_DOCTOR_BRIDGE: '/clinics/:clinicId/specialties/:specialtyId/doctors',
 };
+
 
 // ===== ALLCODE TYPES — SRS Section 4.2 =====
 export const ALLCODE_TYPES = {

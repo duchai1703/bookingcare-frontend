@@ -69,8 +69,8 @@ const formatCurrency = (amount) => {
 
 const SystemSettings = () => {
   const [settings, setSettings] = useState([]);
-  const [editing, setEditing]   = useState({}); // { [key]: newValue }
-  const [saving, setSaving]     = useState(''); // key đang lưu, hoặc 'ALL', hoặc 'RESET'
+  const [editing, setEditing] = useState({}); // { [key]: newValue }
+  const [saving, setSaving] = useState(''); // key đang lưu, hoặc 'ALL', hoặc 'RESET'
   const [bannerMsg, setBannerMsg] = useState({ type: '', text: '' });
   const [samplePrice, setSamplePrice] = useState(300000);
   const [showConfirmReset, setShowConfirmReset] = useState(false);
