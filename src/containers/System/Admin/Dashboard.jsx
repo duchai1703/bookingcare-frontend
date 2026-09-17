@@ -338,7 +338,7 @@ const Dashboard = () => {
           {/* TIER 1: 4 EXECUTIVE KPI CARDS */}
           <section className="kpi-grid">
             {/* Card 1: Total Bookings */}
-            <div className="kpi-card">
+            <div className="kpi-card interactive" onClick={() => navigate(path.ANALYTICS_BOOKINGS)}>
               <div className="kpi-top">
                 <span className="kpi-label">{language === 'vi' ? 'Tổng lượt đặt khám' : 'Total Bookings'}</span>
                 <div className="kpi-icon-wrap">
@@ -356,10 +356,14 @@ const Dashboard = () => {
                 <span>{language === 'vi' ? 'Hoàn thành khám (S3):' : 'Completed:'}</span>
                 <strong>{kpis.completedBookings} ({kpis.completionRate}%)</strong>
               </div>
+              <div className="kpi-action-link">
+                <span>{language === 'vi' ? 'Xem chi tiết lưu lượng đặt khám' : 'View booking breakdown'}</span>
+                <ChevronRight size={14} />
+              </div>
             </div>
 
             {/* Card 2: Net Revenue */}
-            <div className="kpi-card">
+            <div className="kpi-card interactive" onClick={() => navigate(path.ANALYTICS_REVENUE)}>
               <div className="kpi-top">
                 <span className="kpi-label">{language === 'vi' ? 'Doanh thu thực nhận' : 'Net Revenue'}</span>
                 <div className="kpi-icon-wrap">
@@ -377,10 +381,14 @@ const Dashboard = () => {
                 <span>{language === 'vi' ? 'Tổng hoàn tiền (S4):' : 'Refunds:'}</span>
                 <strong>{formatCurrencyVND(kpis.refundAmount)}</strong>
               </div>
+              <div className="kpi-action-link">
+                <span>{language === 'vi' ? 'Xem chi tiết dòng tiền & hoàn tiền' : 'View cashflow & refunds'}</span>
+                <ChevronRight size={14} />
+              </div>
             </div>
 
             {/* Card 3: Doctor Capacity Utilization */}
-            <div className="kpi-card">
+            <div className="kpi-card interactive" onClick={() => navigate(path.ANALYTICS_DOCTORS)}>
               <div className="kpi-top">
                 <span className="kpi-label">{language === 'vi' ? 'Công suất Bác sĩ' : 'Doctor Utilization'}</span>
                 <div className="kpi-icon-wrap">
@@ -397,10 +405,14 @@ const Dashboard = () => {
                 <span>{language === 'vi' ? 'Slot đã đặt / Tổng mở:' : 'Slots Booked / Total:'}</span>
                 <strong>{kpis.totalOccupiedSlots} / {kpis.totalCapacitySlots}</strong>
               </div>
+              <div className="kpi-action-link">
+                <span>{language === 'vi' ? 'Xem chi tiết công suất bác sĩ' : 'View doctor capacity'}</span>
+                <ChevronRight size={14} />
+              </div>
             </div>
 
             {/* Card 4: Patient Cohort (Returning Rate) */}
-            <div className="kpi-card">
+            <div className="kpi-card interactive" onClick={() => navigate(path.ANALYTICS_PATIENTS)}>
               <div className="kpi-top">
                 <span className="kpi-label">{language === 'vi' ? 'Bệnh nhân tái khám' : 'Returning Patients'}</span>
                 <div className="kpi-icon-wrap">
@@ -416,6 +428,10 @@ const Dashboard = () => {
               <div className="kpi-subtext">
                 <span>{language === 'vi' ? 'Bệnh nhân mới lần đầu:' : 'New Patients:'}</span>
                 <strong>{kpis.newPatients} / {kpis.totalPatients}</strong>
+              </div>
+              <div className="kpi-action-link">
+                <span>{language === 'vi' ? 'Xem chi tiết hành vi bệnh nhân' : 'View patient cohorts'}</span>
+                <ChevronRight size={14} />
               </div>
             </div>
           </section>
@@ -589,9 +605,10 @@ const Dashboard = () => {
                     {language === 'vi' ? 'Bản đồ Nhiệt Giờ Cao điểm' : 'Booking Heatmap'}
                   </h2>
                 </div>
-                <span style={{ fontSize: '0.78rem', color: '#64748B' }}>
-                  {language === 'vi' ? 'Thứ trong tuần × Khung giờ' : 'DOW × Slot'}
-                </span>
+                <Link to={path.ANALYTICS_BOOKINGS} className="card-drilldown-link">
+                  <span>{language === 'vi' ? 'Xem phân bổ khung giờ' : 'View slot volume'}</span>
+                  <ChevronRight size={14} />
+                </Link>
               </div>
 
               <div style={{ overflowX: 'auto' }}>

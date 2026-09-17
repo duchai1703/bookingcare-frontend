@@ -409,6 +409,36 @@ $rose-200:  #fecdd3;
           color: $slate-700;
         }
       }
+
+      &.interactive {
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover {
+          border-color: $teal-500;
+          box-shadow: 0 4px 16px rgba(8, 127, 140, 0.12);
+          transform: translateY(-2px);
+
+          .kpi-action-link {
+            color: $teal-700;
+            gap: 6px;
+          }
+        }
+      }
+
+      .kpi-action-link {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 3px;
+        font-size: 0.76rem;
+        font-weight: 600;
+        color: $teal-600;
+        margin-top: 8px;
+        padding-top: 6px;
+        border-top: 1px solid $slate-100;
+        transition: gap 0.2s ease, color 0.2s ease;
+      }
     }
   }
 

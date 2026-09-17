@@ -1,8 +1,8 @@
 // src/containers/System/Admin/Analytics/BookingAnalytics.jsx
 // Detail Analytics: Booking Throughput, Status Breakdown & Cancellation Audits
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import moment from 'moment';
 import {
   ResponsiveContainer,
@@ -19,14 +19,12 @@ import {
 } from 'recharts';
 import {
   CalendarCheck,
-  ChevronLeft,
   ArrowLeft,
   RotateCw,
   AlertCircle,
-  Clock,
-  CheckCircle,
-  XCircle,
-  FileSpreadsheet
+  ExternalLink,
+  User,
+  AlertTriangle
 } from 'lucide-react';
 import { getBookingAnalyticsDetail } from '../../../../services/statisticService';
 import { path } from '../../../../utils/constants';
@@ -46,6 +44,10 @@ const formatCurrencyVND = (num) => {
 
 const BookingAnalytics = () => {
   const language = useSelector((state) => state.app.language);
+  const [searchParams] = useSearchParams();
+  const isCancellationTab = searchParams.get('tab') === 'cancellation';
+  const cancelSectionRef = useRef(null);
+
   const [activePreset, setActivePreset] = useState('30d');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -80,11 +82,20 @@ const BookingAnalytics = () => {
     return () => controller.abort();
   }, [fetchAnalytics]);
 
+  // Auto-scroll to cancellation audit table if opened via alert link
+  useEffect(() => {
+    if (isCancellationTab && cancelSectionRef.current) {
+      setTimeout(() => {
+        cancelSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
+    }
+  }, [isCancellationTab, data]);
+
   const statusBreakdown = data?.statusBreakdown || [];
-  const timeDistribution = data?.timeDistribution || [];
+  const timeDistribution = data?.timeDistribution || data?.timeTypeBreakdown || [];
   const cancellations = data?.cancellations || { count: 0, refundTotal: 0, avgRefundPct: 0, recentList: [] };
 
-  const totalBookings = statusBreakdown.reduce((sum, item) => sum + item.count, 0);
+  const totalBookings = statusBreakdown.reduce((sum, item) => sum + (parseInt(item.count, 10) || 0), 0);
   const completedCount = statusBreakdown.find((s) => s.statusId === 'S3')?.count || 0;
   const completionRate = totalBookings > 0 ? ((completedCount / totalBookings) * 100).toFixed(1) : 0;
 
@@ -141,6 +152,30 @@ const BookingAnalytics = () => {
         </div>
       </header>
 
+      {/* Cancellation Tab Banner Alert */}
+      {isCancellationTab && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '12px 16px',
+          background: '#FFFBEB',
+          border: '1px solid #FDE68A',
+          borderRadius: 8,
+          marginBottom: 20,
+          color: '#92400E',
+          fontSize: '0.88rem',
+          fontWeight: 600
+        }}>
+          <AlertTriangle size={18} color="#D97706" />
+          <span>
+            {language === 'vi'
+              ? 'Đang tập trung xem: Nhật ký Hủy lịch & Đối soát Hoàn tiền theo cảnh báo điều hành'
+              : 'Focused View: Cancellation & Refund Audit Log triggered from operational alert'}
+          </span>
+        </div>
+      )}
+
       {/* KPI Strip */}
       <div className="detail-kpi-strip">
         <div className="detail-kpi-card">
@@ -191,7 +226,7 @@ const BookingAnalytics = () => {
                 <Pie
                   data={statusBreakdown}
                   dataKey="count"
-                  nameKey="nameVi"
+                  nameKey={language === 'vi' ? 'nameVi' : 'nameEn'}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
@@ -205,7 +240,7 @@ const BookingAnalytics = () => {
                 <Tooltip
                   formatter={(val, name, item) => [
                     `${val} ca (${totalBookings > 0 ? ((val / totalBookings) * 100).toFixed(1) : 0}%)`,
-                    item.payload.nameVi,
+                    item.payload.nameVi || item.payload.nameEn,
                   ]}
                 />
                 <Legend />
@@ -241,7 +276,12 @@ const BookingAnalytics = () => {
       </div>
 
       {/* Table: Cancellation Audit & Refund Log */}
-      <div className="analytics-card">
+      <div
+        ref={cancelSectionRef}
+        id="cancellation-audit-section"
+        className="analytics-card"
+        style={isCancellationTab ? { border: '2px solid #F59E0B', boxShadow: '0 4px 16px rgba(245, 158, 11, 0.15)' } : {}}
+      >
         <div className="card-title-row">
           <h2 className="card-title">
             {language === 'vi' ? 'Nhật ký Hủy Lịch & Đối soát Hoàn tiền' : 'Cancellation & Refund Audit Log'}
@@ -263,13 +303,16 @@ const BookingAnalytics = () => {
                   <th>Tỷ lệ hoàn</th>
                   <th>Tiền hoàn lại</th>
                   <th>Thời gian hủy</th>
+                  <th>Thao tác</th>
                 </tr>
               </thead>
               <tbody>
                 {cancellations.recentList.map((item) => (
                   <tr key={item.id}>
                     <td style={{ fontWeight: 700 }}>#{item.id}</td>
-                    <td>{item.patientName || 'Bệnh nhân'}</td>
+                    <td>
+                      <div style={{ fontWeight: 600, color: '#0F172A' }}>{item.patientName || 'Bệnh nhân'}</div>
+                    </td>
                     <td>{item.doctorName || 'Bác sĩ'}</td>
                     <td>{formatCurrencyVND(item.bookingPrice)}</td>
                     <td>
@@ -286,6 +329,28 @@ const BookingAnalytics = () => {
                     </td>
                     <td style={{ fontSize: '0.8rem', color: '#64748B' }}>
                       {item.cancelledAt ? moment(item.cancelledAt).format('HH:mm DD/MM/YYYY') : '—'}
+                    </td>
+                    <td>
+                      <Link
+                        to={item.patientId ? `/system/patients/${item.patientId}` : path.PATIENT_MANAGE}
+                        className="btn-table-action"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          fontSize: '0.78rem',
+                          color: '#087F8C',
+                          fontWeight: 600,
+                          textDecoration: 'none',
+                          padding: '4px 8px',
+                          background: '#E6FFFA',
+                          borderRadius: 6,
+                          border: '1px solid #B2F5EA'
+                        }}
+                      >
+                        <User size={12} />
+                        <span>Hồ sơ BN →</span>
+                      </Link>
                     </td>
                   </tr>
                 ))}

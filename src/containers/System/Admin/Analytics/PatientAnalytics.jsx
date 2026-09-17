@@ -250,6 +250,7 @@ const PatientAnalytics = () => {
                   <th>Tổng lượt đặt</th>
                   <th>Khám hoàn tất</th>
                   <th>Tổng chi tiêu</th>
+                  <th style={{ textAlign: 'center' }}>Thao tác</th>
                 </tr>
               </thead>
               <tbody>
@@ -259,9 +260,30 @@ const PatientAnalytics = () => {
                     <td style={{ fontWeight: 600 }}>{p.patientName}</td>
                     <td>{p.email}</td>
                     <td>{p.phoneNumber || '—'}</td>
-                    <td style={{ fontWeight: 600 }}>{p.totalBookings} ca</td>
-                    <td style={{ color: '#059669', fontWeight: 600 }}>{p.completedBookings} ca</td>
+                    <td style={{ fontWeight: 600 }}>{p.totalBookings || p.bookingCount || 0} ca</td>
+                    <td style={{ color: '#059669', fontWeight: 600 }}>{p.completedBookings || 0} ca</td>
                     <td style={{ fontWeight: 700 }}>{formatCurrencyVND(p.totalSpent)}</td>
+                    <td style={{ textAlign: 'center' }}>
+                      <Link
+                        to={`/system/patients/${p.patientId}`}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          padding: '4px 8px',
+                          background: '#F0FDFA',
+                          border: '1px solid #99F6E4',
+                          borderRadius: 6,
+                          fontSize: '0.78rem',
+                          fontWeight: 600,
+                          color: '#0F766E',
+                          textDecoration: 'none'
+                        }}
+                      >
+                        <span>Hồ sơ BN</span>
+                        <span>→</span>
+                      </Link>
+                    </td>
                   </tr>
                 ))}
               </tbody>

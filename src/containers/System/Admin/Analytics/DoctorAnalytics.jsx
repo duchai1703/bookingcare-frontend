@@ -2,17 +2,28 @@
 // Detail Analytics: Doctor Capacity, Utilization Rates & Roster Load
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import moment from 'moment';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend
+} from 'recharts';
 import {
   UserCheck,
   ArrowLeft,
   RotateCw,
-  AlertTriangle,
+  Search,
+  SlidersHorizontal,
   Calendar,
+  AlertTriangle,
   CheckCircle2,
-  Filter,
-  Search
+  Filter
 } from 'lucide-react';
 import { getDoctorCapacityDetail } from '../../../../services/statisticService';
 import { path } from '../../../../utils/constants';
@@ -20,8 +31,11 @@ import './AnalyticsShared.scss';
 
 const DoctorAnalytics = () => {
   const language = useSelector((state) => state.app.language);
+  const [searchParams] = useSearchParams();
+  const initialFilter = searchParams.get('filter') === 'low_capacity' ? 'low' : 'all';
+
   const [activePreset, setActivePreset] = useState('30d');
-  const [filterType, setFilterType] = useState('all'); // 'all', 'low', 'high'
+  const [filterType, setFilterType] = useState(initialFilter);
   const [searchTerm, setSearchTerm] = useState('');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -123,6 +137,30 @@ const DoctorAnalytics = () => {
           </button>
         </div>
       </header>
+
+      {/* Low Capacity Alert Banner */}
+      {searchParams.get('filter') === 'low_capacity' && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '12px 16px',
+          background: '#FFFBEB',
+          border: '1px solid #FDE68A',
+          borderRadius: 8,
+          marginBottom: 20,
+          color: '#92400E',
+          fontSize: '0.88rem',
+          fontWeight: 600
+        }}>
+          <AlertTriangle size={18} color="#D97706" />
+          <span>
+            {language === 'vi'
+              ? 'Đang lọc danh sách: Bác sĩ có công suất phục vụ dưới 40% cần điều phối thêm ca hoặc điều chỉnh lịch mở'
+              : 'Filtered View: Doctors with utilization below 40% requiring schedule rebalancing'}
+          </span>
+        </div>
+      )}
 
       {/* KPI Strip */}
       <div className="detail-kpi-strip">
