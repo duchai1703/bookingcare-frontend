@@ -1,6 +1,6 @@
 // src/containers/System/Admin/Analytics/BookingAnalytics.jsx
 // Detail Analytics: Booking Throughput, Status Breakdown & Cancellation Audits
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { Link, useSearchParams } from 'react-router-dom';
 import moment from 'moment';
@@ -24,7 +24,9 @@ import {
   AlertCircle,
   ExternalLink,
   User,
-  AlertTriangle
+  AlertTriangle,
+  Search,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { getBookingAnalyticsDetail } from '../../../../services/statisticService';
 import { path } from '../../../../utils/constants';
@@ -52,6 +54,11 @@ const BookingAnalytics = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Cancellation table search, filter, and sort
+  const [cancelSearch, setCancelSearch] = useState('');
+  const [refundFilter, setRefundFilter] = useState('ALL');
+  const [cancelSort, setCancelSort] = useState('date_desc');
 
   const fetchAnalytics = useCallback(async (signal) => {
     setLoading(true);
@@ -94,6 +101,42 @@ const BookingAnalytics = () => {
   const statusBreakdown = data?.statusBreakdown || [];
   const timeDistribution = data?.timeDistribution || data?.timeTypeBreakdown || [];
   const cancellations = data?.cancellations || { count: 0, refundTotal: 0, avgRefundPct: 0, recentList: [] };
+
+  const filteredCancellations = useMemo(() => {
+    let list = [...(cancellations.recentList || [])];
+
+    if (cancelSearch.trim()) {
+      const q = cancelSearch.trim().toLowerCase();
+      list = list.filter(
+        (c) =>
+          c.patientName?.toLowerCase().includes(q) ||
+          c.doctorName?.toLowerCase().includes(q) ||
+          String(c.id).includes(q)
+      );
+    }
+
+    if (refundFilter === 'HAS_REFUND') {
+      list = list.filter((c) => (c.refundAmount || 0) > 0);
+    } else if (refundFilter === 'NO_REFUND') {
+      list = list.filter((c) => (c.refundAmount || 0) === 0);
+    }
+
+    list.sort((a, b) => {
+      switch (cancelSort) {
+        case 'date_asc':
+          return (a.cancelledAt ? new Date(a.cancelledAt).getTime() : 0) - (b.cancelledAt ? new Date(b.cancelledAt).getTime() : 0);
+        case 'refund_desc':
+          return (b.refundAmount || 0) - (a.refundAmount || 0);
+        case 'price_desc':
+          return (b.bookingPrice || 0) - (a.bookingPrice || 0);
+        case 'date_desc':
+        default:
+          return (b.cancelledAt ? new Date(b.cancelledAt).getTime() : 0) - (a.cancelledAt ? new Date(a.cancelledAt).getTime() : 0);
+      }
+    });
+
+    return list;
+  }, [cancellations.recentList, cancelSearch, refundFilter, cancelSort]);
 
   const totalBookings = statusBreakdown.reduce((sum, item) => sum + (parseInt(item.count, 10) || 0), 0);
   const completedCount = statusBreakdown.find((s) => s.statusId === 'S3')?.count || 0;
@@ -287,11 +330,53 @@ const BookingAnalytics = () => {
             {language === 'vi' ? 'Nhật ký Hủy Lịch & Đối soát Hoàn tiền' : 'Cancellation & Refund Audit Log'}
           </h2>
           <span className="card-meta">
-            {cancellations.recentList?.length || 0} {language === 'vi' ? 'ca gần nhất' : 'recent cancellations'}
+            {filteredCancellations.length}/{cancellations.recentList?.length || 0} {language === 'vi' ? 'ca hủy' : 'cancellations'}
           </span>
         </div>
 
-        {cancellations.recentList && cancellations.recentList.length > 0 ? (
+        {/* Toolbar: Search, Refund Filter, Sort */}
+        <div className="table-toolbar">
+          <div className="toolbar-left">
+            <div className="search-input-wrapper">
+              <Search size={14} className="search-icon" />
+              <input
+                type="text"
+                placeholder={language === 'vi' ? 'Tìm theo tên BN, bác sĩ, mã ca...' : 'Search patient, doctor, booking ID...'}
+                value={cancelSearch}
+                onChange={(e) => setCancelSearch(e.target.value)}
+              />
+            </div>
+
+            <select
+              className="filter-select"
+              value={refundFilter}
+              onChange={(e) => setRefundFilter(e.target.value)}
+            >
+              <option value="ALL">{language === 'vi' ? 'Tất cả trạng thái hoàn' : 'All Refund Statuses'}</option>
+              <option value="HAS_REFUND">{language === 'vi' ? 'Có hoàn tiền (> 0đ)' : 'Has Refund (> 0)'}</option>
+              <option value="NO_REFUND">{language === 'vi' ? 'Không hoàn tiền (0đ)' : 'No Refund (0đ)'}</option>
+            </select>
+          </div>
+
+          <div className="toolbar-right">
+            <span style={{ fontSize: '0.8rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <SlidersHorizontal size={13} />
+              {language === 'vi' ? 'Sắp xếp:' : 'Sort:'}
+            </span>
+            <select
+              className="filter-select"
+              value={cancelSort}
+              onChange={(e) => setCancelSort(e.target.value)}
+            >
+              <option value="date_desc">{language === 'vi' ? 'Thời gian hủy (Mới nhất)' : 'Cancelled Date (Newest)'}</option>
+              <option value="date_asc">{language === 'vi' ? 'Thời gian hủy (Cũ nhất)' : 'Cancelled Date (Oldest)'}</option>
+              <option value="refund_desc">{language === 'vi' ? 'Tiền hoàn lại cao nhất' : 'Highest Refund'}</option>
+              <option value="price_desc">{language === 'vi' ? 'Giá khám cao nhất' : 'Highest Price'}</option>
+            </select>
+          </div>
+        </div>
+
+        {filteredCancellations && filteredCancellations.length > 0 ? (
           <div style={{ overflowX: 'auto' }}>
             <table className="analytics-table">
               <thead>
@@ -307,7 +392,7 @@ const BookingAnalytics = () => {
                 </tr>
               </thead>
               <tbody>
-                {cancellations.recentList.map((item) => (
+                {filteredCancellations.map((item) => (
                   <tr key={item.id}>
                     <td style={{ fontWeight: 700 }}>#{item.id}</td>
                     <td>

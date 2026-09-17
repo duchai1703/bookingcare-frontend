@@ -1,6 +1,6 @@
 // src/containers/System/Admin/Analytics/DoctorAnalytics.jsx
 // Detail Analytics: Doctor Capacity, Utilization Rates & Roster Load
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { Link, useSearchParams } from 'react-router-dom';
 import moment from 'moment';
@@ -37,6 +37,7 @@ const DoctorAnalytics = () => {
   const [activePreset, setActivePreset] = useState('30d');
   const [filterType, setFilterType] = useState(initialFilter);
   const [searchTerm, setSearchTerm] = useState('');
+  const [doctorSort, setDoctorSort] = useState('util_desc');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -73,17 +74,37 @@ const DoctorAnalytics = () => {
   const summary = data?.summary || { totalDoctors: 0, totalSlots: 0, occupiedSlots: 0, avgUtilization: 0 };
   const doctors = data?.doctors || [];
 
-  const filteredDoctors = doctors.filter((doc) => {
-    const matchesSearch =
-      doc.doctorName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doc.specialtyName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doc.clinicName?.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredDoctors = useMemo(() => {
+    let list = doctors.filter((doc) => {
+      const matchesSearch =
+        doc.doctorName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        doc.specialtyName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        doc.clinicName?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    if (!matchesSearch) return false;
-    if (filterType === 'low') return doc.utilizationRate < 40;
-    if (filterType === 'high') return doc.utilizationRate >= 85;
-    return true;
-  });
+      if (!matchesSearch) return false;
+      if (filterType === 'low') return doc.utilizationRate < 40;
+      if (filterType === 'high') return doc.utilizationRate >= 85;
+      return true;
+    });
+
+    list.sort((a, b) => {
+      switch (doctorSort) {
+        case 'util_asc':
+          return (a.utilizationRate || 0) - (b.utilizationRate || 0);
+        case 'slots_desc':
+          return (b.totalSlots || 0) - (a.totalSlots || 0);
+        case 'booked_desc':
+          return (b.occupiedSlots || 0) - (a.occupiedSlots || 0);
+        case 'name_asc':
+          return (a.doctorName || '').localeCompare(b.doctorName || '');
+        case 'util_desc':
+        default:
+          return (b.utilizationRate || 0) - (a.utilizationRate || 0);
+      }
+    });
+
+    return list;
+  }, [doctors, searchTerm, filterType, doctorSort]);
 
   return (
     <div className="analytics-detail-page">
@@ -271,6 +292,31 @@ const DoctorAnalytics = () => {
                 }}
               />
               <Search size={14} style={{ position: 'absolute', left: 8, top: 8, color: '#94A3B8' }} />
+            </div>
+
+            {/* Sort Select */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <SlidersHorizontal size={13} style={{ color: '#64748B' }} />
+              <select
+                value={doctorSort}
+                onChange={(e) => setDoctorSort(e.target.value)}
+                style={{
+                  padding: '5px 8px',
+                  fontSize: '0.82rem',
+                  border: '1px solid #CBD5E1',
+                  borderRadius: 6,
+                  background: '#fff',
+                  color: '#334155',
+                  outline: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                <option value="util_desc">{language === 'vi' ? 'Hiệu suất cao nhất' : 'Highest Utilization'}</option>
+                <option value="util_asc">{language === 'vi' ? 'Hiệu suất thấp nhất' : 'Lowest Utilization'}</option>
+                <option value="booked_desc">{language === 'vi' ? 'Slot đã book nhiều nhất' : 'Most Booked Slots'}</option>
+                <option value="slots_desc">{language === 'vi' ? 'Tổng slot mở nhiều nhất' : 'Most Total Slots'}</option>
+                <option value="name_asc">{language === 'vi' ? 'Tên bác sĩ (A-Z)' : 'Doctor Name (A-Z)'}</option>
+              </select>
             </div>
           </div>
         </div>

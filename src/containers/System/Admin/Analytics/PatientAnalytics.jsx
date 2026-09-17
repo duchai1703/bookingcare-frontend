@@ -1,6 +1,6 @@
 // src/containers/System/Admin/Analytics/PatientAnalytics.jsx
 // Detail Analytics: Patient Demographics, Retention & Frequent Visitors
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import moment from 'moment';
@@ -16,9 +16,8 @@ import {
   Users,
   ArrowLeft,
   RotateCw,
-  UserCheck,
-  UserPlus,
-  HeartHandshake
+  Search,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { getPatientAnalytics } from '../../../../services/statisticService';
 import { path } from '../../../../utils/constants';
@@ -37,6 +36,11 @@ const PatientAnalytics = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Table filtering and sorting
+  const [patientSearch, setPatientSearch] = useState('');
+  const [patientFilter, setPatientFilter] = useState('ALL');
+  const [patientSort, setPatientSort] = useState('spent_desc');
 
   const fetchPatients = useCallback(async (signal) => {
     setLoading(true);
@@ -75,6 +79,58 @@ const PatientAnalytics = () => {
     { name: language === 'vi' ? 'Bệnh nhân mới' : 'New Patients', value: summary.newPatients },
     { name: language === 'vi' ? 'Bệnh nhân tái khám' : 'Returning Patients', value: summary.returningPatients },
   ];
+
+  // Gender data with translated labels
+  const formattedGenderDist = useMemo(() => {
+    return genderDistribution.map((g) => ({
+      ...g,
+      displayName: language === 'vi' ? (g.genderVi || g.gender) : (g.genderEn || g.gender),
+    }));
+  }, [genderDistribution, language]);
+
+  // Filter & Sort patient list
+  const filteredPatients = useMemo(() => {
+    let list = [...topPatients];
+
+    if (patientSearch.trim()) {
+      const q = patientSearch.trim().toLowerCase();
+      list = list.filter(
+        (p) =>
+          p.patientName?.toLowerCase().includes(q) ||
+          p.email?.toLowerCase().includes(q) ||
+          p.phoneNumber?.toLowerCase().includes(q) ||
+          String(p.patientId).includes(q)
+      );
+    }
+
+    if (patientFilter === 'VIP') {
+      list = list.filter((p) => (p.totalBookings || p.bookingCount || 0) >= 3);
+    } else if (patientFilter === 'HIGH_SPEND') {
+      list = list.filter((p) => (p.totalSpent || 0) >= 1000000);
+    } else if (patientFilter === 'COMPLETED_ONLY') {
+      list = list.filter((p) => (p.completedBookings || 0) > 0);
+    }
+
+    list.sort((a, b) => {
+      const aTotal = a.totalBookings || a.bookingCount || 0;
+      const bTotal = b.totalBookings || b.bookingCount || 0;
+      switch (patientSort) {
+        case 'spent_asc':
+          return (a.totalSpent || 0) - (b.totalSpent || 0);
+        case 'bookings_desc':
+          return bTotal - aTotal;
+        case 'completed_desc':
+          return (b.completedBookings || 0) - (a.completedBookings || 0);
+        case 'name_asc':
+          return (a.patientName || '').localeCompare(b.patientName || '');
+        case 'spent_desc':
+        default:
+          return (b.totalSpent || 0) - (a.totalSpent || 0);
+      }
+    });
+
+    return list;
+  }, [topPatients, patientSearch, patientFilter, patientSort]);
 
   return (
     <div className="analytics-detail-page">
@@ -206,16 +262,16 @@ const PatientAnalytics = () => {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={genderDistribution}
+                  data={formattedGenderDist}
                   dataKey="count"
-                  nameKey="gender"
+                  nameKey="displayName"
                   cx="50%"
                   cy="50%"
                   innerRadius={55}
                   outerRadius={90}
                   paddingAngle={4}
                 >
-                  {genderDistribution.map((entry, index) => (
+                  {formattedGenderDist.map((entry, index) => (
                     <Cell key={`gender-${index}`} fill={GENDER_COLORS[index % GENDER_COLORS.length]} />
                   ))}
                 </Pie>
@@ -234,11 +290,55 @@ const PatientAnalytics = () => {
             {language === 'vi' ? 'Bệnh nhân Đặt khám Thường xuyên' : 'Top Frequent Healthcare Patients'}
           </h2>
           <span className="card-meta">
-            {topPatients.length} {language === 'vi' ? 'bệnh nhân tiêu biểu' : 'frequent patients'}
+            {filteredPatients.length}/{topPatients.length} {language === 'vi' ? 'bệnh nhân' : 'patients'}
           </span>
         </div>
 
-        {topPatients && topPatients.length > 0 ? (
+        {/* Toolbar: Search, Cohort Filter, Sort */}
+        <div className="table-toolbar">
+          <div className="toolbar-left">
+            <div className="search-input-wrapper">
+              <Search size={14} className="search-icon" />
+              <input
+                type="text"
+                placeholder={language === 'vi' ? 'Tìm theo tên, email, số điện thoại, ID...' : 'Search by name, email, phone, ID...'}
+                value={patientSearch}
+                onChange={(e) => setPatientSearch(e.target.value)}
+              />
+            </div>
+
+            <select
+              className="filter-select"
+              value={patientFilter}
+              onChange={(e) => setPatientFilter(e.target.value)}
+            >
+              <option value="ALL">{language === 'vi' ? 'Tất cả bệnh nhân' : 'All Patients'}</option>
+              <option value="VIP">{language === 'vi' ? 'Khách thân thiết (≥ 3 lượt đặt)' : 'Frequent (≥ 3 bookings)'}</option>
+              <option value="HIGH_SPEND">{language === 'vi' ? 'Chi tiêu cao (≥ 1 triệu VNĐ)' : 'High spend (≥ 1M VND)'}</option>
+              <option value="COMPLETED_ONLY">{language === 'vi' ? 'Đã hoàn tất ít nhất 1 ca' : 'Completed ≥ 1 visit'}</option>
+            </select>
+          </div>
+
+          <div className="toolbar-right">
+            <span style={{ fontSize: '0.8rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <SlidersHorizontal size={13} />
+              {language === 'vi' ? 'Sắp xếp:' : 'Sort:'}
+            </span>
+            <select
+              className="filter-select"
+              value={patientSort}
+              onChange={(e) => setPatientSort(e.target.value)}
+            >
+              <option value="spent_desc">{language === 'vi' ? 'Chi tiêu nhiều nhất' : 'Highest Spend'}</option>
+              <option value="spent_asc">{language === 'vi' ? 'Chi tiêu ít nhất' : 'Lowest Spend'}</option>
+              <option value="bookings_desc">{language === 'vi' ? 'Tổng lượt đặt nhiều nhất' : 'Most Bookings'}</option>
+              <option value="completed_desc">{language === 'vi' ? 'Ca hoàn tất nhiều nhất' : 'Most Completed'}</option>
+              <option value="name_asc">{language === 'vi' ? 'Họ tên (A-Z)' : 'Patient Name (A-Z)'}</option>
+            </select>
+          </div>
+        </div>
+
+        {filteredPatients && filteredPatients.length > 0 ? (
           <div style={{ overflowX: 'auto' }}>
             <table className="analytics-table">
               <thead>
@@ -254,7 +354,7 @@ const PatientAnalytics = () => {
                 </tr>
               </thead>
               <tbody>
-                {topPatients.map((p) => (
+                {filteredPatients.map((p) => (
                   <tr key={p.patientId}>
                     <td style={{ fontWeight: 700 }}>#{p.patientId}</td>
                     <td style={{ fontWeight: 600 }}>{p.patientName}</td>
@@ -291,7 +391,7 @@ const PatientAnalytics = () => {
           </div>
         ) : (
           <div style={{ textAlign: 'center', padding: '30px 20px', color: '#64748B' }}>
-            {language === 'vi' ? 'Không có dữ liệu bệnh nhân thường xuyên' : 'No frequent patients data'}
+            {language === 'vi' ? 'Không tìm thấy bệnh nhân phù hợp với bộ lọc' : 'No patients match current filter'}
           </div>
         )}
       </div>
