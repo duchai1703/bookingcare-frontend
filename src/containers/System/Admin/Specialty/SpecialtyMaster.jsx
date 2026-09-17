@@ -16,12 +16,15 @@ import {
   CheckCircle2,
   PauseCircle,
   TrendingUp,
+  Pencil,
 } from 'lucide-react';
 import {
   getAdminSpecialtiesList,
   updateSpecialtyWorkingStatus,
 } from '../../../../services/specialtyManageService';
 import CommonUtils from '../../../../utils/CommonUtils';
+import AddSpecialtyModal from './AddSpecialtyModal';
+import EditSpecialtyModal from './EditSpecialtyModal';
 import '../MedicalOperations.scss';
 
 const formatCurrencyVND = (amount) => {
@@ -54,6 +57,8 @@ const SpecialtyMaster = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeMenuSpecialtyId, setActiveMenuSpecialtyId] = useState(null);
+  const [showAddSpecialtyModal, setShowAddSpecialtyModal] = useState(false);
+  const [editingSpecialty, setEditingSpecialty] = useState(null);
 
   const fetchSpecialties = useCallback(async (signal) => {
     setLoading(true);
@@ -143,10 +148,7 @@ const SpecialtyMaster = () => {
 
           <button
             className="btn-primary-action"
-            onClick={() => {
-              const name = window.prompt('Nhập tên chuyên khoa mới:');
-              if (name) navigate('/system/specialties/1');
-            }}
+            onClick={() => setShowAddSpecialtyModal(true)}
           >
             <Plus size={14} />
             <span>{language === 'vi' ? 'Thêm chuyên khoa' : 'Add Specialty'}</span>
@@ -415,6 +417,18 @@ const SpecialtyMaster = () => {
                                 <span>{language === 'vi' ? 'Mạng lưới cơ sở' : 'Hospitals Network'}</span>
                               </Link>
 
+                              <button
+                                type="button"
+                                className="action-dropdown-item dropdown-item"
+                                onClick={() => {
+                                  setEditingSpecialty(sp);
+                                  setActiveMenuSpecialtyId(null);
+                                }}
+                              >
+                                <Pencil size={13} style={{ color: '#087F8C' }} />
+                                <span>{language === 'vi' ? 'Chỉnh sửa hồ sơ' : 'Edit Profile'}</span>
+                              </button>
+
                               <div className="dropdown-divider" />
 
                               <button
@@ -476,6 +490,20 @@ const SpecialtyMaster = () => {
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <AddSpecialtyModal
+        isOpen={showAddSpecialtyModal}
+        onClose={() => setShowAddSpecialtyModal(false)}
+        onSuccess={() => fetchSpecialties()}
+      />
+
+      <EditSpecialtyModal
+        isOpen={!!editingSpecialty}
+        onClose={() => setEditingSpecialty(null)}
+        specialty={editingSpecialty}
+        onSuccess={() => fetchSpecialties()}
+      />
     </div>
   );
 };

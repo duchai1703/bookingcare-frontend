@@ -128,22 +128,29 @@ const ClinicDetail = () => {
 
           {/* ====== PHẦN 1: BANNER SLIDER PHÒNG KHÁM ====== */}
           <HeroBannerSlider
-            slides={[
-              {
-                image: clinicData.image
-                  ? CommonUtils.decodeBase64Image(clinicData.image)
-                  : 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=1600&q=80',
-                caption: language === LANGUAGES.VI ? 'Khuôn viên cơ sở' : 'Facility Campus',
-              },
-              {
-                image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1600&q=80',
-                caption: language === LANGUAGES.VI ? 'Khu khám bệnh tiêu chuẩn' : 'Clinical Rooms',
-              },
-              {
-                image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=1600&q=80',
-                caption: language === LANGUAGES.VI ? 'Hệ thống thiết bị hiện đại' : 'Modern Equipment',
-              },
-            ]}
+            slides={
+              Array.isArray(clinicData.photos) && clinicData.photos.length > 0
+                ? clinicData.photos.map((p) => ({
+                    image: typeof p === 'string' ? (p.startsWith('http') ? p : CommonUtils.decodeBase64Image(p)) : (p.image?.startsWith('http') ? p.image : CommonUtils.decodeBase64Image(p.image)),
+                    caption: typeof p === 'object' ? p.caption : '',
+                  }))
+                : [
+                    {
+                      image: clinicData.image
+                        ? CommonUtils.decodeBase64Image(clinicData.image)
+                        : 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=1600&q=80',
+                      caption: language === LANGUAGES.VI ? 'Khuôn viên cơ sở' : 'Facility Campus',
+                    },
+                    {
+                      image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1600&q=80',
+                      caption: language === LANGUAGES.VI ? 'Khu khám bệnh tiêu chuẩn' : 'Clinical Rooms',
+                    },
+                    {
+                      image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=1600&q=80',
+                      caption: language === LANGUAGES.VI ? 'Hệ thống thiết bị hiện đại' : 'Modern Equipment',
+                    },
+                  ]
+            }
             title={clinicData.name || ''}
             address={clinicData.address || ''}
             stats={[

@@ -17,12 +17,16 @@ import {
   RotateCw,
   Clock,
   Star,
+  Pencil,
+  Camera,
 } from 'lucide-react';
 import {
   getAdminSpecialtyWorkspace,
   updateSpecialtyWorkingStatus,
 } from '../../../../services/specialtyManageService';
 import CommonUtils from '../../../../utils/CommonUtils';
+import EditSpecialtyModal from './EditSpecialtyModal';
+import HeroBannerSlider from '../../../../components/Common/HeroBannerSlider';
 import '../MedicalOperations.scss';
 
 const formatCurrencyVND = (amount) => {
@@ -37,8 +41,9 @@ const SpecialtyDetailWorkspace = () => {
   const language = useSelector((state) => state.app.language) || 'vi';
 
   const [specialtyData, setSpecialtyData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const fetchWorkspace = useCallback(async (signal) => {
     setLoading(true);
@@ -181,6 +186,11 @@ const SpecialtyDetailWorkspace = () => {
           </div>
 
           <div className="header-actions-group">
+            <button className="btn-ws-action primary" onClick={() => setShowEditModal(true)}>
+              <Pencil size={14} />
+              <span>{language === 'vi' ? 'Sửa hồ sơ & Slider' : 'Edit Profile & Slider'}</span>
+            </button>
+
             <button className="btn-ws-action secondary" onClick={handleToggleStatus}>
               {profile.status === 'active' ? (
                 <>
@@ -459,10 +469,55 @@ const SpecialtyDetailWorkspace = () => {
         {/* Tab 5: Profile */}
         {activeTab === 'profile' && (
           <div>
-            <h3 className="tab-section-title">
-              <FileText size={18} style={{ color: '#087F8C' }} />
-              <span>Hồ sơ Chuyên môn & Tài liệu Y khoa</span>
-            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <h3 className="tab-section-title" style={{ margin: 0 }}>
+                <FileText size={18} style={{ color: '#087F8C' }} />
+                <span>Hồ sơ Chuyên môn & Tài liệu Y khoa</span>
+              </h3>
+              <button
+                type="button"
+                className="btn-ws-action primary"
+                onClick={() => setShowEditModal(true)}
+                style={{ padding: '7px 14px', fontSize: '0.8rem' }}
+              >
+                <Pencil size={13} />
+                <span>Chỉnh sửa hồ sơ & Slider</span>
+              </button>
+            </div>
+
+            {/* Live Slider Preview */}
+            <div style={{ marginBottom: 24, border: '1px solid #E2E8F0', borderRadius: 12, overflow: 'hidden', background: '#F8FAFC' }}>
+              <div style={{ padding: '10px 16px', background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Camera size={15} style={{ color: '#087F8C' }} />
+                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155' }}>
+                  Xem trước Slider Đầu Trang ({Array.isArray(profile.photos) ? profile.photos.length : 0} ảnh)
+                </span>
+              </div>
+              {Array.isArray(profile.photos) && profile.photos.length > 0 ? (
+                <div style={{ maxHeight: 320, overflow: 'hidden' }}>
+                  <HeroBannerSlider
+                    slides={profile.photos.map((p) => ({
+                      image: typeof p === 'string' ? (p.startsWith('http') ? p : CommonUtils.decodeBase64Image(p)) : (p.image?.startsWith('http') ? p.image : CommonUtils.decodeBase64Image(p.image)),
+                      caption: typeof p === 'object' ? p.caption : '',
+                    }))}
+                    title={profile.name}
+                    description="Xem trước giao diện banner slider chuyên khoa hiển thị cho bệnh nhân"
+                  />
+                </div>
+              ) : (
+                <div style={{ padding: 24, textAlign: 'center', color: '#64748B', fontSize: '0.82rem' }}>
+                  Chưa có ảnh slider tùy chỉnh. Hệ thống đang sử dụng ảnh đại diện mặc định.<br />
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(true)}
+                    style={{ marginTop: 8, background: 'transparent', border: 'none', color: '#087F8C', fontWeight: 600, cursor: 'pointer' }}
+                  >
+                    + Thêm ảnh slider ngay
+                  </button>
+                </div>
+              )}
+            </div>
+
             <div style={{ marginBottom: 20 }}>
               <h4 style={{ fontSize: '0.9rem', color: '#334155', marginBottom: 8 }}>Mô tả Markdown:</h4>
               <div
@@ -482,7 +537,7 @@ const SpecialtyDetailWorkspace = () => {
 
             {profile.descriptionHTML && (
               <div>
-                <h4 style={{ fontSize: '0.9rem', color: '#334155', marginBottom: 8 }}>Nội dung giới thiệu bệnh học (HTML):</h4>
+                <h4 style={{ fontSize: '0.9rem', color: '#334155', marginBottom: 8 }}>Nội dung giới thiệu bệnh học (HTML Preview):</h4>
                 <div
                   style={{
                     padding: 16,
@@ -499,6 +554,16 @@ const SpecialtyDetailWorkspace = () => {
           </div>
         )}
       </main>
+
+      {/* Edit Specialty Modal */}
+      {showEditModal && (
+        <EditSpecialtyModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          specialty={profile}
+          onSuccess={() => fetchWorkspace()}
+        />
+      )}
     </div>
   );
 };

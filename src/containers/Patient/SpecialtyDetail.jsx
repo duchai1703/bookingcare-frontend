@@ -138,22 +138,29 @@ const SpecialtyDetail = () => {
       {/* ====== HERO BANNER SLIDER CHUYÊN KHOA ====== */}
       {specialtyData && (
         <HeroBannerSlider
-          slides={[
-            {
-              image: specialtyData.image
-                ? CommonUtils.decodeBase64Image(specialtyData.image)
-                : 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=1600&q=80',
-              caption: language === LANGUAGES.VI ? 'Chuyên khoa trọng điểm' : 'Medical Specialty',
-            },
-            {
-              image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=1600&q=80',
-              caption: language === LANGUAGES.VI ? 'Chăm sóc & Khám chuyên sâu' : 'Advanced Care',
-            },
-            {
-              image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=1600&q=80',
-              caption: language === LANGUAGES.VI ? 'Đội ngũ bác sĩ chuyên khoa' : 'Specialist Team',
-            },
-          ]}
+          slides={
+            Array.isArray(specialtyData.photos) && specialtyData.photos.length > 0
+              ? specialtyData.photos.map((p) => ({
+                  image: typeof p === 'string' ? (p.startsWith('http') ? p : CommonUtils.decodeBase64Image(p)) : (p.image?.startsWith('http') ? p.image : CommonUtils.decodeBase64Image(p.image)),
+                  caption: typeof p === 'object' ? p.caption : '',
+                }))
+              : [
+                  {
+                    image: specialtyData.image
+                      ? CommonUtils.decodeBase64Image(specialtyData.image)
+                      : 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=1600&q=80',
+                    caption: language === LANGUAGES.VI ? 'Chuyên khoa trọng điểm' : 'Medical Specialty',
+                  },
+                  {
+                    image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=1600&q=80',
+                    caption: language === LANGUAGES.VI ? 'Chăm sóc & Khám chuyên sâu' : 'Advanced Care',
+                  },
+                  {
+                    image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=1600&q=80',
+                    caption: language === LANGUAGES.VI ? 'Đội ngũ bác sĩ chuyên khoa' : 'Specialist Team',
+                  },
+                ]
+          }
           title={specialtyData.name || ''}
           description={language === LANGUAGES.VI ? 'Khám và điều trị chuyên sâu cùng đội ngũ chuyên gia, bác sĩ giàu kinh nghiệm' : 'Specialized diagnosis and treatment with leading doctors'}
           stats={[

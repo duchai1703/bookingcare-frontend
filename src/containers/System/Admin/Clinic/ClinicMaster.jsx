@@ -18,6 +18,7 @@ import {
   Percent,
   MapPin,
   Phone,
+  Pencil,
 } from 'lucide-react';
 import {
   getAdminClinicsList,
@@ -25,6 +26,8 @@ import {
   updateClinicCommission,
 } from '../../../../services/clinicManageService';
 import AssignDoctorModal from './AssignDoctorModal';
+import AddClinicModal from './AddClinicModal';
+import EditClinicModal from './EditClinicModal';
 import CommonUtils from '../../../../utils/CommonUtils';
 import '../MedicalOperations.scss';
 
@@ -63,6 +66,8 @@ const ClinicMaster = () => {
   // Dropdown menu & Modals
   const [activeMenuClinicId, setActiveMenuClinicId] = useState(null);
   const [selectedAssignClinic, setSelectedAssignClinic] = useState(null);
+  const [showAddClinicModal, setShowAddClinicModal] = useState(false);
+  const [editingClinic, setEditingClinic] = useState(null);
 
   // Fetch clinics
   const fetchClinics = useCallback(async (signal) => {
@@ -179,10 +184,7 @@ const ClinicMaster = () => {
 
           <button
             className="btn-primary-action"
-            onClick={() => {
-              const name = window.prompt('Nhập tên cơ sở / phòng khám mới:');
-              if (name) navigate(`/system/clinics/1`);
-            }}
+            onClick={() => setShowAddClinicModal(true)}
           >
             <Plus size={14} />
             <span>{language === 'vi' ? 'Thêm cơ sở' : 'Add Facility'}</span>
@@ -501,6 +503,15 @@ const ClinicMaster = () => {
                                 <span>{language === 'vi' ? 'Cấu hình hoa hồng viện' : 'Config Commission'}</span>
                               </button>
 
+                              <button
+                                type="button"
+                                className="action-dropdown-item dropdown-item"
+                                onClick={() => { setEditingClinic(clinic); setActiveMenuClinicId(null); }}
+                              >
+                                <Pencil size={13} style={{ color: '#087F8C' }} />
+                                <span>{language === 'vi' ? 'Chỉnh sửa hồ sơ' : 'Edit Profile'}</span>
+                              </button>
+
                               <div className="dropdown-divider" />
 
                               <button
@@ -572,6 +583,21 @@ const ClinicMaster = () => {
           onSuccess={() => fetchClinics()}
         />
       )}
+
+      {/* Add Clinic Modal */}
+      <AddClinicModal
+        isOpen={showAddClinicModal}
+        onClose={() => setShowAddClinicModal(false)}
+        onSuccess={() => fetchClinics()}
+      />
+
+      {/* Edit Clinic Modal */}
+      <EditClinicModal
+        isOpen={!!editingClinic}
+        onClose={() => setEditingClinic(null)}
+        clinic={editingClinic}
+        onSuccess={() => fetchClinics()}
+      />
     </div>
   );
 };
