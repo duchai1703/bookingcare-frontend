@@ -76,6 +76,7 @@ const DoctorRegisterWizard = () => {
 
     // Step 3
     clinicId: '',
+    isIndependentDoctor: false,
     proposedRoom: '',
     priceId: 'PRI1',
     bankName: 'Vietcombank (VCB)',
@@ -85,6 +86,36 @@ const DoctorRegisterWizard = () => {
     // Step 4
     agreedTerms: false,
   });
+
+  // Khôi phục bản lưu nháp từ LocalStorage nếu có
+  useEffect(() => {
+    try {
+      const savedDraft = localStorage.getItem('bookingcare_doctor_onboard_draft');
+      if (savedDraft) {
+        const parsed = JSON.parse(savedDraft);
+        if (parsed && (parsed.email || parsed.firstName)) {
+          setFormData(prev => ({ ...prev, ...parsed }));
+          toast.info('Đã tự động nạp lại bản lưu nháp hồ sơ trước đó của bạn.');
+        }
+      }
+    } catch (err) {
+      console.error('Error loading draft from localStorage:', err);
+    }
+  }, []);
+
+  // Xử lý Lưu nháp
+  const handleSaveDraft = async () => {
+    try {
+      localStorage.setItem('bookingcare_doctor_onboard_draft', JSON.stringify(formData));
+      if (formData.email && formData.phoneNumber && formData.firstName && formData.lastName) {
+        await submitDoctorOnboarding({ ...formData, isDraft: true });
+      }
+      toast.success('Đã lưu nháp hồ sơ! Bạn có thể thoát ra và tiếp tục hoàn thiện sau.');
+    } catch (err) {
+      console.error('Error saving draft:', err);
+      toast.error('Lỗi khi lưu nháp hồ sơ!');
+    }
+  };
 
   // Load Master Data
   useEffect(() => {
@@ -643,30 +674,64 @@ const DoctorRegisterWizard = () => {
             <div className="wizard-step-content step-3 animate-fade-in">
               <div className="section-header">
                 <h3 className="section-title"><i className="fas fa-hospital me-2 text-primary"></i>3. Nơi Đăng Ký Công Tác & Tài Khoản Nhận Thù Lao</h3>
-                <p className="section-desc">Lựa chọn cơ sở y tế làm việc và cung cấp số tài khoản nhận đối soát doanh thu khám.</p>
+                <p className="section-desc">Lựa chọn cơ sở y tế làm việc hoặc đăng ký hành nghề độc lập, cung cấp số tài khoản nhận đối soát doanh thu khám.</p>
               </div>
 
               <div className="row g-4 mt-2">
-                <div className="col-md-6">
-                  <label className="form-label required">Cơ sở y tế công tác (Clinic Master)</label>
-                  <select
-                    className="form-select"
-                    value={formData.clinicId}
-                    onChange={(e) => handleInputChange('clinicId', e.target.value)}
-                  >
-                    <option value="">-- Chọn bệnh viện / phòng khám làm việc --</option>
-                    {clinics.map(clinic => (
-                      <option key={clinic.id} value={clinic.id}>{clinic.name}</option>
-                    ))}
-                  </select>
+                {/* Switch Bác sĩ độc lập */}
+                <div className="col-md-12">
+                  <div className="p-3 bg-light rounded-3 border d-flex align-items-start gap-3">
+                    <input
+                      type="checkbox"
+                      className="form-check-input mt-1"
+                      id="independentDoctorCheck"
+                      checked={formData.isIndependentDoctor}
+                      onChange={(e) => handleInputChange('isIndependentDoctor', e.target.checked)}
+                      style={{ transform: 'scale(1.2)', cursor: 'pointer' }}
+                    />
+                    <label className="form-check-label mb-0" htmlFor="independentDoctorCheck" style={{ cursor: 'pointer' }}>
+                      <strong className="text-dark d-block">
+                        <i className="fas fa-user-md text-primary me-2"></i>Tôi là Bác sĩ hành nghề độc lập (Chưa trực thuộc cơ sở y tế cố định nào)
+                      </strong>
+                      <span className="text-muted small">
+                        Hồ sơ chuyên môn của bạn vẫn được thẩm định và phê duyệt bình thường. Admin sẽ hỗ trợ kết nối cơ sở y tế phù hợp sau hoặc cho phép bạn tư vấn/hội chẩn trực tuyến độc lập.
+                      </span>
+                    </label>
+                  </div>
                 </div>
+
+                {!formData.isIndependentDoctor ? (
+                  <div className="col-md-6">
+                    <label className="form-label required">Cơ sở y tế công tác (Clinic Master)</label>
+                    <select
+                      className="form-select"
+                      value={formData.clinicId}
+                      onChange={(e) => handleInputChange('clinicId', e.target.value)}
+                    >
+                      <option value="">-- Chọn bệnh viện / phòng khám làm việc --</option>
+                      {clinics.map(clinic => (
+                        <option key={clinic.id} value={clinic.id}>{clinic.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
+                  <div className="col-md-6">
+                    <label className="form-label text-muted">Cơ sở y tế công tác</label>
+                    <input
+                      type="text"
+                      className="form-control bg-light text-muted"
+                      value="Bác sĩ độc lập (Chờ Ban Quản trị phân bổ cơ sở sau)"
+                      disabled
+                    />
+                  </div>
+                )}
 
                 <div className="col-md-6">
                   <label className="form-label">Phòng khám / Vị trí làm việc đề xuất</label>
                   <input
                     type="text"
                     className="form-control"
-                    placeholder="Ví dụ: Phòng 302 - Khoa khám theo yêu cầu"
+                    placeholder={formData.isIndependentDoctor ? "Ví dụ: Phòng khám trực tuyến / Khám từ xa" : "Ví dụ: Phòng 302 - Khoa khám theo yêu cầu"}
                     value={formData.proposedRoom}
                     onChange={(e) => handleInputChange('proposedRoom', e.target.value)}
                   />
@@ -839,44 +904,64 @@ const DoctorRegisterWizard = () => {
 
           {/* Wizard Footer Controls */}
           <div className="wizard-footer-controls d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
-            {currentStep > 1 ? (
+            <div className="d-flex gap-2">
+              {currentStep > 1 && (
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary px-3"
+                  onClick={handlePrevStep}
+                  disabled={loading}
+                >
+                  <i className="fas fa-arrow-left me-2"></i>Quay lại
+                </button>
+              )}
               <button
                 type="button"
-                className="btn btn-outline-secondary px-4"
-                onClick={handlePrevStep}
-                disabled={loading}
+                className="btn btn-outline-primary px-3"
+                onClick={handleSaveDraft}
+                title="Lưu tiến trình vào máy để tiếp tục hoàn thiện sau"
               >
-                <i className="fas fa-arrow-left me-2"></i>Quay lại bước trước
+                <i className="fas fa-save me-2"></i>Lưu nháp hồ sơ
               </button>
-            ) : <div></div>}
+            </div>
 
-            {currentStep < 4 ? (
+            <div className="d-flex align-items-center gap-3">
               <button
                 type="button"
-                className="btn btn-primary px-4 btn-next-step"
-                onClick={handleNextStep}
+                className="btn btn-link text-decoration-none text-muted small p-0"
+                onClick={() => navigate('/doctor-onboarding-status')}
               >
-                Tiếp tục bước tiếp theo<i className="fas fa-arrow-right ms-2"></i>
+                <i className="fas fa-search me-1"></i>Tra cứu hồ sơ đã nộp
               </button>
-            ) : (
-              <button
-                type="button"
-                className="btn btn-success px-5 btn-submit-onboard"
-                onClick={handleSubmitOnboarding}
-                disabled={loading || !formData.agreedTerms}
-              >
-                {loading ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm me-2"></span>
-                    Đang gửi hồ sơ...
-                  </>
-                ) : (
-                  <>
-                    <i className="fas fa-paper-plane me-2"></i>Gửi Hồ Sơ Thẩm Định Cho Admin
-                  </>
-                )}
-              </button>
-            )}
+
+              {currentStep < 4 ? (
+                <button
+                  type="button"
+                  className="btn btn-primary px-4 btn-next-step"
+                  onClick={handleNextStep}
+                >
+                  Tiếp tục bước tiếp theo<i className="fas fa-arrow-right ms-2"></i>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-success px-5 btn-submit-onboard"
+                  onClick={handleSubmitOnboarding}
+                  disabled={loading || !formData.agreedTerms}
+                >
+                  {loading ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2"></span>
+                      Đang gửi hồ sơ...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-paper-plane me-2"></i>Gửi Hồ Sơ Thẩm Định Cho Admin
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
           </div>
 
         </div>

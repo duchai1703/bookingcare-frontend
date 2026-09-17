@@ -62,6 +62,7 @@ import DoctorVerificationQueue  from './System/Admin/Doctor/DoctorVerificationQu
 
 // [Doctor Self-Onboarding Portal]
 import DoctorRegisterWizard     from './DoctorOnboarding/DoctorRegisterWizard';
+import DoctorApplicationStatus  from './DoctorOnboarding/DoctorApplicationStatus';
 
 // [Clinic Operations Center] Facility Master & Control Center
 import ClinicMaster             from './System/Admin/Clinic/ClinicMaster';
@@ -116,8 +117,9 @@ const App = () => {
         <Route path={path.FORGOT_PASSWORD} element={<ForgotPassword />} />
         <Route path={path.RESET_PASSWORD} element={<ResetPassword />} />
 
-        {/* [Doctor Self-Onboarding Portal] Public Registration Wizard */}
+        {/* [Doctor Self-Onboarding Portal] Public Registration Wizard & Status Tracker */}
         <Route path={path.DOCTOR_REGISTER} element={<DoctorRegisterWizard />} />
+        <Route path={path.DOCTOR_ONBOARDING_STATUS} element={<DoctorApplicationStatus />} />
 
         {/* Chi tiết bác sĩ — SRS 3.8 */}
         <Route

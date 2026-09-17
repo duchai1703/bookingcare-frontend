@@ -82,6 +82,30 @@ const Register = () => {
             <i className="fas fa-user-plus" /> <FormattedMessage id="register.title" />
           </h2>
 
+          {/* Bộ chọn vai trò đăng ký */}
+          <div className="role-switch-container mb-4">
+            <div className="role-switch-prompt mb-2 text-muted small text-center">
+              Bạn muốn đăng ký tài khoản với vai trò nào?
+            </div>
+            <div className="d-flex role-switch-buttons gap-2">
+              <button
+                type="button"
+                className="btn btn-role-select active flex-fill"
+              >
+                <i className="fas fa-user me-2"></i>Bệnh nhân
+              </button>
+              <button
+                type="button"
+                className="btn btn-role-select btn-doctor-select flex-fill"
+                onClick={() => navigate('/doctor-register')}
+                title="Chuyển sang quy trình đăng ký dành cho Bác sĩ"
+              >
+                <i className="fas fa-user-md me-2 text-primary"></i>Bác sĩ / Chuyên gia
+                <span className="badge-doctor-portal ms-1">Mới</span>
+              </button>
+            </div>
+          </div>
+
           {/* Họ + Tên (2 cột) */}
           <div className="form-row">
             <div className="form-group form-group--half">

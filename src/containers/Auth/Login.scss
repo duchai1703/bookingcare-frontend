@@ -182,4 +182,44 @@
       }
     }
   }
+
+  // Role Switcher styling
+  .role-switch-container {
+    background: #f1f5f9;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+
+    .btn-role-select {
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      color: #64748b;
+      background: transparent;
+      transition: all 0.2s;
+
+      &.active {
+        background: #ffffff;
+        color: $primary;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        border-color: #cbd5e1;
+      }
+
+      &:hover:not(.active) {
+        background: rgba(255, 255, 255, 0.6);
+        color: #1e293b;
+      }
+
+      .badge-doctor-portal {
+        background: #ef4444;
+        color: #fff;
+        font-size: 10px;
+        padding: 1px 6px;
+        border-radius: 8px;
+        font-weight: 700;
+      }
+    }
+  }
 }
