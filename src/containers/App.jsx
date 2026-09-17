@@ -44,6 +44,11 @@ import MedicalCatalogManage from './System/Admin/MedicalCatalogManage';
 import MedicineManage       from './System/Admin/MedicineManage';
 import SystemSettings       from './System/Admin/SystemSettings';
 
+
+// [Phase F] Admin Patient Enterprise Management
+import PatientMaster            from './System/Admin/Patient/PatientMaster';
+import PatientDetailWorkspace   from './System/Admin/Patient/PatientDetailWorkspace';
+
 // [Phase 9.4] Patient Portal
 import PatientLayout from './PatientPortal/PatientLayout';
 import PatientOverview from './PatientPortal/PatientOverview';
@@ -189,6 +194,12 @@ const App = () => {
             <Route path="medical-catalog-manage"  element={<MedicalCatalogManage />} />
             <Route path="medicine-manage"          element={<MedicineManage />} />
             <Route path="system-settings"          element={<SystemSettings />} />
+
+            {/* [Phase F] Patient Enterprise Management & Workspace */}
+            <Route path="patient-manage"          element={<PatientMaster />} />
+            <Route path="patients"                element={<PatientMaster />} />
+            <Route path="patients/:id"            element={<PatientDetailWorkspace />} />
+
           </Route>
         </Route>
 

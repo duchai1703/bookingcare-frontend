@@ -8,7 +8,6 @@
   "header.sub-doctor": "Select doctor",
   "header.fee": "Examination Fee",
   "header.sub-fee": "General checkup",
-
   "chatbot.header-title": "BookingCare AI Assistant",
   "chatbot.header-subtitle": "Always ready to assist you",
   "chatbot.btn-clear-history": "Clear history",
@@ -27,16 +26,13 @@
   "chatbot.login-prompt-title": "Log in to Chat with AI",
   "chatbot.login-prompt-desc": "Please log in to your BookingCare account to start chatting and use the Health Consultation service with AI Assistant.",
   "chatbot.btn-login-now": "Log in now",
-
   "banner.title-line1": "MEDICAL PLATFORM",
   "banner.title-line2": "COMPREHENSIVE HEALTH CARE",
   "banner.search-placeholder": "Search for doctors, specialties, clinics...",
-
   "homepage.specialty-popular": "Popular Specialties",
   "homepage.see-more": "See more",
   "homepage.outstanding-doctor": "Outstanding Doctors",
   "homepage.medical-facility": "Outstanding Health Facilities",
-
   "login.title": "Login",
   "login.email": "Email",
   "login.password": "Password",
@@ -46,7 +42,6 @@
   "login.password-placeholder": "Enter your password",
   "login.register-link": "Don't have an account? Register",
   "login.logging-in": "Logging in...",
-
   "register.title": "Create Account",
   "register.first-name": "First Name",
   "register.last-name": "Last Name",
@@ -68,7 +63,6 @@
   "register.email-placeholder": "Enter email",
   "register.password-placeholder": "Enter password",
   "register.confirm-password-placeholder": "Confirm password",
-
   "forgot-password.title": "Forgot Password",
   "forgot-password.description": "Enter your registered email and we will send you a reset link.",
   "forgot-password.email": "Email",
@@ -77,7 +71,6 @@
   "forgot-password.submitting": "Sending...",
   "forgot-password.success": "If the email exists, you will receive a password reset link.",
   "forgot-password.login-link": "Back to Login",
-
   "reset-password.title": "Set New Password",
   "reset-password.new-password": "New Password",
   "reset-password.confirm-password": "Confirm New Password",
@@ -89,16 +82,14 @@
   "reset-password.password-mismatch": "Passwords do not match!",
   "reset-password.password-min-length": "Password must be at least 6 characters!",
   "reset-password.invalid-token": "Invalid password reset link!",
-
   "menu.admin.manage-user": "User Management",
+  "menu.admin.manage-patient": "Patient Base",
   "menu.admin.manage-doctor": "Doctor Management",
   "menu.admin.manage-schedule": "Doctor Schedule Management",
   "menu.admin.manage-specialty": "Specialty Management",
   "menu.admin.manage-clinic": "Clinic Management",
-
   "menu.doctor.manage-patient": "Patient Appointment Management",
   "menu.doctor.manage-schedule": "Schedule Management",
-
   "common.welcome": "Welcome, ",
   "common.logout": "Logout",
   "common.login": "Login",
@@ -113,13 +104,11 @@
   "common.search": "Search",
   "common.no-data": "No data available",
   "common.close": "Close",
-
   "doctor.price": "EXAMINATION PRICE",
   "doctor.insurance": "INSURANCE APPLIED",
   "doctor.see-detail": "See details",
   "doctor.choose-schedule": "SCHEDULE",
   "doctor.choose-date": "Choose date",
-
   "booking.title": "Book Appointment",
   "booking.fullname": "Full name",
   "booking.phone": "Phone number",
@@ -129,7 +118,6 @@
   "booking.gender": "Gender",
   "booking.address": "Address",
   "booking.confirm-btn": "Confirm booking",
-
   "patient.doctor-detail.schedule": "SCHEDULE",
   "patient.doctor-detail.select-date": "Select date",
   "patient.doctor-detail.no-schedule": "The doctor has no available schedule on this day",
@@ -140,7 +128,6 @@
   "patient.doctor-detail.payment": "Payment",
   "patient.doctor-detail.insurance": "Insurance",
   "patient.doctor-detail.clinic-address": "CLINIC ADDRESS",
-
   "patient.booking-modal.title": "Book Appointment Information",
   "patient.booking-modal.full-name": "Full name",
   "patient.booking-modal.email": "Email",
@@ -156,25 +143,20 @@
   "patient.booking-modal.success": "Booking successful! Please check your email to confirm.",
   "patient.booking-modal.duplicate": "Appointment already exists. Please choose another time slot.",
   "patient.booking-modal.error": "An error occurred, please try again later.",
-
   "patient.verify-email.success": "Appointment confirmed successfully!",
   "patient.verify-email.success-desc": "Thank you for confirming. Please arrive on time.",
   "patient.verify-email.failed": "Confirmation failed!",
   "patient.verify-email.failed-desc": "The confirmation link is invalid or has already been used.",
   "patient.verify-email.go-home": "Go to homepage",
-
   "patient.specialty-detail.filter-province": "All provinces",
   "patient.specialty-detail.see-more": "See more",
   "patient.specialty-detail.collapse": "Collapse",
   "patient.specialty-detail.no-doctor": "No doctors found in this area.",
-
   "patient.clinic-detail.our-doctors": "Our Doctors",
   "patient.clinic-detail.no-doctor": "No doctors available at this clinic.",
   "patient.clinic-detail.not-found": "Clinic not found",
   "patient.clinic-detail.not-found-desc": "Please check the URL.",
-
   "patient.social-plugin.like-share": "Like and share",
-
   "doctor.manage-patient.title": "Patient Appointment Management",
   "doctor.manage-patient.select-date": "Select date",
   "doctor.manage-patient.filter-status": "Filter by status",
@@ -183,7 +165,6 @@
   "doctor.manage-patient.status-confirmed": "Confirmed",
   "doctor.manage-patient.status-done": "Done",
   "doctor.manage-patient.status-cancelled": "Cancelled",
-
   "doctor.manage-patient.col-name": "Patient Name",
   "doctor.manage-patient.col-phone": "Phone Number",
   "doctor.manage-patient.col-address": "Address",
@@ -191,18 +172,15 @@
   "doctor.manage-patient.col-time": "Time Slot",
   "doctor.manage-patient.col-reason": "Reason",
   "doctor.manage-patient.col-actions": "Actions",
-
   "doctor.manage-patient.btn-send-remedy": "Send Result",
   "doctor.manage-patient.btn-cancel": "Cancel",
   "doctor.manage-patient.no-patient": "No patients found for this date",
-
   "doctor.manage-patient.remedy-title": "Send Medical Examination Results",
   "doctor.manage-patient.patient-name": "Patient",
   "doctor.manage-patient.email-label": "Patient Email",
   "doctor.manage-patient.image-label": "Attach result image (JPEG/PNG, max 5MB)",
   "doctor.manage-patient.btn-send": "Send",
   "doctor.manage-patient.sending": "Sending...",
-
   "doctor.manage-patient.send-success": "Medical results sent successfully!",
   "doctor.manage-patient.send-error": "Failed to send results, please try again.",
   "doctor.manage-patient.cancel-success": "Appointment cancelled successfully!",
@@ -212,21 +190,17 @@
   "doctor.manage-patient.no-permission": "You do not have permission to access this feature!",
   "doctor.manage-patient.email-required": "Please enter patient email!",
   "doctor.manage-patient.image-required": "Please attach the examination result image!",
-
   "auth.login.email-placeholder": "Enter your email",
   "auth.login.password-placeholder": "Enter your password",
   "auth.common.system-error": "Server connection error!",
   "auth.register.guest-warning": "This email was used for booking. Please use Forgot Password to set a password.",
-
   "header.patient-portal": "My Profile",
   "header.sub-patient-portal": "Appointments & records",
   "header.patient-logout": "Logout",
-
   "patient-portal.sidebar.profile": "Personal Information",
   "patient-portal.sidebar.appointments": "Appointment History",
   "patient-portal.sidebar.title": "Patient Portal",
   "patient-portal.sidebar.home": "Home",
-
   "patient-portal.profile.title": "Personal Information",
   "patient-portal.profile.first-name": "First Name",
   "patient-portal.profile.last-name": "Last Name",
@@ -266,7 +240,6 @@
   "patient-portal.bank.set-primary-success": "Primary refund account updated!",
   "patient-portal.bank.delete-success": "Bank account removed successfully!",
   "patient-portal.bank.delete-confirm": "Are you sure you want to delete this bank account?",
-
   "patient-portal.change-password.title": "Change Password",
   "patient-portal.change-password.current": "Current Password",
   "patient-portal.change-password.new": "New Password",
@@ -280,7 +253,6 @@
   "patient-portal.change-password.current-placeholder": "Enter current password",
   "patient-portal.change-password.new-placeholder": "Enter new password",
   "patient-portal.change-password.confirm-placeholder": "Confirm new password",
-
   "patient-portal.appointments.title": "Appointment History",
   "patient-portal.appointments.tab-upcoming": "Upcoming",
   "patient-portal.appointments.tab-done": "Completed",
@@ -307,14 +279,11 @@
   "patient-portal.appointments.prev-page": "Previous",
   "patient-portal.appointments.next-page": "Next",
   "patient-portal.appointments.reviewed": "Reviewed",
-
   "patient-portal.layout.back-to-home": "Back to Home",
-
   "schedule.loading": "Loading...",
   "schedule.note": "Select and book (free)",
   "schedule.empty": "The doctor has no available schedule on this day.",
   "schedule.login-required": "Please log in to book an appointment.",
-
   "booking-modal.title": "Book Appointment Information",
   "booking-modal.free-booking": "Free booking",
   "booking-modal.fullname-label": "Full name",
@@ -336,7 +305,6 @@
   "booking-modal.duplicate": "Appointment already exists. Please choose another time slot.",
   "booking-modal.slot-full": "This time slot is full! Please choose another time slot.",
   "booking-modal.error": "An error occurred. Please try again later.",
-
   "booking-modal.err-fullname": "Please enter full name (minimum 2 characters)",
   "booking-modal.err-email": "Invalid email format",
   "booking-modal.err-phone": "Invalid phone number (10 digits, starts with 03/05/07/08/09)",
@@ -344,12 +312,9 @@
   "booking-modal.err-reason": "Please enter reason for visit",
   "booking-modal.err-birthday": "Please enter a valid date of birth",
   "booking-modal.err-gender": "Please select gender",
-
   "common.brand-name": "BookingCare",
-
   "doctor-detail.not-found-title": "Doctor information not found",
   "doctor-detail.not-found-desc": "Please check the URL or go back to the homepage.",
-
   "rating.modal-title": "Rate Doctor",
   "rating.star-label": "Select rating",
   "rating.comment-label": "Comment",
@@ -360,36 +325,30 @@
   "rating.success": "Review submitted successfully! Thank you.",
   "rating.error": "Failed to submit review, please try again.",
   "rating.star-required": "Please select a star rating!",
-
   "review-list.title": "Patient Reviews",
   "review-list.average": "average",
   "review-list.total-reviews": "reviews",
   "review-list.no-reviews": "No reviews yet.",
   "review-list.load-more": "Load more reviews",
   "review-list.anonymous-suffix": "***",
-
   "common.page-not-found": "The page you're looking for doesn't exist",
   "common.back-to-home": "← Back to Home",
   "common.add-new": "Add New",
   "common.results-count": "{filtered}/{total} results",
-
   "banner.search-group.doctor": "Doctors",
   "banner.search-group.specialty": "Specialties",
   "banner.search-group.clinic": "Clinics",
   "banner.search-no-results": "No results found",
-
   "admin.manage.system-layout.back-to-home": "Back to Home",
   "admin.manage.system-layout.admin-panel": "ADMIN PANEL",
   "admin.manage.system-layout.home": "Home",
   "admin.manage.system-layout.role-admin": "Admin",
   "admin.manage.system-layout.role-doctor": "Doctor",
-
   "footer.address": "28 Thanh Thai, Ward 14, District 10, Ho Chi Minh City",
   "footer.phone": "024-7300-6858",
   "footer.email": "support@bookingcare.vn",
   "footer.copyright": "© 2026 BookingCare. All rights reserved.",
   "footer.university": "Capstone Project 1 — University of Information Technology (UIT)",
-
   "admin.manage.user.title": "User Management",
   "admin.manage.user.btn-add": "Add New",
   "admin.manage.user.btn-save": "Save",
@@ -443,7 +402,6 @@
   "admin.manage.user.kpi-doctors": "Doctors",
   "admin.manage.user.kpi-patients": "Patients",
   "admin.manage.user.kpi-admins": "Administrators",
-
   "admin.manage.doctor.title": "Doctor Profile Management",
   "admin.manage.doctor.existing-badge": "Profile exists",
   "admin.manage.doctor.label-select-doctor": "Select Doctor",
@@ -483,7 +441,6 @@
   "admin.manage.doctor.toast-delete-success": "Doctor profile deleted successfully.",
   "admin.manage.doctor.toast-delete-error": "Delete failed",
   "admin.manage.doctor.toast-server-error": "Cannot connect to server",
-
   "admin.manage.clinic.title": "Clinic Management",
   "admin.manage.clinic.btn-add": "Add New",
   "admin.manage.clinic.form-title-edit": "Edit Clinic",
@@ -509,7 +466,6 @@
   "admin.manage.clinic.toast-missing-info": "Missing information!",
   "admin.manage.clinic.toast-missing-info-desc": "Please enter clinic name and address.",
   "admin.manage.clinic.toast-server-error": "Cannot connect to server",
-
   "admin.manage.specialty.title": "Specialty Management",
   "admin.manage.specialty.btn-add": "Add New",
   "admin.manage.specialty.form-title-edit": "Edit Specialty",
@@ -530,7 +486,6 @@
   "admin.manage.specialty.toast-missing-info": "Missing information!",
   "admin.manage.specialty.toast-missing-info-desc": "Please enter specialty name.",
   "admin.manage.specialty.toast-server-error": "Cannot connect to server",
-
   "admin.manage.schedule.title": "Schedule Management",
   "admin.manage.schedule.desc-admin": "Create and manage doctor schedules",
   "admin.manage.schedule.desc-doctor": "Manage your own work schedule",
@@ -571,7 +526,6 @@
   "admin.manage.schedule.toast-quota-success": "Updated maximum capacity → {max}.",
   "admin.manage.schedule.toast-quota-error": "Update failed.",
   "admin.manage.schedule.toast-server-error": "Cannot connect to server",
-
   "dashboard.title": "Dashboard",
   "dashboard.stat-total-bookings": "Total Bookings",
   "dashboard.stat-total-doctors": "Active Doctors",
@@ -594,26 +548,21 @@
   "dashboard.error": "Error loading statistics",
   "menu.admin.dashboard": "Dashboard",
   "admin.layout.toggle-sidebar": "Toggle sidebar",
-
   "list-page.specialty.title": "Medical Specialties",
   "list-page.specialty.subtitle": "Search and explore top medical specialties",
   "list-page.specialty.search-placeholder": "Search specialties...",
-
   "list-page.clinic.title": "Health Facilities",
   "list-page.clinic.subtitle": "Explore trusted hospitals and clinics nationwide",
   "list-page.clinic.search-placeholder": "Search by clinic name or address...",
-
   "list-page.doctor.title": "Outstanding Doctors",
   "list-page.doctor.subtitle": "Experienced and dedicated doctors ready to serve you",
   "list-page.doctor.search-placeholder": "Search doctors by name...",
   "list-page.doctor.btn-detail": "Book Appointment",
   "list-page.doctor.btn-ai": "AI Consult",
-
   "list-page.filter-all-provinces": "All provinces/cities",
   "list-page.filter-all-specialties": "All specialties",
   "list-page.results-count": "Showing {count}/{total} results",
   "list-page.no-results": "No matching results found.",
-
   "list-page.fee.title": "Medical Examination Fees",
   "list-page.fee.subtitle": "Transparent pricing of leading doctors and medical services",
   "list-page.fee.search-placeholder": "Search by doctor name...",
@@ -627,41 +576,35 @@
   "list-page.fee.filter-price-low": "Under 300,000 VND",
   "list-page.fee.filter-price-high": "300,000 VND & above",
   "list-page.fee.no-results": "No examination fee information found!",
-
-  "menu.admin.medical-catalog":  "Medical Catalog",
-  "menu.admin.medicine":         "Medicine Catalog",
-  "menu.admin.system-settings":  "System Settings",
-  "menu.doctor.revenue":         "Revenue",
-  "menu.doctor.profile":         "My Profile",
+  "menu.admin.medical-catalog": "Medical Catalog",
+  "menu.admin.medicine": "Medicine Catalog",
+  "menu.admin.system-settings": "System Settings",
+  "menu.doctor.revenue": "Revenue",
+  "menu.doctor.profile": "My Profile",
   "menu.doctor.manage-schedule": "Manage Schedule",
-
-  "doctor.revenue.title":        "My Revenue",
-  "doctor.profile.title":        "My Profile",
-  "doctor.medical-info.title":   "Record Medical Info",
-  "doctor.medical-info.symptoms":         "Symptoms",
-  "doctor.medical-info.clinical-notes":   "Clinical Notes",
-  "doctor.medical-info.diagnosis":        "Diagnosis",
-  "doctor.medical-info.follow-up-date":   "Follow-up Date",
-  "doctor.medical-info.care-instructions":"Care Instructions",
-  "doctor.medical-info.medicines":        "Prescription",
-
-  "patient.history.detail":              "View Details",
-  "patient.history.symptoms":            "Symptoms",
-  "patient.history.diagnosis":           "Diagnosis",
-  "patient.history.prescription":        "Prescription",
-  "patient.history.follow-up":           "Follow-up Date",
-  "patient.history.care-instructions":   "Care Instructions",
-
-  "booking.refund-policy.title":         "Refund Policy",
-  "booking.refund-policy.before-24h":    "Cancel before 24h: {rate}% refund",
-  "booking.refund-policy.after-24h":     "Cancel after 24h: {rate}% refund",
-  "booking.bank-info.title":             "Refund Account (optional)",
-  "booking.bank-info.account-number":    "Account Number",
-  "booking.bank-info.account-name":      "Account Holder Name",
-  "booking.bank-info.bank-name":         "Bank Name",
-
-  "admin.medical-catalog.title":         "Medical Catalog",
-  "admin.medicine.title":                "Medicine Catalog",
-  "admin.system-settings.title":         "System Settings"
+  "doctor.revenue.title": "My Revenue",
+  "doctor.profile.title": "My Profile",
+  "doctor.medical-info.title": "Record Medical Info",
+  "doctor.medical-info.symptoms": "Symptoms",
+  "doctor.medical-info.clinical-notes": "Clinical Notes",
+  "doctor.medical-info.diagnosis": "Diagnosis",
+  "doctor.medical-info.follow-up-date": "Follow-up Date",
+  "doctor.medical-info.care-instructions": "Care Instructions",
+  "doctor.medical-info.medicines": "Prescription",
+  "patient.history.detail": "View Details",
+  "patient.history.symptoms": "Symptoms",
+  "patient.history.diagnosis": "Diagnosis",
+  "patient.history.prescription": "Prescription",
+  "patient.history.follow-up": "Follow-up Date",
+  "patient.history.care-instructions": "Care Instructions",
+  "booking.refund-policy.title": "Refund Policy",
+  "booking.refund-policy.before-24h": "Cancel before 24h: {rate}% refund",
+  "booking.refund-policy.after-24h": "Cancel after 24h: {rate}% refund",
+  "booking.bank-info.title": "Refund Account (optional)",
+  "booking.bank-info.account-number": "Account Number",
+  "booking.bank-info.account-name": "Account Holder Name",
+  "booking.bank-info.bank-name": "Bank Name",
+  "admin.medical-catalog.title": "Medical Catalog",
+  "admin.medicine.title": "Medicine Catalog",
+  "admin.system-settings.title": "System Settings"
 }
-
