@@ -290,10 +290,12 @@ $rose-50:   #fff1f2;
     background: #ffffff;
     border: 1px solid $slate-200;
     border-radius: 8px;
-    overflow: hidden;
+    overflow: visible;
 
     .table-responsive {
       overflow-x: auto;
+      min-height: 340px;
+      padding-bottom: 80px;
     }
 
     .doctor-table {
@@ -399,34 +401,54 @@ $rose-50:   #fff1f2;
         display: inline-block;
 
         .btn-more {
-          background: transparent;
-          border: 1px solid $slate-200;
+          background: #ffffff;
+          border: 1px solid $slate-300;
           border-radius: 6px;
-          padding: 4px 8px;
+          padding: 6px 10px;
           cursor: pointer;
           color: $slate-600;
-          &:hover { background: $slate-100; }
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+          transition: all 0.15s ease;
+
+          svg {
+            pointer-events: none;
+          }
+
+          &:hover {
+            background: $slate-100;
+            color: $teal-700;
+            border-color: $teal-600;
+          }
         }
 
+        .action-dropdown-menu,
         .dropdown-menu {
+          display: block !important;
+          visibility: visible !important;
+          opacity: 1 !important;
           position: absolute;
           right: 0;
-          top: 100%;
-          z-index: 50;
-          min-width: 170px;
-          background: #ffffff;
+          top: calc(100% + 4px);
+          z-index: 1050 !important;
+          min-width: 195px;
+          background: #ffffff !important;
           border: 1px solid $slate-200;
           border-radius: 8px;
-          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-          padding: 4px;
-          margin-top: 4px;
+          box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.18) !important;
+          padding: 6px;
+          animation: modalSlideUp 0.12s ease-out;
 
+          .action-dropdown-item,
           .dropdown-item {
-            display: flex;
+            display: flex !important;
             align-items: center;
-            gap: 8px;
-            padding: 7px 10px;
-            font-size: 0.78rem;
+            gap: 9px;
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
             color: $slate-700;
             background: transparent;
             border: none;
@@ -435,17 +457,18 @@ $rose-50:   #fff1f2;
             border-radius: 6px;
             cursor: pointer;
             text-decoration: none;
+            box-sizing: border-box;
 
             &:hover {
-              background: $slate-50;
-              color: $teal-700;
+              background: #f0fdfa !important;
+              color: $teal-700 !important;
             }
           }
 
           .dropdown-divider {
             height: 1px;
-            background: $slate-200;
-            margin: 4px 0;
+            background: $slate-100;
+            margin: 5px 0;
           }
         }
       }

@@ -36,6 +36,7 @@ import {
   updateDoctorScheduleSlots
 } from '../../../../services/doctorManageService';
 import { saveInfoDoctor } from '../../../../services/doctorService';
+import CommonUtils from '../../../../utils/CommonUtils';
 import CommissionModal from './CommissionModal';
 import DoctorPayoutModal from './DoctorPayoutModal';
 import './DoctorWorkspace.scss';
@@ -271,23 +272,31 @@ const DoctorDetailWorkspace = () => {
         <div className="header-top-row">
           <div className="profile-meta">
             {profile.avatar ? (
-              <img src={profile.avatar} alt={profile.doctorName} className="avatar-lg" />
-            ) : (
-              <div
+              <img
+                src={CommonUtils.decodeBase64Image(profile.avatar)}
+                alt={profile.doctorName}
                 className="avatar-lg"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 800,
-                  fontSize: '1.4rem',
-                  color: '#087F8C',
-                  background: '#F0FDFA',
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  const fb = e.currentTarget.parentElement?.querySelector('.avatar-fallback');
+                  if (fb) fb.style.display = 'flex';
                 }}
-              >
-                {profile.firstName?.[0] || 'D'}
-              </div>
-            )}
+              />
+            ) : null}
+            <div
+              className="avatar-lg avatar-fallback"
+              style={{
+                display: profile.avatar ? 'none' : 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 800,
+                fontSize: '1.4rem',
+                color: '#087F8C',
+                background: '#F0FDFA',
+              }}
+            >
+              {profile.firstName?.[0] || profile.doctorName?.[0] || 'D'}
+            </div>
 
             <div className="profile-titles">
               <div className="badge-row">

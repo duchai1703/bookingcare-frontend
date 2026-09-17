@@ -24,6 +24,7 @@ import {
 import { getAdminDoctorsList, updateDoctorWorkingStatus } from '../../../../services/doctorManageService';
 import { getAllSpecialty } from '../../../../services/specialtyService';
 import { getAllClinic } from '../../../../services/clinicService';
+import CommonUtils from '../../../../utils/CommonUtils';
 import CommissionModal from './CommissionModal';
 import DoctorPayoutModal from './DoctorPayoutModal';
 import './DoctorWorkspace.scss';
@@ -136,9 +137,13 @@ const DoctorMaster = () => {
 
   // Click outside to close action dropdown
   useEffect(() => {
-    const handleClickOutside = () => setActiveMenuDoctorId(null);
-    window.addEventListener('click', handleClickOutside);
-    return () => window.removeEventListener('click', handleClickOutside);
+    const handleClickOutside = (e) => {
+      if (!e.target) return;
+      if (typeof e.target.closest === 'function' && e.target.closest('.action-menu-wrapper')) return;
+      setActiveMenuDoctorId(null);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   // Handle toggle doctor working status
@@ -362,12 +367,31 @@ const DoctorMaster = () => {
                     <td>
                       <div className="doc-cell">
                         {doc.avatar ? (
-                          <img src={doc.avatar} alt={doc.doctorName} className="doc-avatar" />
-                        ) : (
-                          <div className="doc-avatar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#087F8C' }}>
-                            {doc.firstName?.[0] || 'D'}
-                          </div>
-                        )}
+                          <img
+                            src={CommonUtils.decodeBase64Image(doc.avatar)}
+                            alt={doc.doctorName}
+                            className="doc-avatar"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              const fallback = e.currentTarget.parentElement?.querySelector('.fallback-avatar');
+                              if (fallback) fallback.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <div
+                          className="doc-avatar fallback-avatar"
+                          style={{
+                            display: doc.avatar ? 'none' : 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: 700,
+                            color: '#087F8C',
+                            background: '#F0FDFA',
+                            border: '1px solid #CCFBF1',
+                          }}
+                        >
+                          {doc.firstName?.[0] || doc.doctorName?.[0] || 'D'}
+                        </div>
                         <div className="doc-info">
                           <Link to={`/system/doctors/${doc.id}`} className="doc-name" style={{ textDecoration: 'none' }}>
                             {doc.doctorName}
@@ -444,30 +468,34 @@ const DoctorMaster = () => {
 
                     {/* Action Menu */}
                     <td style={{ textAlign: 'center' }}>
-                      <div className="action-menu-wrapper" onClick={(e) => e.stopPropagation()}>
+                      <div className="action-menu-wrapper">
                         <button
+                          type="button"
                           className="btn-more"
-                          onClick={() => setActiveMenuDoctorId(activeMenuDoctorId === doc.id ? null : doc.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveMenuDoctorId((prev) => (prev === doc.id ? null : doc.id));
+                          }}
                           title="Tùy chọn thao tác"
                         >
                           <MoreVertical size={16} />
                         </button>
 
                         {activeMenuDoctorId === doc.id && (
-                          <div className="dropdown-menu">
-                            <Link to={`/system/doctors/${doc.id}`} className="dropdown-item">
+                          <div className="action-dropdown-menu dropdown-menu show" onClick={(e) => e.stopPropagation()}>
+                            <Link to={`/system/doctors/${doc.id}`} className="action-dropdown-item dropdown-item">
                               <Eye size={13} style={{ color: '#087F8C' }} />
                               <span>{language === 'vi' ? 'Xem hồ sơ vận hành' : 'View Workspace'}</span>
                             </Link>
 
-                            <Link to={`/system/doctors/${doc.id}?tab=schedule`} className="dropdown-item">
+                            <Link to={`/system/doctors/${doc.id}?tab=schedule`} className="action-dropdown-item dropdown-item">
                               <Calendar size={13} style={{ color: '#3B82F6' }} />
                               <span>{language === 'vi' ? 'Quản lý lịch khám' : 'Manage Schedule'}</span>
                             </Link>
 
                             <button
                               type="button"
-                              className="dropdown-item"
+                              className="action-dropdown-item dropdown-item"
                               onClick={() => { setSelectedPayoutDoc(doc); setActiveMenuDoctorId(null); }}
                             >
                               <CreditCard size={13} style={{ color: '#059669' }} />
@@ -476,7 +504,7 @@ const DoctorMaster = () => {
 
                             <button
                               type="button"
-                              className="dropdown-item"
+                              className="action-dropdown-item dropdown-item"
                               onClick={() => { setSelectedCommissionDoc(doc); setActiveMenuDoctorId(null); }}
                             >
                               <Percent size={13} style={{ color: '#F59E0B' }} />
@@ -487,7 +515,7 @@ const DoctorMaster = () => {
 
                             <button
                               type="button"
-                              className="dropdown-item"
+                              className="action-dropdown-item dropdown-item"
                               onClick={() => { handleToggleStatus(doc); setActiveMenuDoctorId(null); }}
                             >
                               {doc.workingStatus === 'active' ? (
