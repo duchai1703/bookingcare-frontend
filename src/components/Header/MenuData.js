@@ -21,9 +21,8 @@ export const adminMenu = [
 
   // ── Nhóm 2: Quản trị Vận hành & Bệnh nhân ──
   { type: 'group', label: 'Vận hành Y tế' },
+  { name: 'menu.admin.manage-doctor',    link: path.DOCTOR_OPERATIONS },
   { name: 'menu.admin.manage-patient',   link: path.PATIENT_MANAGE },
-  { name: 'menu.admin.manage-doctor',    link: '/system/doctor-manage' },
-  { name: 'menu.admin.manage-schedule',  link: path.SCHEDULE_MANAGE },
 
   // ── Nhóm 3: Cơ sở y tế & Chuyên khoa ──
   { type: 'group', label: 'Cơ sở & Chuyên môn' },

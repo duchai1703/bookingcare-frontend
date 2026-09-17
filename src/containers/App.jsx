@@ -55,6 +55,9 @@ import SpecialtyClinicAnalytics from './System/Admin/Analytics/SpecialtyClinicAn
 import PatientMaster            from './System/Admin/Patient/PatientMaster';
 import PatientDetailWorkspace   from './System/Admin/Patient/PatientDetailWorkspace';
 
+// [Doctor Operations Center] Enterprise Master & Detail Workspace
+import DoctorMaster             from './System/Admin/Doctor/DoctorMaster';
+import DoctorDetailWorkspace    from './System/Admin/Doctor/DoctorDetailWorkspace';
 
 // [Phase 9.4] Patient Portal
 import PatientLayout from './PatientPortal/PatientLayout';
@@ -193,10 +196,13 @@ const App = () => {
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="user-manage" element={<UserManage />} />
-            <Route path="doctor-manage" element={<DoctorManage />} />
+            {/* [Doctor Operations Center] Master & Workspace */}
+            <Route path="doctor-manage" element={<DoctorMaster />} />
+            <Route path="doctors" element={<DoctorMaster />} />
+            <Route path="doctors/:id" element={<DoctorDetailWorkspace />} />
+            <Route path="schedule-manage" element={<DoctorMaster />} />
             <Route path="clinic-manage" element={<ClinicManage />} />
             <Route path="specialty-manage" element={<SpecialtyManage />} />
-            <Route path="schedule-manage"         element={<ScheduleManage />} />
             {/* [Phase C] Admin new pages */}
             <Route path="medical-catalog-manage"  element={<MedicalCatalogManage />} />
             <Route path="medicine-manage"          element={<MedicineManage />} />
