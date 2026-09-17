@@ -85,6 +85,7 @@
   "menu.admin.manage-user": "Quản lý người dùng",
   "menu.admin.manage-patient": "Hồ sơ bệnh nhân",
   "menu.admin.manage-doctor": "Quản lý bác sĩ",
+  "menu.admin.doctor-verification": "Thẩm định Bác sĩ",
   "menu.admin.manage-schedule": "Quản lý lịch khám bác sĩ",
   "menu.admin.manage-specialty": "Quản lý chuyên khoa",
   "menu.admin.manage-clinic": "Quản lý phòng khám",

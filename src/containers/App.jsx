@@ -58,6 +58,10 @@ import PatientDetailWorkspace   from './System/Admin/Patient/PatientDetailWorksp
 // [Doctor Operations Center] Enterprise Master & Detail Workspace
 import DoctorMaster             from './System/Admin/Doctor/DoctorMaster';
 import DoctorDetailWorkspace    from './System/Admin/Doctor/DoctorDetailWorkspace';
+import DoctorVerificationQueue  from './System/Admin/Doctor/DoctorVerificationQueue';
+
+// [Doctor Self-Onboarding Portal]
+import DoctorRegisterWizard     from './DoctorOnboarding/DoctorRegisterWizard';
 
 // [Clinic Operations Center] Facility Master & Control Center
 import ClinicMaster             from './System/Admin/Clinic/ClinicMaster';
@@ -111,6 +115,9 @@ const App = () => {
         <Route path={path.REGISTER} element={<Register />} />
         <Route path={path.FORGOT_PASSWORD} element={<ForgotPassword />} />
         <Route path={path.RESET_PASSWORD} element={<ResetPassword />} />
+
+        {/* [Doctor Self-Onboarding Portal] Public Registration Wizard */}
+        <Route path={path.DOCTOR_REGISTER} element={<DoctorRegisterWizard />} />
 
         {/* Chi tiết bác sĩ — SRS 3.8 */}
         <Route
@@ -212,6 +219,7 @@ const App = () => {
             <Route path="doctor-manage" element={<DoctorMaster />} />
             <Route path="doctors" element={<DoctorMaster />} />
             <Route path="doctors/:id" element={<DoctorDetailWorkspace />} />
+            <Route path="doctor-verification" element={<DoctorVerificationQueue />} />
             <Route path="schedule-manage" element={<DoctorMaster />} />
             {/* [Clinic Operations Center] Master & Control Center */}
             <Route path="clinic-manage" element={<ClinicMaster />} />

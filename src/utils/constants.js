@@ -99,6 +99,18 @@ export const path = {
   // [Phase C] Public — Clinic → Specialty → Doctor bridge
   CLINIC_SPECIALTY_BRIDGE: '/clinics/:clinicId/specialties',
   SPECIALTY_DOCTOR_BRIDGE: '/clinics/:clinicId/specialties/:specialtyId/doctors',
+
+  // [Doctor Self-Onboarding & Verification Center]
+  DOCTOR_REGISTER:          '/doctor-register',
+  DOCTOR_ONBOARDING_STATUS: '/doctor-onboarding-status',
+  DOCTOR_VERIFICATION:      '/system/doctor-verification',
+};
+
+export const DOCTOR_ONBOARDING_STATUS = {
+  SUBMITTED: 'SUBMITTED',
+  CHANGES_REQUESTED: 'CHANGES_REQUESTED',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
 };
 
 
