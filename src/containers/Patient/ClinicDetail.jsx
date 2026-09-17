@@ -12,6 +12,7 @@ import { getDetailClinicById } from '../../services/clinicService';
 import { LANGUAGES } from '../../utils/constants';
 import CommonUtils from '../../utils/CommonUtils';
 import Breadcrumb from '../../components/Common/Breadcrumb';
+import HeroBannerSlider from '../../components/Common/HeroBannerSlider';
 import DoctorSchedule from './DoctorSchedule';
 import DoctorExtraInfo from './DoctorExtraInfo';
 import './ClinicDetail.scss';
@@ -125,41 +126,39 @@ const ClinicDetail = () => {
             ]}
           />
 
-          {/* ====== PHẦN 1: BANNER PHÒNG KHÁM ====== */}
-          <div
-            className="clinic-detail__banner"
-            style={{
-              backgroundImage: clinicData.image
-                ? `url(${CommonUtils.decodeBase64Image(clinicData.image)})`
-                : 'none',
-            }}
-          >
-            <div className="clinic-detail__banner-overlay">
-              <div className="clinic-detail__banner-container">
-                <h1 className="clinic-detail__banner-name">
-                  {clinicData.name || ''}
-                </h1>
-                {clinicData.address && (
-                  <p className="clinic-detail__banner-address">
-                    <i className="fas fa-map-marker-alt"></i>
-                    {clinicData.address}
-                  </p>
-                )}
-                <div className="clinic-detail__banner-stats">
-                  <span className="stat-pill">
-                    <i className="fas fa-stethoscope" /> {specialties.length}{' '}
-                    {language === LANGUAGES.VI ? 'Chuyên khoa' : 'Specialties'}
-                  </span>
-                  <span className="stat-pill">
-                    <i className="fas fa-user-md" /> {doctorList.length}{' '}
-                    {language === LANGUAGES.VI ? 'Bác sĩ' : 'Doctors'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* ====== PHẦN 1: BANNER SLIDER PHÒNG KHÁM ====== */}
+          <HeroBannerSlider
+            slides={[
+              {
+                image: clinicData.image
+                  ? CommonUtils.decodeBase64Image(clinicData.image)
+                  : 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=1600&q=80',
+                caption: language === LANGUAGES.VI ? 'Khuôn viên cơ sở' : 'Facility Campus',
+              },
+              {
+                image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1600&q=80',
+                caption: language === LANGUAGES.VI ? 'Khu khám bệnh tiêu chuẩn' : 'Clinical Rooms',
+              },
+              {
+                image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=1600&q=80',
+                caption: language === LANGUAGES.VI ? 'Hệ thống thiết bị hiện đại' : 'Modern Equipment',
+              },
+            ]}
+            title={clinicData.name || ''}
+            address={clinicData.address || ''}
+            stats={[
+              {
+                icon: 'fas fa-stethoscope',
+                label: `${specialties.length} ${language === LANGUAGES.VI ? 'Chuyên khoa' : 'Specialties'}`,
+              },
+              {
+                icon: 'fas fa-user-md',
+                label: `${doctorList.length} ${language === LANGUAGES.VI ? 'Bác sĩ' : 'Doctors'}`,
+              },
+            ]}
+          />
 
-          {/* ====== PHẦN 2: MÔ TẢ PHÒNG KHÁM ====== */}
+          {/* ====== PHẦN 2: MÔ TẢ PHÒNG KHÁM (PEEK COLLAPSE) ====== */}
           {clinicData.descriptionHTML && (
             <div
               className={`clinic-detail__description ${
@@ -173,18 +172,27 @@ const ClinicDetail = () => {
                     __html: DOMPurify.sanitize(clinicData.descriptionHTML),
                   }}
                 />
+                {!showFullDescription && <div className="clinic-detail__description-fade" />}
               </div>
 
               <div className="clinic-detail__description-toggle">
-                <span onClick={() => setShowFullDescription(!showFullDescription)}>
-                  {showFullDescription
-                    ? language === LANGUAGES.VI
-                      ? '▲ Thu gọn'
-                      : '▲ Collapse'
-                    : language === LANGUAGES.VI
-                    ? '▼ Xem thêm'
-                    : '▼ See more'}
-                </span>
+                <button
+                  type="button"
+                  className="btn-toggle-peek"
+                  onClick={() => setShowFullDescription(!showFullDescription)}
+                >
+                  {showFullDescription ? (
+                    <>
+                      <span>{language === LANGUAGES.VI ? 'Thu gọn' : 'Collapse'}</span>
+                      <i className="fas fa-chevron-up" />
+                    </>
+                  ) : (
+                    <>
+                      <span>{language === LANGUAGES.VI ? 'Xem thêm' : 'See more'}</span>
+                      <i className="fas fa-chevron-down" />
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           )}

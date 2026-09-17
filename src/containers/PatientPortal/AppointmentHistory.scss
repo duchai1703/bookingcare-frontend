@@ -1124,34 +1124,126 @@ $border-color: #e2e8f0;
       background: #ffffff;
       border-radius: 14px;
       padding: 24px;
-      max-width: 440px;
+      max-width: 490px;
       width: 100%;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
 
       .cancel-header {
         display: flex;
         align-items: center;
-        gap: 10px;
-        margin-bottom: 12px;
+        gap: 12px;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #f1f5f9;
 
-        .warning-icon {
-          color: #f59e0b;
-          font-size: 1.3rem;
+        .cancel-icon-wrap {
+          width: 44px;
+          height: 44px;
+          border-radius: 10px;
+          background: #fef2f2;
+          border: 1px solid #fee2e2;
+          color: #ef4444;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.25rem;
+          flex-shrink: 0;
         }
 
-        h3 {
-          margin: 0;
-          font-size: 1.1rem;
-          font-weight: 700;
-          color: $text-dark;
+        .cancel-header-text {
+          h3 {
+            margin: 0;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: $text-dark;
+          }
+          .booking-subcode {
+            font-size: 0.8rem;
+            color: #64748b;
+            font-family: monospace;
+          }
         }
       }
 
-      .cancel-desc {
-        margin: 0 0 20px;
-        font-size: 0.88rem;
-        color: $text-muted;
-        line-height: 1.5;
+      .cancel-summary-box {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 20px;
+
+        .cancel-appt-info {
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 10px;
+          padding: 12px 14px;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+
+          .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.84rem;
+
+            .label {
+              color: #64748b;
+            }
+            .val {
+              color: #1e293b;
+              text-align: right;
+            }
+          }
+        }
+
+        .cancel-refund-policy {
+          background: #f0fdfa;
+          border: 1px solid #ccfbf1;
+          border-radius: 10px;
+          padding: 12px 14px;
+          display: flex;
+          flex-direction: column;
+          gap: 7px;
+
+          .policy-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #0f766e;
+            margin-bottom: 2px;
+          }
+
+          .policy-calc-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.83rem;
+            color: #334155;
+
+            &--highlight {
+              padding-top: 6px;
+              margin-top: 4px;
+              border-top: 1px dashed #99f6e4;
+              font-size: 0.9rem;
+            }
+          }
+        }
+
+        .cancel-account-note {
+          display: flex;
+          align-items: flex-start;
+          gap: 6px;
+          font-size: 0.78rem;
+          color: #64748b;
+          line-height: 1.4;
+
+          i {
+            margin-top: 2px;
+            color: #0d9488;
+          }
+        }
       }
 
       .cancel-actions {
@@ -1160,11 +1252,15 @@ $border-color: #e2e8f0;
         gap: 10px;
 
         button {
-          padding: 8px 18px;
+          padding: 9px 20px;
           border-radius: 8px;
           font-size: 0.85rem;
           font-weight: 600;
           cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          transition: all 0.2s ease;
         }
 
         .btn-cancel-back {
@@ -1179,6 +1275,7 @@ $border-color: #e2e8f0;
           border: none;
           color: #ffffff;
           &:hover { background: #dc2626; }
+          &:disabled { opacity: 0.6; cursor: not-allowed; }
         }
       }
     }

@@ -219,14 +219,6 @@ const DoctorSchedule = ({ doctorId }) => {
                 </button>
               ))}
             </div>
-
-            {/* Ghi chú đặt lịch — Fix i18n */}
-            <div className="doctor-schedule__note">
-              <span className="doctor-schedule__note-icon">🗓</span>
-              <span className="doctor-schedule__note-text">
-                <FormattedMessage id="schedule.note" />
-              </span>
-            </div>
           </>
         )}
 

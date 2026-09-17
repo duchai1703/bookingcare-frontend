@@ -14,6 +14,7 @@ import { fetchAllcodeByType } from '../../redux/slices/appSlice';
 import { LANGUAGES, ALLCODE_TYPES } from '../../utils/constants';
 import CommonUtils from '../../utils/CommonUtils';
 import Breadcrumb from '../../components/Common/Breadcrumb';
+import HeroBannerSlider from '../../components/Common/HeroBannerSlider';
 import DoctorSchedule from './DoctorSchedule';
 import DoctorExtraInfo from './DoctorExtraInfo';
 import './SpecialtyDetail.scss';
@@ -134,37 +135,41 @@ const SpecialtyDetail = () => {
         ]}
       />
 
-      {/* ====== HERO BANNER CHUYÊN KHOA ====== */}
+      {/* ====== HERO BANNER SLIDER CHUYÊN KHOA ====== */}
       {specialtyData && (
-        <div className="specialty-detail__hero">
-          <div className="specialty-detail__hero-container">
-            <div className="specialty-detail__hero-content">
-              {specialtyData.image && (
-                <img
-                  src={CommonUtils.decodeBase64Image(specialtyData.image)}
-                  alt={specialtyData.name}
-                  className="specialty-detail__hero-avatar"
-                />
-              )}
-              <div>
-                <h1 className="specialty-detail__hero-title">{specialtyData.name}</h1>
-                <div className="specialty-detail__hero-stats">
-                  <span className="stat-pill">
-                    <i className="fas fa-hospital" /> {clinics.length}{' '}
-                    {language === LANGUAGES.VI ? 'Cơ sở y tế' : 'Clinics'}
-                  </span>
-                  <span className="stat-pill">
-                    <i className="fas fa-user-md" /> {doctorList.length}{' '}
-                    {language === LANGUAGES.VI ? 'Bác sĩ' : 'Doctors'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <HeroBannerSlider
+          slides={[
+            {
+              image: specialtyData.image
+                ? CommonUtils.decodeBase64Image(specialtyData.image)
+                : 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=1600&q=80',
+              caption: language === LANGUAGES.VI ? 'Chuyên khoa trọng điểm' : 'Medical Specialty',
+            },
+            {
+              image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=1600&q=80',
+              caption: language === LANGUAGES.VI ? 'Chăm sóc & Khám chuyên sâu' : 'Advanced Care',
+            },
+            {
+              image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=1600&q=80',
+              caption: language === LANGUAGES.VI ? 'Đội ngũ bác sĩ chuyên khoa' : 'Specialist Team',
+            },
+          ]}
+          title={specialtyData.name || ''}
+          description={language === LANGUAGES.VI ? 'Khám và điều trị chuyên sâu cùng đội ngũ chuyên gia, bác sĩ giàu kinh nghiệm' : 'Specialized diagnosis and treatment with leading doctors'}
+          stats={[
+            {
+              icon: 'fas fa-hospital',
+              label: `${clinics.length} ${language === LANGUAGES.VI ? 'Cơ sở y tế' : 'Clinics'}`,
+            },
+            {
+              icon: 'fas fa-user-md',
+              label: `${doctorList.length} ${language === LANGUAGES.VI ? 'Bác sĩ' : 'Doctors'}`,
+            },
+          ]}
+        />
       )}
 
-      {/* ====== PHẦN 1: MÔ TẢ CHUYÊN KHOA ====== */}
+      {/* ====== PHẦN 1: MÔ TẢ CHUYÊN KHOA (PEEK COLLAPSE) ====== */}
       {specialtyData && specialtyData.descriptionHTML && (
         <div
           className={`specialty-detail__description ${
@@ -178,18 +183,27 @@ const SpecialtyDetail = () => {
                 __html: DOMPurify.sanitize(specialtyData.descriptionHTML),
               }}
             />
+            {!showFullDescription && <div className="specialty-detail__description-fade" />}
           </div>
 
           <div className="specialty-detail__description-toggle">
-            <span onClick={() => setShowFullDescription(!showFullDescription)}>
-              {showFullDescription
-                ? language === LANGUAGES.VI
-                  ? '▲ Thu gọn'
-                  : '▲ Collapse'
-                : language === LANGUAGES.VI
-                ? '▼ Xem thêm'
-                : '▼ See more'}
-            </span>
+            <button
+              type="button"
+              className="btn-toggle-peek"
+              onClick={() => setShowFullDescription(!showFullDescription)}
+            >
+              {showFullDescription ? (
+                <>
+                  <span>{language === LANGUAGES.VI ? 'Thu gọn' : 'Collapse'}</span>
+                  <i className="fas fa-chevron-up" />
+                </>
+              ) : (
+                <>
+                  <span>{language === LANGUAGES.VI ? 'Xem thêm' : 'See more'}</span>
+                  <i className="fas fa-chevron-down" />
+                </>
+              )}
+            </button>
           </div>
         </div>
       )}

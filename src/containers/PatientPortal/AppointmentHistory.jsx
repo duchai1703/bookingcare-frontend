@@ -48,7 +48,7 @@ const AppointmentHistory = () => {
   const [isLoading, setIsLoading]       = useState(false);
 
   // Modals state
-  const [cancelModal, setCancelModal]   = useState({ isOpen: false, bookingId: null, isCancelling: false });
+  const [cancelModal, setCancelModal]   = useState({ isOpen: false, bookingId: null, booking: null, isCancelling: false });
   const [ratingModal, setRatingModal]   = useState({ isOpen: false, bookingData: null });
   const [detailBooking, setDetailBooking] = useState(null);
   const [showQrModal, setShowQrModal]   = useState(false);
@@ -235,12 +235,20 @@ const AppointmentHistory = () => {
   };
 
   // Hủy lịch
-  const handleOpenCancelModal = (bookingId) => {
-    setCancelModal({ isOpen: true, bookingId, isCancelling: false });
+  const handleOpenCancelModal = (bookingOrId) => {
+    const bookingObj = typeof bookingOrId === 'object'
+      ? bookingOrId
+      : bookings.find((b) => b.id === bookingOrId) || (detailBooking?.id === bookingOrId ? detailBooking : null);
+    setCancelModal({
+      isOpen: true,
+      bookingId: bookingObj?.id || bookingOrId,
+      booking: bookingObj,
+      isCancelling: false,
+    });
   };
 
   const handleCloseCancelModal = () => {
-    setCancelModal({ isOpen: false, bookingId: null, isCancelling: false });
+    setCancelModal({ isOpen: false, bookingId: null, booking: null, isCancelling: false });
   };
 
   const handleConfirmCancel = async () => {
@@ -249,7 +257,7 @@ const AppointmentHistory = () => {
     try {
       const result = await cancelBooking(cancelModal.bookingId);
       if (result.errCode === 0) {
-        toast.success(intl.formatMessage({ id: 'patient-portal.appointments.cancel-success' }, { defaultMessage: 'Hủy lịch khám thành công!' }));
+        toast.success(result.message || intl.formatMessage({ id: 'patient-portal.appointments.cancel-success' }, { defaultMessage: 'Hủy lịch khám thành công!' }));
         handleCloseCancelModal();
         if (detailBooking && detailBooking.id === cancelModal.bookingId) {
           setDetailBooking(null);
@@ -263,6 +271,33 @@ const AppointmentHistory = () => {
       toast.error('Có lỗi xảy ra khi kết nối');
       setCancelModal((prev) => ({ ...prev, isCancelling: false }));
     }
+  };
+
+  // Helper: Format ngày tạo lịch (createdAt)
+  const formatCreatedAt = (dateStr) => {
+    if (!dateStr) return '--';
+    const m = moment(dateStr);
+    if (!m.isValid()) return '--';
+    return m.format('DD/MM/YYYY HH:mm');
+  };
+
+  // Helper: Tính toán thời gian từ lúc đặt tới lúc hủy và ước tính hoàn tiền
+  const getRefundEstimate = (booking) => {
+    if (!booking) return { hours: 0, rate: 100, amount: 0, price: 0 };
+    const created = booking.createdAt ? new Date(booking.createdAt).getTime() : Date.now();
+    const now = Date.now();
+    const hours = Math.max(0, Math.round((now - created) / (1000 * 60 * 60)));
+    let rate = 100;
+    if (hours <= 24) {
+      rate = 100;
+    } else if (hours <= 72) {
+      rate = 75;
+    } else {
+      rate = 50;
+    }
+    const price = parseInt(booking.bookingPrice, 10) || 0;
+    const amount = Math.round((price * rate) / 100);
+    return { hours, rate, amount, price };
   };
 
   // Helper: Format Date chuẩn xác (tránh hiển thị raw timestamp)
@@ -504,6 +539,18 @@ const AppointmentHistory = () => {
                     <span className="time-label">Khung giờ:</span>
                     <span className="time-val text-primary font-bold">{getTimeSlot(b)}</span>
                   </div>
+                  <div className="time-item">
+                    <span className="time-label">Ngày đặt:</span>
+                    <span className="time-val text-slate-500 font-medium">{formatCreatedAt(b.createdAt)}</span>
+                  </div>
+                  {b.statusId === 'S4' && b.refundRate > 0 && (
+                    <div className="time-item">
+                      <span className="time-label">Hoàn tiền:</span>
+                      <span className="time-val text-emerald-600 font-semibold">
+                        {b.refundRate}% ({CommonUtils.formatCurrency(b.refundAmount)} ₫)
+                      </span>
+                    </div>
+                  )}
                   {b.reason && (
                     <div className="reason-item">
                       <span className="time-label">Lý do khám:</span>
@@ -527,7 +574,7 @@ const AppointmentHistory = () => {
                     <button
                       type="button"
                       className="btn-card-action btn-card-cancel"
-                      onClick={() => handleOpenCancelModal(b.id)}
+                      onClick={() => handleOpenCancelModal(b)}
                     >
                       <i className="fas fa-ban" /> Hủy lịch
                     </button>
@@ -567,6 +614,7 @@ const AppointmentHistory = () => {
                 <th>Bác sĩ</th>
                 <th>Chuyên khoa & Cơ sở</th>
                 <th>Thời gian</th>
+                <th>Ngày đặt</th>
                 <th>Trạng thái</th>
                 <th className="text-right">Thao tác</th>
               </tr>
@@ -593,6 +641,9 @@ const AppointmentHistory = () => {
                       <span>{formatDateTime(b.date, b.timeTypeBooking)}</span>
                     </div>
                   </td>
+                  <td className="text-xs text-slate-500 font-mono">
+                    {formatCreatedAt(b.createdAt)}
+                  </td>
                   <td>{renderStatusBadge(b.statusId)}</td>
                   <td className="text-right">
                     <div className="table-actions-cell">
@@ -608,7 +659,7 @@ const AppointmentHistory = () => {
                         <button
                           type="button"
                           className="btn-tbl-cancel"
-                          onClick={() => handleOpenCancelModal(b.id)}
+                          onClick={() => handleOpenCancelModal(b)}
                           title="Hủy lịch"
                         >
                           Hủy
@@ -716,6 +767,13 @@ const AppointmentHistory = () => {
                 </div>
 
                 <div className="info-fields-grid">
+                  {detailBooking.reason && (
+                    <div className="field-item full-width">
+                      <span className="field-label">Lý do khám đăng ký:</span>
+                      <p className="field-reason-box">{detailBooking.reason}</p>
+                    </div>
+                  )}
+
                   <div className="field-item">
                     <span className="field-label">Bác sĩ phụ trách:</span>
                     <strong className="field-value text-dark">{getDoctorName(detailBooking)}</strong>
@@ -730,7 +788,7 @@ const AppointmentHistory = () => {
                   </div>
 
                   <div className="field-item full-width">
-                    <span className="field-label">Địa điểm khám bệnh:</span>
+                    <span className="field-label">Cơ sở y tế & Địa điểm:</span>
                     <strong className="field-value">{getClinicName(detailBooking) || 'Phòng khám / Bệnh viện đối tác'}</strong>
                     {getClinicAddress(detailBooking) && (
                       <span className="field-sub location-sub">
@@ -747,16 +805,35 @@ const AppointmentHistory = () => {
                   </div>
 
                   <div className="field-item">
+                    <span className="field-label">Ngày đặt lịch:</span>
+                    <span className="field-value text-slate-700 font-medium">
+                      {formatCreatedAt(detailBooking.createdAt)}
+                    </span>
+                  </div>
+
+                  {detailBooking.statusId === 'S4' && (
+                    <>
+                      <div className="field-item">
+                        <span className="field-label">Thời điểm hủy:</span>
+                        <span className="field-value text-rose-600 font-medium">
+                          {formatCreatedAt(detailBooking.cancelledAt || detailBooking.updatedAt)}
+                        </span>
+                      </div>
+                      <div className="field-item">
+                        <span className="field-label">Chính sách hoàn tiền:</span>
+                        <span className="field-value text-emerald-600 font-semibold">
+                          {detailBooking.refundRate
+                            ? `${detailBooking.refundRate}% · ${CommonUtils.formatCurrency(detailBooking.refundAmount)} ₫ (${detailBooking.refundStatus === 'done' ? 'Đã hoàn tiền' : 'Đang xử lý'})`
+                            : 'Không áp dụng hoàn tiền'}
+                        </span>
+                      </div>
+                    </>
+                  )}
+
+                  <div className="field-item">
                     <span className="field-label">Bệnh nhân đặt khám:</span>
                     <span className="field-value">{detailBooking.patientName || '--'}</span>
                   </div>
-
-                  {detailBooking.reason && (
-                    <div className="field-item full-width">
-                      <span className="field-label">Lý do khám đăng ký:</span>
-                      <p className="field-reason-box">{detailBooking.reason}</p>
-                    </div>
-                  )}
                 </div>
               </div>
 
@@ -961,7 +1038,7 @@ const AppointmentHistory = () => {
                 <button
                   type="button"
                   className="btn-footer-cancel"
-                  onClick={() => handleOpenCancelModal(detailBooking.id)}
+                  onClick={() => handleOpenCancelModal(detailBooking)}
                 >
                   <i className="fas fa-ban" /> Hủy lịch hẹn này
                 </button>
@@ -979,20 +1056,74 @@ const AppointmentHistory = () => {
       )}
 
       {/* ═══════════════════════════════════════════════════════════
-          MODAL CONFIRM HỦY LỊCH
+          MODAL CONFIRM HỦY LỊCH — TÓM TẮT CHÍNH SÁCH HOÀN TIỀN
       ═══════════════════════════════════════════════════════════ */}
       {cancelModal.isOpen && (
         <div className="cancel-modal-backdrop" onClick={handleCloseCancelModal}>
           <div className="cancel-modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="cancel-header">
-              <i className="fas fa-exclamation-triangle warning-icon" />
-              <h3>Xác nhận hủy lịch hẹn?</h3>
+              <div className="cancel-icon-wrap">
+                <i className="fas fa-calendar-times" />
+              </div>
+              <div className="cancel-header-text">
+                <h3>Xác nhận hủy lịch khám?</h3>
+                <span className="booking-subcode">Mã lịch hẹn: #BK-{cancelModal.bookingId}</span>
+              </div>
             </div>
-            <p className="cancel-desc">
-              Bạn có chắc chắn muốn hủy lịch hẹn <strong>#BK-{cancelModal.bookingId}</strong>?
-              <br />
-              Nếu bạn đã thanh toán qua VNPay, tiền sẽ được hoàn theo Chính sách hoàn tiền của hệ thống.
-            </p>
+
+            {(() => {
+              const estimate = getRefundEstimate(cancelModal.booking);
+              const b = cancelModal.booking;
+              return (
+                <div className="cancel-summary-box">
+                  {b && (
+                    <div className="cancel-appt-info">
+                      <div className="info-row">
+                        <span className="label">Bác sĩ:</span>
+                        <span className="val font-semibold">{getDoctorName(b)}</span>
+                      </div>
+                      <div className="info-row">
+                        <span className="label">Thời gian khám:</span>
+                        <span className="val text-primary font-semibold">
+                          {formatDateTime(b.date, b.timeTypeBooking)} ({getTimeSlot(b)})
+                        </span>
+                      </div>
+                      <div className="info-row">
+                        <span className="label">Ngày đặt lịch:</span>
+                        <span className="val">{formatCreatedAt(b.createdAt)}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="cancel-refund-policy">
+                    <div className="policy-header">
+                      <i className="fas fa-shield-alt text-teal" />
+                      <span>Chính sách hoàn tiền dựa trên thời gian:</span>
+                    </div>
+                    <div className="policy-calc-row">
+                      <span>Thời gian từ khi đặt tới lúc hủy:</span>
+                      <strong>{estimate.hours} giờ</strong>
+                    </div>
+                    <div className="policy-calc-row">
+                      <span>Tỷ lệ hoàn tiền áp dụng:</span>
+                      <strong className="text-emerald-600">✓ Hoàn {estimate.rate}%</strong>
+                    </div>
+                    {estimate.price > 0 && (
+                      <div className="policy-calc-row policy-calc-row--highlight">
+                        <span>Số tiền hoàn dự kiến:</span>
+                        <strong className="text-emerald-700">{CommonUtils.formatCurrency(estimate.amount)} ₫</strong>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="cancel-account-note">
+                    <i className="fas fa-info-circle text-teal" />
+                    <span>Tiền hoàn sẽ được đối soát và chuyển về tài khoản ngân hàng nhận hoàn tiền trong hồ sơ của bạn.</span>
+                  </div>
+                </div>
+              );
+            })()}
+
             <div className="cancel-actions">
               <button
                 type="button"
@@ -1008,7 +1139,13 @@ const AppointmentHistory = () => {
                 disabled={cancelModal.isCancelling}
                 onClick={handleConfirmCancel}
               >
-                {cancelModal.isCancelling ? 'Đang xử lý...' : 'Xác nhận hủy lịch'}
+                {cancelModal.isCancelling ? (
+                  <>
+                    <i className="fas fa-spinner fa-spin" /> Đang xử lý...
+                  </>
+                ) : (
+                  'Xác nhận hủy lịch'
+                )}
               </button>
             </div>
           </div>
