@@ -70,6 +70,7 @@ export const path = {
   MEDICAL_CATALOG_MANAGE: '/system/medical-catalog-manage',
   MEDICINE_MANAGE:        '/system/medicine-manage',
   SYSTEM_SETTINGS:        '/system/system-settings',
+  FINANCIAL_POLICIES:     '/system/policies',
 
   // [Phase E] Admin Detail Analytics pages
   ANALYTICS_BOOKINGS:     '/system/analytics/bookings',

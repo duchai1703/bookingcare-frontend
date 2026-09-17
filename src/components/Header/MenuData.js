@@ -31,7 +31,11 @@ export const adminMenu = [
   { name: 'menu.admin.medical-catalog',  link: path.MEDICAL_CATALOG_MANAGE },
   { name: 'menu.admin.medicine',         link: path.MEDICINE_MANAGE },
 
-  // ── Nhóm 4: Cài đặt & Phân quyền ──
+  // ── Nhóm 4: Tài chính & Chính sách ──
+  { type: 'group', label: 'Tài chính & Quy định' },
+  { name: 'menu.admin.financial-policies', link: path.FINANCIAL_POLICIES },
+
+  // ── Nhóm 5: Cài đặt & Phân quyền ──
   { type: 'group', label: 'Hệ thống' },
   { name: 'menu.admin.manage-user',      link: path.USER_MANAGE },
   { name: 'menu.admin.system-settings',  link: path.SYSTEM_SETTINGS },

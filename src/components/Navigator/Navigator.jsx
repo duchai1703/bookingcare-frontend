@@ -51,6 +51,7 @@ const MENU_ICONS = {
   'menu.admin.medicine': Pill,
 
   // Admin System
+  'menu.admin.financial-policies': CircleDollarSign,
   'menu.admin.manage-user': Users,
   'menu.admin.system-settings': Settings,
 

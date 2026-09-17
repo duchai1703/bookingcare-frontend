@@ -88,6 +88,7 @@
   "menu.admin.manage-schedule": "Doctor Schedule Management",
   "menu.admin.manage-specialty": "Specialty Management",
   "menu.admin.manage-clinic": "Clinic Management",
+  "menu.admin.financial-policies": "Financial Policies & Rules",
   "menu.doctor.manage-patient": "Patient Appointment Management",
   "menu.doctor.manage-schedule": "Schedule Management",
   "common.welcome": "Welcome, ",

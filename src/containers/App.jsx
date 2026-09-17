@@ -68,6 +68,9 @@ import ClinicSpecialtyWorkspace from './System/Admin/Clinic/ClinicSpecialtyWorks
 import SpecialtyMaster          from './System/Admin/Specialty/SpecialtyMaster';
 import SpecialtyDetailWorkspace from './System/Admin/Specialty/SpecialtyDetailWorkspace';
 
+// [Financial Policy Engine] Immutable Policies & Rules
+import PolicyMaster             from './System/Admin/Policy/PolicyMaster';
+
 // [Phase 9.4] Patient Portal
 import PatientLayout from './PatientPortal/PatientLayout';
 import PatientOverview from './PatientPortal/PatientOverview';
@@ -228,6 +231,9 @@ const App = () => {
             <Route path="patient-manage"          element={<PatientMaster />} />
             <Route path="patients"                element={<PatientMaster />} />
             <Route path="patients/:id"            element={<PatientDetailWorkspace />} />
+
+            {/* [Financial Policy Engine] Immutable Policies & Rules */}
+            <Route path="policies"                element={<PolicyMaster />} />
 
             {/* [Phase E] Admin Detail Analytics pages */}
             <Route path="analytics/bookings"            element={<BookingAnalytics />} />
