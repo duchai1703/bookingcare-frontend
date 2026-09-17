@@ -28,7 +28,8 @@ import {
   Save,
   PauseCircle,
   PlayCircle,
-  User
+  User,
+  Hospital,
 } from 'lucide-react';
 import {
   getAdminDoctorWorkspace,
@@ -36,6 +37,8 @@ import {
   updateDoctorScheduleSlots
 } from '../../../../services/doctorManageService';
 import { saveInfoDoctor } from '../../../../services/doctorService';
+import clinicHierarchyService from '../../../../services/clinicHierarchyService';
+import ContextBreadcrumbs from '../../../../components/ContextBreadcrumbs/ContextBreadcrumbs';
 import CommonUtils from '../../../../utils/CommonUtils';
 import CommissionModal from './CommissionModal';
 import DoctorPayoutModal from './DoctorPayoutModal';
@@ -67,6 +70,7 @@ const DoctorDetailWorkspace = () => {
 
   // Data State
   const [data, setData] = useState(null);
+  const [doctorAssignments, setDoctorAssignments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -109,6 +113,16 @@ const DoctorDetailWorkspace = () => {
         }
       } else {
         setError(res?.errMessage || 'Không tìm thấy hồ sơ bác sĩ');
+      }
+
+      // Fetch Multi-Clinic Affiliations & Assignments
+      try {
+        const asRes = await clinicHierarchyService.getDoctorAssignments(id);
+        if (asRes && asRes.errCode === 0) {
+          setDoctorAssignments(asRes.data || []);
+        }
+      } catch (asErr) {
+        console.error('Error fetching doctor assignments:', asErr);
       }
     } catch (err) {
       if (err.name !== 'CanceledError' && err.name !== 'AbortError') {
@@ -256,16 +270,12 @@ const DoctorDetailWorkspace = () => {
   return (
     <div className="doctor-workspace-container">
       {/* Breadcrumb */}
-      <div className="workspace-breadcrumb">
-        <Link to="/system/doctors">
-          <ArrowLeft size={14} />
-          <span>{language === 'vi' ? 'Quản lý Bác sĩ' : 'Doctor Operations'}</span>
-        </Link>
-        <span className="bc-separator">/</span>
-        <span className="bc-current">
-          {profile.doctorCode} — {profile.doctorName}
-        </span>
-      </div>
+      <ContextBreadcrumbs
+        items={[
+          { label: language === 'vi' ? 'Quản lý Bác sĩ' : 'Doctor Operations', path: '/system/doctors' },
+          { label: `${profile.doctorCode || ''} — ${profile.doctorName || ''}`, badge: 'Hồ sơ Bác sĩ' },
+        ]}
+      />
 
       {/* Header Card */}
       <div className="workspace-header-card">
@@ -474,6 +484,14 @@ const DoctorDetailWorkspace = () => {
         >
           <Activity size={15} />
           <span>Nhật ký điều hành</span>
+        </button>
+
+        <button
+          className={`tab-btn ${activeTab === 'affiliations' ? 'active' : ''}`}
+          onClick={() => handleTabChange('affiliations')}
+        >
+          <Hospital size={15} />
+          <span>Cơ sở công tác ({doctorAssignments.length})</span>
         </button>
       </nav>
 
@@ -1098,6 +1116,124 @@ const DoctorDetailWorkspace = () => {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* TAB 7: MULTI-CLINIC AFFILIATIONS */}
+        {activeTab === 'affiliations' && (
+          <div style={{ background: '#ffffff', border: '1px solid #E2E8F0', borderRadius: 10, padding: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Hospital size={18} style={{ color: '#087F8C' }} />
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: '#0F172A' }}>
+                  Cơ sở Y tế & Chuyên khoa Bác sĩ Đang Công tác
+                </h3>
+              </div>
+              <span className="badge bg-secondary" style={{ background: '#087F8C', color: '#fff' }}>
+                {doctorAssignments.length} Cơ sở phân bổ
+              </span>
+            </div>
+
+            {doctorAssignments.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px 20px', color: '#94A3B8' }}>
+                <Hospital size={36} style={{ marginBottom: 10, opacity: 0.5 }} />
+                <div>Bác sĩ chưa được phân bổ vào cơ sở y tế nào</div>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
+                {doctorAssignments.map((asg) => (
+                  <div
+                    key={asg.id}
+                    style={{
+                      border: '1px solid #E2E8F0',
+                      borderRadius: 10,
+                      padding: 16,
+                      background: '#F8FAFC',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                        <div>
+                          <h4 style={{ margin: 0, fontSize: '0.96rem', color: '#0F172A', fontWeight: 700 }}>
+                            {asg.clinicName}
+                          </h4>
+                          <small style={{ color: '#64748B', fontSize: '0.76rem' }}>{asg.clinicAddress}</small>
+                        </div>
+                        {asg.isPrimary ? (
+                          <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: 9999, background: '#ECFDF5', color: '#047857', fontWeight: 700 }}>
+                            ★ Cơ sở chính
+                          </span>
+                        ) : (
+                          <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: 9999, background: '#F1F5F9', color: '#64748B' }}>
+                            Kiêm nhiệm
+                          </span>
+                        )}
+                      </div>
+
+                      <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 8, padding: 12, margin: '10px 0', fontSize: '0.78rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                          <span style={{ color: '#64748B' }}>Chuyên khoa:</span>
+                          <strong style={{ color: '#087F8C' }}>{asg.specialtyName}</strong>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                          <span style={{ color: '#64748B' }}>Phòng khám:</span>
+                          <strong>{asg.roomNumber || 'Chưa xếp phòng'}</strong>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                          <span style={{ color: '#64748B' }}>Giá dịch vụ:</span>
+                          <strong style={{ color: '#059669' }}>{asg.priceText}</strong>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: '#64748B' }}>Hoa hồng sàn riêng:</span>
+                          <strong style={{ color: '#D97706' }}>{asg.commissionRate}%</strong>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                      <Link
+                        to={`/system/clinics/${asg.clinicId}`}
+                        style={{
+                          flex: 1,
+                          textAlign: 'center',
+                          padding: '6px 10px',
+                          background: '#FFFFFF',
+                          border: '1px solid #CBD5E1',
+                          borderRadius: 6,
+                          fontSize: '0.78rem',
+                          color: '#334155',
+                          textDecoration: 'none',
+                          fontWeight: 600,
+                        }}
+                      >
+                        Vào Cơ sở
+                      </Link>
+                      <Link
+                        to={`/system/clinics/${asg.clinicId}/specialties/${asg.specialtyId}`}
+                        style={{
+                          flex: 1,
+                          textAlign: 'center',
+                          padding: '6px 10px',
+                          background: '#087F8C',
+                          border: '1px solid #087F8C',
+                          borderRadius: 6,
+                          fontSize: '0.78rem',
+                          color: '#FFFFFF',
+                          textDecoration: 'none',
+                          fontWeight: 600,
+                        }}
+                      >
+                        Vào Chuyên khoa
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

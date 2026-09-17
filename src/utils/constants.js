@@ -86,6 +86,15 @@ export const path = {
   DOCTOR_OPERATIONS:      '/system/doctors',
   DOCTOR_WORKSPACE:       '/system/doctors/:id',
 
+  // [Clinic Operations Center] Master & Control Center
+  CLINIC_OPERATIONS:          '/system/clinics',
+  CLINIC_CONTROL_CENTER:      '/system/clinics/:id',
+  CLINIC_SPECIALTY_WORKSPACE: '/system/clinics/:clinicId/specialties/:specialtyId',
+
+  // [Specialty Intelligence Center] Master & Workspace
+  SPECIALTY_OPERATIONS:       '/system/specialties',
+  SPECIALTY_WORKSPACE:        '/system/specialties/:id',
+
   // [Phase C] Public — Clinic → Specialty → Doctor bridge
   CLINIC_SPECIALTY_BRIDGE: '/clinics/:clinicId/specialties',
   SPECIALTY_DOCTOR_BRIDGE: '/clinics/:clinicId/specialties/:specialtyId/doctors',

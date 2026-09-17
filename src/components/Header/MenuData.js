@@ -26,8 +26,8 @@ export const adminMenu = [
 
   // ── Nhóm 3: Cơ sở y tế & Chuyên khoa ──
   { type: 'group', label: 'Cơ sở & Chuyên môn' },
-  { name: 'menu.admin.manage-clinic',    link: path.CLINIC_MANAGE },
-  { name: 'menu.admin.manage-specialty', link: path.SPECIALTY_MANAGE },
+  { name: 'menu.admin.manage-clinic',    link: path.CLINIC_OPERATIONS },
+  { name: 'menu.admin.manage-specialty', link: path.SPECIALTY_OPERATIONS },
   { name: 'menu.admin.medical-catalog',  link: path.MEDICAL_CATALOG_MANAGE },
   { name: 'menu.admin.medicine',         link: path.MEDICINE_MANAGE },
 

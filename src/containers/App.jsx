@@ -59,6 +59,15 @@ import PatientDetailWorkspace   from './System/Admin/Patient/PatientDetailWorksp
 import DoctorMaster             from './System/Admin/Doctor/DoctorMaster';
 import DoctorDetailWorkspace    from './System/Admin/Doctor/DoctorDetailWorkspace';
 
+// [Clinic Operations Center] Facility Master & Control Center
+import ClinicMaster             from './System/Admin/Clinic/ClinicMaster';
+import ClinicControlCenter      from './System/Admin/Clinic/ClinicControlCenter';
+import ClinicSpecialtyWorkspace from './System/Admin/Clinic/ClinicSpecialtyWorkspace';
+
+// [Specialty Intelligence Center] Disciplines Master & Workspace
+import SpecialtyMaster          from './System/Admin/Specialty/SpecialtyMaster';
+import SpecialtyDetailWorkspace from './System/Admin/Specialty/SpecialtyDetailWorkspace';
+
 // [Phase 9.4] Patient Portal
 import PatientLayout from './PatientPortal/PatientLayout';
 import PatientOverview from './PatientPortal/PatientOverview';
@@ -201,8 +210,16 @@ const App = () => {
             <Route path="doctors" element={<DoctorMaster />} />
             <Route path="doctors/:id" element={<DoctorDetailWorkspace />} />
             <Route path="schedule-manage" element={<DoctorMaster />} />
-            <Route path="clinic-manage" element={<ClinicManage />} />
-            <Route path="specialty-manage" element={<SpecialtyManage />} />
+            {/* [Clinic Operations Center] Master & Control Center */}
+            <Route path="clinic-manage" element={<ClinicMaster />} />
+            <Route path="clinics" element={<ClinicMaster />} />
+            <Route path="clinics/:id" element={<ClinicControlCenter />} />
+            <Route path="clinics/:clinicId/specialties/:specialtyId" element={<ClinicSpecialtyWorkspace />} />
+
+            {/* [Specialty Intelligence Center] Master & Workspace */}
+            <Route path="specialty-manage" element={<SpecialtyMaster />} />
+            <Route path="specialties" element={<SpecialtyMaster />} />
+            <Route path="specialties/:id" element={<SpecialtyDetailWorkspace />} />
             {/* [Phase C] Admin new pages */}
             <Route path="medical-catalog-manage"  element={<MedicalCatalogManage />} />
             <Route path="medicine-manage"          element={<MedicineManage />} />
