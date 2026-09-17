@@ -72,3 +72,27 @@ export const deleteBookingAttachment = (bookingId, attachmentId) => {
   return axiosInstance.delete(`/api/v1/patient/bookings/${bookingId}/attachments/${attachmentId}`);
 };
 
+// ===== PATIENT BANK ACCOUNTS (Tài khoản nhận tiền hoàn) =====
+
+// Lấy danh sách tài khoản ngân hàng của bệnh nhân
+export const getPatientBankAccounts = () => {
+  return axiosInstance.get('/api/v1/patient/bank-accounts');
+};
+
+// Thêm tài khoản ngân hàng mới
+export const addPatientBankAccount = (data) => {
+  // data = { bankName, accountNumber, accountHolder, isPrimary }
+  return axiosInstance.post('/api/v1/patient/bank-accounts', data);
+};
+
+// Đặt tài khoản làm chính
+export const setPrimaryBankAccount = (id) => {
+  return axiosInstance.put(`/api/v1/patient/bank-accounts/${id}/primary`);
+};
+
+// Xóa tài khoản ngân hàng
+export const deletePatientBankAccount = (id) => {
+  return axiosInstance.delete(`/api/v1/patient/bank-accounts/${id}`);
+};
+
+

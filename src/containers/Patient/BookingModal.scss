@@ -220,17 +220,309 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 0;
+    gap: 18px;
 
     @include mobile {
       padding: 16px;
+      gap: 14px;
     }
   }
 
+  // ===================================================
+  // SECTIONS
+  // ===================================================
+  &__section {
+    background: #ffffff;
+    border: 1px solid #e8ecf1;
+    border-radius: 10px;
+    padding: 16px 18px;
+    transition: border-color 0.15s;
+
+    &--primary {
+      border-color: #cbd5e1;
+      background: #fafbfc;
+    }
+
+    &-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    &-badge {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba($primary, 0.12);
+      color: $primary;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    &-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1e293b;
+      margin: 0;
+    }
+
+    &-desc {
+      font-size: 12px;
+      color: #64748b;
+      margin: 0 0 12px 0;
+      line-height: 1.4;
+    }
+  }
+
+  &__edit-profile-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #f1f5f9;
+    color: #0f766e;
+    border: 1px solid #ccfbf1;
+    border-radius: 6px;
+    padding: 4px 9px;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+
+    &:hover {
+      background: #0d9488;
+      color: #ffffff;
+      border-color: #0d9488;
+    }
+  }
+
+  // ===================================================
+  // PROFILE TILES
+  // ===================================================
+  &__profile-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 10px;
+
+    @include mobile {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__info-tile {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    padding: 7px 11px;
+    display: flex;
+    flex-direction: column;
+
+    &--full {
+      grid-column: 1 / -1;
+    }
+
+    &-label {
+      font-size: 10.5px;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: #94a3b8;
+      letter-spacing: 0.03em;
+      margin-bottom: 2px;
+    }
+
+    &-val {
+      font-size: 13px;
+      font-weight: 500;
+      color: #1e293b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  // ===================================================
+  // EMAIL CARD (Read-only Account Email)
+  // ===================================================
+  &__email-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 9px 12px;
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 7px;
+
+    &-icon {
+      color: #64748b;
+      font-size: 14px;
+      margin-top: 2px;
+    }
+
+    &-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+  }
+
+  &__email-val {
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+  }
+
+  &__email-badge {
+    font-size: 10px;
+    background: #e2e8f0;
+    color: #475569;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-weight: 500;
+  }
+
+  &__email-hint {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 1px;
+  }
+
+  // ===================================================
+  // BANK SECTION & CARD
+  // ===================================================
+  &__switch-bank-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: transparent;
+    color: #0f766e;
+    border: none;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  &__bank-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: #f0fdfa;
+    border: 1px solid #99f6e4;
+    border-radius: 8px;
+
+    &-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: #ccfbf1;
+      color: #0d9488;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    &-details {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    &-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #0f766e;
+    }
+
+    &-primary {
+      font-size: 10px;
+      background: #0d9488;
+      color: #ffffff;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-weight: 600;
+    }
+
+    &-number {
+      font-size: 13px;
+      font-family: monospace;
+      font-weight: 600;
+      color: #1e293b;
+      letter-spacing: 0.05em;
+    }
+
+    &-holder {
+      font-size: 11px;
+      font-weight: 500;
+      color: #64748b;
+    }
+
+    &-edit {
+      background: transparent;
+      border: none;
+      color: #0d9488;
+      font-size: 13px;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 6px;
+      transition: background 0.15s;
+
+      &:hover {
+        background: #ccfbf1;
+      }
+    }
+  }
+
+  &__bank-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px;
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    font-size: 12.5px;
+    color: #64748b;
+  }
+
+  &__bank-add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: #0d9488;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+
+    &:hover {
+      background: #0f766e;
+    }
+  }
+
+  // ===================================================
+  // INPUTS & GENERAL STYLES
+  // ===================================================
   &__row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: $spacing-md;
+    gap: 12px;
 
     @include mobile {
       grid-template-columns: 1fr;
@@ -239,15 +531,15 @@
   }
 
   &__field {
-    margin-bottom: 16px;
+    margin-bottom: 12px;
   }
 
   &__label {
     display: block;
-    font-size: 13px;
-    font-weight: 500;
-    color: #3d4555;
-    margin-bottom: 6px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 5px;
   }
 
   &__required {
@@ -259,10 +551,10 @@
   &__textarea,
   &__select {
     width: 100%;
-    padding: 9px 12px;
-    border: 1px solid #D1D5DB;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
     border-radius: 7px;
-    font-size: 14px;
+    font-size: 13.5px;
     color: #1a1f2e;
     background: #fff;
     transition: border-color 0.15s, box-shadow 0.15s;
@@ -275,8 +567,8 @@
     }
 
     &::placeholder {
-      color: #A8AFBC;
-      font-size: 13.5px;
+      color: #94a3b8;
+      font-size: 13px;
     }
 
     &--error {
@@ -286,18 +578,13 @@
         box-shadow: 0 0 0 3px rgba(#ef4444, 0.12);
       }
     }
-
-    &--readonly {
-      background: #F8F9FB;
-      color: #8c93a2;
-      cursor: not-allowed;
-    }
   }
 
   &__textarea {
     resize: vertical;
-    min-height: 72px;
+    min-height: 68px;
     font-family: inherit;
+    line-height: 1.45;
   }
 
   &__select {
@@ -316,61 +603,6 @@
   }
 
   // ===================================================
-  // BANK INFO TOGGLE (collapsible)
-  // ===================================================
-  &__bank-toggle {
-    margin-bottom: 12px;
-    padding: 12px;
-    background: #F8F9FB;
-    border: 1px solid #E8EAED;
-    border-radius: 8px;
-
-    &-btn {
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 13.5px;
-      font-weight: 500;
-      color: #3d4555;
-      cursor: pointer;
-      background: none;
-      border: none;
-      padding: 0;
-      text-align: left;
-
-      &:hover { color: $primary; }
-    }
-  }
-
-  &__bank-arrow {
-    font-size: 11px;
-    color: #8c93a2;
-    transition: transform 0.2s;
-
-    &--open {
-      transform: rotate(180deg);
-    }
-  }
-
-  &__bank-hint {
-    font-size: 12px;
-    color: #8c93a2;
-    margin-top: 4px;
-  }
-
-  &__bank-fields {
-    background: #F8F9FB;
-    border: 1px solid #E8EAED;
-    border-top: none;
-    border-radius: 0 0 8px 8px;
-    padding: 16px 12px 4px;
-    margin-top: -4px;
-    margin-bottom: 12px;
-    animation: bmFadeIn 0.15s ease;
-  }
-
-  // ===================================================
   // FOOTER
   // ===================================================
   &__footer {
@@ -378,8 +610,8 @@
     justify-content: flex-end;
     align-items: center;
     gap: 10px;
-    padding: 16px 24px;
-    border-top: 1px solid #E8EAED;
+    padding: 14px 24px;
+    border-top: 1px solid #e8eaed;
     background: #fff;
     flex-shrink: 0;
 
@@ -406,10 +638,10 @@
     &--cancel {
       background: #fff;
       color: #5f6673;
-      border: 1px solid #D1D5DB;
+      border: 1px solid #d1d5db;
 
       &:hover {
-        background: #F0F2F5;
+        background: #f0f2f5;
       }
     }
 
@@ -424,7 +656,7 @@
       }
 
       &:disabled {
-        background: #A8AFBC;
+        background: #a8afbc;
         cursor: not-allowed;
         transform: none;
         box-shadow: none;
@@ -432,3 +664,125 @@
     }
   }
 }
+
+// ===================================================
+// SUBMODALS (Quick Edit Patient & Bank Selector)
+// ===================================================
+.bm-submodal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(2px);
+  z-index: $z-modal + 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: bmFadeIn 0.15s ease;
+}
+
+.bm-submodal {
+  background: #ffffff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  animation: bmSlideUp 0.18s ease;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid #f1f5f9;
+
+    h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 0;
+      display: flex;
+      align-items: center;
+    }
+  }
+
+  &__close {
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    color: #94a3b8;
+    cursor: pointer;
+    line-height: 1;
+
+    &:hover {
+      color: #1e293b;
+    }
+  }
+
+  &__body {
+    padding: 18px;
+  }
+
+  &__notice {
+    font-size: 11.5px;
+    color: #64748b;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin: 10px 0 14px;
+    line-height: 1.45;
+  }
+
+  &__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  &__bank-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 280px;
+    overflow-y: auto;
+    margin-bottom: 14px;
+  }
+
+  &__bank-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+
+    &:hover {
+      border-color: #0d9488;
+      background: #f0fdfa;
+    }
+
+    &--selected {
+      border-color: #0d9488;
+      background: #f0fdfa;
+      box-shadow: 0 0 0 1px #0d9488;
+    }
+  }
+
+  &__bank-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: #f1f5f9;
+    color: #0d9488;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+  }
+}
+
