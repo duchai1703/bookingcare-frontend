@@ -38,3 +38,15 @@ export const updateDoctorScheduleSlots = (doctorId, data = {}, options = {}) => 
     signal: options.signal,
   });
 };
+
+export const getDoctorFinancialTerms = (doctorId, options = {}) => {
+  return axiosInstance.get(`/api/v1/admin/doctors/${doctorId}/financial-terms`, {
+    signal: options.signal,
+  });
+};
+
+export const setDoctorFinancialTerms = (doctorId, data = {}, options = {}) => {
+  return axiosInstance.post(`/api/v1/admin/doctors/${doctorId}/financial-terms`, data, {
+    signal: options.signal,
+  });
+};

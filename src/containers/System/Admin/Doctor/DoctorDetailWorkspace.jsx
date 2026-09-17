@@ -42,6 +42,7 @@ import ContextBreadcrumbs from '../../../../components/ContextBreadcrumbs/Contex
 import CommonUtils from '../../../../utils/CommonUtils';
 import CommissionModal from './CommissionModal';
 import DoctorPayoutModal from './DoctorPayoutModal';
+import DoctorFinancialTermsModal from './DoctorFinancialTermsModal';
 import './DoctorWorkspace.scss';
 
 const TIME_FRAMES = [
@@ -77,6 +78,8 @@ const DoctorDetailWorkspace = () => {
   // Modals state
   const [isCommissionModalOpen, setIsCommissionModalOpen] = useState(false);
   const [isPayoutModalOpen, setIsPayoutModalOpen] = useState(false);
+  const [isFinancialTermsModalOpen, setIsFinancialTermsModalOpen] = useState(false);
+  const [isFinancialHistoryModalOpen, setIsFinancialHistoryModalOpen] = useState(false);
 
   // Slot Detail Modal (Khi admin bấm vào slot có ca khám)
   const [selectedSlotForDetail, setSelectedSlotForDetail] = useState(null);
@@ -256,6 +259,7 @@ const DoctorDetailWorkspace = () => {
 
   const profile = data?.profile || {};
   const kpis = data?.kpis || {};
+  const financialTerms = data?.financialTerms || null;
   const weeklySchedule = data?.weeklySchedule || [];
   const monthlyRevenue = data?.monthlyRevenue || [];
   const patients = data?.patients || [];
@@ -351,11 +355,14 @@ const DoctorDetailWorkspace = () => {
 
             <button
               className="btn-ws-action secondary"
-              onClick={() => setIsCommissionModalOpen(true)}
-              title="Điều chỉnh hoa hồng riêng"
+              onClick={() => setIsFinancialTermsModalOpen(true)}
+              title="Điều chỉnh điều khoản hoa hồng"
             >
               <Percent size={14} />
-              <span>Hoa hồng ({profile.commissionRate}%)</span>
+              <span>
+                Hoa hồng ({financialTerms?.currentTerm?.platformFeePercent ?? profile.commissionRate}%)
+                {financialTerms?.isCustom ? ' ★' : ''}
+              </span>
             </button>
 
             <button
@@ -500,6 +507,89 @@ const DoctorDetailWorkspace = () => {
         {/* TAB 1: OVERVIEW */}
         {activeTab === 'overview' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: 20 }}>
+            {/* Financial Terms & Commission Card (Policy Engine Integration) */}
+            <div style={{ background: '#ffffff', border: '1px solid #E2E8F0', borderRadius: 10, padding: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <ShieldCheck size={18} style={{ color: '#0D9488' }} />
+                  <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: '#0F172A' }}>
+                    Điều khoản Tài chính & Hoa hồng
+                  </h3>
+                </div>
+                {financialTerms?.isCustom ? (
+                  <span style={{ fontSize: '0.72rem', background: '#F0FDFA', color: '#0F766E', border: '1px solid #99F6E4', padding: '3px 8px', borderRadius: 6, fontWeight: 700 }}>
+                    ★ Thỏa thuận Riêng
+                  </span>
+                ) : (
+                  <span style={{ fontSize: '0.72rem', background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', padding: '3px 8px', borderRadius: 6, fontWeight: 600 }}>
+                    Kế thừa Toàn sàn
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: '0.84rem', color: '#334155' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 8, borderBottom: '1px solid #F1F5F9' }}>
+                  <span style={{ color: '#64748B' }}>Mức phí sàn áp dụng:</span>
+                  <span style={{ fontWeight: 800, color: '#0D9488', fontSize: '1.05rem' }}>
+                    {financialTerms?.currentTerm?.platformFeePercent ?? profile.commissionRate}%
+                    <span style={{ fontSize: '0.75rem', color: '#059669', fontWeight: 600, marginLeft: 6 }}>
+                      (Bác sĩ nhận {financialTerms?.currentTerm?.doctorSharePercent ?? (100 - profile.commissionRate)}%)
+                    </span>
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 8, borderBottom: '1px solid #F1F5F9' }}>
+                  <span style={{ color: '#64748B' }}>Căn cứ văn bản:</span>
+                  <span style={{ fontWeight: 600, color: '#1E293B', fontFamily: 'monospace' }}>
+                    {financialTerms?.currentTerm?.code || 'POL_REVENUE_SHARE'} (v{financialTerms?.currentTerm?.version || 1})
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 8, borderBottom: '1px solid #F1F5F9' }}>
+                  <span style={{ color: '#64748B' }}>Ngày bắt đầu hiệu lực:</span>
+                  <span style={{ fontWeight: 600 }}>
+                    {financialTerms?.currentTerm?.effectiveFrom
+                      ? moment(financialTerms.currentTerm.effectiveFrom).format('DD/MM/YYYY HH:mm')
+                      : 'Mặc định'}
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 8, borderBottom: '1px solid #F1F5F9' }}>
+                  <span style={{ color: '#64748B' }}>Quy định hoàn tiền:</span>
+                  <span style={{ fontWeight: 600, color: '#D97706' }}>
+                    {financialTerms?.refundRule?.name || 'Kế thừa chính sách hoàn tiền toàn sàn'}
+                  </span>
+                </div>
+
+                {financialTerms?.currentTerm?.description && (
+                  <div style={{ background: '#F8FAFC', padding: '8px 10px', borderRadius: 6, fontSize: '0.78rem', color: '#64748B' }}>
+                    <strong>Ghi chú:</strong> {financialTerms.currentTerm.description}
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, marginTop: 14, paddingTop: 12, borderTop: '1px solid #F1F5F9' }}>
+                <button
+                  type="button"
+                  className="btn-ws-action secondary"
+                  style={{ flex: 1, padding: '6px 10px', fontSize: '0.75rem', justifyContent: 'center' }}
+                  onClick={() => setIsFinancialHistoryModalOpen(true)}
+                >
+                  <Clock size={13} />
+                  <span>Xem Lịch sử ({financialTerms?.history?.length || 0})</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn-ws-action primary"
+                  style={{ flex: 1, padding: '6px 10px', fontSize: '0.75rem', justifyContent: 'center' }}
+                  onClick={() => setIsFinancialTermsModalOpen(true)}
+                >
+                  <Percent size={13} />
+                  <span>Thiết lập Điều khoản</span>
+                </button>
+              </div>
+            </div>
+
             {/* Bank & Payout Card */}
             <div style={{ background: '#ffffff', border: '1px solid #E2E8F0', borderRadius: 10, padding: 20 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
@@ -524,12 +614,6 @@ const DoctorDetailWorkspace = () => {
                   <span style={{ color: '#64748B' }}>Tên chủ tài khoản:</span>
                   <span style={{ fontWeight: 700, textTransform: 'uppercase' }}>
                     {profile.bankAccountName || profile.doctorName}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 8, borderBottom: '1px solid #F1F5F9' }}>
-                  <span style={{ color: '#64748B' }}>Tỷ lệ hoa hồng thỏa thuận:</span>
-                  <span style={{ fontWeight: 800, color: '#D97706' }}>
-                    {profile.commissionRate}% phí sàn
                   </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -1256,6 +1340,100 @@ const DoctorDetailWorkspace = () => {
         }}
         onSuccess={() => fetchWorkspace()}
       />
+
+      {/* MODAL 4: Doctor Financial Terms Modal (Policy Engine Integration) */}
+      <DoctorFinancialTermsModal
+        isOpen={isFinancialTermsModalOpen}
+        onClose={() => setIsFinancialTermsModalOpen(false)}
+        doctor={profile}
+        financialTerms={financialTerms}
+        onSuccess={() => fetchWorkspace()}
+      />
+
+      {/* MODAL 5: Doctor Financial Terms History Modal */}
+      {isFinancialHistoryModalOpen && (
+        <div className="policy-modal-backdrop" onClick={() => setIsFinancialHistoryModalOpen(false)}>
+          <div className="policy-modal-container" style={{ maxWidth: 580 }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header-custom">
+              <div className="header-info">
+                <div className="icon-badge">
+                  <Clock size={20} />
+                </div>
+                <div>
+                  <h3 className="modal-title">Lịch sử Điều khoản Hoa hồng Bác sĩ</h3>
+                  <p className="modal-subtitle">
+                    BS. {profile.doctorName} (#{profile.id})
+                  </p>
+                </div>
+              </div>
+              <button className="btn-close-modal" onClick={() => setIsFinancialHistoryModalOpen(false)}>
+                <XCircle size={18} />
+              </button>
+            </div>
+            <div style={{ padding: 20, maxHeight: '65vh', overflowY: 'auto' }}>
+              {!financialTerms?.history || financialTerms.history.length === 0 ? (
+                <div style={{ textAlign: 'center', color: '#94A3B8', padding: 30 }}>
+                  Bác sĩ chưa có thỏa thuận riêng nào, đang kế thừa chính sách hoa hồng tiêu chuẩn của sàn.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  {financialTerms.history.map((term, idx) => (
+                    <div
+                      key={term.id || idx}
+                      style={{
+                        padding: 14,
+                        borderRadius: 8,
+                        border: term.status === 'ACTIVE' ? '1.5px solid #0D9488' : '1px solid #E2E8F0',
+                        background: term.status === 'ACTIVE' ? '#F0FDFA' : '#F8FAFC',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                        <span style={{ fontWeight: 700, color: '#0F172A', fontSize: '0.88rem' }}>
+                          Phiên bản v{term.version} — Phí sàn: {term.parsedRules?.platformFeePercent}%
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            padding: '2px 8px',
+                            borderRadius: 4,
+                            background: term.status === 'ACTIVE' ? '#DCFCE7' : '#F1F5F9',
+                            color: term.status === 'ACTIVE' ? '#166534' : '#64748B',
+                          }}
+                        >
+                          {term.status}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: '#475569', marginBottom: 4 }}>
+                        {term.name}
+                      </div>
+                      <div style={{ fontSize: '0.74rem', color: '#64748B' }}>
+                        Hiệu lực: {term.effectiveFrom ? moment(term.effectiveFrom).format('DD/MM/YYYY HH:mm') : '—'}
+                        {' → '}
+                        {term.effectiveTo ? moment(term.effectiveTo).format('DD/MM/YYYY HH:mm') : 'Hiện tại'}
+                      </div>
+                      {term.description && (
+                        <div style={{ fontSize: '0.74rem', color: '#64748B', marginTop: 4, fontStyle: 'italic' }}>
+                          Lý do: {term.description}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="modal-footer-custom" style={{ padding: '12px 20px', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                className="btn-cancel"
+                onClick={() => setIsFinancialHistoryModalOpen(false)}
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL 3: Slot Bookings Detail Popup */}
       {selectedSlotForDetail && (
