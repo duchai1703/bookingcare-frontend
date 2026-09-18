@@ -27,6 +27,7 @@ import SpecialtyDoctorBridge from './Patient/SpecialtyDoctorBridge'; // [Phase D
 
 // ===== Protected Pages =====
 import SystemLayout from './System/SystemLayout';
+import DoctorLayout from './DoctorPortal/DoctorLayout';
 import UserManage from './System/Admin/UserManage';
 import DoctorManage from './System/Admin/DoctorManage';
 import ClinicManage from './System/Admin/ClinicManage';
@@ -258,7 +259,7 @@ const App = () => {
 
         {/* ===== DOCTOR ROUTES — Chỉ Doctor R2 (SRS REQ-AU-005) ===== */}
         <Route element={<PrivateRoute allowedRoles={[USER_ROLE.DOCTOR]} />}>
-          <Route path={path.DOCTOR_DASHBOARD} element={<SystemLayout />}>
+          <Route path={path.DOCTOR_DASHBOARD} element={<DoctorLayout />}>
             <Route index element={<Navigate to="manage-patient" replace />} />
             <Route path="manage-patient" element={<ManagePatient />} />
             <Route path="manage-schedule" element={<DoctorScheduleWorkspace />} />

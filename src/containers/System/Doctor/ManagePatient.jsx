@@ -13,7 +13,6 @@ import { getListPatientForDoctor, cancelBooking } from '../../../services/doctor
 import { processLogout } from '../../../redux/slices/userSlice';
 import { LANGUAGES, BOOKING_STATUS } from '../../../utils/constants';
 import RemedyModal from './RemedyModal';
-import MedicalInfoModal from './MedicalInfoModal';
 import AppointmentScannerModal from './AppointmentScannerModal';
 
 import {
@@ -84,7 +83,6 @@ const ManagePatient = () => {
   const [isOpenScanner, setIsOpenScanner] = useState(false);
   const [isOpenRemedyModal, setIsOpenRemedyModal] = useState(false);
   const [dataRemedyModal, setDataRemedyModal] = useState({});
-  const [medicalModal, setMedicalModal] = useState(null);
 
   // ===== FETCH PATIENT LIST (Luôn lấy statusId='ALL' để tính counters đầy đủ) =====
   const fetchPatientList = useCallback(async (dateTimestamp) => {
@@ -778,7 +776,8 @@ const ManagePatient = () => {
                     <button
                       type="button"
                       className="btn-action-start"
-                      onClick={() => setMedicalModal(selectedBooking)}
+                      onClick={() => navigate(`/doctor-dashboard/encounter/${selectedBooking.id}`)}
+                      title="Mở Encounter Workspace để tiếp nhận và bắt đầu ca khám"
                     >
                       <Stethoscope size={16} />
                       <span>Tiếp nhận & Khám bệnh</span>
@@ -897,17 +896,6 @@ const ManagePatient = () => {
         />
       )}
 
-      {/* Medical Info & Clinical Attachments Modal */}
-      {medicalModal && (
-        <MedicalInfoModal
-          booking={medicalModal}
-          onClose={() => setMedicalModal(null)}
-          onSaved={() => {
-            setMedicalModal(null);
-            fetchPatientList(currentDate);
-          }}
-        />
-      )}
     </div>
   );
 };
