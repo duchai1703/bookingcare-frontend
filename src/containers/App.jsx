@@ -38,6 +38,7 @@ import ManagePatient from './System/Doctor/ManagePatient';
 // [Phase C] Doctor new pages
 import DoctorProfile from './System/Doctor/DoctorProfile';
 import DoctorRevenue from './System/Doctor/DoctorRevenue';
+import DoctorScheduleWorkspace from './System/Doctor/DoctorScheduleWorkspace';
 
 // [Phase C] Admin new pages
 import MedicalCatalogManage from './System/Admin/MedicalCatalogManage';
@@ -259,7 +260,7 @@ const App = () => {
           <Route path={path.DOCTOR_DASHBOARD} element={<SystemLayout />}>
             <Route index element={<Navigate to="manage-patient" replace />} />
             <Route path="manage-patient" element={<ManagePatient />} />
-            <Route path="manage-schedule" element={<ScheduleManage />} />
+            <Route path="manage-schedule" element={<DoctorScheduleWorkspace />} />
             {/* [Phase C] Doctor new pages */}
             <Route path="doctor-profile" element={<DoctorProfile />} />
             <Route path="doctor-revenue" element={<DoctorRevenue />} />

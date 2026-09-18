@@ -123,3 +123,18 @@ export const verifyDoctorCheckin = (tokenOrCode) => {
   return axiosInstance.get(`/api/v1/doctor/checkin/${encodeURIComponent(tokenOrCode)}`);
 };
 
+// [Doctor Capacity Engine] Sao chép lịch sang nhiều ngày
+export const copyDoctorSchedule = (data) => {
+  return axiosInstance.post('/api/v1/doctor/schedules/copy', data);
+};
+
+// [Doctor Capacity Engine] Thiết lập lịch lặp định kỳ theo tuần
+export const createRecurringSchedule = (data) => {
+  return axiosInstance.post('/api/v1/doctor/schedules/recurring', data);
+};
+
+// [Doctor Capacity Engine] Đóng / Mở nhận lịch của slot
+export const toggleCloseScheduleSlot = (id, isClose) => {
+  return axiosInstance.patch(`/api/v1/doctor/schedules/${id}/toggle-close`, { isClose });
+};
+
