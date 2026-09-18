@@ -113,6 +113,11 @@ export const getDoctorRevenue = (year) => {
   return axiosInstance.get('/api/v1/doctor/revenue', { params: { year } });
 };
 
+// [Doctor Income Workspace] Mini Financial Workspace — Bóc tách tài chính Master-Detail
+export const getDoctorIncomeWorkspace = (params = {}) => {
+  return axiosInstance.get('/api/v1/doctor/income-workspace', { params });
+};
+
 // Lấy bệnh nhân với filter từ-đến
 export const getListPatientWithRange = (doctorId, params = {}) => {
   return axiosInstance.get(`/api/v1/doctors/${doctorId}/patients`, { params });
