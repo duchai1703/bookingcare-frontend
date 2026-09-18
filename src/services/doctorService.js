@@ -118,3 +118,8 @@ export const getListPatientWithRange = (doctorId, params = {}) => {
   return axiosInstance.get(`/api/v1/doctors/${doctorId}/patients`, { params });
 };
 
+// [Smart QR Check-in] Bác sĩ tra cứu & tiếp nhận bệnh nhân qua mã QR hoặc mã Booking #BK-xxx
+export const verifyDoctorCheckin = (tokenOrCode) => {
+  return axiosInstance.get(`/api/v1/doctor/checkin/${encodeURIComponent(tokenOrCode)}`);
+};
+

@@ -26,10 +26,10 @@ import './AppointmentHistory.scss';
 
 // Bộ lọc trạng thái
 const TABS = [
-  { key: 'all',       status: '',      labelVi: 'Tất cả',     labelEn: 'All' },
-  { key: 'upcoming',  status: 'S1,S2', labelVi: 'Sắp tới',    labelEn: 'Upcoming' },
-  { key: 'done',      status: 'S3',    labelVi: 'Đã khám',    labelEn: 'Completed' },
-  { key: 'cancelled', status: 'S4',    labelVi: 'Đã hủy',     labelEn: 'Cancelled' },
+  { key: 'all', status: '', labelVi: 'Tất cả', labelEn: 'All' },
+  { key: 'upcoming', status: 'S1,S2', labelVi: 'Sắp tới', labelEn: 'Upcoming' },
+  { key: 'done', status: 'S3', labelVi: 'Đã khám', labelEn: 'Completed' },
+  { key: 'cancelled', status: 'S4', labelVi: 'Đã hủy', labelEn: 'Cancelled' },
 ];
 
 const PAGE_SIZE = 6;
@@ -39,19 +39,19 @@ const AppointmentHistory = () => {
   const language = useSelector((state) => state.app.language);
 
   // State
-  const [activeTab, setActiveTab]       = useState('upcoming');
-  const [viewMode, setViewMode]         = useState('cards'); // 'cards' | 'table'
-  const [bookings, setBookings]         = useState([]);
-  const [totalPages, setTotalPages]     = useState(1);
-  const [totalItems, setTotalItems]     = useState(0);
-  const [currentPage, setCurrentPage]   = useState(1);
-  const [isLoading, setIsLoading]       = useState(false);
+  const [activeTab, setActiveTab] = useState('upcoming');
+  const [viewMode, setViewMode] = useState('cards'); // 'cards' | 'table'
+  const [bookings, setBookings] = useState([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Modals state
-  const [cancelModal, setCancelModal]   = useState({ isOpen: false, bookingId: null, booking: null, isCancelling: false });
-  const [ratingModal, setRatingModal]   = useState({ isOpen: false, bookingData: null });
+  const [cancelModal, setCancelModal] = useState({ isOpen: false, bookingId: null, booking: null, isCancelling: false });
+  const [ratingModal, setRatingModal] = useState({ isOpen: false, bookingData: null });
   const [detailBooking, setDetailBooking] = useState(null);
-  const [showQrModal, setShowQrModal]   = useState(false);
+  const [showQrModal, setShowQrModal] = useState(false);
 
   // Attachments state
   const [attachmentsList, setAttachmentsList] = useState([]);
@@ -72,7 +72,7 @@ const AppointmentHistory = () => {
             setAttachmentsList(res.data);
           }
         })
-        .catch(() => {});
+        .catch(() => { });
     } else {
       setAttachmentsList([]);
     }
@@ -305,7 +305,7 @@ const AppointmentHistory = () => {
     if (!rawDate) return '--';
     const num = parseInt(rawDate, 10);
     const m = isNaN(num) ? moment(rawDate) : moment(num);
-    
+
     if (language === LANGUAGES.VI) {
       m.locale('vi');
       const dateFormatted = m.isValid() ? m.format('DD/MM/YYYY') : rawDate;

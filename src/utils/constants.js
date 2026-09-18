@@ -45,10 +45,10 @@ export const path = {
   RESET_PASSWORD: '/reset-password',
 
   // [Phase 9.4] Patient Portal
-  PATIENT_PORTAL:          '/patient',
+  PATIENT_PORTAL: '/patient',
   PATIENT_PORTAL_OVERVIEW: '/patient/overview',
-  PATIENT_PORTAL_HISTORY:  '/patient/history',
-  PATIENT_PORTAL_PROFILE:  '/patient/profile',
+  PATIENT_PORTAL_HISTORY: '/patient/history',
+  PATIENT_PORTAL_PROFILE: '/patient/profile',
 
   // Admin (R1)
   SYSTEM: '/system',
@@ -61,49 +61,49 @@ export const path = {
 
   // Doctor (R2)
   DOCTOR_DASHBOARD: '/doctor-dashboard',
-  MANAGE_PATIENT:   '/doctor-dashboard/manage-patient',
+  MANAGE_PATIENT: '/doctor-dashboard/manage-patient',
   // [Phase C] Doctor self-service pages
-  DOCTOR_PROFILE:   '/doctor-dashboard/doctor-profile',
-  DOCTOR_REVENUE:   '/doctor-dashboard/doctor-revenue',
+  DOCTOR_PROFILE: '/doctor-dashboard/doctor-profile',
+  DOCTOR_REVENUE: '/doctor-dashboard/doctor-revenue',
 
   // [Phase C] Admin new pages
   MEDICAL_CATALOG_MANAGE: '/system/medical-catalog-manage',
-  MEDICINE_MANAGE:        '/system/medicine-manage',
-  SYSTEM_SETTINGS:        '/system/system-settings',
-  FINANCIAL_POLICIES:     '/system/policies',
+  MEDICINE_MANAGE: '/system/medicine-manage',
+  SYSTEM_SETTINGS: '/system/system-settings',
+  FINANCIAL_POLICIES: '/system/policies',
 
   // [Phase E] Admin Detail Analytics pages
-  ANALYTICS_BOOKINGS:     '/system/analytics/bookings',
-  ANALYTICS_REVENUE:      '/system/analytics/revenue',
-  ANALYTICS_DOCTORS:      '/system/analytics/doctors',
-  ANALYTICS_PATIENTS:     '/system/analytics/patients',
-  ANALYTICS_SPECIALTIES:  '/system/analytics/specialties-clinics',
+  ANALYTICS_BOOKINGS: '/system/analytics/bookings',
+  ANALYTICS_REVENUE: '/system/analytics/revenue',
+  ANALYTICS_DOCTORS: '/system/analytics/doctors',
+  ANALYTICS_PATIENTS: '/system/analytics/patients',
+  ANALYTICS_SPECIALTIES: '/system/analytics/specialties-clinics',
 
   // [Phase F] Admin Patient Enterprise Management
-  PATIENT_MANAGE:         '/system/patient-manage',
-  PATIENT_WORKSPACE:      '/system/patients/:id',
+  PATIENT_MANAGE: '/system/patient-manage',
+  PATIENT_WORKSPACE: '/system/patients/:id',
 
   // [Doctor Operations Center] Master & Workspace
-  DOCTOR_OPERATIONS:      '/system/doctors',
-  DOCTOR_WORKSPACE:       '/system/doctors/:id',
+  DOCTOR_OPERATIONS: '/system/doctors',
+  DOCTOR_WORKSPACE: '/system/doctors/:id',
 
   // [Clinic Operations Center] Master & Control Center
-  CLINIC_OPERATIONS:          '/system/clinics',
-  CLINIC_CONTROL_CENTER:      '/system/clinics/:id',
+  CLINIC_OPERATIONS: '/system/clinics',
+  CLINIC_CONTROL_CENTER: '/system/clinics/:id',
   CLINIC_SPECIALTY_WORKSPACE: '/system/clinics/:clinicId/specialties/:specialtyId',
 
   // [Specialty Intelligence Center] Master & Workspace
-  SPECIALTY_OPERATIONS:       '/system/specialties',
-  SPECIALTY_WORKSPACE:        '/system/specialties/:id',
+  SPECIALTY_OPERATIONS: '/system/specialties',
+  SPECIALTY_WORKSPACE: '/system/specialties/:id',
 
   // [Phase C] Public — Clinic → Specialty → Doctor bridge
   CLINIC_SPECIALTY_BRIDGE: '/clinics/:clinicId/specialties',
   SPECIALTY_DOCTOR_BRIDGE: '/clinics/:clinicId/specialties/:specialtyId/doctors',
 
   // [Doctor Self-Onboarding & Verification Center]
-  DOCTOR_REGISTER:          '/doctor-register',
+  DOCTOR_REGISTER: '/doctor-register',
   DOCTOR_ONBOARDING_STATUS: '/doctor-onboarding-status',
-  DOCTOR_VERIFICATION:      '/system/doctor-verification',
+  DOCTOR_VERIFICATION: '/system/doctor-verification',
 };
 
 export const DOCTOR_ONBOARDING_STATUS = {

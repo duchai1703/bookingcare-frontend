@@ -36,45 +36,45 @@ import Dashboard from './System/Admin/Dashboard';
 import ManagePatient from './System/Doctor/ManagePatient';
 
 // [Phase C] Doctor new pages
-import DoctorProfile  from './System/Doctor/DoctorProfile';
-import DoctorRevenue  from './System/Doctor/DoctorRevenue';
+import DoctorProfile from './System/Doctor/DoctorProfile';
+import DoctorRevenue from './System/Doctor/DoctorRevenue';
 
 // [Phase C] Admin new pages
 import MedicalCatalogManage from './System/Admin/MedicalCatalogManage';
-import MedicineManage       from './System/Admin/MedicineManage';
-import SystemSettings       from './System/Admin/SystemSettings';
+import MedicineManage from './System/Admin/MedicineManage';
+import SystemSettings from './System/Admin/SystemSettings';
 
 // [Phase E] Admin Detail Analytics pages
-import BookingAnalytics         from './System/Admin/Analytics/BookingAnalytics';
-import RevenueAnalytics         from './System/Admin/Analytics/RevenueAnalytics';
-import DoctorAnalytics          from './System/Admin/Analytics/DoctorAnalytics';
-import PatientAnalytics         from './System/Admin/Analytics/PatientAnalytics';
+import BookingAnalytics from './System/Admin/Analytics/BookingAnalytics';
+import RevenueAnalytics from './System/Admin/Analytics/RevenueAnalytics';
+import DoctorAnalytics from './System/Admin/Analytics/DoctorAnalytics';
+import PatientAnalytics from './System/Admin/Analytics/PatientAnalytics';
 import SpecialtyClinicAnalytics from './System/Admin/Analytics/SpecialtyClinicAnalytics';
 
 // [Phase F] Admin Patient Enterprise Management
-import PatientMaster            from './System/Admin/Patient/PatientMaster';
-import PatientDetailWorkspace   from './System/Admin/Patient/PatientDetailWorkspace';
+import PatientMaster from './System/Admin/Patient/PatientMaster';
+import PatientDetailWorkspace from './System/Admin/Patient/PatientDetailWorkspace';
 
 // [Doctor Operations Center] Enterprise Master & Detail Workspace
-import DoctorMaster             from './System/Admin/Doctor/DoctorMaster';
-import DoctorDetailWorkspace    from './System/Admin/Doctor/DoctorDetailWorkspace';
-import DoctorVerificationQueue  from './System/Admin/Doctor/DoctorVerificationQueue';
+import DoctorMaster from './System/Admin/Doctor/DoctorMaster';
+import DoctorDetailWorkspace from './System/Admin/Doctor/DoctorDetailWorkspace';
+import DoctorVerificationQueue from './System/Admin/Doctor/DoctorVerificationQueue';
 
 // [Doctor Self-Onboarding Portal]
-import DoctorRegisterWizard     from './DoctorOnboarding/DoctorRegisterWizard';
-import DoctorApplicationStatus  from './DoctorOnboarding/DoctorApplicationStatus';
+import DoctorRegisterWizard from './DoctorOnboarding/DoctorRegisterWizard';
+import DoctorApplicationStatus from './DoctorOnboarding/DoctorApplicationStatus';
 
 // [Clinic Operations Center] Facility Master & Control Center
-import ClinicMaster             from './System/Admin/Clinic/ClinicMaster';
-import ClinicControlCenter      from './System/Admin/Clinic/ClinicControlCenter';
+import ClinicMaster from './System/Admin/Clinic/ClinicMaster';
+import ClinicControlCenter from './System/Admin/Clinic/ClinicControlCenter';
 import ClinicSpecialtyWorkspace from './System/Admin/Clinic/ClinicSpecialtyWorkspace';
 
 // [Specialty Intelligence Center] Disciplines Master & Workspace
-import SpecialtyMaster          from './System/Admin/Specialty/SpecialtyMaster';
+import SpecialtyMaster from './System/Admin/Specialty/SpecialtyMaster';
 import SpecialtyDetailWorkspace from './System/Admin/Specialty/SpecialtyDetailWorkspace';
 
 // [Financial Policy Engine] Immutable Policies & Rules
-import PolicyMaster             from './System/Admin/Policy/PolicyMaster';
+import PolicyMaster from './System/Admin/Policy/PolicyMaster';
 
 // [Phase 9.4] Patient Portal
 import PatientLayout from './PatientPortal/PatientLayout';
@@ -234,22 +234,22 @@ const App = () => {
             <Route path="specialties" element={<SpecialtyMaster />} />
             <Route path="specialties/:id" element={<SpecialtyDetailWorkspace />} />
             {/* [Phase C] Admin new pages */}
-            <Route path="medical-catalog-manage"  element={<MedicalCatalogManage />} />
-            <Route path="medicine-manage"          element={<MedicineManage />} />
-            <Route path="system-settings"          element={<SystemSettings />} />
+            <Route path="medical-catalog-manage" element={<MedicalCatalogManage />} />
+            <Route path="medicine-manage" element={<MedicineManage />} />
+            <Route path="system-settings" element={<SystemSettings />} />
             {/* [Phase F] Patient Enterprise Management & Workspace */}
-            <Route path="patient-manage"          element={<PatientMaster />} />
-            <Route path="patients"                element={<PatientMaster />} />
-            <Route path="patients/:id"            element={<PatientDetailWorkspace />} />
+            <Route path="patient-manage" element={<PatientMaster />} />
+            <Route path="patients" element={<PatientMaster />} />
+            <Route path="patients/:id" element={<PatientDetailWorkspace />} />
 
             {/* [Financial Policy Engine] Immutable Policies & Rules */}
-            <Route path="policies"                element={<PolicyMaster />} />
+            <Route path="policies" element={<PolicyMaster />} />
 
             {/* [Phase E] Admin Detail Analytics pages */}
-            <Route path="analytics/bookings"            element={<BookingAnalytics />} />
-            <Route path="analytics/revenue"             element={<RevenueAnalytics />} />
-            <Route path="analytics/doctors"             element={<DoctorAnalytics />} />
-            <Route path="analytics/patients"            element={<PatientAnalytics />} />
+            <Route path="analytics/bookings" element={<BookingAnalytics />} />
+            <Route path="analytics/revenue" element={<RevenueAnalytics />} />
+            <Route path="analytics/doctors" element={<DoctorAnalytics />} />
+            <Route path="analytics/patients" element={<PatientAnalytics />} />
             <Route path="analytics/specialties-clinics" element={<SpecialtyClinicAnalytics />} />
           </Route>
         </Route>
@@ -258,11 +258,11 @@ const App = () => {
         <Route element={<PrivateRoute allowedRoles={[USER_ROLE.DOCTOR]} />}>
           <Route path={path.DOCTOR_DASHBOARD} element={<SystemLayout />}>
             <Route index element={<Navigate to="manage-patient" replace />} />
-            <Route path="manage-patient"  element={<ManagePatient />} />
+            <Route path="manage-patient" element={<ManagePatient />} />
             <Route path="manage-schedule" element={<ScheduleManage />} />
             {/* [Phase C] Doctor new pages */}
-            <Route path="doctor-profile"  element={<DoctorProfile />} />
-            <Route path="doctor-revenue"  element={<DoctorRevenue />} />
+            <Route path="doctor-profile" element={<DoctorProfile />} />
+            <Route path="doctor-revenue" element={<DoctorRevenue />} />
           </Route>
         </Route>
 
