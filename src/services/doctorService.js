@@ -143,3 +143,20 @@ export const toggleCloseScheduleSlot = (id, isClose) => {
   return axiosInstance.patch(`/api/v1/doctor/schedules/${id}/toggle-close`, { isClose });
 };
 
+// [Encounter Workspace] Không gian phiên khám bệnh 3 cột
+export const getDoctorEncounter = (bookingId) => {
+  return axiosInstance.get(`/api/v1/doctor/encounters/${bookingId}`);
+};
+
+export const saveDoctorEncounter = (bookingId, data) => {
+  return axiosInstance.put(`/api/v1/doctor/encounters/${bookingId}`, data);
+};
+
+export const uploadEncounterAttachments = (bookingId, data) => {
+  return axiosInstance.post(`/api/v1/doctor/encounters/${bookingId}/attachments`, data);
+};
+
+export const deleteEncounterAttachment = (bookingId, attachmentId) => {
+  return axiosInstance.delete(`/api/v1/doctor/encounters/${bookingId}/attachments/${attachmentId}`);
+};
+

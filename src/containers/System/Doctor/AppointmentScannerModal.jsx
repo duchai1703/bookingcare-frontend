@@ -1,6 +1,5 @@
-// src/containers/System/Doctor/AppointmentScannerModal.jsx
-// [Doctor Workspace] Smart Check-in Modal: Tra cứu mã khám #BK-xxx & Quét QR tiếp nhận bệnh nhân
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { verifyDoctorCheckin } from '../../../services/doctorService';
 import {
@@ -16,10 +15,12 @@ import {
   ArrowRight,
   X,
   Sparkles,
+  Stethoscope,
 } from 'lucide-react';
 import './AppointmentScannerModal.scss';
 
 const AppointmentScannerModal = ({ isOpen, onClose, onSelectBooking }) => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('manual'); // 'manual' | 'qr'
   const [inputCode, setInputCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -273,12 +274,40 @@ const AppointmentScannerModal = ({ isOpen, onClose, onSelectBooking }) => {
               <div className="sc-result-actions">
                 <button
                   type="button"
+                  className="btn-start-encounter-now"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    background: '#10b981',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '10px 18px',
+                    borderRadius: '8px',
+                    fontWeight: '700',
+                    fontSize: '0.9rem',
+                    cursor: 'pointer',
+                    marginBottom: '8px',
+                    width: '100%',
+                  }}
+                  onClick={() => {
+                    onClose();
+                    navigate(`/doctor-dashboard/encounter/${checkinResult.id}`);
+                  }}
+                >
+                  <Stethoscope size={17} />
+                  <span>Bắt đầu phiên khám ngay (Encounter Workspace)</span>
+                  <ArrowRight size={17} />
+                </button>
+
+                <button
+                  type="button"
                   className="btn-confirm-select"
                   onClick={handleConfirmCheckin}
                 >
                   <CheckCircle2 size={16} />
-                  <span>Xác nhận tiếp nhận & Mở hồ sơ ca này</span>
-                  <ArrowRight size={16} />
+                  <span>Mở chi tiết trên danh sách ca khám</span>
                 </button>
               </div>
             </div>

@@ -815,8 +815,8 @@ const ManagePatient = () => {
                     <button
                       type="button"
                       className="btn-action-start"
-                      onClick={() => setMedicalModal(selectedBooking)}
-                      title="Ghi nhận triệu chứng, chẩn đoán, kê đơn và tải file xét nghiệm"
+                      onClick={() => navigate(`/doctor-dashboard/encounter/${selectedBooking.id}`)}
+                      title="Mở Encounter Workspace: Ghi nhận triệu chứng, chẩn đoán, kê đơn và tải file xét nghiệm"
                     >
                       <Stethoscope size={16} />
                       <span>Bắt đầu phiên khám</span>
@@ -842,10 +842,10 @@ const ManagePatient = () => {
                     <button
                       type="button"
                       className="btn-action-view-history"
-                      onClick={() => setMedicalModal(selectedBooking)}
+                      onClick={() => navigate(`/doctor-dashboard/encounter/${selectedBooking.id}`)}
                     >
                       <Eye size={16} />
-                      <span>Xem / Sửa hồ sơ khám</span>
+                      <span>Xem hồ sơ phiên khám (Encounter)</span>
                     </button>
                   </div>
                 )}

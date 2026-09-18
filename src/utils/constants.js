@@ -65,6 +65,7 @@ export const path = {
   // [Phase C] Doctor self-service pages
   DOCTOR_PROFILE: '/doctor-dashboard/doctor-profile',
   DOCTOR_REVENUE: '/doctor-dashboard/doctor-revenue',
+  DOCTOR_ENCOUNTER: '/doctor-dashboard/encounter/:bookingId',
 
   // [Phase C] Admin new pages
   MEDICAL_CATALOG_MANAGE: '/system/medical-catalog-manage',

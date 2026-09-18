@@ -39,6 +39,7 @@ import ManagePatient from './System/Doctor/ManagePatient';
 import DoctorProfile from './System/Doctor/DoctorProfile';
 import DoctorRevenue from './System/Doctor/DoctorRevenue';
 import DoctorScheduleWorkspace from './System/Doctor/DoctorScheduleWorkspace';
+import EncounterWorkspace from './System/Doctor/EncounterWorkspace';
 
 // [Phase C] Admin new pages
 import MedicalCatalogManage from './System/Admin/MedicalCatalogManage';
@@ -264,6 +265,7 @@ const App = () => {
             {/* [Phase C] Doctor new pages */}
             <Route path="doctor-profile" element={<DoctorProfile />} />
             <Route path="doctor-revenue" element={<DoctorRevenue />} />
+            <Route path="encounter/:bookingId" element={<EncounterWorkspace />} />
           </Route>
         </Route>
 
