@@ -25,8 +25,18 @@ export const createNewUser = (data) => {
 
 // REQ-AM-003: Sửa user
 export const editUser = (data) => {
-  // data = {id, firstName, lastName, address, phoneNumber, gender, roleId, image}
+  // data = {id, firstName, lastName, address, phoneNumber, gender, roleId, image, isActive}
   return axiosInstance.put(`/api/v1/users/${data.id}`, data);
+};
+
+// [Phase 14] Khóa / Mở khóa tài khoản người dùng
+export const toggleUserStatus = (id, isActive) => {
+  return axiosInstance.put(`/api/v1/users/${id}`, { isActive });
+};
+
+// [Phase 14] Đặt lại mật khẩu người dùng bởi Admin
+export const resetUserPasswordApi = (id, newPassword) => {
+  return axiosInstance.post(`/api/v1/users/${id}/reset-password`, { newPassword });
 };
 
 // REQ-AM-004: Xóa user
