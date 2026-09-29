@@ -1,7 +1,33 @@
 // src/containers/System/Admin/SystemSettings.jsx
-// [Phase D.12 + Redesign] Admin quản lý cài đặt hệ thống & chính sách hoàn tiền
-// Cung cấp giao diện tùy chỉnh: Tỷ lệ hoàn tiền, Mốc giờ hủy lịch, Phí sàn, và Live Simulator
+// [Upgrade - Phương án 1] Admin Cài đặt & Vận hành Nền tảng (Platform Operations & Configuration)
+// Tách biệt hoàn toàn khỏi Chính sách Tài chính/Phí sàn (được quản lý tại /system/policies)
 import React, { useEffect, useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
+import {
+  Settings,
+  Clock,
+  UserCheck,
+  AlertCircle,
+  MailCheck,
+  FileText,
+  Bell,
+  PhoneCall,
+  Mail,
+  MapPin,
+  ShieldAlert,
+  Lock,
+  ShieldCheck,
+  ArrowRight,
+  RotateCw,
+  Save,
+  Check,
+  CheckCircle2,
+  AlertTriangle,
+  Server,
+  CreditCard,
+  Send,
+  Zap,
+} from 'lucide-react';
 import {
   getSystemSettings,
   updateSystemSetting,
@@ -10,61 +36,131 @@ import {
 } from '../../../services/catalogService';
 import './SystemSettings.scss';
 
+// Cấu hình định nghĩa các tham số vận hành nền tảng BookingCare
 const SETTING_DEFINITIONS = {
-  refund_rate_cancel_before_24h: {
-    label: 'Tỷ lệ hoàn tiền — Hủy trước hạn',
-    unit: '%',
-    icon: '✅',
-    badgeColor: 'success',
-    category: 'refund',
-    description: 'Phần trăm viện phí bệnh nhân được hoàn lại khi hủy lịch trước mốc thời gian quy định.',
-    min: 0,
-    max: 100,
-    step: 5,
-    presets: [100, 90, 80, 70],
-  },
-  refund_rate_cancel_after_24h: {
-    label: 'Tỷ lệ hoàn tiền — Hủy sau hạn',
-    unit: '%',
-    icon: '⚠️',
-    badgeColor: 'warning',
-    category: 'refund',
-    description: 'Phần trăm viện phí bệnh nhân được hoàn lại khi hủy lịch sát giờ (sau mốc thời gian quy định).',
-    min: 0,
-    max: 100,
-    step: 5,
-    presets: [50, 30, 20, 0],
-  },
-  refund_threshold_hours: {
-    label: 'Mốc thời gian quy định hủy lịch',
-    unit: 'giờ',
-    icon: '⏰',
-    badgeColor: 'info',
-    category: 'refund',
-    description: 'Khoảng thời gian (tính bằng giờ trước giờ khám) dùng làm căn cứ áp dụng mức hoàn tiền.',
-    min: 1,
-    max: 72,
-    step: 1,
-    presets: [12, 24, 48],
-  },
-  service_fee_rate: {
-    label: 'Phí dịch vụ nền tảng (sàn)',
-    unit: '%',
-    icon: '💳',
+  // ═════ 1. VẬN HÀNH & ĐẶT KHÁM ═════
+  booking_hold_timeout_minutes: {
+    label: 'Thời gian giữ chỗ chờ thanh toán VNPay',
+    unit: 'phút',
+    icon: Clock,
+    type: 'number',
     badgeColor: 'primary',
-    category: 'fee',
-    description: 'Phần trăm phí nền tảng hệ thống trích lại trên mỗi lịch khám hoàn thành thành công.',
-    min: 0,
-    max: 30,
-    step: 1,
-    presets: [0, 3, 5, 10],
+    category: 'operations',
+    description: 'Khoảng thời gian tối đa để bệnh nhân hoàn tất thanh toán trước khi hệ thống tự động hủy và hoàn trả slot khám.',
+    min: 5,
+    max: 60,
+    step: 5,
+    presets: [10, 15, 20, 30],
   },
-};
+  max_daily_bookings_per_patient: {
+    label: 'Giới hạn lịch hẹn trong ngày / Bệnh nhân',
+    unit: 'lịch',
+    icon: UserCheck,
+    type: 'number',
+    badgeColor: 'primary',
+    category: 'operations',
+    description: 'Số lịch hẹn tối đa một tài khoản bệnh nhân được đặt trong cùng 1 ngày (nhằm ngăn chặn đầu cơ hoặc spam giữ chỗ ảo).',
+    min: 1,
+    max: 10,
+    step: 1,
+    presets: [2, 3, 5],
+  },
+  min_hours_before_booking_cancel: {
+    label: 'Hạn chót cho phép tự hủy lịch khám',
+    unit: 'giờ',
+    icon: AlertCircle,
+    type: 'number',
+    badgeColor: 'primary',
+    category: 'operations',
+    description: 'Bệnh nhân chỉ có thể tự hủy lịch trên cổng cá nhân nếu cách giờ hẹn khám tối thiểu khoảng thời gian này.',
+    min: 1,
+    max: 24,
+    step: 1,
+    presets: [1, 2, 4, 12],
+  },
 
-const SAMPLE_PRICES = [150000, 300000, 500000, 1000000];
+  // ═════ 2. KÊNH THÔNG BÁO & EMAIL TỰ ĐỘNG ═════
+  auto_email_booking_confirmation: {
+    label: 'Tự động gửi email xác nhận đặt lịch',
+    icon: MailCheck,
+    type: 'boolean',
+    badgeColor: 'success',
+    category: 'notifications',
+    description: 'Gửi email xác nhận đặt lịch kèm mã QR tiếp nhận cho bệnh nhân ngay khi lịch khám chuyển sang trạng thái sẵn sàng.',
+  },
+  auto_email_remedy_prescription: {
+    label: 'Tự động gửi hóa đơn & đơn thuốc sau khám',
+    icon: FileText,
+    type: 'boolean',
+    badgeColor: 'success',
+    category: 'notifications',
+    description: 'Tự động gửi email chứa đơn thuốc, hướng dẫn chăm sóc y tế và các tệp đính kèm khi bác sĩ hoàn tất phiên khám.',
+  },
+  appointment_reminder_hours_before: {
+    label: 'Gửi thông báo nhắc lịch khám trước',
+    unit: 'giờ',
+    icon: Bell,
+    type: 'number',
+    badgeColor: 'success',
+    category: 'notifications',
+    description: 'Tự động kích hoạt email hoặc thông báo nhắc nhở bệnh nhân trước khi khung giờ khám diễn ra.',
+    min: 1,
+    max: 24,
+    step: 1,
+    presets: [1, 2, 4],
+  },
 
-const formatCurrency = (amount) => {
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0);
+  // ═════ 3. THƯƠNG HIỆU & HỖ TRỢ CSKH ═════
+  platform_support_hotline: {
+    label: 'Hotline tổng đài CSKH (24/7)',
+    icon: PhoneCall,
+    type: 'text',
+    badgeColor: 'info',
+    category: 'branding',
+    description: 'Đường dây nóng hỗ trợ bệnh nhân và bác sĩ hiển thị trên trang chủ, ứng dụng và chân trang email thông báo.',
+    placeholder: 'Ví dụ: 1900-2115',
+  },
+  platform_support_email: {
+    label: 'Hòm thư tiếp nhận hỗ trợ & phản hồi',
+    icon: Mail,
+    type: 'text',
+    badgeColor: 'info',
+    category: 'branding',
+    description: 'Địa chỉ email CSKH chính thức tiếp nhận thắc mắc, khiếu nại và hóa đơn hoàn tiền của người dùng.',
+    placeholder: 'Ví dụ: hotro@bookingcare.vn',
+  },
+  platform_headquarters_address: {
+    label: 'Địa chỉ trụ sở công ty',
+    icon: MapPin,
+    type: 'text',
+    badgeColor: 'info',
+    category: 'branding',
+    description: 'Địa chỉ văn phòng công ty hiển thị trên hóa đơn y tế điện tử, phiếu thu và chân trang website.',
+    placeholder: 'Ví dụ: 28 Thành Thái, Dịch Vọng Hậu, Cầu Giấy, Hà Nội',
+  },
+
+  // ═════ 4. BẢO MẬT & HỆ THỐNG ═════
+  maintenance_mode: {
+    label: 'Chế độ bảo trì toàn sàn (Maintenance Mode)',
+    icon: ShieldAlert,
+    type: 'boolean',
+    badgeColor: 'warning',
+    category: 'security',
+    description: 'Khi kích hoạt, cổng bệnh nhân sẽ tạm ngưng tiếp nhận đặt lịch mới và hiển thị màn hình thông báo nâng cấp hạ tầng.',
+  },
+  session_timeout_hours: {
+    label: 'Thời hạn hiệu lực phiên làm việc',
+    unit: 'giờ',
+    icon: Lock,
+    type: 'number',
+    badgeColor: 'warning',
+    category: 'security',
+    description: 'Khoảng thời gian hiệu lực của phiên đăng nhập quản trị & bác sĩ trước khi hệ thống yêu cầu xác thực lại.',
+    min: 1,
+    max: 24,
+    step: 1,
+    presets: [2, 4, 8, 24],
+  },
 };
 
 const SystemSettings = () => {
@@ -72,10 +168,9 @@ const SystemSettings = () => {
   const [editing, setEditing] = useState({}); // { [key]: newValue }
   const [saving, setSaving] = useState(''); // key đang lưu, hoặc 'ALL', hoặc 'RESET'
   const [bannerMsg, setBannerMsg] = useState({ type: '', text: '' });
-  const [samplePrice, setSamplePrice] = useState(300000);
   const [showConfirmReset, setShowConfirmReset] = useState(false);
 
-  // Chuẩn hóa trích xuất danh sách settings bất kể axios có bóc tách response.data hay không
+  // Chuẩn hóa trích xuất danh sách settings
   const extractSettingsArray = (res) => {
     if (!res) return null;
     if (Array.isArray(res.data)) return res.data;
@@ -138,189 +233,226 @@ const SystemSettings = () => {
           delete next[key];
           return next;
         });
-        setTimeout(() => setBannerMsg({ type: '', text: '' }), 3500);
       } else {
-        setBannerMsg({ type: 'error', text: res?.message || 'Có lỗi xảy ra khi lưu!' });
+        setBannerMsg({ type: 'error', text: res?.message || 'Lưu thất bại!' });
       }
     } catch (err) {
-      setBannerMsg({ type: 'error', text: 'Không thể kết nối máy chủ để lưu cài đặt!' });
+      console.error(`Save ${key} error:`, err);
+      setBannerMsg({ type: 'error', text: 'Lỗi máy chủ khi lưu cài đặt!' });
     } finally {
       setSaving('');
     }
   };
 
-  // Lưu tất cả các settings đang thay đổi
+  // Lưu tất cả các setting đang có thay đổi
   const handleSaveAll = async () => {
-    const changedItems = Object.keys(editing)
-      .filter((key) => {
-        const original = settings.find((s) => s.key === key)?.value;
-        return editing[key] !== undefined && String(editing[key]) !== String(original);
-      })
-      .map((key) => ({
-        key,
-        value: editing[key],
-        description: SETTING_DEFINITIONS[key]?.description || settings.find((s) => s.key === key)?.description || '',
-      }));
-
-    if (changedItems.length === 0) return;
-
+    if (!hasDirtySettings) return;
     setSaving('ALL');
     try {
-      const res = await updateBulkSystemSettings(changedItems);
+      const payload = Object.keys(editing)
+        .filter((key) => {
+          const original = settings.find((s) => s.key === key)?.value;
+          return editing[key] !== undefined && String(editing[key]) !== String(original);
+        })
+        .map((key) => {
+          const original = settings.find((s) => s.key === key);
+          return {
+            key,
+            value: editing[key],
+            description: SETTING_DEFINITIONS[key]?.description || original?.description || '',
+          };
+        });
+
+      const res = await updateBulkSystemSettings(payload);
       const isOk = res?.errCode === 0 || res?.data?.errCode === 0;
 
       if (isOk) {
-        setBannerMsg({ type: 'success', text: `Đã cập nhật thành công ${changedItems.length} thông số hệ thống!` });
+        setBannerMsg({ type: 'success', text: `Đã lưu thành công tất cả ${payload.length} cấu hình hệ thống!` });
         await fetchSettings();
         setEditing({});
-        setTimeout(() => setBannerMsg({ type: '', text: '' }), 3500);
       } else {
-        setBannerMsg({ type: 'error', text: res?.message || 'Có lỗi khi cập nhật hàng loạt!' });
+        setBannerMsg({ type: 'error', text: res?.message || 'Lưu hàng loạt thất bại!' });
       }
     } catch (err) {
-      setBannerMsg({ type: 'error', text: 'Lỗi lưu thay đổi toàn hệ thống!' });
+      console.error('Save all error:', err);
+      setBannerMsg({ type: 'error', text: 'Lỗi máy chủ khi lưu tất cả cài đặt!' });
     } finally {
       setSaving('');
     }
   };
 
-  // Khôi phục cài đặt gốc
+  // Khôi phục cài đặt mặc định
   const handleResetDefaults = async () => {
-    setShowConfirmReset(false);
     setSaving('RESET');
+    setShowConfirmReset(false);
     try {
       const res = await resetSystemSettings();
       const isOk = res?.errCode === 0 || res?.data?.errCode === 0;
 
       if (isOk) {
-        setBannerMsg({ type: 'success', text: 'Đã khôi phục toàn bộ chính sách hoàn tiền về mặc định!' });
+        setBannerMsg({ type: 'success', text: 'Đã khôi phục toàn bộ cài đặt vận hành về giá trị chuẩn!' });
         await fetchSettings();
         setEditing({});
-        setTimeout(() => setBannerMsg({ type: '', text: '' }), 4000);
       } else {
-        setBannerMsg({ type: 'error', text: res?.message || 'Có lỗi khi khôi phục mặc định!' });
+        setBannerMsg({ type: 'error', text: res?.message || 'Khôi phục mặc định thất bại!' });
       }
     } catch (err) {
-      setBannerMsg({ type: 'error', text: 'Không thể kết nối máy chủ để reset!' });
+      console.error('Reset error:', err);
+      setBannerMsg({ type: 'error', text: 'Lỗi máy chủ khi khôi phục cài đặt mặc định!' });
     } finally {
       setSaving('');
     }
   };
 
-  // Lấy giá trị hiện tại (đang chỉnh sửa hoặc trong DB)
-  const getCurrentValue = (key, fallback = '') => {
-    if (editing[key] !== undefined) return editing[key];
-    const found = settings.find((s) => s.key === key);
-    return found ? found.value : fallback;
-  };
-
-  // Tính toán số liệu cho Live Simulation
-  const rateBefore = Number(getCurrentValue('refund_rate_cancel_before_24h', 100)) || 0;
-  const rateAfter = Number(getCurrentValue('refund_rate_cancel_after_24h', 50)) || 0;
-  const thresholdHours = Number(getCurrentValue('refund_threshold_hours', 24)) || 24;
-  const feeRate = Number(getCurrentValue('service_fee_rate', 5)) || 0;
-
-  const simRefundBefore = Math.round((samplePrice * rateBefore) / 100);
-  const simPenaltyBefore = Math.max(0, samplePrice - simRefundBefore);
-
-  const simRefundAfter = Math.round((samplePrice * rateAfter) / 100);
-  const simPenaltyAfter = Math.max(0, samplePrice - simRefundAfter);
-
-  const simPlatformFee = Math.round((samplePrice * feeRate) / 100);
-
-  // Phân nhóm settings
-  const refundSettings = settings.filter((s) => SETTING_DEFINITIONS[s.key]?.category === 'refund');
-  const feeSettings = settings.filter((s) => SETTING_DEFINITIONS[s.key]?.category === 'fee');
-  const otherSettings = settings.filter((s) => !SETTING_DEFINITIONS[s.key]);
-
-  const renderSettingCard = (s) => {
-    const meta = SETTING_DEFINITIONS[s.key] || {
-      label: s.key,
-      unit: '',
-      icon: '⚙️',
-      badgeColor: 'info',
-      description: s.description || 'Cài đặt hệ thống',
-      min: 0,
-      max: 1000,
-      step: 1,
-      presets: [],
+  // Phân nhóm settings theo category
+  const categorizedSettings = useMemo(() => {
+    const groups = {
+      operations: [],
+      notifications: [],
+      branding: [],
+      security: [],
+      other: [],
     };
 
-    const currentVal = getCurrentValue(s.key, s.value);
+    settings.forEach((s) => {
+      const def = SETTING_DEFINITIONS[s.key];
+      const cat = def?.category || 'other';
+      if (groups[cat]) {
+        groups[cat].push(s);
+      } else {
+        groups.other.push(s);
+      }
+    });
+
+    return groups;
+  }, [settings]);
+
+  // Render từng card cấu hình
+  const renderSettingCard = (s) => {
+    const def = SETTING_DEFINITIONS[s.key] || {
+      label: s.description || s.key,
+      unit: '',
+      icon: Settings,
+      type: 'text',
+      badgeColor: 'primary',
+      description: s.description || '',
+    };
+
+    const currentValue = editing[s.key] !== undefined ? editing[s.key] : s.value;
     const isDirty = editing[s.key] !== undefined && String(editing[s.key]) !== String(s.value);
-    const isSavingThis = saving === s.key || saving === 'ALL';
+    const IconComp = def.icon || Settings;
 
     return (
-      <div key={s.key} className={`setting-card ${isDirty ? 'setting-card--dirty' : ''}`}>
-        <div className="setting-card-top">
-          <div className="setting-title-wrap">
-            <span className="setting-icon">{meta.icon}</span>
-            <div>
-              <h4 className="setting-title">{meta.label}</h4>
-              <p className="setting-desc">{meta.description}</p>
+      <div className={`setting-card ${isDirty ? 'card-dirty' : ''}`} key={s.key}>
+        <div className="card-top">
+          <div className="card-identity">
+            <span className={`icon-badge badge-${def.badgeColor || 'primary'}`}>
+              <IconComp size={18} strokeWidth={2.2} />
+            </span>
+            <div className="title-wrap">
+              <h4 className="setting-label">{def.label}</h4>
+              <span className="setting-key-tag">{s.key}</span>
             </div>
           </div>
-          <div className={`setting-badge badge-${meta.badgeColor}`}>
-            {currentVal} {meta.unit}
+
+          <div className="card-status-pill">
+            {isDirty ? (
+              <span className="pill-dirty">Chưa lưu</span>
+            ) : (
+              <span className="pill-synced">
+                <Check size={12} strokeWidth={3} /> Đã lưu
+              </span>
+            )}
           </div>
         </div>
 
-        <div className="setting-controls">
-          {/* Slider */}
-          <div className="slider-row">
-            <input
-              type="range"
-              min={meta.min}
-              max={meta.max}
-              step={meta.step}
-              value={currentVal || 0}
-              onChange={(e) => handleEdit(s.key, e.target.value)}
-              className="setting-slider"
-            />
-          </div>
+        <p className="setting-desc">{def.description}</p>
 
-          <div className="input-actions-row">
-            {/* Quick Presets */}
-            {meta.presets && meta.presets.length > 0 && (
-              <div className="preset-buttons">
-                <span className="preset-label">Mẫu nhanh:</span>
-                {meta.presets.map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    className={`btn-preset ${String(currentVal) === String(p) ? 'active' : ''}`}
-                    onClick={() => handleEdit(s.key, p)}
-                  >
-                    {p}{meta.unit}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Direct Number Input & Save */}
-            <div className="direct-input-group">
-              <div className="input-unit-wrap">
+        {/* Dynamic Controls based on field type */}
+        <div className="card-controls-area">
+          {def.type === 'boolean' ? (
+            <div className="toggle-control-row">
+              <label className="switch-toggle">
+                <input
+                  type="checkbox"
+                  checked={String(currentValue) === 'true'}
+                  onChange={(e) => handleEdit(s.key, String(e.target.checked))}
+                />
+                <span className="slider round" />
+              </label>
+              <span className="toggle-status-label">
+                {String(currentValue) === 'true' ? (
+                  <strong className="text-emerald-600">Đang bật (Active)</strong>
+                ) : (
+                  <span className="text-slate-400">Đang tắt (Disabled)</span>
+                )}
+              </span>
+            </div>
+          ) : def.type === 'number' ? (
+            <div className="number-control-group">
+              <div className="input-number-wrap">
                 <input
                   type="number"
-                  min={meta.min}
-                  max={meta.max}
-                  value={currentVal || ''}
+                  min={def.min ?? 0}
+                  max={def.max ?? 9999}
+                  step={def.step ?? 1}
+                  value={currentValue}
                   onChange={(e) => handleEdit(s.key, e.target.value)}
-                  className="setting-number-input"
+                  className="field-number-input"
                 />
-                <span className="input-unit">{meta.unit}</span>
+                {def.unit && <span className="field-unit-suffix">{def.unit}</span>}
               </div>
 
-              <button
-                type="button"
-                className="btn-save-single"
-                disabled={!isDirty || isSavingThis}
-                onClick={() => handleSaveSingle(s.key)}
-                title="Lưu thay đổi cho mục này"
-              >
-                {saving === s.key ? '⏳ Đang lưu...' : isDirty ? '💾 Lưu' : '✓ Đã lưu'}
-              </button>
+              {def.presets && def.presets.length > 0 && (
+                <div className="presets-strip">
+                  <span className="presets-label">Mẫu nhanh:</span>
+                  {def.presets.map((preset) => (
+                    <button
+                      type="button"
+                      key={preset}
+                      className={`btn-preset ${Number(currentValue) === Number(preset) ? 'active' : ''}`}
+                      onClick={() => handleEdit(s.key, String(preset))}
+                    >
+                      {preset} {def.unit}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
+          ) : (
+            <div className="text-control-group">
+              <input
+                type="text"
+                value={currentValue}
+                placeholder={def.placeholder || ''}
+                onChange={(e) => handleEdit(s.key, e.target.value)}
+                className="field-text-input"
+              />
+            </div>
+          )}
+
+          {/* Nút lưu đơn lẻ */}
+          <div className="single-save-wrap">
+            <button
+              type="button"
+              className={`btn-single-save ${isDirty ? 'dirty' : ''}`}
+              disabled={!isDirty || saving === s.key}
+              onClick={() => handleSaveSingle(s.key)}
+            >
+              {saving === s.key ? (
+                <>
+                  <RotateCw size={14} className="fa-spin" /> Lưu...
+                </>
+              ) : isDirty ? (
+                <>
+                  <Save size={14} /> Lưu thay đổi
+                </>
+              ) : (
+                <>
+                  <Check size={14} strokeWidth={2.5} /> Chuẩn khớp
+                </>
+              )}
+            </button>
           </div>
         </div>
       </div>
@@ -332,9 +464,13 @@ const SystemSettings = () => {
       {/* ===== HEADER ===== */}
       <div className="settings-page-header">
         <div className="header-text">
-          <h2>⚙️ Cài đặt hệ thống & Chính sách hoàn tiền</h2>
+          <div className="header-badge">
+            <Settings size={14} strokeWidth={2.5} />
+            <span>Platform Configuration & Operations</span>
+          </div>
+          <h2>Cài đặt & Vận hành Nền tảng</h2>
           <p>
-            Tùy chỉnh tỷ lệ hoàn tiền hủy lịch, mốc thời gian quy định, phí dịch vụ sàn và kiểm tra mô phỏng trực quan.
+            Trung tâm giám sát cấu hình vận hành đặt lịch, thời gian giữ chỗ thanh toán, kênh thông báo tự động và thông tin liên hệ sàn BookingCare.
           </p>
         </div>
 
@@ -344,9 +480,9 @@ const SystemSettings = () => {
             className="btn-action-reset"
             onClick={() => setShowConfirmReset(true)}
             disabled={saving !== ''}
-            title="Khôi phục lại tỷ lệ hoàn tiền gốc ban đầu"
+            title="Khôi phục lại toàn bộ cài đặt vận hành về giá trị chuẩn"
           >
-            🔄 Khôi phục mặc định
+            <RotateCw size={14} /> Khôi phục mặc định
           </button>
 
           <button
@@ -356,10 +492,13 @@ const SystemSettings = () => {
             onClick={handleSaveAll}
           >
             {saving === 'ALL' ? (
-              '⏳ Đang lưu tất cả...'
+              <>
+                <RotateCw size={14} className="fa-spin" /> Đang lưu tất cả...
+              </>
             ) : (
               <>
-                💾 Lưu tất cả {dirtyCount > 0 && <span className="dirty-pill">{dirtyCount}</span>}
+                <Save size={15} /> Lưu tất cả cấu hình
+                {dirtyCount > 0 && <span className="dirty-pill">{dirtyCount}</span>}
               </>
             )}
           </button>
@@ -369,8 +508,10 @@ const SystemSettings = () => {
       {/* ===== BANNER MESSAGE ===== */}
       {bannerMsg.text && (
         <div className={`settings-banner banner-${bannerMsg.type}`}>
-          <span className="banner-icon">{bannerMsg.type === 'success' ? '✅' : '⚠️'}</span>
-          <span>{bannerMsg.text}</span>
+          <span className="banner-icon">
+            {bannerMsg.type === 'success' ? <CheckCircle2 size={18} /> : <AlertTriangle size={18} />}
+          </span>
+          <span className="banner-content">{bannerMsg.text}</span>
           <button type="button" className="banner-close" onClick={() => setBannerMsg({ type: '', text: '' })}>
             ✕
           </button>
@@ -381,13 +522,16 @@ const SystemSettings = () => {
       {showConfirmReset && (
         <div className="settings-modal-backdrop">
           <div className="settings-modal-box">
-            <h3>⚠️ Xác nhận khôi phục cài đặt mặc định?</h3>
+            <div className="modal-icon-warn">
+              <AlertTriangle size={32} />
+            </div>
+            <h3>Xác nhận khôi phục cài đặt mặc định?</h3>
             <p>
-              Toàn bộ thông số chính sách hoàn tiền sẽ được đặt lại:
-              <br />• Hủy trước 24h: <strong>100%</strong>
-              <br />• Hủy sau 24h: <strong>50%</strong>
-              <br />• Mốc thời gian: <strong>24 giờ</strong>
-              <br />• Phí dịch vụ sàn: <strong>5%</strong>
+              Toàn bộ thông số vận hành nền tảng sẽ được đặt lại theo giá trị chuẩn ban đầu:
+              <br />• Giữ chỗ thanh toán: <strong>15 phút</strong>
+              <br />• Giới hạn đặt khám / ngày: <strong>3 lịch</strong>
+              <br />• Hạn chót tự hủy lịch: <strong>2 giờ</strong>
+              <br />• Hotline CSKH: <strong>1900-2115</strong>
             </p>
             <div className="modal-btn-row">
               <button
@@ -411,137 +555,143 @@ const SystemSettings = () => {
 
       {/* ===== NỘI DUNG CHÍNH: 2 CỘT ===== */}
       <div className="settings-grid-layout">
-        {/* CỘT TRÁI: DANH SÁCH CÀI ĐẶT */}
+        {/* CỘT TRÁI: CÁC NHÓM CẤU HÌNH VẬN HÀNH */}
         <div className="settings-cards-column">
-          {/* Nhóm 1: Chính sách hoàn tiền */}
-          <div className="settings-section">
-            <div className="section-header">
-              <span className="section-dot dot-green" />
-              <h3>Chính sách hoàn tiền khi hủy lịch hẹn</h3>
-            </div>
-            <div className="cards-wrapper">
-              {refundSettings.map(renderSettingCard)}
-            </div>
-          </div>
-
-          {/* Nhóm 2: Phí dịch vụ sàn */}
-          <div className="settings-section">
-            <div className="section-header">
-              <span className="section-dot dot-purple" />
-              <h3>Thông số tài chính & Phí sàn BookingCare</h3>
-            </div>
-            <div className="cards-wrapper">
-              {feeSettings.map(renderSettingCard)}
-            </div>
-          </div>
-
-          {/* Nhóm khác nếu có */}
-          {otherSettings.length > 0 && (
+          {/* Nhóm 1: Vận hành & Quy tắc Đặt khám */}
+          {categorizedSettings.operations.length > 0 && (
             <div className="settings-section">
               <div className="section-header">
                 <span className="section-dot dot-blue" />
-                <h3>Các thông số khác</h3>
+                <h3>Vận hành & Quy tắc Đặt khám (Booking Operations)</h3>
               </div>
               <div className="cards-wrapper">
-                {otherSettings.map(renderSettingCard)}
+                {categorizedSettings.operations.map(renderSettingCard)}
               </div>
             </div>
           )}
 
-          {settings.length === 0 && (
-            <div className="settings-empty-state">
-              <p>Đang tải cấu hình hệ thống...</p>
+          {/* Nhóm 2: Kênh Thông báo & Tự động hóa */}
+          {categorizedSettings.notifications.length > 0 && (
+            <div className="settings-section">
+              <div className="section-header">
+                <span className="section-dot dot-green" />
+                <h3>Kênh Thông báo & Tự động hóa Email (Notifications)</h3>
+              </div>
+              <div className="cards-wrapper">
+                {categorizedSettings.notifications.map(renderSettingCard)}
+              </div>
+            </div>
+          )}
+
+          {/* Nhóm 3: Thông tin Thương hiệu & Hỗ trợ */}
+          {categorizedSettings.branding.length > 0 && (
+            <div className="settings-section">
+              <div className="section-header">
+                <span className="section-dot dot-purple" />
+                <h3>Thông tin Thương hiệu & Đường dây CSKH</h3>
+              </div>
+              <div className="cards-wrapper">
+                {categorizedSettings.branding.map(renderSettingCard)}
+              </div>
+            </div>
+          )}
+
+          {/* Nhóm 4: An toàn & Bảo trì */}
+          {categorizedSettings.security.length > 0 && (
+            <div className="settings-section">
+              <div className="section-header">
+                <span className="section-dot dot-amber" />
+                <h3>Bảo mật & Trạng thái Hệ thống</h3>
+              </div>
+              <div className="cards-wrapper">
+                {categorizedSettings.security.map(renderSettingCard)}
+              </div>
+            </div>
+          )}
+
+          {/* Nhóm khác nếu có */}
+          {categorizedSettings.other.length > 0 && (
+            <div className="settings-section">
+              <div className="section-header">
+                <span className="section-dot dot-slate" />
+                <h3>Các thông số bổ sung</h3>
+              </div>
+              <div className="cards-wrapper">
+                {categorizedSettings.other.map(renderSettingCard)}
+              </div>
             </div>
           )}
         </div>
 
-        {/* CỘT PHẢI: LIVE SIMULATION CALCULATOR */}
-        <div className="settings-simulation-column">
-          <div className="sim-panel sticky-panel">
-            <div className="sim-header">
-              <span className="sim-icon">🧪</span>
-              <div>
-                <h4>Mô phỏng chính sách (Live Preview)</h4>
-                <p>Xem trước số tiền bệnh nhân nhận được khi hủy lịch</p>
+        {/* CỘT PHẢI: TRẠNG THÁI HẠ TẦNG & ĐIỀU HƯỚNG TÀI CHÍNH */}
+        <div className="settings-sidebar-column">
+          {/* Card 1: Trạng thái Vận hành Hạ tầng */}
+          <div className="health-status-card">
+            <div className="health-card-header">
+              <div className="header-title-row">
+                <Server size={18} className="text-teal-600" />
+                <h4>Trạng thái Hạ tầng & Kết nối</h4>
+              </div>
+              <span className="health-online-pill">
+                <span className="pulsing-dot" /> Online
+              </span>
+            </div>
+
+            <div className="health-items-list">
+              <div className="health-item">
+                <div className="item-left">
+                  <CreditCard size={15} />
+                  <span>Cổng thanh toán:</span>
+                </div>
+                <strong className="item-value text-emerald-600">VNPay Sandbox (Active)</strong>
+              </div>
+
+              <div className="health-item">
+                <div className="item-left">
+                  <Send size={15} />
+                  <span>Dịch vụ Email:</span>
+                </div>
+                <strong className="item-value text-emerald-600">Nodemailer SMTP (Ready)</strong>
+              </div>
+
+              <div className="health-item">
+                <div className="item-left">
+                  <Zap size={15} />
+                  <span>Bộ đệm hệ thống:</span>
+                </div>
+                <strong className="item-value text-cyan-600">Sequelize Connection Pool</strong>
+              </div>
+
+              <div className="health-item">
+                <div className="item-left">
+                  <Clock size={15} />
+                  <span>Múi giờ chuẩn:</span>
+                </div>
+                <span className="item-value font-mono">Asia/Ho_Chi_Minh (GMT+7)</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Phân định Phân hệ Chính sách Phí & Hoàn tiền */}
+          <div className="policy-redirection-card">
+            <div className="policy-card-top">
+              <div className="policy-badge-icon">
+                <ShieldCheck size={24} />
+              </div>
+              <div className="policy-card-headings">
+                <h4>Chính sách Phí & Hoàn tiền</h4>
+                <span>Kiến trúc Sổ cái Bất biến (Immutable Ledger)</span>
               </div>
             </div>
 
-            <div className="sim-price-input-box">
-              <label>Giá khám thử nghiệm:</label>
-              <div className="sim-price-row">
-                <input
-                  type="number"
-                  step="50000"
-                  min="0"
-                  value={samplePrice}
-                  onChange={(e) => setSamplePrice(Number(e.target.value) || 0)}
-                  className="sim-input"
-                />
-                <span className="sim-unit">VNĐ</span>
-              </div>
-              <div className="sim-price-chips">
-                {SAMPLE_PRICES.map((price) => (
-                  <button
-                    key={price}
-                    type="button"
-                    className={`price-chip ${samplePrice === price ? 'active' : ''}`}
-                    onClick={() => setSamplePrice(price)}
-                  >
-                    {price / 1000}k
-                  </button>
-                ))}
-              </div>
-            </div>
+            <p className="policy-card-desc">
+              Tỷ lệ phân bổ phí dịch vụ sàn và quy định hoàn tiền viện phí theo bậc thang thời gian hiện được quản lý độc lập tại phân hệ <strong>Chính sách & Tỷ lệ phí</strong> để đảm bảo 100% tính toàn vẹn dữ liệu kế toán và đối soát.
+            </p>
 
-            <div className="sim-results">
-              {/* Kịch bản 1: Trước mốc quy định */}
-              <div className="sim-card sim-card--ok">
-                <div className="sim-card-top">
-                  <span className="badge-scenario">Kịch bản 1</span>
-                  <span className="scenario-label">Hủy trước {thresholdHours} giờ khám</span>
-                </div>
-                <div className="sim-rate-badge">Hoàn {rateBefore}%</div>
-                <div className="sim-amount-row">
-                  <span>Bệnh nhân nhận:</span>
-                  <strong className="text-success">{formatCurrency(simRefundBefore)}</strong>
-                </div>
-                <div className="sim-sub-row">
-                  <span>Phí phạt hủy:</span>
-                  <span>{formatCurrency(simPenaltyBefore)}</span>
-                </div>
-              </div>
-
-              {/* Kịch bản 2: Sau mốc quy định */}
-              <div className="sim-card sim-card--warn">
-                <div className="sim-card-top">
-                  <span className="badge-scenario badge-scenario--warn">Kịch bản 2</span>
-                  <span className="scenario-label">Hủy sau {thresholdHours} giờ khám</span>
-                </div>
-                <div className="sim-rate-badge sim-rate-badge--warn">Hoàn {rateAfter}%</div>
-                <div className="sim-amount-row">
-                  <span>Bệnh nhân nhận:</span>
-                  <strong className="text-warning">{formatCurrency(simRefundAfter)}</strong>
-                </div>
-                <div className="sim-sub-row">
-                  <span>Phí phạt hủy:</span>
-                  <span>{formatCurrency(simPenaltyAfter)}</span>
-                </div>
-              </div>
-
-              {/* Sàn thu */}
-              <div className="sim-fee-box">
-                <div className="fee-title">
-                  <span>💳 Phí sàn ước tính khi khám thành công ({feeRate}%):</span>
-                  <strong>{formatCurrency(simPlatformFee)}</strong>
-                </div>
-              </div>
-            </div>
-
-            <div className="sim-footer-note">
-              <small>
-                💡 Lưu ý: Các thay đổi sẽ được áp dụng ngay lập tức trên <strong>Modal Đặt Lịch</strong> của bệnh nhân và khi bệnh nhân gửi yêu cầu hủy lịch.
-              </small>
-            </div>
+            <Link to="/system/policies" className="btn-goto-policy">
+              <span>Đến trang Chính sách & Tỷ lệ phí</span>
+              <ArrowRight size={15} />
+            </Link>
           </div>
         </div>
       </div>

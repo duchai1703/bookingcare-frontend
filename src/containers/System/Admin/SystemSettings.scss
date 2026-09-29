@@ -1,18 +1,19 @@
 // src/containers/System/Admin/SystemSettings.scss
-// [Redesign] Admin System Settings & Refund Policy Manager
-$primary: #45c3d2;
-$primary-dark: #2a9bb5;
+// [Upgrade - Phương án 1] Admin Platform Configuration & Operations Design System
+$primary: #087f8c;
+$primary-light: #e6f6f8;
+$primary-dark: #066570;
 $success: #10b981;
 $warning: #f59e0b;
 $danger: #ef4444;
-$text-dark: #1e293b;
+$text-dark: #0f172a;
 $text-muted: #64748b;
 $bg-light: #f8fafc;
 $card-border: #e2e8f0;
 
 .system-settings-page {
-  padding: 28px 32px;
-  max-width: 1300px;
+  padding: 24px 32px;
+  max-width: 1400px;
   margin: 0 auto;
 
   // ===== HEADER =====
@@ -26,20 +27,36 @@ $card-border: #e2e8f0;
     border-bottom: 1px solid $card-border;
 
     .header-text {
-      h2 {
-        font-size: 1.5rem;
+      .header-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #f0fdfa;
+        color: #0f766e;
+        border: 1px solid #ccfbf1;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
         font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 8px;
+      }
+
+      h2 {
+        font-size: 1.6rem;
+        font-weight: 800;
         color: $text-dark;
         margin: 0 0 6px 0;
-        display: flex;
-        align-items: center;
-        gap: 8px;
+        letter-spacing: -0.02em;
       }
+
       p {
-        font-size: 0.9rem;
+        font-size: 0.88rem;
         color: $text-muted;
         margin: 0;
-        line-height: 1.4;
+        line-height: 1.5;
+        max-width: 800px;
       }
     }
 
@@ -50,20 +67,23 @@ $card-border: #e2e8f0;
       flex-shrink: 0;
 
       .btn-action-reset {
-        padding: 9px 18px;
+        padding: 9px 16px;
         background: #fff;
         border: 1px solid #cbd5e1;
         color: #475569;
         border-radius: 8px;
-        font-size: 0.88rem;
+        font-size: 0.86rem;
         font-weight: 600;
         cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
         transition: all 0.2s;
 
         &:hover:not(:disabled) {
           background: #f1f5f9;
           border-color: #94a3b8;
-          color: #1e293b;
+          color: $text-dark;
         }
         &:disabled {
           opacity: 0.5;
@@ -72,35 +92,36 @@ $card-border: #e2e8f0;
       }
 
       .btn-action-save-all {
-        padding: 9px 22px;
+        padding: 9px 20px;
         background: #94a3b8;
         border: none;
         color: #fff;
         border-radius: 8px;
-        font-size: 0.88rem;
+        font-size: 0.86rem;
         font-weight: 600;
         cursor: pointer;
-        display: flex;
+        display: inline-flex;
         align-items: center;
         gap: 8px;
         transition: all 0.2s;
 
         &.has-changes {
           background: $primary;
-          box-shadow: 0 2px 10px rgba(69, 195, 210, 0.4);
+          box-shadow: 0 3px 12px rgba(8, 127, 140, 0.35);
 
           &:hover {
             background: $primary-dark;
+            transform: translateY(-1px);
           }
         }
 
         .dirty-pill {
           background: #fff;
           color: $primary-dark;
-          font-size: 0.75rem;
-          padding: 2px 6px;
+          font-size: 0.74rem;
+          padding: 1px 7px;
           border-radius: 12px;
-          font-weight: 700;
+          font-weight: 800;
         }
 
         &:disabled {
@@ -119,10 +140,33 @@ $card-border: #e2e8f0;
     gap: 12px;
     padding: 12px 18px;
     border-radius: 10px;
-    margin-bottom: 24px;
-    font-size: 0.9rem;
+    margin-bottom: 22px;
+    font-size: 0.88rem;
     font-weight: 500;
     animation: fadeInDown 0.25s ease-out;
+
+    .banner-icon {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    .banner-content {
+      flex: 1;
+    }
+
+    .banner-close {
+      background: transparent;
+      border: none;
+      font-size: 1.1rem;
+      cursor: pointer;
+      opacity: 0.6;
+      line-height: 1;
+      padding: 2px 6px;
+      &:hover {
+        opacity: 1;
+      }
+    }
 
     &.banner-success {
       background: #ecfdf5;
@@ -134,122 +178,145 @@ $card-border: #e2e8f0;
       color: #991b1b;
       border: 1px solid #fecaca;
     }
-
-    .banner-close {
-      margin-left: auto;
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      font-size: 1rem;
-      opacity: 0.6;
-      &:hover { opacity: 1; }
-    }
   }
 
-  // ===== MODAL BACKDROP =====
+  // ===== MODAL XÁC NHẬN RESET =====
   .settings-modal-backdrop {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(15, 23, 42, 0.55);
+    inset: 0;
+    background: rgba(15, 23, 42, 0.6);
     backdrop-filter: blur(3px);
-    z-index: 1000;
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 1000;
 
     .settings-modal-box {
       background: #fff;
       border-radius: 14px;
-      padding: 24px 28px;
-      max-width: 480px;
+      padding: 26px 28px;
+      max-width: 460px;
       width: 90%;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      text-align: center;
+
+      .modal-icon-warn {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: #fef3c7;
+        color: #d97706;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 16px;
+      }
 
       h3 {
-        margin: 0 0 12px;
         font-size: 1.15rem;
-        color: #b91c1c;
+        font-weight: 700;
+        color: $text-dark;
+        margin: 0 0 10px;
       }
+
       p {
-        margin: 0 0 20px;
-        font-size: 0.9rem;
+        font-size: 0.86rem;
         color: #475569;
         line-height: 1.6;
+        margin-bottom: 22px;
+        text-align: left;
+        background: #f8fafc;
+        padding: 12px 16px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
       }
 
       .modal-btn-row {
         display: flex;
-        justify-content: flex-end;
         gap: 12px;
+        justify-content: flex-end;
 
         button {
-          padding: 8px 18px;
+          padding: 9px 18px;
           border-radius: 8px;
-          font-weight: 600;
           font-size: 0.88rem;
+          font-weight: 600;
           cursor: pointer;
+          transition: all 0.2s;
         }
 
         .btn-modal-cancel {
-          background: #f1f5f9;
+          background: #fff;
           border: 1px solid #cbd5e1;
           color: #475569;
-          &:hover { background: #e2e8f0; }
+          &:hover {
+            background: #f1f5f9;
+          }
         }
 
         .btn-modal-confirm {
-          background: #ef4444;
+          background: #dc2626;
           border: none;
           color: #fff;
-          &:hover { background: #dc2626; }
+          &:hover {
+            background: #b91c1c;
+          }
         }
       }
     }
   }
 
-  // ===== MAIN 2-COLUMN GRID =====
+  // ===== LAYOUT CHÍNH: 2 CỘT =====
   .settings-grid-layout {
     display: grid;
-    grid-template-columns: 1fr 380px;
+    grid-template-columns: 1fr 360px;
     gap: 28px;
-    align-items: start;
+    align-items: flex-start;
 
-    @media (max-width: 1024px) {
+    @media (max-width: 1080px) {
       grid-template-columns: 1fr;
     }
   }
 
-  // ===== CỘT TRÁI: DANH SÁCH CARDS =====
+  // ===== CỘT TRÁI: DANH SÁCH CÁC NHÓM CẤU HÌNH =====
   .settings-cards-column {
     display: flex;
     flex-direction: column;
     gap: 28px;
 
     .settings-section {
+      background: #fff;
+      border: 1px solid $card-border;
+      border-radius: 14px;
+      padding: 22px 24px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+
       .section-header {
         display: flex;
         align-items: center;
         gap: 10px;
-        margin-bottom: 14px;
+        margin-bottom: 18px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid #f1f5f9;
 
         .section-dot {
-          width: 10px;
-          height: 10px;
+          width: 9px;
+          height: 9px;
           border-radius: 50%;
 
-          &.dot-green { background: $success; box-shadow: 0 0 8px rgba(16, 185, 129, 0.4); }
-          &.dot-purple { background: #8b5cf6; box-shadow: 0 0 8px rgba(139, 92, 246, 0.4); }
-          &.dot-blue { background: $primary; }
+          &.dot-blue { background: #0284c7; box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15); }
+          &.dot-green { background: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15); }
+          &.dot-purple { background: #8b5cf6; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15); }
+          &.dot-amber { background: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15); }
+          &.dot-slate { background: #64748b; box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.15); }
         }
 
         h3 {
-          margin: 0;
           font-size: 1.05rem;
           font-weight: 700;
           color: $text-dark;
+          margin: 0;
+          letter-spacing: -0.01em;
         }
       }
 
@@ -259,442 +326,479 @@ $card-border: #e2e8f0;
         gap: 16px;
       }
     }
-
-    // Single Setting Card
-    .setting-card {
-      background: #ffffff;
-      border: 1.5px solid $card-border;
-      border-radius: 14px;
-      padding: 20px 24px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
-      transition: all 0.25s ease;
-
-      &:hover {
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
-      }
-
-      &--dirty {
-        border-color: #f59e0b;
-        background: #fffdfa;
-        box-shadow: 0 2px 14px rgba(245, 158, 11, 0.15);
-      }
-
-      .setting-card-top {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 16px;
-        margin-bottom: 16px;
-
-        .setting-title-wrap {
-          display: flex;
-          gap: 14px;
-          align-items: flex-start;
-
-          .setting-icon {
-            font-size: 1.5rem;
-            flex-shrink: 0;
-            background: #f1f5f9;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 10px;
-          }
-
-          .setting-title {
-            margin: 0 0 4px;
-            font-size: 0.98rem;
-            font-weight: 700;
-            color: $text-dark;
-          }
-
-          .setting-desc {
-            margin: 0;
-            font-size: 0.82rem;
-            color: $text-muted;
-            line-height: 1.4;
-          }
-        }
-
-        .setting-badge {
-          padding: 4px 12px;
-          border-radius: 20px;
-          font-size: 0.85rem;
-          font-weight: 700;
-          white-space: nowrap;
-
-          &.badge-success { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
-          &.badge-warning { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
-          &.badge-info    { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
-          &.badge-primary { background: #f5f3ff; color: #7c3aed; border: 1px solid #ddd6fe; }
-        }
-      }
-
-      .setting-controls {
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-        background: #f8fafc;
-        border-radius: 10px;
-        padding: 14px 16px;
-        border: 1px solid #edf2f7;
-
-        .slider-row {
-          display: flex;
-          align-items: center;
-
-          .setting-slider {
-            width: 100%;
-            height: 6px;
-            border-radius: 4px;
-            background: #cbd5e1;
-            outline: none;
-            cursor: pointer;
-            accent-color: $primary;
-            transition: all 0.2s;
-
-            &:hover {
-              background: #94a3b8;
-            }
-          }
-        }
-
-        .input-actions-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 16px;
-          flex-wrap: wrap;
-
-          .preset-buttons {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-
-            .preset-label {
-              font-size: 0.78rem;
-              color: #64748b;
-              margin-right: 4px;
-            }
-
-            .btn-preset {
-              background: #fff;
-              border: 1px solid #cbd5e1;
-              color: #475569;
-              padding: 4px 9px;
-              border-radius: 6px;
-              font-size: 0.78rem;
-              font-weight: 600;
-              cursor: pointer;
-              transition: all 0.15s;
-
-              &:hover {
-                border-color: $primary;
-                color: $primary-dark;
-              }
-
-              &.active {
-                background: $primary;
-                border-color: $primary;
-                color: #fff;
-              }
-            }
-          }
-
-          .direct-input-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-left: auto;
-
-            .input-unit-wrap {
-              display: flex;
-              align-items: center;
-              background: #fff;
-              border: 1.5px solid #cbd5e1;
-              border-radius: 8px;
-              overflow: hidden;
-              transition: border-color 0.2s;
-
-              &:focus-within {
-                border-color: $primary;
-                box-shadow: 0 0 0 3px rgba(69, 195, 210, 0.15);
-              }
-
-              .setting-number-input {
-                border: none;
-                width: 75px;
-                padding: 6px 10px;
-                font-size: 0.95rem;
-                font-weight: 700;
-                color: $text-dark;
-                text-align: right;
-                outline: none;
-                background: transparent;
-              }
-
-              .input-unit {
-                padding: 6px 10px 6px 4px;
-                font-size: 0.85rem;
-                font-weight: 600;
-                color: #64748b;
-              }
-            }
-
-            .btn-save-single {
-              padding: 6px 14px;
-              border-radius: 8px;
-              font-size: 0.82rem;
-              font-weight: 600;
-              cursor: pointer;
-              border: none;
-              background: $primary;
-              color: #fff;
-              transition: all 0.2s;
-              white-space: nowrap;
-
-              &:hover:not(:disabled) {
-                background: $primary-dark;
-              }
-
-              &:disabled {
-                background: #e2e8f0;
-                color: #94a3b8;
-                cursor: not-allowed;
-              }
-            }
-          }
-        }
-      }
-    }
-
-    .settings-empty-state {
-      padding: 40px;
-      text-align: center;
-      color: $text-muted;
-      background: #fff;
-      border-radius: 12px;
-      border: 1px dashed $card-border;
-    }
   }
 
-  // ===== CỘT PHẢI: LIVE SIMULATION =====
-  .settings-simulation-column {
-    .sim-panel {
-      background: #ffffff;
-      border: 1.5px solid #e0f2fe;
-      border-radius: 16px;
-      padding: 22px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  // ===== CARD CẤU HÌNH ĐƠN LẺ =====
+  .setting-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px 18px;
+    transition: all 0.2s;
 
-      &.sticky-panel {
-        position: sticky;
-        top: 80px;
-      }
+    &:hover {
+      background: #fff;
+      border-color: #cbd5e1;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.04);
+    }
 
-      .sim-header {
+    &.card-dirty {
+      background: #fff;
+      border-color: #f59e0b;
+      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.15);
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 8px;
+
+      .card-identity {
         display: flex;
-        gap: 12px;
         align-items: center;
-        padding-bottom: 16px;
-        margin-bottom: 16px;
-        border-bottom: 1px solid #f1f5f9;
+        gap: 10px;
 
-        .sim-icon {
-          font-size: 1.6rem;
-          background: #e0f2fe;
-          width: 42px;
-          height: 42px;
+        .icon-badge {
+          width: 34px;
+          height: 34px;
+          border-radius: 8px;
           display: flex;
           align-items: center;
           justify-content: center;
-          border-radius: 10px;
+          flex-shrink: 0;
+
+          &.badge-primary { background: #e0f2fe; color: #0284c7; }
+          &.badge-success { background: #dcfce7; color: #15803d; }
+          &.badge-info { background: #ede9fe; color: #7c3aed; }
+          &.badge-warning { background: #fef3c7; color: #b45309; }
         }
 
-        h4 {
-          margin: 0 0 2px;
-          font-size: 0.98rem;
-          font-weight: 700;
-          color: $text-dark;
-        }
-        p {
-          margin: 0;
-          font-size: 0.78rem;
-          color: $text-muted;
+        .title-wrap {
+          display: flex;
+          flex-direction: column;
+
+          .setting-label {
+            font-size: 0.94rem;
+            font-weight: 700;
+            color: $text-dark;
+            margin: 0;
+          }
+
+          .setting-key-tag {
+            font-family: monospace;
+            font-size: 0.72rem;
+            color: #94a3b8;
+            margin-top: 1px;
+          }
         }
       }
 
-      .sim-price-input-box {
-        margin-bottom: 16px;
+      .card-status-pill {
+        flex-shrink: 0;
 
-        label {
-          display: block;
-          font-size: 0.8rem;
-          font-weight: 600;
-          color: #475569;
-          margin-bottom: 6px;
+        .pill-dirty {
+          font-size: 0.72rem;
+          font-weight: 700;
+          background: #fef3c7;
+          color: #b45309;
+          padding: 2px 8px;
+          border-radius: 12px;
+          border: 1px solid #fde68a;
         }
 
-        .sim-price-row {
+        .pill-synced {
+          font-size: 0.72rem;
+          font-weight: 600;
+          color: #059669;
+          background: #ecfdf5;
+          padding: 2px 8px;
+          border-radius: 12px;
+          border: 1px solid #a7f3d0;
+          display: inline-flex;
+          align-items: center;
+          gap: 3px;
+        }
+      }
+    }
+
+    .setting-desc {
+      font-size: 0.82rem;
+      color: #64748b;
+      margin: 0 0 14px 44px;
+      line-height: 1.45;
+    }
+
+    .card-controls-area {
+      margin-left: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+
+      @media (max-width: 768px) {
+        margin-left: 0;
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      // 1. Controls Toggle Switch (Boolean)
+      .toggle-control-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        .switch-toggle {
+          position: relative;
+          display: inline-block;
+          width: 44px;
+          height: 24px;
+          flex-shrink: 0;
+
+          input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+
+            &:checked + .slider {
+              background-color: #10b981;
+            }
+
+            &:checked + .slider:before {
+              transform: translateX(20px);
+            }
+          }
+
+          .slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background-color: #cbd5e1;
+            transition: 0.25s;
+
+            &:before {
+              position: absolute;
+              content: "";
+              height: 18px;
+              width: 18px;
+              left: 3px;
+              bottom: 3px;
+              background-color: white;
+              transition: 0.25s;
+              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            }
+
+            &.round {
+              border-radius: 24px;
+              &:before {
+                border-radius: 50%;
+              }
+            }
+          }
+        }
+
+        .toggle-status-label {
+          font-size: 0.84rem;
+          font-weight: 600;
+        }
+      }
+
+      // 2. Controls Number
+      .number-control-group {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+
+        .input-number-wrap {
           display: flex;
           align-items: center;
-          background: #f8fafc;
-          border: 1.5px solid #cbd5e1;
+          background: #fff;
+          border: 1px solid #cbd5e1;
           border-radius: 8px;
           padding: 2px 10px;
+          width: 120px;
+          transition: border-color 0.2s;
 
-          .sim-input {
+          &:focus-within {
+            border-color: $primary;
+            box-shadow: 0 0 0 2px rgba(8, 127, 140, 0.15);
+          }
+
+          .field-number-input {
             border: none;
+            outline: none;
             width: 100%;
-            padding: 6px 0;
-            font-size: 1.1rem;
+            font-size: 0.95rem;
             font-weight: 700;
             color: $text-dark;
             background: transparent;
-            outline: none;
+            padding: 5px 0;
           }
 
-          .sim-unit {
-            font-weight: 700;
+          .field-unit-suffix {
+            font-size: 0.8rem;
             color: #64748b;
-            font-size: 0.85rem;
+            font-weight: 600;
+            margin-left: 4px;
           }
         }
 
-        .sim-price-chips {
+        .presets-strip {
           display: flex;
+          align-items: center;
           gap: 6px;
-          margin-top: 8px;
 
-          .price-chip {
-            background: #f1f5f9;
+          .presets-label {
+            font-size: 0.74rem;
+            color: #94a3b8;
+          }
+
+          .btn-preset {
+            background: #fff;
             border: 1px solid #e2e8f0;
             color: #475569;
-            border-radius: 12px;
-            padding: 3px 10px;
-            font-size: 0.75rem;
+            font-size: 0.74rem;
             font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 6px;
             cursor: pointer;
             transition: all 0.15s;
 
             &:hover {
-              background: #e2e8f0;
+              background: #f1f5f9;
+              border-color: #cbd5e1;
             }
 
             &.active {
-              background: #0284c7;
-              border-color: #0284c7;
+              background: #087f8c;
+              border-color: #087f8c;
               color: #fff;
             }
           }
         }
       }
 
-      .sim-results {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
+      // 3. Controls Text
+      .text-control-group {
+        flex: 1;
+        max-width: 480px;
 
-        .sim-card {
-          border-radius: 12px;
-          padding: 14px;
-          border: 1.5px solid #e2e8f0;
+        .field-text-input {
+          width: 100%;
+          background: #fff;
+          border: 1px solid #cbd5e1;
+          border-radius: 8px;
+          padding: 7px 12px;
+          font-size: 0.88rem;
+          color: $text-dark;
+          outline: none;
+          transition: border-color 0.2s;
 
-          &--ok {
-            background: #f0fdf4;
-            border-color: #bbf7d0;
-
-            .badge-scenario { background: #bbf7d0; color: #166534; }
-            .sim-rate-badge { background: #dcfce7; color: #15803d; }
+          &:focus {
+            border-color: $primary;
+            box-shadow: 0 0 0 2px rgba(8, 127, 140, 0.15);
           }
 
-          &--warn {
-            background: #fffbeb;
-            border-color: #fde68a;
-
-            .badge-scenario--warn { background: #fde68a; color: #92400e; }
-            .sim-rate-badge--warn { background: #fef3c7; color: #b45309; }
-          }
-
-          .sim-card-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 6px;
-
-            .badge-scenario {
-              font-size: 0.72rem;
-              font-weight: 700;
-              padding: 2px 6px;
-              border-radius: 4px;
-              text-transform: uppercase;
-            }
-
-            .scenario-label {
-              font-size: 0.78rem;
-              font-weight: 600;
-              color: #475569;
-            }
-          }
-
-          .sim-rate-badge {
-            display: inline-block;
-            font-size: 0.8rem;
-            font-weight: 700;
-            padding: 2px 8px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-          }
-
-          .sim-amount-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.88rem;
-            margin-bottom: 4px;
-
-            .text-success { color: #15803d; font-size: 1.05rem; }
-            .text-warning { color: #b45309; font-size: 1.05rem; }
-          }
-
-          .sim-sub-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.78rem;
-            color: #64748b;
-          }
-        }
-
-        .sim-fee-box {
-          background: #f8fafc;
-          border: 1px dashed #cbd5e1;
-          border-radius: 10px;
-          padding: 10px 14px;
-
-          .fee-title {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.8rem;
-            color: #475569;
-
-            strong {
-              color: #7c3aed;
-              font-size: 0.95rem;
-            }
+          &::placeholder {
+            color: #94a3b8;
           }
         }
       }
 
-      .sim-footer-note {
-        margin-top: 16px;
-        padding-top: 12px;
-        border-top: 1px solid #f1f5f9;
-        font-size: 0.76rem;
-        color: #64748b;
-        line-height: 1.4;
+      // 4. Single Save Button
+      .single-save-wrap {
+        flex-shrink: 0;
+
+        .btn-single-save {
+          padding: 6px 12px;
+          font-size: 0.8rem;
+          font-weight: 600;
+          border-radius: 6px;
+          border: 1px solid #e2e8f0;
+          background: #fff;
+          color: #94a3b8;
+          cursor: default;
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          transition: all 0.2s;
+
+          &.dirty {
+            background: #f59e0b;
+            border-color: #f59e0b;
+            color: #fff;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
+
+            &:hover:not(:disabled) {
+              background: #d97706;
+            }
+          }
+
+          &:disabled {
+            opacity: 0.6;
+          }
+        }
+      }
+    }
+  }
+
+  // ===== CỘT PHẢI: SIDEBAR SUMMARY & POLICIES LINK =====
+  .settings-sidebar-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: sticky;
+    top: 24px;
+
+    // Card 1: Health Status
+    .health-status-card {
+      background: #fff;
+      border: 1px solid $card-border;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+
+      .health-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #f1f5f9;
+
+        .header-title-row {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          h4 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: $text-dark;
+            margin: 0;
+          }
+        }
+
+        .health-online-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          background: #ecfdf5;
+          color: #059669;
+          border: 1px solid #a7f3d0;
+          padding: 2px 8px;
+          border-radius: 12px;
+          font-size: 0.74rem;
+          font-weight: 700;
+
+          .pulsing-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+          }
+        }
+      }
+
+      .health-items-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        .health-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 0.82rem;
+
+          .item-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #64748b;
+          }
+
+          .item-value {
+            font-size: 0.82rem;
+            font-weight: 600;
+          }
+        }
+      }
+    }
+
+    // Card 2: Financial Policy Redirection Card
+    .policy-redirection-card {
+      background: linear-gradient(135deg, #093b48 0%, #062b35 100%);
+      border-radius: 14px;
+      padding: 22px 20px;
+      color: #fff;
+      box-shadow: 0 6px 18px rgba(6, 43, 53, 0.2);
+
+      .policy-card-top {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 12px;
+
+        .policy-badge-icon {
+          width: 40px;
+          height: 40px;
+          border-radius: 10px;
+          background: rgba(69, 195, 210, 0.2);
+          color: #45c3d2;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .policy-card-headings {
+          h4 {
+            margin: 0 0 2px 0;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+          }
+          span {
+            font-size: 0.74rem;
+            color: #99f6e4;
+            font-weight: 500;
+          }
+        }
+      }
+
+      .policy-card-desc {
+        font-size: 0.82rem;
+        line-height: 1.5;
+        color: #cbd5e1;
+        margin: 0 0 16px 0;
+
+        strong {
+          color: #fff;
+        }
+      }
+
+      .btn-goto-policy {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #087f8c;
+        color: #fff;
+        text-decoration: none;
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-size: 0.84rem;
+        font-weight: 600;
+        transition: all 0.2s;
+
+        &:hover {
+          background: #0aa2b3;
+          transform: translateY(-1px);
+        }
       }
     }
   }
