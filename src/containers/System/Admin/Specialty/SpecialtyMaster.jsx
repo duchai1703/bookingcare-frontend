@@ -135,8 +135,8 @@ const SpecialtyMaster = () => {
           </h1>
           <p className="page-subtitle">
             {language === 'vi'
-              ? 'Trung tâm giám sát danh mục chuyên môn, lực lượng bác sĩ chuyên khoa, độ phủ cơ sở và cân bằng Cung - Cầu'
-              : 'Medical discipline oversight: specialist capacity, hospital coverage, market demand balance and clinical output'}
+              ? 'Trung tâm giám sát danh mục chuyên môn, lực lượng bác sĩ chuyên khoa và độ phủ cơ sở'
+              : 'Medical discipline oversight: specialist capacity, hospital coverage and clinical output'}
           </p>
         </div>
 
@@ -262,7 +262,6 @@ const SpecialtyMaster = () => {
                 <th>{language === 'vi' ? 'Chuyên khoa' : 'Medical Discipline'}</th>
                 <th>{language === 'vi' ? 'Mạng lưới cơ sở' : 'Hospitals'}</th>
                 <th>{language === 'vi' ? 'Bác sĩ phụ trách' : 'Specialists'}</th>
-                <th>{language === 'vi' ? 'Cân bằng Cung - Cầu' : 'Supply / Demand Health'}</th>
                 <th>{language === 'vi' ? 'Lượt khám hoàn tất' : 'Completed Bookings'}</th>
                 <th>{language === 'vi' ? 'Doanh thu gộp' : 'Gross Revenue'}</th>
                 <th>{language === 'vi' ? 'Trạng thái' : 'Status'}</th>
@@ -272,25 +271,12 @@ const SpecialtyMaster = () => {
             <tbody>
               {specialties.length === 0 && !loading ? (
                 <tr>
-                  <td colSpan={8} style={{ textAlign: 'center', padding: '40px 0', color: '#94A3B8' }}>
+                  <td colSpan={7} style={{ textAlign: 'center', padding: '40px 0', color: '#94A3B8' }}>
                     {language === 'vi' ? 'Không tìm thấy chuyên khoa phù hợp' : 'No specialties found'}
                   </td>
                 </tr>
               ) : (
                 specialties.map((sp) => {
-                  let healthClass = 'optimal';
-                  let healthText = language === 'vi' ? 'Cân bằng Cung - Cầu' : 'Balanced';
-                  if (sp.healthBalance === 'shortage') {
-                    healthClass = 'understaffed';
-                    healthText = language === 'vi' ? 'Thiếu Bác sĩ' : 'Doctor Shortage';
-                  } else if (sp.healthBalance === 'low_demand') {
-                    healthClass = 'high_load';
-                    healthText = language === 'vi' ? 'Dư thừa Năng lực' : 'Surplus Capacity';
-                  } else if (sp.healthBalance === 'inactive') {
-                    healthClass = 'paused';
-                    healthText = language === 'vi' ? 'Tạm đóng' : 'Inactive';
-                  }
-
                   return (
                     <tr key={sp.id}>
                       {/* Name & Icon */}
@@ -357,13 +343,6 @@ const SpecialtyMaster = () => {
                         <div style={{ fontSize: '0.72rem', color: '#64748B', marginTop: 2 }}>
                           {sp.activeDoctors} {language === 'vi' ? 'đang nhận lịch' : 'active'}
                         </div>
-                      </td>
-
-                      {/* Health / Demand balance */}
-                      <td>
-                        <span className={`status-pill ${healthClass}`}>
-                          ● {healthText}
-                        </span>
                       </td>
 
                       {/* Completed bookings */}
