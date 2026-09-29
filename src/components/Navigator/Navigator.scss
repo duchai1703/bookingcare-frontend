@@ -1,81 +1,164 @@
 // src/components/Navigator/Navigator.scss
-$primary: #45c3d2;
+// [Admin Console Redesign] Theme: Royal Indigo & Deep Midnight (Phương án A)
+// Tách biệt hoàn toàn với Doctor Sidebar (Clinical Teal) — Thể hiện quyền lực điều hành Super Admin
+
+$admin-indigo: #6366f1;
+$admin-indigo-light: #818cf8;
+$admin-indigo-lighter: #a5b4fc;
+$admin-indigo-glow: rgba(99, 102, 241, 0.4);
+$admin-violet: #8b5cf6;
+$admin-text-subtle: #94a3b8;
+$admin-text-bright: #f8fafc;
 
 .navigator {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 12px 0;
+  padding: 12px 0 8px;
   overflow-y: auto;
+  overflow-x: hidden;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+  // Custom scrollbar
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    &:hover {
+      background: rgba(99, 102, 241, 0.3);
+    }
+  }
 
   .nav-list {
     list-style: none;
     margin: 0;
     padding: 0;
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
   }
 
   .nav-item {
-    margin: 2px 8px;
+    margin: 1px 10px;
+    position: relative;
   }
 
-  // [Phase C] Group label — phân nhóm sidebar
+  // 1. Group Headers & Dividers
   .nav-group-label {
     list-style: none;
-    padding: 14px 22px 4px;
-    font-size: 0.68rem;
+    padding: 16px 14px 6px;
+    font-size: 0.65rem;
     font-weight: 700;
-    letter-spacing: 1.2px;
+    letter-spacing: 1.4px;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.35);
+    color: rgba(165, 180, 252, 0.6); // Indigo tinted uppercase
     user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(99, 102, 241, 0.2), transparent);
+    }
 
     &:not(:first-child) {
-      margin-top: 8px;
-      border-top: 1px solid rgba(255, 255, 255, 0.07);
-      padding-top: 12px;
+      margin-top: 10px;
     }
   }
 
+  .nav-group-divider {
+    list-style: none;
+    margin: 10px auto;
+    width: 28px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  // 2. Navigation Links
   .nav-link {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 14px;
-    border-radius: 8px;
+    padding: 9px 12px;
+    border-radius: 9px;
     text-decoration: none;
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 0.88rem;
-    transition: all 0.2s ease;
+    color: rgba(226, 232, 240, 0.72);
+    font-size: 0.86rem;
+    font-weight: 500;
+    position: relative;
+    border: 1px solid transparent;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
     .nav-icon {
-      font-size: 1.1rem;
-      width: 24px;
-      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
       flex-shrink: 0;
+      color: rgba(203, 213, 225, 0.75);
+      transition: all 0.2s ease;
     }
 
     .nav-label {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      transition: color 0.2s ease;
     }
 
+    // Hover state
     &:hover {
-      background: rgba(69, 195, 210, 0.15);
-      color: $primary;
-      transform: translateX(3px);
+      background: rgba(99, 102, 241, 0.1);
+      color: #e0e7ff;
+      border-color: rgba(99, 102, 241, 0.18);
+      transform: translateX(2px);
+
+      .nav-icon {
+        color: $admin-indigo-light;
+        transform: scale(1.08);
+      }
     }
 
+    // Active state (Royal Indigo signature)
     &.active {
-      background: $primary;
-      color: #fff;
+      background: linear-gradient(90deg, rgba(99, 102, 241, 0.22) 0%, rgba(139, 92, 246, 0.08) 100%);
+      color: #ffffff;
       font-weight: 600;
-      box-shadow: 0 4px 12px rgba(69, 195, 210, 0.4);
+      border-color: rgba(99, 102, 241, 0.38);
+      box-shadow: inset 0 0 16px rgba(99, 102, 241, 0.12);
+
+      // Glowing left indicator bar
+      &::before {
+        content: '';
+        position: absolute;
+        left: -10px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 3.5px;
+        height: 60%;
+        border-radius: 0 4px 4px 0;
+        background: linear-gradient(180deg, #6366f1, #8b5cf6);
+        box-shadow: 0 0 10px rgba(99, 102, 241, 0.85);
+      }
+
+      .nav-icon {
+        color: #818cf8;
+        filter: drop-shadow(0 0 6px rgba(99, 102, 241, 0.65));
+      }
     }
   }
 
-  // Master-Detail Submenu Row
+  // 3. Master-Detail Submenu Row
   .nav-master-row {
     display: flex;
     align-items: center;
@@ -89,46 +172,50 @@ $primary: #45c3d2;
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 26px;
-      height: 26px;
+      width: 24px;
+      height: 24px;
+      margin-left: -28px;
       margin-right: 6px;
-      background: rgba(255, 255, 255, 0.05);
+      z-index: 2;
+      background: rgba(255, 255, 255, 0.04);
       border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 6px;
-      color: rgba(255, 255, 255, 0.6);
+      color: rgba(226, 232, 240, 0.6);
       cursor: pointer;
       transition: all 0.2s ease;
 
       &:hover {
-        background: rgba(69, 195, 210, 0.2);
-        color: #fff;
-        border-color: rgba(69, 195, 210, 0.4);
+        background: rgba(99, 102, 241, 0.2);
+        color: #ffffff;
+        border-color: rgba(99, 102, 241, 0.45);
       }
 
       &.expanded {
-        background: rgba(69, 195, 210, 0.15);
-        color: $primary;
+        background: rgba(99, 102, 241, 0.16);
+        color: $admin-indigo-light;
+        border-color: rgba(99, 102, 241, 0.3);
       }
     }
   }
 
   .nav-item.child-active {
     .master-link:not(.active) {
-      background: rgba(69, 195, 210, 0.08);
-      color: rgba(255, 255, 255, 0.9);
+      background: rgba(99, 102, 241, 0.08);
+      color: #c7d2fe;
+      border-color: rgba(99, 102, 241, 0.15);
     }
   }
 
-  // Nested Sub-reports List (Tree indentation)
+  // 4. Nested Sub-reports List
   .nav-sub-list {
     list-style: none;
-    margin: 4px 0 6px 20px;
+    margin: 4px 0 6px 18px;
     padding: 0 0 0 10px;
-    border-left: 1.5px solid rgba(69, 195, 210, 0.25);
+    border-left: 1.5px solid rgba(99, 102, 241, 0.25);
     display: flex;
     flex-direction: column;
     gap: 3px;
-    animation: fadeInSubmenu 0.2s ease;
+    animation: fadeInSubmenu 0.22s ease-out;
 
     .nav-sub-item {
       margin: 0;
@@ -141,16 +228,18 @@ $primary: #45c3d2;
       padding: 7px 10px;
       border-radius: 6px;
       text-decoration: none;
-      color: rgba(255, 255, 255, 0.65);
-      font-size: 0.82rem;
+      color: rgba(226, 232, 240, 0.68);
+      font-size: 0.81rem;
       transition: all 0.2s ease;
 
       .nav-sub-icon {
-        width: 18px;
+        width: 16px;
         display: flex;
         align-items: center;
         justify-content: center;
-        opacity: 0.75;
+        opacity: 0.7;
+        color: $admin-indigo-light;
+        transition: all 0.2s ease;
       }
 
       .nav-sub-label {
@@ -160,8 +249,8 @@ $primary: #45c3d2;
       }
 
       &:hover {
-        background: rgba(69, 195, 210, 0.12);
-        color: $primary;
+        background: rgba(99, 102, 241, 0.12);
+        color: #e0e7ff;
         transform: translateX(2px);
 
         .nav-sub-icon {
@@ -170,14 +259,14 @@ $primary: #45c3d2;
       }
 
       &.active {
-        background: rgba(69, 195, 210, 0.22);
-        color: #45c3d2;
+        background: rgba(99, 102, 241, 0.2);
+        color: #ffffff;
         font-weight: 600;
-        border-left: 2px solid $primary;
+        border-left: 2px solid $admin-indigo-light;
 
         .nav-sub-icon {
           opacity: 1;
-          color: $primary;
+          color: #a5b4fc;
         }
       }
     }
@@ -194,9 +283,10 @@ $primary: #45c3d2;
     }
   }
 
+  // 5. Footer Logout (Pinned Glass Crimson)
   .nav-footer {
-    padding: 16px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 12px 10px 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
     margin-top: auto;
 
     .btn-logout {
@@ -205,19 +295,58 @@ $primary: #45c3d2;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      padding: 10px;
-      background: rgba(220, 53, 69, 0.15);
-      color: #ff6b7a;
-      border: 1px solid rgba(220, 53, 69, 0.3);
+      padding: 9px 12px;
+      background: rgba(239, 68, 68, 0.08);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.22);
       border-radius: 8px;
       cursor: pointer;
-      font-size: 0.88rem;
-      transition: all 0.2s;
+      font-size: 0.84rem;
+      font-weight: 500;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
       &:hover {
-        background: #dc3545;
-        color: #fff;
-        border-color: #dc3545;
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: #ffffff;
+        border-color: #ef4444;
+        box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+        transform: translateY(-1px);
+      }
+    }
+  }
+
+  // 6. Collapsed State Behavior
+  &.is-collapsed {
+    padding: 12px 0 8px;
+
+    .nav-item {
+      margin: 2px 6px;
+    }
+
+    .nav-link {
+      padding: 10px 0;
+      justify-content: center;
+      gap: 0;
+
+      .nav-icon {
+        margin: 0;
+      }
+
+      &.active::before {
+        left: -6px;
+      }
+    }
+
+    .nav-master-row {
+      justify-content: center;
+    }
+
+    .nav-footer {
+      padding: 10px 6px 4px;
+
+      .btn-logout {
+        padding: 10px 0;
+        border-radius: 8px;
       }
     }
   }

@@ -62,7 +62,7 @@ const MENU_ICONS = {
   'menu.doctor.profile': User,
 };
 
-const Navigator = () => {
+const Navigator = ({ collapsed = false }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
@@ -102,11 +102,14 @@ const Navigator = () => {
   };
 
   return (
-    <nav className="navigator">
+    <nav className={`navigator${collapsed ? ' is-collapsed' : ''}`}>
       <ul className="nav-list">
         {menuItems.map((item, index) => {
           // Render group header label
           if (item.type === 'group') {
+            if (collapsed) {
+              return <li key={`group-${index}`} className="nav-group-divider" title={item.label} />;
+            }
             return (
               <li key={`group-${index}`} className="nav-group-label">
                 <span>{item.label}</span>
@@ -117,7 +120,8 @@ const Navigator = () => {
           const IconComponent = MENU_ICONS[item.name] || Settings;
           const hasSubmenus = Array.isArray(item.subMenus) && item.subMenus.length > 0;
           const isSubActive = hasSubmenus && item.subMenus.some((sub) => location.pathname === sub.link);
-          const isExpanded = expandedMenus[item.name] ?? isSubActive;
+          const isExpanded = !collapsed && (expandedMenus[item.name] ?? isSubActive);
+          const labelText = formatMessage({ id: item.name });
 
           if (hasSubmenus) {
             return (
@@ -127,34 +131,36 @@ const Navigator = () => {
                     to={item.link}
                     end={item.link === '/system/dashboard'}
                     className={({ isActive }) => `nav-link master-link${isActive ? ' active' : ''}`}
+                    title={collapsed ? labelText : undefined}
                   >
                     <span className="nav-icon">
-                      <IconComponent size={17} strokeWidth={2} />
+                      <IconComponent size={18} strokeWidth={2} />
                     </span>
-                    <span className="nav-label">
-                      {formatMessage({ id: item.name })}
-                    </span>
+                    {!collapsed && <span className="nav-label">{labelText}</span>}
                   </NavLink>
 
-                  <button
-                    type="button"
-                    className={`btn-submenu-toggle${isExpanded ? ' expanded' : ''}`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      toggleSubmenu(item.name);
-                    }}
-                    title={isExpanded ? 'Thu gọn báo cáo' : 'Mở rộng báo cáo'}
-                  >
-                    {isExpanded ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
-                  </button>
+                  {!collapsed && (
+                    <button
+                      type="button"
+                      className={`btn-submenu-toggle${isExpanded ? ' expanded' : ''}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleSubmenu(item.name);
+                      }}
+                      title={isExpanded ? 'Thu gọn báo cáo' : 'Mở rộng báo cáo'}
+                    >
+                      {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                    </button>
+                  )}
                 </div>
 
-                {/* Danh sách sub-reports theo dạng Master - Detail */}
-                {isExpanded && (
+                {/* Danh sách sub-reports theo dạng Master - Detail (chỉ mở khi không collapsed) */}
+                {isExpanded && !collapsed && (
                   <ul className="nav-sub-list">
                     {item.subMenus.map((sub, sIdx) => {
                       const SubIcon = MENU_ICONS[sub.name] || BarChart3;
+                      const subLabelText = formatMessage({ id: sub.name });
                       return (
                         <li key={`sub-${sIdx}`} className="nav-sub-item">
                           <NavLink
@@ -164,9 +170,7 @@ const Navigator = () => {
                             <span className="nav-sub-icon">
                               <SubIcon size={14} strokeWidth={2} />
                             </span>
-                            <span className="nav-sub-label">
-                              {formatMessage({ id: sub.name })}
-                            </span>
+                            <span className="nav-sub-label">{subLabelText}</span>
                           </NavLink>
                         </li>
                       );
@@ -183,13 +187,12 @@ const Navigator = () => {
                 to={item.link}
                 end={item.link === '/system/dashboard'}
                 className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+                title={collapsed ? labelText : undefined}
               >
                 <span className="nav-icon">
-                  <IconComponent size={17} strokeWidth={2} />
+                  <IconComponent size={18} strokeWidth={2} />
                 </span>
-                <span className="nav-label">
-                  {formatMessage({ id: item.name })}
-                </span>
+                {!collapsed && <span className="nav-label">{labelText}</span>}
               </NavLink>
             </li>
           );
@@ -197,9 +200,13 @@ const Navigator = () => {
       </ul>
 
       <div className="nav-footer">
-        <button className="btn-logout" onClick={handleLogout}>
+        <button
+          className="btn-logout"
+          onClick={handleLogout}
+          title={collapsed ? formatMessage({ id: 'common.logout' }) : undefined}
+        >
           <LogOut size={16} strokeWidth={2} />
-          <span><FormattedMessage id="common.logout" /></span>
+          {!collapsed && <span><FormattedMessage id="common.logout" /></span>}
         </button>
       </div>
     </nav>
