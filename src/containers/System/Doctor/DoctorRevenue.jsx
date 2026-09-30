@@ -2,6 +2,7 @@
 // [Doctor Income Workspace] Mini Financial Workspace — Bóc tách tài chính Master - Detail
 import React, { useEffect, useState, useMemo } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
+import { useOutletContext } from 'react-router-dom';
 import { getDoctorIncomeWorkspace } from '../../../services/doctorService';
 import './DoctorRevenue.scss';
 
@@ -56,6 +57,8 @@ const getPresetRange = (preset) => {
 
 const DoctorRevenue = () => {
   const intl = useIntl();
+  const outletCtx = useOutletContext();
+  const outletClinicId = outletCtx?.selectedClinicId;
 
   // State Tabs: 'overview' | 'payouts'
   const [activeMainTab, setActiveMainTab] = useState('overview');
@@ -64,8 +67,15 @@ const DoctorRevenue = () => {
   const [rangePreset, setRangePreset] = useState('this_year');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [selectedFacility, setSelectedFacility] = useState('all');
+  const [selectedFacility, setSelectedFacility] = useState(() => outletClinicId || 'all');
   const [selectedSpecialty, setSelectedSpecialty] = useState('all');
+
+  // [Multi-Facility] Đồng bộ khi Practice Context Selector ở topbar thay đổi
+  useEffect(() => {
+    if (outletClinicId && outletClinicId !== selectedFacility) {
+      setSelectedFacility(outletClinicId);
+    }
+  }, [outletClinicId]);
   const [statusTab, setStatusTab] = useState('all'); // 'all' | 'paid' | 'pending' | 'refunded'
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState('newest'); // 'newest' | 'oldest' | 'income_desc' | 'income_asc'

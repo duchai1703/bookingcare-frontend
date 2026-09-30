@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useIntl } from 'react-intl';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import moment from 'moment';
 import DatePicker from 'react-datepicker';
@@ -14,6 +14,7 @@ import { processLogout } from '../../../redux/slices/userSlice';
 import { LANGUAGES, BOOKING_STATUS } from '../../../utils/constants';
 import RemedyModal from './RemedyModal';
 import AppointmentScannerModal from './AppointmentScannerModal';
+
 
 import {
   CalendarDays,
@@ -41,9 +42,11 @@ import {
   RefreshCw,
   Eye,
   FileCheck,
+  Building2,
 } from 'lucide-react';
 
 import './ManagePatient.scss';
+
 
 const ManagePatient = () => {
   const dispatch = useDispatch();
@@ -84,12 +87,22 @@ const ManagePatient = () => {
   const [isOpenRemedyModal, setIsOpenRemedyModal] = useState(false);
   const [dataRemedyModal, setDataRemedyModal] = useState({});
 
-  // ===== FETCH PATIENT LIST (Luôn lấy statusId='ALL' để tính counters đầy đủ) =====
-  const fetchPatientList = useCallback(async (dateTimestamp) => {
+  // [Multi-Facility] Đọc ngữ cảnh cơ sở đang chọn từ DoctorLayout
+  const outletCtx = useOutletContext();
+  const selectedClinicId = outletCtx?.selectedClinicId || 'all';
+
+  // ===== FETCH PATIENT LIST (Luôn lấy statusId='ALL' để tính counters đầy đủ, lọc theo clinicId) =====
+  const fetchPatientList = useCallback(async (dateTimestamp, clinicId) => {
     if (!userInfo?.id) return;
     setIsLoading(true);
     try {
-      const res = await getListPatientForDoctor(userInfo.id, dateTimestamp, 'ALL');
+      const activeClinicId = clinicId !== undefined ? clinicId : selectedClinicId;
+      const res = await getListPatientForDoctor(
+        userInfo.id,
+        dateTimestamp,
+        'ALL',
+        activeClinicId !== 'all' ? activeClinicId : null
+      );
       if (res && res.errCode === 0) {
         const list = res.data || [];
         setDataPatient(list);
@@ -114,11 +127,12 @@ const ManagePatient = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [userInfo?.id, dispatch]);
+  }, [userInfo?.id, selectedClinicId, dispatch]);
 
   useEffect(() => {
-    fetchPatientList(currentDate);
-  }, [currentDate, fetchPatientList]);
+    fetchPatientList(currentDate, selectedClinicId);
+  }, [currentDate, selectedClinicId, fetchPatientList]);
+
 
   // ===== DATE STEPPING =====
   const handleStepDay = (step) => {
@@ -541,7 +555,16 @@ const ManagePatient = () => {
                       <span className="code-badge">#BK-{item.id}</span>
                     </div>
 
+                    {item.clinicData?.name && (
+                      <div className="clinic-badge-row">
+                        <span className="clinic-badge-inline" title={`Cơ sở khám: ${item.clinicData.name}`}>
+                          <Building2 size={12} /> {item.clinicData.name}
+                        </span>
+                      </div>
+                    )}
+
                     <div className="patient-name-row">
+
                       <strong>{pName}</strong>
                       {item.patientData?.genderData && (
                         <span className="gender-tag">
@@ -698,8 +721,24 @@ const ManagePatient = () => {
                           : '⏳ Thanh toán tại phòng khám'}
                       </span>
                     </div>
+
+                    {selectedBooking.clinicData && (
+                      <div className="sec-item full-col clinic-facility-item">
+                        <label>Cơ sở y tế tiếp đón</label>
+                        <div className="clinic-facility-bubble">
+                          <Building2 size={16} className="text-teal-600" />
+                          <div>
+                            <strong>{selectedBooking.clinicData.name}</strong>
+                            {selectedBooking.clinicData.address && (
+                              <p className="clinic-facility-address">{selectedBooking.clinicData.address}</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
+
 
                 {/* 3. HỒ SƠ LÂM SÀNG & TỆP ĐÍNH KÈM (Nếu có) */}
                 {(selectedBooking.symptoms ||

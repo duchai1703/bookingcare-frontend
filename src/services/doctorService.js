@@ -14,19 +14,20 @@ export const getDoctorDetail = (id) => {
   return axiosInstance.get(`/api/v1/doctors/${id}`);
 };
 
-// REQ-PT-009: Lấy lịch khám theo ngày (Patient — chỉ slot còn chỗ)
-export const getScheduleByDate = (doctorId, date) => {
-  return axiosInstance.get(`/api/v1/doctors/${doctorId}/schedules`, {
-    params: { date },
-  });
+// REQ-PT-009: Lấy lịch khám theo ngày (Patient — chỉ slot còn chỗ, hỗ trợ lọc theo cơ sở)
+export const getScheduleByDate = (doctorId, date, clinicId = null) => {
+  const params = { date };
+  if (clinicId && clinicId !== 'all') params.clinicId = clinicId;
+  return axiosInstance.get(`/api/v1/doctors/${doctorId}/schedules`, { params });
 };
 
-// [Phase 10.5 VULN-001] Admin version — uses dedicated secured route
-export const getScheduleByDateAdmin = (doctorId, date) => {
-  return axiosInstance.get('/api/v1/admin/schedules', {
-    params: { doctorId, date, includeAll: 'true' },
-  });
+// [Phase 10.5 VULN-001] Admin/Doctor version — uses dedicated secured route, hỗ trợ lọc theo cơ sở
+export const getScheduleByDateAdmin = (doctorId, date, clinicId = null) => {
+  const params = { doctorId, date, includeAll: 'true' };
+  if (clinicId && clinicId !== 'all') params.clinicId = clinicId;
+  return axiosInstance.get('/api/v1/admin/schedules', { params });
 };
+
 
 // ===== ADMIN — Quản lý bác sĩ (SRS 3.3) =====
 
@@ -63,12 +64,13 @@ export const editSchedule = (data) => {
 
 // ===== DOCTOR — Dashboard (SRS 3.11, 3.12, 3.13) =====
 
-// REQ-DR-001, 002, 003: Lấy danh sách bệnh nhân
-export const getListPatientForDoctor = (doctorId, date, statusId) => {
-  return axiosInstance.get(`/api/v1/doctors/${doctorId}/patients`, {
-    params: { date, statusId },
-  });
+// REQ-DR-001, 002, 003: Lấy danh sách bệnh nhân (hỗ trợ lọc theo cơ sở clinicId)
+export const getListPatientForDoctor = (doctorId, date, statusId, clinicId = null) => {
+  const params = { date, statusId };
+  if (clinicId && clinicId !== 'all') params.clinicId = clinicId;
+  return axiosInstance.get(`/api/v1/doctors/${doctorId}/patients`, { params });
 };
+
 
 // REQ-DR-008, 009, 010: Gửi kết quả khám (S2 → S3)
 export const sendRemedy = (bookingId, data) => {
@@ -159,4 +161,18 @@ export const uploadEncounterAttachments = (bookingId, data) => {
 export const deleteEncounterAttachment = (bookingId, attachmentId) => {
   return axiosInstance.delete(`/api/v1/doctor/encounters/${bookingId}/attachments/${attachmentId}`);
 };
+
+// ═══════════════════════════════════════════════════════
+// [Multi-Facility Support] Doctor Assignments / Practices
+// ═══════════════════════════════════════════════════════
+// Doctor — Lấy danh sách các cơ sở y tế bác sĩ đang công tác
+export const getMyPractices = () => {
+  return axiosInstance.get('/api/v1/doctor/my-practices');
+};
+
+// Public/Patient — Lấy danh sách cơ sở công tác của bác sĩ theo ID
+export const getDoctorPractices = (doctorId) => {
+  return axiosInstance.get(`/api/v1/doctors/${doctorId}/practices`);
+};
+
 

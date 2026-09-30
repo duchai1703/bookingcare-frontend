@@ -23,6 +23,7 @@ import {
   Sparkles,
   CalendarDays,
   ArrowRight,
+  Building2,
 } from 'lucide-react';
 
 import './CreateScheduleModal.scss';
@@ -48,9 +49,30 @@ const DAYS_OF_WEEK = [
   { key: 7, label: 'Chủ nhật' },
 ];
 
-const CreateScheduleModal = ({ isOpen, onClose, doctorId, initialDate, onSaved }) => {
+const CreateScheduleModal = ({
+  isOpen,
+  onClose,
+  doctorId,
+  initialDate,
+  onSaved,
+  practices = [],
+  defaultClinicId = '',
+}) => {
   const [activeTab, setActiveTab] = useState('single'); // 'single' | 'copy' | 'recurring'
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // [Multi-Facility] State chọn cơ sở
+  const [modalClinicId, setModalClinicId] = useState(
+    () => defaultClinicId || practices[0]?.clinicId || ''
+  );
+
+  useEffect(() => {
+    if (defaultClinicId && defaultClinicId !== 'all') {
+      setModalClinicId(defaultClinicId);
+    } else if (practices.length > 0 && !modalClinicId) {
+      setModalClinicId(practices[0].clinicId);
+    }
+  }, [defaultClinicId, practices]);
 
   // Tab 1: Single Date State
   const [singleDate, setSingleDate] = useState(() => new Date(initialDate || Date.now()));
@@ -105,19 +127,28 @@ const CreateScheduleModal = ({ isOpen, onClose, doctorId, initialDate, onSaved }
     try {
       const dateStr = moment(singleDate).format('YYYY-MM-DD');
       const timestamp = moment.utc(dateStr).valueOf();
+      const targetClinicId = modalClinicId ? Number(modalClinicId) : undefined;
 
       const arrSchedule = singleTimes.map((timeType) => ({
         doctorId,
+        clinicId: targetClinicId,
         date: timestamp,
         timeType,
         maxNumber: parseInt(singleCapacity, 10) || 10,
       }));
 
-      const res = await bulkCreateSchedule({ arrSchedule });
+      const res = await bulkCreateSchedule({
+        clinicId: targetClinicId,
+        arrSchedule,
+      });
+
       if (res && res.errCode === 0) {
         toast.success(`Đã tạo thành công ${singleTimes.length} slot khám cho ngày ${moment(singleDate).format('DD/MM/YYYY')}!`);
         if (onSaved) onSaved();
         onClose();
+      } else if (res && res.errCode === 4) {
+        // [Multi-Facility] Thông báo xung đột lịch giữa các cơ sở
+        toast.error(res.message || 'Xung đột lịch khám giữa các cơ sở!', { autoClose: 6000 });
       } else {
         toast.error(res?.message || 'Lỗi khi tạo lịch khám!');
       }
@@ -176,12 +207,14 @@ const CreateScheduleModal = ({ isOpen, onClose, doctorId, initialDate, onSaved }
 
     setIsSubmitting(true);
     try {
+      const targetClinicId = modalClinicId ? Number(modalClinicId) : undefined;
       const res = await createRecurringSchedule({
         daysOfWeek: recurringDays,
         startDate: moment(startDate).format('YYYY-MM-DD'),
         endDate: moment(endDate).format('YYYY-MM-DD'),
         timeTypes: recurringTimes,
         maxNumber: parseInt(recurringCapacity, 10) || 10,
+        clinicId: targetClinicId,
       });
 
       if (res && res.errCode === 0) {
@@ -248,10 +281,29 @@ const CreateScheduleModal = ({ isOpen, onClose, doctorId, initialDate, onSaved }
         {/* Body */}
         <div className="csm-body">
           {/* ──────────────────────────────────────────────────────── */}
-          {/* TAB 1: TẠO CHO MỘT NGÀY                                 */}
-          {/* ──────────────────────────────────────────────────────── */}
+          {/* TAB 1: TẠO CHO MỘT NGÀY */}
           {activeTab === 'single' && (
             <form onSubmit={handleSaveSingle} className="csm-form">
+              {practices.length > 0 && (
+                <div className="csm-field-group">
+                  <label className="field-label">
+                    <Building2 size={15} /> Cơ sở y tế làm việc (Khám tại)
+                  </label>
+                  <select
+                    className="csm-select-clinic"
+                    value={modalClinicId}
+                    onChange={(e) => setModalClinicId(e.target.value)}
+                    required
+                  >
+                    {practices.map((p) => (
+                      <option key={p.id} value={p.clinicId}>
+                        🏢 {p.clinicData?.name || `Cơ sở #${p.clinicId}`} {p.roomNumber ? `— Phòng ${p.roomNumber}` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div className="csm-field-group">
                 <label className="field-label">
                   <Calendar size={15} /> Ngày khám
@@ -417,11 +469,29 @@ const CreateScheduleModal = ({ isOpen, onClose, doctorId, initialDate, onSaved }
             </form>
           )}
 
-          {/* ──────────────────────────────────────────────────────── */}
-          {/* TAB 3: LỊCH ĐỊNH KỲ LẶP TUẦN                           */}
-          {/* ──────────────────────────────────────────────────────── */}
+          {/* TAB 3: LỊCH ĐỊNH KỲ LẶP TUẦN */}
           {activeTab === 'recurring' && (
             <form onSubmit={handleSaveRecurring} className="csm-form">
+              {practices.length > 0 && (
+                <div className="csm-field-group">
+                  <label className="field-label">
+                    <Building2 size={15} /> Cơ sở y tế áp dụng lịch lặp
+                  </label>
+                  <select
+                    className="csm-select-clinic"
+                    value={modalClinicId}
+                    onChange={(e) => setModalClinicId(e.target.value)}
+                    required
+                  >
+                    {practices.map((p) => (
+                      <option key={p.id} value={p.clinicId}>
+                        🏢 {p.clinicData?.name || `Cơ sở #${p.clinicId}`} {p.roomNumber ? `— Phòng ${p.roomNumber}` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div className="csm-field-group">
                 <div className="field-label-row">
                   <label className="field-label">

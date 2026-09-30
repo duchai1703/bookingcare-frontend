@@ -24,7 +24,9 @@ import {
   Moon,
   Clock,
   ShieldCheck,
+  Building2,
 } from 'lucide-react';
+import { getMyPractices } from '../../services/doctorService';
 import './DoctorLayout.scss';
 
 const DOCTOR_NAV_GROUPS = [
@@ -73,6 +75,33 @@ const DoctorLayout = () => {
   const { userInfo } = useSelector((state) => state.user);
   const language = useSelector((state) => state.app.language);
   const [collapsed, setCollapsed] = useState(false);
+
+  // [Multi-Facility] Practice Context Selector state
+  const [practices, setPractices] = useState([]);
+  const [selectedClinicId, setSelectedClinicId] = useState(() => {
+    return localStorage.getItem('doctor_selected_clinic_id') || 'all';
+  });
+
+  useEffect(() => {
+    const fetchPractices = async () => {
+      try {
+        const res = await getMyPractices();
+        if (res && res.errCode === 0 && Array.isArray(res.data)) {
+          setPractices(res.data);
+        }
+      } catch (err) {
+        console.error('Error fetching doctor practices:', err);
+      }
+    };
+    if (userInfo?.id) {
+      fetchPractices();
+    }
+  }, [userInfo?.id]);
+
+  const handleClinicChange = (clinicId) => {
+    setSelectedClinicId(clinicId);
+    localStorage.setItem('doctor_selected_clinic_id', clinicId);
+  };
 
   const handleLogout = () => {
     dispatch(processLogout());
@@ -258,6 +287,29 @@ const DoctorLayout = () => {
           </div>
 
           <div className="topbar-right">
+            {/* [Multi-Facility] Practice Context Selector */}
+            <div className="dp-practice-selector" title="Chọn cơ sở y tế đang làm việc">
+              <div className="practice-selector-icon">
+                <Building2 size={16} />
+              </div>
+              <select
+                value={selectedClinicId}
+                onChange={(e) => handleClinicChange(e.target.value)}
+                className="practice-select"
+                aria-label="Cơ sở làm việc"
+              >
+                <option value="all">🌐 Tất cả cơ sở ({practices.length})</option>
+                {practices.map((p) => (
+                  <option key={p.id} value={p.clinicId}>
+                    🏢 {p.clinicData?.name || `Cơ sở #${p.clinicId}`} {p.roomNumber ? `(P.${p.roomNumber})` : ''}
+                  </option>
+                ))}
+              </select>
+              {practices.length > 0 && (
+                <span className="practice-count-badge">{practices.length} nơi</span>
+              )}
+            </div>
+
             {/* Language Switcher */}
             <div className="dp-lang-switcher">
               <button
@@ -315,7 +367,7 @@ const DoctorLayout = () => {
 
         {/* Page Content Body */}
         <main className="dp-main-content">
-          <Outlet />
+          <Outlet context={{ selectedClinicId, setSelectedClinicId, practices, handleClinicChange }} />
         </main>
       </div>
     </div>

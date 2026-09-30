@@ -2,7 +2,7 @@
 // [Doctor Capacity Workspace] Master - Detail Slot Architecture & Availability Management
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import moment from 'moment';
 import DatePicker from 'react-datepicker';
@@ -89,13 +89,23 @@ const DoctorScheduleWorkspace = () => {
     }
   }, [userInfo?.id]);
 
-  // 2. Fetch Schedules for current date
-  const fetchSchedules = useCallback(async (dateTimestamp) => {
+  // [Multi-Facility] Đọc ngữ cảnh cơ sở đang chọn từ DoctorLayout
+  const outletCtx = useOutletContext();
+  const selectedClinicId = outletCtx?.selectedClinicId || 'all';
+  const practices = outletCtx?.practices || [];
+
+  // 2. Fetch Schedules for current date (hỗ trợ lọc theo clinicId)
+  const fetchSchedules = useCallback(async (dateTimestamp, clinicId) => {
     if (!userInfo?.id) return;
     setIsLoading(true);
     try {
+      const activeClinicId = clinicId !== undefined ? clinicId : selectedClinicId;
       // includeAll = true để lấy đầy đủ cả slot đã đầy & danh sách slotBookings
-      const res = await getScheduleByDateAdmin(userInfo.id, dateTimestamp);
+      const res = await getScheduleByDateAdmin(
+        userInfo.id,
+        dateTimestamp,
+        activeClinicId !== 'all' ? activeClinicId : null
+      );
       if (res && res.errCode === 0) {
         const list = res.data || [];
         setSchedules(list);
@@ -120,11 +130,12 @@ const DoctorScheduleWorkspace = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [userInfo?.id, dispatch]);
+  }, [userInfo?.id, selectedClinicId, dispatch]);
 
   useEffect(() => {
-    fetchSchedules(currentDate);
-  }, [currentDate, fetchSchedules]);
+    fetchSchedules(currentDate, selectedClinicId);
+  }, [currentDate, selectedClinicId, fetchSchedules]);
+
 
   // Sync editCapacityVal when selectedSlot changes
   useEffect(() => {
@@ -481,10 +492,17 @@ const DoctorScheduleWorkspace = () => {
                     </div>
 
                     <div className="slot-meta-line">
-                      <span>{specialtyName}</span>
+                      {slot.clinicData?.name ? (
+                        <span className="slot-clinic-tag" title={`Cơ sở khám: ${slot.clinicData.name}`}>
+                          <Building2 size={12} /> {slot.clinicData.name}
+                        </span>
+                      ) : (
+                        <span>{facilityName}</span>
+                      )}
                       <span>·</span>
-                      <span>Khám trực tiếp</span>
+                      <span>{specialtyName}</span>
                     </div>
+
 
                     {/* Capacity Progress Bar */}
                     <div className="slot-capacity-bar-group">
@@ -764,16 +782,16 @@ const DoctorScheduleWorkspace = () => {
         </div>
       </div>
 
-      {/* ────────────────────────────────────────────────────── */}
-      {/* 5. MODAL TẠO LỊCH 3-IN-1                               */}
-      {/* ────────────────────────────────────────────────────── */}
+      {/* 5. MODAL TẠO LỊCH 3-IN-1 (Hỗ trợ đa cơ sở) */}
       {isOpenCreateModal && (
         <CreateScheduleModal
           isOpen={isOpenCreateModal}
           onClose={() => setIsOpenCreateModal(false)}
           doctorId={userInfo?.id}
           initialDate={currentDate}
-          onSaved={() => fetchSchedules(currentDate)}
+          practices={practices}
+          defaultClinicId={selectedClinicId}
+          onSaved={() => fetchSchedules(currentDate, selectedClinicId)}
         />
       )}
     </div>
@@ -781,3 +799,4 @@ const DoctorScheduleWorkspace = () => {
 };
 
 export default DoctorScheduleWorkspace;
+
