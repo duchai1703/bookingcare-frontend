@@ -38,3 +38,9 @@ export const seedDefaultAdminPolicies = (options = {}) => {
     signal: options.signal,
   });
 };
+
+export const getAdminDoctorHierarchyTree = (options = {}) => {
+  return axiosInstance.get('/api/v1/admin/doctor-hierarchy-tree', {
+    signal: options.signal,
+  });
+};

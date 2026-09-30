@@ -14,9 +14,11 @@ import {
   User,
   Globe,
   Sliders,
-  Sparkles
+  Sparkles,
+  Users
 } from 'lucide-react';
 import { createAdminPolicy, createAdminPolicyVersion } from '../../../../services/policyService';
+import HierarchicalDoctorSelector from './HierarchicalDoctorSelector';
 
 const CreatePolicyModal = ({ isOpen, onClose, existingPolicy = null, isNewVersion = false, onSuccess }) => {
   if (!isOpen) return null;
@@ -29,8 +31,12 @@ const CreatePolicyModal = ({ isOpen, onClose, existingPolicy = null, isNewVersio
       ? `${existingPolicy?.name} (v${existingPolicy.version + 1})`
       : existingPolicy?.name || ''
   );
-  const [scopeType, setScopeType] = useState(existingPolicy?.scopeType || 'GLOBAL');
-  const [scopeId, setScopeId] = useState(existingPolicy?.scopeId || '');
+  const [targetMode, setTargetMode] = useState(
+    existingPolicy?.targetMode || (existingPolicy?.scopeType === 'GLOBAL' ? 'ALL_DOCTORS' : (existingPolicy?.targetDoctors?.length > 0 ? 'SELECTED_DOCTORS' : 'ALL_DOCTORS'))
+  );
+  const [selectedDoctors, setSelectedDoctors] = useState(
+    existingPolicy?.targetDoctors || []
+  );
   const [status, setStatus] = useState('ACTIVE');
   const [description, setDescription] = useState(existingPolicy?.description || '');
 
@@ -120,6 +126,10 @@ const CreatePolicyModal = ({ isOpen, onClose, existingPolicy = null, isNewVersio
       setError('Vui lòng nhập mã chính sách!');
       return;
     }
+    if (targetMode === 'SELECTED_DOCTORS' && selectedDoctors.length === 0) {
+      setError('Vui lòng chọn ít nhất 1 bác sĩ từ danh sách phân cấp!');
+      return;
+    }
 
     setLoading(true);
     setError('');
@@ -146,8 +156,16 @@ const CreatePolicyModal = ({ isOpen, onClose, existingPolicy = null, isNewVersio
       code,
       policyType,
       name,
-      scopeType,
-      scopeId: (scopeType === 'CLINIC' || scopeType === 'DOCTOR') && scopeId ? parseInt(scopeId, 10) : null,
+      scopeType: targetMode === 'ALL_DOCTORS' ? 'GLOBAL' : 'DOCTOR',
+      scopeId: targetMode === 'SELECTED_DOCTORS' && selectedDoctors.length === 1 ? selectedDoctors[0].doctorId : null,
+      targetMode,
+      selectedDoctorTargets: targetMode === 'SELECTED_DOCTORS' ? selectedDoctors.map(d => ({
+        doctorId: d.doctorId,
+        clinicId: d.clinicId,
+        specialtyId: d.specialtyId,
+        doctorAssignmentId: d.assignmentId,
+        fullName: d.fullName
+      })) : [],
       effectiveFrom,
       effectiveTo: effectiveTo ? effectiveTo : null,
       status,
@@ -269,39 +287,72 @@ const CreatePolicyModal = ({ isOpen, onClose, existingPolicy = null, isNewVersio
             />
           </div>
 
-          {/* Row 3: Scope Selection */}
-          <div className="form-row-grid">
-            <div className="form-group">
-              <label className="form-label">Phạm vi áp dụng (Scope) *</label>
-              <select
-                className="form-control"
-                value={scopeType}
-                onChange={(e) => setScopeType(e.target.value)}
-                disabled={isNewVersion}
-              >
-                <option value="GLOBAL">Toàn sàn (Mặc định toàn hệ thống)</option>
-                <option value="CLINIC">Riêng từng Cơ sở y tế (Clinic)</option>
-                <option value="DOCTOR">Riêng từng Bác sĩ (Doctor)</option>
-              </select>
+          {/* Row 3: Target Audience Mode & Hierarchical Picker */}
+          <div className="target-mode-section">
+            <div className="flex items-center justify-between mb-1">
+              <label className="form-label font-semibold text-gray-800 m-0">
+                Đối tượng Áp dụng Chính sách *
+              </label>
+              {targetMode === 'SELECTED_DOCTORS' && (
+                <span className="text-xs font-semibold text-teal-600 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                  Đã chọn {selectedDoctors.length} bác sĩ
+                </span>
+              )}
             </div>
 
-            {scopeType !== 'GLOBAL' && (
-              <div className="form-group">
-                <label className="form-label">
-                  {scopeType === 'CLINIC' ? 'ID Cơ sở y tế *' : 'ID Bác sĩ *'}
-                </label>
+            <div className="target-mode-options">
+              <label className={`mode-option-card ${targetMode === 'ALL_DOCTORS' ? 'mode-option-card--active' : ''}`}>
                 <input
-                  type="number"
-                  className="form-control"
-                  value={scopeId}
-                  onChange={(e) => setScopeId(e.target.value)}
-                  placeholder="Nhập ID số"
+                  type="radio"
+                  name="targetMode"
+                  value="ALL_DOCTORS"
+                  checked={targetMode === 'ALL_DOCTORS'}
+                  onChange={() => setTargetMode('ALL_DOCTORS')}
                   disabled={isNewVersion}
-                  required
                 />
-              </div>
-            )}
+                <div className="mode-option-text">
+                  <div className="mode-title">
+                    <Globe size={15} className="text-teal-600" />
+                    <span>Toàn bộ Bác sĩ (Toàn sàn)</span>
+                  </div>
+                  <div className="mode-desc">
+                    Tự động áp dụng cho tất cả bác sĩ đang hoạt động và bác sĩ mới gia nhập trong thời hạn chính sách.
+                  </div>
+                </div>
+              </label>
 
+              <label className={`mode-option-card ${targetMode === 'SELECTED_DOCTORS' ? 'mode-option-card--active' : ''}`}>
+                <input
+                  type="radio"
+                  name="targetMode"
+                  value="SELECTED_DOCTORS"
+                  checked={targetMode === 'SELECTED_DOCTORS'}
+                  onChange={() => setTargetMode('SELECTED_DOCTORS')}
+                  disabled={isNewVersion}
+                />
+                <div className="mode-option-text">
+                  <div className="mode-title">
+                    <Users size={15} className="text-blue-600" />
+                    <span>Tùy chọn Bác sĩ (Bộ chọn Phân cấp)</span>
+                  </div>
+                  <div className="mode-desc">
+                    Chỉ định danh sách bác sĩ cụ thể từ cây phân cấp Cơ sở y tế & Chuyên khoa (mô hình 2 cột ZKBio).
+                  </div>
+                </div>
+              </label>
+            </div>
+
+            {/* BỘ CHỌN 2 CỘT NẾU CHỌN TÙY CHỌN BÁC SĨ */}
+            {targetMode === 'SELECTED_DOCTORS' && (
+              <HierarchicalDoctorSelector
+                selectedDoctors={selectedDoctors}
+                onChange={setSelectedDoctors}
+              />
+            )}
+          </div>
+
+          {/* Row 4: Dates & Status */}
+          <div className="form-row-grid">
             <div className="form-group">
               <label className="form-label">Trạng thái phát hành</label>
               <select
@@ -313,10 +364,7 @@ const CreatePolicyModal = ({ isOpen, onClose, existingPolicy = null, isNewVersio
                 <option value="DRAFT">Lưu bản thảo (DRAFT)</option>
               </select>
             </div>
-          </div>
 
-          {/* Row 4: Dates */}
-          <div className="form-row-grid">
             <div className="form-group">
               <label className="form-label">Bắt đầu có hiệu lực (Effective From) *</label>
               <input

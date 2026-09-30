@@ -229,6 +229,93 @@
     }
   }
 
+  /* Target Doctors Card & Grid */
+  .target-doctors-card {
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 10px;
+    padding: 12px;
+
+    .target-doctors-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 8px;
+      max-height: 220px;
+      overflow-y: auto;
+
+      &::-webkit-scrollbar {
+        width: 5px;
+      }
+      &::-webkit-scrollbar-thumb {
+        background: #CBD5E1;
+        border-radius: 3px;
+      }
+
+      .target-doctor-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 8px;
+        padding: 6px 10px;
+
+        .item-avatar {
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          overflow: hidden;
+          flex-shrink: 0;
+
+          img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+          }
+
+          .avatar-fallback {
+            width: 100%;
+            height: 100%;
+            background: #E0F2FE;
+            color: #0284C7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+        }
+
+        .item-details {
+          flex: 1;
+          min-width: 0;
+
+          .item-name {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #0F172A;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+
+          .item-sub {
+            font-size: 0.68rem;
+            color: #64748B;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            gap: 3px;
+
+            .clinic-badge {
+              color: #087F8C;
+              font-weight: 600;
+            }
+          }
+        }
+      }
+    }
+  }
+
   /* 2. Scope Entity Card */
   .scope-entity-card {
     display: flex;

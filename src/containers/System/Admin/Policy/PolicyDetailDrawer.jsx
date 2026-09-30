@@ -19,6 +19,7 @@ import {
   History,
   RotateCw,
   ExternalLink,
+  Users,
 } from 'lucide-react';
 import { getAdminPolicyDetail } from '../../../../services/policyService';
 import CommonUtils from '../../../../utils/CommonUtils';
@@ -167,18 +168,57 @@ const PolicyDetailDrawer = ({ isOpen, onClose, policyId, onUpgradeVersion }) => 
                 </div>
               </div>
 
-              {/* 2. Scope Entity Card */}
+              {/* 2. Target Audience / Scope Entity Card */}
               <div className="section-block">
                 <div className="section-header">
                   <div className="section-title">
-                    {policyData.scopeType === 'DOCTOR' && <User size={16} style={{ color: '#059669' }} />}
-                    {policyData.scopeType === 'CLINIC' && <Building size={16} style={{ color: '#2563EB' }} />}
-                    {policyData.scopeType === 'GLOBAL' && <Globe size={16} style={{ color: '#0D9488' }} />}
-                    <span>Đối tượng Áp dụng (Phạm vi {policyData.scopeType})</span>
+                    {policyData.targetDoctors && policyData.targetDoctors.length > 0 ? (
+                      <Users size={16} style={{ color: '#087F8C' }} />
+                    ) : policyData.scopeType === 'DOCTOR' ? (
+                      <User size={16} style={{ color: '#059669' }} />
+                    ) : policyData.scopeType === 'CLINIC' ? (
+                      <Building size={16} style={{ color: '#2563EB' }} />
+                    ) : (
+                      <Globe size={16} style={{ color: '#0D9488' }} />
+                    )}
+                    <span>
+                      Đối tượng Áp dụng
+                      {policyData.targetDoctors && policyData.targetDoctors.length > 0
+                        ? ` (${policyData.targetDoctors.length} Bác sĩ được chỉ định)`
+                        : policyData.targetMode === 'ALL_DOCTORS' || policyData.scopeType === 'GLOBAL'
+                        ? ' (Toàn bộ Bác sĩ - Toàn sàn)'
+                        : ` (Phạm vi ${policyData.scopeType})`}
+                    </span>
                   </div>
                 </div>
 
-                {scopeEntity?.type === 'DOCTOR' ? (
+                {policyData.targetDoctors && policyData.targetDoctors.length > 0 ? (
+                  <div className="target-doctors-card">
+                    <div className="target-doctors-grid">
+                      {policyData.targetDoctors.map((doc) => (
+                        <div key={doc.id} className="target-doctor-item">
+                          <div className="item-avatar">
+                            {doc.image ? (
+                              <img src={CommonUtils.decodeBase64Image(doc.image)} alt={doc.doctorName} />
+                            ) : (
+                              <div className="avatar-fallback"><User size={12} /></div>
+                            )}
+                          </div>
+                          <div className="item-details">
+                            <div className="item-name">
+                              {doc.positionVi ? `${doc.positionVi} ` : 'BS. '}{doc.doctorName}
+                            </div>
+                            <div className="item-sub">
+                              <span className="clinic-badge">{doc.clinicName}</span>
+                              <span className="spec-badge">• {doc.specialtyName}</span>
+                              {doc.roomNumber && <span className="room-badge">• {doc.roomNumber}</span>}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : scopeEntity?.type === 'DOCTOR' ? (
                   <div className="scope-entity-card">
                     {scopeEntity.image ? (
                       <img
@@ -221,9 +261,9 @@ const PolicyDetailDrawer = ({ isOpen, onClose, policyId, onUpgradeVersion }) => 
                   <div className="scope-entity-card global">
                     <Globe size={28} style={{ color: '#0D9488', flexShrink: 0 }} />
                     <div className="entity-info">
-                      <div className="entity-name">Chính sách Tiêu chuẩn Toàn hệ thống (Global)</div>
+                      <div className="entity-name">Chính sách Tiêu chuẩn Toàn hệ thống (Toàn sàn)</div>
                       <div className="entity-meta">
-                        Áp dụng mặc định cho tất cả các Cơ sở Y tế và Bác sĩ trên toàn sàn BookingCare.
+                        Áp dụng tự động cho tất cả các Bác sĩ đang hoạt động và bác sĩ mới gia nhập trong thời hạn chính sách.
                       </div>
                     </div>
                   </div>
