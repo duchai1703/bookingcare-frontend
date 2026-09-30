@@ -23,6 +23,7 @@ import {
   addPatientBankAccount,
   setPrimaryBankAccount,
 } from '../../services/patientService';
+import { getMyWallet } from '../../services/walletService';
 import { getSystemSettings } from '../../services/catalogService';
 import './BookingModal.scss';
 
@@ -90,6 +91,14 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price, select
   });
   const [isSavingBank, setIsSavingBank] = useState(false);
 
+  // Ví BookingCare & Phương thức thanh toán
+  const [walletInfo, setWalletInfo] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState('WALLET'); // 'WALLET' | 'VNPAY'
+
+  // Tính giá khám dạng số
+  const rawPriceStr = selectedPractice?.priceTypeData?.valueVi || String(price || '0');
+  const numericPrice = parseInt(rawPriceStr.replace(/[^0-9]/g, ''), 10) || 0;
+
   // Refund policy & UI submission state
   const [refundPolicy, setRefundPolicy] = useState({ before24h: '100', after24h: '50', thresholdHours: '24' });
   const [uiState, setUiState] = useState('idle');
@@ -149,6 +158,18 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price, select
           address: userInfo.address || '',
           email: userInfo.email || '',
         });
+      }
+
+      // Tải thông tin ví nếu đã đăng nhập
+      if (userInfo) {
+        try {
+          const wRes = await getMyWallet();
+          if (wRes && wRes.errCode === 0) {
+            setWalletInfo(wRes.data);
+          }
+        } catch (wErr) {
+          console.error('loadWallet error:', wErr);
+        }
       }
     } catch (e) {
       console.error('loadPatientDetails error:', e);
@@ -313,6 +334,20 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price, select
       return;
     }
 
+    // Kiểm tra số dư ví nếu chọn thanh toán bằng Ví BookingCare
+    if (paymentMethod === 'WALLET') {
+      if (!walletInfo) {
+        toast.error('Không tìm thấy thông tin Ví BookingCare. Vui lòng kiểm tra lại tài khoản!');
+        return;
+      }
+      if ((walletInfo.availableBalance || 0) < numericPrice) {
+        toast.error(
+          `Số dư Ví BookingCare không đủ để thanh toán (Hiện có: ${(walletInfo.availableBalance || 0).toLocaleString('vi-VN')} ₫, Cần: ${numericPrice.toLocaleString('vi-VN')} ₫). Vui lòng nạp thêm tiền hoặc chọn hình thức khác!`
+        );
+        return;
+      }
+    }
+
     if (uiState === 'loading') return;
     setUiState('loading');
 
@@ -332,18 +367,28 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price, select
         // Multi-Facility Context
         clinicId: selectedPractice?.clinicId || null,
         doctorAssignmentId: selectedPractice?.id || null,
+        // Phương thức thanh toán
+        paymentMethod: paymentMethod, // 'WALLET' | 'VNPAY'
         // Snapshot thông tin tài khoản hoàn tiền
         bankAccountNumber: selectedBank ? selectedBank.accountNumber : '',
-        bankAccountName: selectedBank ? selectedBank.accountHolder : '',
+        bankAccountName: selectedBank ? (selectedBank.accountHolder || selectedBank.accountHolderName) : '',
         bankName: selectedBank ? selectedBank.bankName : '',
       });
 
       if (response && response.errCode === 0) {
-        toast.success(
-          language === LANGUAGES.VI
-            ? 'Đặt lịch thành công! Vui lòng kiểm tra email để xác nhận và thanh toán.'
-            : 'Booking successful! Please check your email to confirm and pay.'
-        );
+        if (paymentMethod === 'WALLET') {
+          toast.success(
+            language === LANGUAGES.VI
+              ? 'Đặt lịch và thanh toán bằng Ví BookingCare thành công! Lịch hẹn đã được xác nhận trực tiếp.'
+              : 'Booking and payment via BookingCare Wallet successful! Appointment confirmed.'
+          );
+        } else {
+          toast.success(
+            language === LANGUAGES.VI
+              ? 'Đặt lịch thành công! Vui lòng kiểm tra email để xác nhận và thanh toán.'
+              : 'Booking successful! Please check your email to confirm and pay.'
+          );
+        }
         handleCloseModal();
       } else {
         toast.error(response?.message || response?.errMessage || 'Lỗi đặt lịch khám!');
@@ -539,57 +584,144 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price, select
               </div>
             </div>
 
-            {/* 3. THÔNG TIN HOÀN TIỀN */}
+            {/* 3. PHƯƠNG THỨC THANH TOÁN */}
             <div className="bm__section">
               <div className="bm__section-header tw-flex tw-justify-between tw-items-center">
                 <div className="tw-flex tw-items-center tw-gap-2">
                   <span className="bm__section-badge">3</span>
-                  <h3 className="bm__section-title">Tài khoản nhận hoàn tiền</h3>
+                  <h3 className="bm__section-title">Phương thức thanh toán</h3>
                 </div>
-                {bankAccounts.length > 1 && (
-                  <button
-                    type="button"
-                    className="bm__switch-bank-btn"
-                    onClick={() => setShowBankSelectModal(true)}
-                  >
-                    <i className="fas fa-exchange-alt" /> Đổi tài khoản
-                  </button>
-                )}
               </div>
-              <p className="bm__section-desc">Số tiền hoàn (nếu có lịch hủy hợp lệ) sẽ được chuyển về tài khoản này.</p>
+              <p className="bm__section-desc">Chọn phương thức thanh toán an toàn và tiện lợi nhất cho bạn.</p>
 
-              {selectedBank ? (
-                <div className="bm__bank-card">
-                  <div className="bm__bank-card-icon">
-                    <i className="fas fa-university" />
+              {/* Bộ chọn phương thức thanh toán */}
+              <div className="bm__payment-methods">
+                {/* 1. VÍ ĐIỆN TỬ BOOKINGCARE */}
+                <div
+                  className={`bm__payment-option ${paymentMethod === 'WALLET' ? 'bm__payment-option--selected' : ''}`}
+                  onClick={() => setPaymentMethod('WALLET')}
+                >
+                  <input
+                    type="radio"
+                    className="payment-radio"
+                    checked={paymentMethod === 'WALLET'}
+                    onChange={() => setPaymentMethod('WALLET')}
+                  />
+                  <div className="payment-icon-wrap payment-icon-wrap--wallet">
+                    <i className="fas fa-wallet" />
                   </div>
-                  <div className="bm__bank-card-details">
-                    <div className="tw-flex tw-items-center tw-gap-2">
-                      <span className="bm__bank-card-name">{selectedBank.bankName}</span>
-                      {selectedBank.isPrimary && <span className="bm__bank-card-primary">Chính</span>}
+                  <div className="payment-content">
+                    <div className="payment-title-row">
+                      <span className="payment-title">Ví BookingCare</span>
+                      <span className="recommended-pill">Khuyên dùng · Xác nhận tức thì</span>
                     </div>
-                    <span className="bm__bank-card-number">{selectedBank.accountNumber}</span>
-                    <span className="bm__bank-card-holder">Chủ TK: {selectedBank.accountHolder || selectedBank.accountHolderName}</span>
+                    <p className="payment-desc">
+                      Xác nhận lịch khám ngay lập tức không cần chờ duyệt. Hoàn tiền tự động 100% về ví trong tích tắc nếu hủy lịch hợp lệ.
+                    </p>
+                    <div className="payment-balance-badge">
+                      {walletInfo ? (
+                        walletInfo.availableBalance >= numericPrice ? (
+                          <span className="tw-inline-flex tw-items-center tw-gap-1.5 tw-px-2.5 tw-py-1 tw-rounded-md tw-text-xs tw-font-semibold tw-bg-emerald-50 tw-text-emerald-700 tw-border tw-border-emerald-200">
+                            <i className="fas fa-check-circle" /> Số dư khả dụng: {walletInfo.availableBalance.toLocaleString('vi-VN')} ₫ (Đủ thanh toán)
+                          </span>
+                        ) : (
+                          <div className="tw-flex tw-items-center tw-gap-2 tw-flex-wrap">
+                            <span className="tw-inline-flex tw-items-center tw-gap-1.5 tw-px-2.5 tw-py-1 tw-rounded-md tw-text-xs tw-font-semibold tw-bg-amber-50 tw-text-amber-700 tw-border tw-border-amber-200">
+                              <i className="fas fa-exclamation-triangle" /> Số dư khả dụng: {walletInfo.availableBalance.toLocaleString('vi-VN')} ₫ (Thiếu {(numericPrice - walletInfo.availableBalance).toLocaleString('vi-VN')} ₫)
+                            </span>
+                            <a
+                              href="/patient/wallet"
+                              target="_blank"
+                              rel="noreferrer"
+                              className="tw-text-xs tw-font-bold tw-text-teal-700 hover:tw-underline tw-inline-flex tw-items-center tw-gap-1"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <i className="fas fa-plus-circle" /> Nạp tiền vào ví
+                            </a>
+                          </div>
+                        )
+                      ) : (
+                        <span className="tw-text-xs tw-text-slate-400">Đang kiểm tra số dư ví...</span>
+                      )}
+                    </div>
                   </div>
-                  <button
-                    type="button"
-                    className="bm__bank-card-edit"
-                    onClick={() => setShowBankSelectModal(true)}
-                    title="Thay đổi tài khoản"
-                  >
-                    <i className="fas fa-pencil-alt" />
-                  </button>
                 </div>
-              ) : (
-                <div className="bm__bank-empty">
-                  <span>Chưa có tài khoản hoàn tiền trong hồ sơ.</span>
-                  <button
-                    type="button"
-                    className="bm__bank-add-btn"
-                    onClick={handleOpenAddBank}
-                  >
-                    <i className="fas fa-plus" /> Thêm tài khoản ngân hàng
-                  </button>
+
+                {/* 2. CỔNG THANH TOÁN VNPAY */}
+                <div
+                  className={`bm__payment-option ${paymentMethod === 'VNPAY' ? 'bm__payment-option--selected' : ''}`}
+                  onClick={() => setPaymentMethod('VNPAY')}
+                >
+                  <input
+                    type="radio"
+                    className="payment-radio"
+                    checked={paymentMethod === 'VNPAY'}
+                    onChange={() => setPaymentMethod('VNPAY')}
+                  />
+                  <div className="payment-icon-wrap payment-icon-wrap--vnpay">
+                    <i className="fas fa-credit-card" />
+                  </div>
+                  <div className="payment-content">
+                    <div className="payment-title-row">
+                      <span className="payment-title">Cổng thanh toán VNPay / Thẻ ngân hàng</span>
+                    </div>
+                    <p className="payment-desc">
+                      Nhận email hướng dẫn thanh toán. Nếu hủy lịch, tiền hoàn sẽ được chuyển khoản thủ công về tài khoản ngân hàng sau khi đối soát.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Nếu chọn VNPAY: Hiển thị mục cấu hình tài khoản ngân hàng nhận tiền hoàn thủ công */}
+              {paymentMethod === 'VNPAY' && (
+                <div className="tw-mt-3 tw-pt-3 tw-border-t tw-border-slate-200">
+                  <div className="tw-flex tw-justify-between tw-items-center tw-mb-2">
+                    <span className="tw-text-xs tw-font-bold tw-text-slate-700">Tài khoản nhận hoàn tiền (VNPay):</span>
+                    {bankAccounts.length > 1 && (
+                      <button
+                        type="button"
+                        className="bm__switch-bank-btn"
+                        onClick={() => setShowBankSelectModal(true)}
+                      >
+                        <i className="fas fa-exchange-alt" /> Đổi tài khoản
+                      </button>
+                    )}
+                  </div>
+
+                  {selectedBank ? (
+                    <div className="bm__bank-card">
+                      <div className="bm__bank-card-icon">
+                        <i className="fas fa-university" />
+                      </div>
+                      <div className="bm__bank-card-details">
+                        <div className="tw-flex tw-items-center tw-gap-2">
+                          <span className="bm__bank-card-name">{selectedBank.bankName}</span>
+                          {selectedBank.isPrimary && <span className="bm__bank-card-primary">Chính</span>}
+                        </div>
+                        <span className="bm__bank-card-number">{selectedBank.accountNumber}</span>
+                        <span className="bm__bank-card-holder">Chủ TK: {selectedBank.accountHolder || selectedBank.accountHolderName}</span>
+                      </div>
+                      <button
+                        type="button"
+                        className="bm__bank-card-edit"
+                        onClick={() => setShowBankSelectModal(true)}
+                        title="Thay đổi tài khoản"
+                      >
+                        <i className="fas fa-pencil-alt" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="bm__bank-empty">
+                      <span>Chưa có tài khoản hoàn tiền trong hồ sơ.</span>
+                      <button
+                        type="button"
+                        className="bm__bank-add-btn"
+                        onClick={handleOpenAddBank}
+                      >
+                        <i className="fas fa-plus" /> Thêm tài khoản ngân hàng
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

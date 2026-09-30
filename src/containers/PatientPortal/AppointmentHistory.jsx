@@ -414,18 +414,33 @@ const AppointmentHistory = () => {
   };
 
   // Render Payment Badge
-  const renderPaymentBadge = (paymentStatus) => {
+  const renderPaymentBadge = (paymentStatus, booking = null) => {
+    const isWallet = booking?.paymentMethod === 'WALLET' || booking?.refundMethod === 'WALLET';
     if (!paymentStatus || paymentStatus === 'unpaid') {
       return <span className="payment-tag payment-tag--unpaid">Chưa thanh toán</span>;
     }
     if (paymentStatus === 'paid') {
+      if (isWallet) {
+        return (
+          <span className="payment-tag payment-tag--wallet">
+            <i className="fas fa-wallet me-1" /> Ví BookingCare
+          </span>
+        );
+      }
       return <span className="payment-tag payment-tag--paid">Đã thanh toán (VNPay)</span>;
     }
     if (paymentStatus === 'refund_pending') {
-      return <span className="payment-tag payment-tag--refund-pending">Chờ hoàn tiền</span>;
+      return <span className="payment-tag payment-tag--refund-pending">Chờ hoàn tiền (TKNH)</span>;
     }
     if (paymentStatus === 'refunded') {
-      return <span className="payment-tag payment-tag--refunded">Đã hoàn tiền</span>;
+      if (isWallet) {
+        return (
+          <span className="payment-tag payment-tag--refunded-wallet">
+            <i className="fas fa-undo-alt me-1" /> Đã hoàn vào Ví
+          </span>
+        );
+      }
+      return <span className="payment-tag payment-tag--refunded">Đã hoàn tiền (TKNH)</span>;
     }
     return <span className="payment-tag">{paymentStatus}</span>;
   };
@@ -511,7 +526,7 @@ const AppointmentHistory = () => {
                 <div className="card-top-bar">
                   <div className="badge-group">
                     {renderStatusBadge(b.statusId)}
-                    {b.paymentStatus && renderPaymentBadge(b.paymentStatus)}
+                    {b.paymentStatus && renderPaymentBadge(b.paymentStatus, b)}
                   </div>
                   <span className="booking-code">#BK-{b.id}</span>
                 </div>
@@ -779,7 +794,7 @@ const AppointmentHistory = () => {
                 </div>
                 <div className="strip-item">
                   <span className="strip-label">Thanh toán:</span>
-                  {renderPaymentBadge(detailBooking.paymentStatus)}
+                  {renderPaymentBadge(detailBooking.paymentStatus, detailBooking)}
                 </div>
               </div>
 
@@ -852,7 +867,13 @@ const AppointmentHistory = () => {
                         <span className="field-label">Chính sách hoàn tiền:</span>
                         <span className="field-value text-emerald-600 font-semibold">
                           {detailBooking.refundRate
-                            ? `${detailBooking.refundRate}% · ${CommonUtils.formatCurrency(detailBooking.refundAmount)} ₫ (${detailBooking.refundStatus === 'done' ? 'Đã hoàn tiền' : 'Đang xử lý'})`
+                            ? `${detailBooking.refundRate}% · ${CommonUtils.formatCurrency(detailBooking.refundAmount)} ₫ (${
+                                detailBooking.refundMethod === 'WALLET' || detailBooking.paymentMethod === 'WALLET'
+                                  ? 'Đã hoàn vào Ví'
+                                  : detailBooking.refundStatus === 'completed' || detailBooking.refundStatus === 'done'
+                                  ? 'Đã hoàn vào TKNH'
+                                  : 'Đang xử lý hoàn tiền'
+                              })`
                             : 'Không áp dụng hoàn tiền'}
                         </span>
                       </div>
@@ -1145,10 +1166,19 @@ const AppointmentHistory = () => {
                     )}
                   </div>
 
-                  <div className="cancel-account-note">
-                    <i className="fas fa-info-circle text-teal" />
-                    <span>Tiền hoàn sẽ được đối soát và chuyển về tài khoản ngân hàng nhận hoàn tiền trong hồ sơ của bạn.</span>
-                  </div>
+                  {b?.paymentMethod === 'WALLET' ? (
+                    <div className="cancel-account-note cancel-account-note--wallet">
+                      <i className="fas fa-bolt text-teal" />
+                      <span>
+                        <strong>Hoàn tiền tự động tức thì:</strong> Lịch khám này thanh toán bằng Ví BookingCare. Tiền hoàn ({estimate.rate}%) sẽ được tự động cộng trực tiếp vào số dư Ví của bạn ngay sau khi xác nhận hủy (Zero-Admin).
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="cancel-account-note">
+                      <i className="fas fa-info-circle text-teal" />
+                      <span>Tiền hoàn sẽ được đối soát và chuyển về tài khoản ngân hàng nhận hoàn tiền trong hồ sơ của bạn.</span>
+                    </div>
+                  )}
                 </div>
               );
             })()}
