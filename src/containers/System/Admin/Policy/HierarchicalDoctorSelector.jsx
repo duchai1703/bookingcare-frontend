@@ -16,6 +16,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { getAdminDoctorHierarchyTree } from '../../../../services/policyService';
+import CommonUtils from '../../../../utils/CommonUtils';
 import './HierarchicalDoctorSelector.scss';
 
 // Tri-state checkbox helper component
@@ -404,7 +405,21 @@ const HierarchicalDoctorSelector = ({ selectedDoctors = [], onChange }) => {
 
                                         <div className="doctor-avatar-wrap">
                                           {doc.image ? (
-                                            <img src={doc.image} alt={doc.fullName} className="doc-avatar-img" />
+                                            <>
+                                              <img
+                                                src={CommonUtils.decodeBase64Image(doc.image)}
+                                                alt={doc.fullName}
+                                                className="doc-avatar-img"
+                                                onError={(e) => {
+                                                  e.target.style.display = 'none';
+                                                  const fb = e.target.parentElement.querySelector('.doc-avatar-placeholder');
+                                                  if (fb) fb.style.display = 'flex';
+                                                }}
+                                              />
+                                              <div className="doc-avatar-placeholder" style={{ display: 'none' }}>
+                                                <User size={13} />
+                                              </div>
+                                            </>
                                           ) : (
                                             <div className="doc-avatar-placeholder">
                                               <User size={13} />
@@ -482,7 +497,20 @@ const HierarchicalDoctorSelector = ({ selectedDoctors = [], onChange }) => {
                   <div key={docKey} className="selected-doctor-card">
                     <div className="card-avatar">
                       {doc.image ? (
-                        <img src={doc.image} alt={doc.fullName} />
+                        <>
+                          <img
+                            src={CommonUtils.decodeBase64Image(doc.image)}
+                            alt={doc.fullName}
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              const fb = e.target.parentElement.querySelector('.avatar-fallback');
+                              if (fb) fb.style.display = 'flex';
+                            }}
+                          />
+                          <div className="avatar-fallback" style={{ display: 'none' }}>
+                            <User size={14} />
+                          </div>
+                        </>
                       ) : (
                         <div className="avatar-fallback">
                           <User size={14} />
