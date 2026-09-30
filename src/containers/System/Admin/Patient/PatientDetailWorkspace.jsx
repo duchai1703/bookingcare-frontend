@@ -459,7 +459,7 @@ const PatientDetailWorkspace = () => {
                       </td>
                       <td style={{ padding: '12px' }}>
                         {a.statusId === 'S4' ? (
-                          a.refundStatus === 'refunded' ? (
+                          (a.refundStatus === 'refunded' || a.refundStatus === 'done' || a.paymentStatus === 'refunded') ? (
                             <span style={{ color: '#059669', fontWeight: 700, fontSize: '0.78rem' }}>
                               ✓ Đã hoàn {formatCurrencyVND(a.refundAmount)}
                             </span>
@@ -473,7 +473,7 @@ const PatientDetailWorkspace = () => {
                         )}
                       </td>
                       <td style={{ padding: '12px' }}>
-                        {a.statusId === 'S4' && a.refundStatus !== 'refunded' ? (
+                        {a.statusId === 'S4' && !(a.refundStatus === 'refunded' || a.refundStatus === 'done' || a.paymentStatus === 'refunded') ? (
                           <button
                             style={{
                               background: '#FEF3C7',
@@ -547,7 +547,12 @@ const PatientDetailWorkspace = () => {
             <div className="ws-card">
               <h2 className="ws-card-title">
                 <span>Đối Soát & Lịch Sử Hoàn Tiền Hủy Lịch</span>
-                <span style={{ fontSize: '0.8rem', color: '#E11D48' }}>{refundHistory.length} ca hoàn tiền</span>
+                <span style={{ fontSize: '0.8rem', color: '#64748B' }}>
+                  Tổng {refundHistory.length} ca (
+                  <strong style={{ color: '#E11D48' }}>
+                    {refundHistory.filter(r => !(r.refundStatus === 'refunded' || r.refundStatus === 'done' || r.paymentStatus === 'refunded')).length} chờ chuyển khoản
+                  </strong>, {refundHistory.filter(r => (r.refundStatus === 'refunded' || r.refundStatus === 'done' || r.paymentStatus === 'refunded')).length} đã hoàn)
+                </span>
               </h2>
 
               {refundHistory && refundHistory.length > 0 ? (
@@ -582,19 +587,24 @@ const PatientDetailWorkspace = () => {
                             <div style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: '#64748B' }}>{r.accountNumber}</div>
                           </td>
                           <td style={{ padding: '12px' }}>
-                            <span style={{
-                              padding: '3px 8px',
-                              borderRadius: 4,
-                              fontSize: '0.75rem',
-                              fontWeight: 700,
-                              background: r.refundStatus === 'refunded' ? '#D1FAE5' : '#FEF3C7',
-                              color: r.refundStatus === 'refunded' ? '#047857' : '#92400E',
-                            }}>
-                              {r.refundStatus === 'refunded' ? 'Đã hoàn tiền' : 'Chờ chuyển khoản'}
-                            </span>
+                            {(() => {
+                              const isRefunded = r.refundStatus === 'refunded' || r.refundStatus === 'done' || r.paymentStatus === 'refunded';
+                              return (
+                                <span style={{
+                                  padding: '3px 8px',
+                                  borderRadius: 4,
+                                  fontSize: '0.75rem',
+                                  fontWeight: 700,
+                                  background: isRefunded ? '#D1FAE5' : '#FEF3C7',
+                                  color: isRefunded ? '#047857' : '#92400E',
+                                }}>
+                                  {isRefunded ? 'Đã hoàn tiền' : 'Chờ chuyển khoản'}
+                                </span>
+                              );
+                            })()}
                           </td>
                           <td style={{ padding: '12px' }}>
-                            {r.refundStatus !== 'refunded' && (
+                            {!(r.refundStatus === 'refunded' || r.refundStatus === 'done' || r.paymentStatus === 'refunded') && (
                               <button
                                 style={{
                                   background: '#FEF3C7',
