@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import moment from 'moment';
 import { getPatientBookings, cancelBooking } from '../../services/patientService';
+import { getMyWallet } from '../../services/walletService';
 import { path, LANGUAGES } from '../../utils/constants';
 import CommonUtils from '../../utils/CommonUtils';
 import { toast } from 'react-toastify';
@@ -21,6 +22,7 @@ const PatientOverview = () => {
     done: 0,
     cancelled: 0,
   });
+  const [walletBalance, setWalletBalance] = useState(0);
   const [nearestBooking, setNearestBooking] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -34,10 +36,11 @@ const PatientOverview = () => {
   const fetchOverviewData = async () => {
     setIsLoading(true);
     try {
-      const [upcomingRes, doneRes, cancelledRes] = await Promise.all([
+      const [upcomingRes, doneRes, cancelledRes, walletRes] = await Promise.all([
         getPatientBookings({ status: 'S1,S2', page: 1, limit: 5 }),
         getPatientBookings({ status: 'S3', page: 1, limit: 1 }),
         getPatientBookings({ status: 'S4', page: 1, limit: 1 }),
+        getMyWallet().catch(() => null),
       ]);
 
       const upcomingCount = upcomingRes?.pagination?.totalItems ?? (upcomingRes?.data?.length || 0);
@@ -49,6 +52,10 @@ const PatientOverview = () => {
         done: doneCount,
         cancelled: cancelledCount,
       });
+
+      if (walletRes && walletRes.errCode === 0 && walletRes.data) {
+        setWalletBalance(walletRes.data.availableBalance || 0);
+      }
 
       const upcomingList = upcomingRes?.data || [];
       if (upcomingList.length > 0) {
@@ -172,6 +179,17 @@ const PatientOverview = () => {
           <div className="stat-details">
             <span className="stat-count">{isLoading ? '...' : stats.cancelled}</span>
             <span className="stat-label">Lịch khám đã hủy</span>
+          </div>
+          <span className="stat-arrow">→</span>
+        </Link>
+
+        <Link to="/patient/wallet" className="po-stat-card po-stat-card--wallet">
+          <div className="stat-icon-wrap">
+            <i className="fas fa-wallet" />
+          </div>
+          <div className="stat-details">
+            <span className="stat-count">{isLoading ? '...' : (walletBalance ? Number(walletBalance).toLocaleString('vi-VN') + ' đ' : '0 đ')}</span>
+            <span className="stat-label">Ví BookingCare (Nạp/Xem)</span>
           </div>
           <span className="stat-arrow">→</span>
         </Link>

@@ -99,10 +99,14 @@ $card-bg: #ffffff;
   // ===== STATS GRID =====
   .po-stats-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 18px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
 
-    @media (max-width: 768px) {
+    @media (max-width: 1024px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: 576px) {
       grid-template-columns: 1fr;
     }
 
@@ -189,6 +193,19 @@ $card-bg: #ffffff;
         .stat-icon-wrap {
           background: #f1f5f9;
           color: #64748b;
+        }
+      }
+
+      // Variant: Wallet
+      &--wallet {
+        border-left: 4px solid #0d9488;
+        .stat-icon-wrap {
+          background: #f0fdfa;
+          color: #0d9488;
+        }
+        .stat-count {
+          color: #0f766e;
+          font-size: 1.25rem;
         }
       }
     }

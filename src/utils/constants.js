@@ -49,6 +49,7 @@ export const path = {
   PATIENT_PORTAL_OVERVIEW: '/patient/overview',
   PATIENT_PORTAL_HISTORY: '/patient/history',
   PATIENT_PORTAL_PROFILE: '/patient/profile',
+  PATIENT_PORTAL_WALLET: '/patient/wallet',
 
   // Admin (R1)
   SYSTEM: '/system',
