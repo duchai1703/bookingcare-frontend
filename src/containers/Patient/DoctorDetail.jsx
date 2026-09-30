@@ -9,7 +9,7 @@ import { useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { FormattedMessage } from "react-intl";
 import DOMPurify from "dompurify";
-import { getDoctorDetail } from "../../services/doctorService";
+import { getDoctorDetail, getDoctorPractices } from "../../services/doctorService";
 import { LANGUAGES } from "../../utils/constants";
 import CommonUtils from "../../utils/CommonUtils";
 import DoctorSchedule from "./DoctorSchedule";
@@ -26,24 +26,57 @@ const DoctorDetail = () => {
   // ✅ [DEEP-SCAN FIX-2] Khởi tạo isLoading = true để hiển thị Skeleton
   const [isLoading, setIsLoading] = useState(true);
   const [doctorInfo, setDoctorInfo] = useState(null);
+  const [practices, setPractices] = useState([]);
+  const [selectedPractice, setSelectedPractice] = useState(null);
 
-  // Gọi API getDoctorDetail khi mount hoặc khi id thay đổi
+  // Gọi API getDoctorDetail và getDoctorPractices khi mount hoặc khi id thay đổi
   useEffect(() => {
-    const fetchDoctorDetail = async () => {
+    const fetchDoctorData = async () => {
       setIsLoading(true);
       try {
-        const res = await getDoctorDetail(id);
-        if (res && res.errCode === 0) {
-          setDoctorInfo(res.data);
+        const [resDetail, resPractices] = await Promise.all([
+          getDoctorDetail(id),
+          getDoctorPractices(id).catch(() => null),
+        ]);
+
+        if (resDetail && resDetail.errCode === 0) {
+          setDoctorInfo(resDetail.data);
+
+          let activePractices = [];
+          if (resPractices && resPractices.errCode === 0 && Array.isArray(resPractices.data) && resPractices.data.length > 0) {
+            activePractices = resPractices.data;
+          } else if (resDetail.data?.Doctor_Info) {
+            // Fallback an toàn nếu chưa có bản ghi Doctor_Assignment
+            const docInfo = resDetail.data.Doctor_Info;
+            activePractices = [
+              {
+                id: null,
+                doctorId: Number(id),
+                clinicId: docInfo.clinicId,
+                specialtyId: docInfo.specialtyId,
+                roomNumber: '',
+                isPrimary: true,
+                workingStatus: 'active',
+                clinicData: docInfo.clinicData,
+                specialtyData: docInfo.specialtyData,
+                priceTypeData: docInfo.priceData,
+              },
+            ];
+          }
+
+          setPractices(activePractices);
+          const primary = activePractices.find((p) => p.isPrimary) || activePractices[0] || null;
+          setSelectedPractice(primary);
         }
       } catch (err) {
+        console.error('Error fetching doctor detail or practices:', err);
       } finally {
         setIsLoading(false);
       }
     };
 
     if (id) {
-      fetchDoctorDetail();
+      fetchDoctorData();
     }
   }, [id]);
 
@@ -188,17 +221,97 @@ const DoctorDetail = () => {
               </div>
             </div>
           </div>
+          {/* ====== PHẦN 1.5: FACILITY SELECTOR — Chọn Cơ sở khám bệnh (Multi-Facility Doctor) ====== */}
+          {practices && practices.length > 0 && (
+            <div className="doctor-detail__facility-section">
+              <div className="doctor-detail__facility-container">
+                <div className="doctor-detail__facility-header">
+                  <div className="doctor-detail__facility-title">
+                    <i className="fas fa-hospital-alt"></i>
+                    <span>
+                      {language === LANGUAGES.VI ? 'Chọn Cơ sở khám bệnh' : 'Select Examination Facility'}
+                    </span>
+                  </div>
+                  <span className="doctor-detail__facility-count">
+                    {practices.length} {language === LANGUAGES.VI ? 'địa điểm tiếp nhận' : 'available locations'}
+                  </span>
+                </div>
+
+                <div className="doctor-detail__facility-grid">
+                  {practices.map((practice, index) => {
+                    const isSelected = selectedPractice?.id
+                      ? selectedPractice.id === practice.id
+                      : selectedPractice?.clinicId === practice.clinicId;
+
+                    return (
+                      <div
+                        key={practice.id || practice.clinicId || index}
+                        className={`doctor-detail__facility-card ${isSelected ? 'is-selected' : ''}`}
+                        onClick={() => setSelectedPractice(practice)}
+                      >
+                        <div className="facility-card__top">
+                          <div className="facility-card__badge-row">
+                            {practice.isPrimary ? (
+                              <span className="facility-badge facility-badge--primary">
+                                <i className="fas fa-star"></i> {language === LANGUAGES.VI ? 'Cơ sở chính' : 'Primary Clinic'}
+                              </span>
+                            ) : (
+                              <span className="facility-badge facility-badge--secondary">
+                                <i className="fas fa-building"></i> {language === LANGUAGES.VI ? 'Cơ sở liên kết' : 'Affiliated Clinic'}
+                              </span>
+                            )}
+                            {isSelected && (
+                              <span className="facility-badge facility-badge--active">
+                                <i className="fas fa-check-circle"></i> {language === LANGUAGES.VI ? 'Đang chọn' : 'Selected'}
+                              </span>
+                            )}
+                          </div>
+                          <h4 className="facility-card__name">
+                            {practice.clinicData?.name || `Cơ sở y tế #${practice.clinicId}`}
+                          </h4>
+                          <p className="facility-card__address">
+                            <i className="fas fa-map-marker-alt"></i> {practice.clinicData?.address || 'Đang cập nhật địa chỉ'}
+                          </p>
+                        </div>
+
+                        <div className="facility-card__bottom">
+                          {practice.roomNumber && (
+                            <div className="facility-card__meta">
+                              <span className="meta-label">{language === LANGUAGES.VI ? 'Phòng khám:' : 'Room:'}</span>
+                              <strong className="meta-value">{practice.roomNumber}</strong>
+                            </div>
+                          )}
+                          <div className="facility-card__meta">
+                            <span className="meta-label">{language === LANGUAGES.VI ? 'Giá khám:' : 'Fee:'}</span>
+                            <strong className="meta-price">
+                              {language === LANGUAGES.VI
+                                ? practice.priceTypeData?.valueVi || 'Chưa cập nhật'
+                                : practice.priceTypeData?.valueEn || 'Updating'}
+                            </strong>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ====== PHẦN 2: BODY — Lịch khám + Thông tin phòng khám ====== */}
           <div className="doctor-detail__schedule-section">
             <div className="doctor-detail__schedule-container">
               {/* Cột trái — Lịch khám */}
               <div className="doctor-detail__schedule-left">
-                <DoctorSchedule doctorId={id} />
+                <DoctorSchedule doctorId={id} selectedPractice={selectedPractice} />
               </div>
 
               {/* Cột phải — Giá khám, phòng khám */}
               <div className="doctor-detail__schedule-right">
-                <DoctorExtraInfo extraInfo={doctorInfo?.Doctor_Info} />
+                <DoctorExtraInfo
+                  extraInfo={doctorInfo?.Doctor_Info}
+                  selectedPractice={selectedPractice}
+                />
               </div>
             </div>
           </div>

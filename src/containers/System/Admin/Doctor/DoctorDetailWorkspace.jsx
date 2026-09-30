@@ -30,6 +30,8 @@ import {
   PlayCircle,
   User,
   Hospital,
+  Edit3,
+  Trash2,
 } from 'lucide-react';
 import {
   getAdminDoctorWorkspace,
@@ -43,6 +45,7 @@ import CommonUtils from '../../../../utils/CommonUtils';
 import CommissionModal from './CommissionModal';
 import DoctorPayoutModal from './DoctorPayoutModal';
 import DoctorFinancialTermsModal from './DoctorFinancialTermsModal';
+import DoctorAffiliationModal from './DoctorAffiliationModal';
 import './DoctorWorkspace.scss';
 
 const TIME_FRAMES = [
@@ -80,6 +83,8 @@ const DoctorDetailWorkspace = () => {
   const [isPayoutModalOpen, setIsPayoutModalOpen] = useState(false);
   const [isFinancialTermsModalOpen, setIsFinancialTermsModalOpen] = useState(false);
   const [isFinancialHistoryModalOpen, setIsFinancialHistoryModalOpen] = useState(false);
+  const [isAffiliationModalOpen, setIsAffiliationModalOpen] = useState(false);
+  const [selectedAffiliationForEdit, setSelectedAffiliationForEdit] = useState(null);
 
   // Slot Detail Modal (Khi admin bấm vào slot có ca khám)
   const [selectedSlotForDetail, setSelectedSlotForDetail] = useState(null);
@@ -172,6 +177,24 @@ const DoctorDetailWorkspace = () => {
       }
     } catch (err) {
       alert('Lỗi: ' + err.message);
+    }
+  };
+
+  // Hủy / Rút phân bổ bác sĩ khỏi cơ sở y tế
+  const handleUnassignAffiliation = async (assignmentId, clinicName) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn rút bác sĩ khỏi cơ sở y tế "${clinicName}" không?`)) {
+      return;
+    }
+    try {
+      const res = await clinicHierarchyService.unassignDoctorFromClinicSpecialty(assignmentId);
+      if (res && res.errCode === 0) {
+        alert('Rút bác sĩ khỏi cơ sở y tế thành công!');
+        fetchWorkspace();
+      } else {
+        alert(res?.message || 'Không thể rút phân bổ: Vui lòng kiểm tra lại các ca khám đang chờ thực hiện.');
+      }
+    } catch (err) {
+      alert('Lỗi kết nối: ' + (err?.response?.data?.message || err.message));
     }
   };
 
@@ -1213,15 +1236,43 @@ const DoctorDetailWorkspace = () => {
                   Cơ sở Y tế & Chuyên khoa Bác sĩ Đang Công tác
                 </h3>
               </div>
-              <span className="badge bg-secondary" style={{ background: '#087F8C', color: '#fff' }}>
-                {doctorAssignments.length} Cơ sở phân bổ
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span className="badge bg-secondary" style={{ background: '#087F8C', color: '#fff', padding: '6px 12px', borderRadius: 6 }}>
+                  {doctorAssignments.length} Cơ sở phân bổ
+                </span>
+                <button
+                  type="button"
+                  className="btn-ws-action primary"
+                  style={{ padding: '6px 14px', fontSize: '0.8rem' }}
+                  onClick={() => {
+                    setSelectedAffiliationForEdit(null);
+                    setIsAffiliationModalOpen(true);
+                  }}
+                >
+                  <Plus size={14} />
+                  <span>Phân bổ Cơ sở mới</span>
+                </button>
+              </div>
             </div>
 
             {doctorAssignments.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px 20px', color: '#94A3B8' }}>
-                <Hospital size={36} style={{ marginBottom: 10, opacity: 0.5 }} />
-                <div>Bác sĩ chưa được phân bổ vào cơ sở y tế nào</div>
+              <div style={{ textAlign: 'center', padding: '50px 20px', color: '#94A3B8' }}>
+                <Hospital size={44} style={{ marginBottom: 12, opacity: 0.4 }} />
+                <div style={{ fontSize: '0.96rem', fontWeight: 600, color: '#64748B', marginBottom: 12 }}>
+                  Bác sĩ chưa được phân bổ vào cơ sở y tế nào
+                </div>
+                <button
+                  type="button"
+                  className="btn-ws-action primary"
+                  style={{ margin: '0 auto', fontSize: '0.82rem' }}
+                  onClick={() => {
+                    setSelectedAffiliationForEdit(null);
+                    setIsAffiliationModalOpen(true);
+                  }}
+                >
+                  <Plus size={14} />
+                  <span>Phân bổ Cơ sở công tác đầu tiên</span>
+                </button>
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
@@ -1229,10 +1280,10 @@ const DoctorDetailWorkspace = () => {
                   <div
                     key={asg.id}
                     style={{
-                      border: '1px solid #E2E8F0',
+                      border: asg.isPrimary ? '1.5px solid #0D9488' : '1px solid #E2E8F0',
                       borderRadius: 10,
                       padding: 16,
-                      background: '#F8FAFC',
+                      background: asg.isPrimary ? '#F0FDFA' : '#F8FAFC',
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'space-between',
@@ -1247,15 +1298,29 @@ const DoctorDetailWorkspace = () => {
                           </h4>
                           <small style={{ color: '#64748B', fontSize: '0.76rem' }}>{asg.clinicAddress}</small>
                         </div>
-                        {asg.isPrimary ? (
-                          <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: 9999, background: '#ECFDF5', color: '#047857', fontWeight: 700 }}>
-                            ★ Cơ sở chính
+                        <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                          {asg.isPrimary ? (
+                            <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: 9999, background: '#ECFDF5', color: '#047857', fontWeight: 700 }}>
+                              ★ Cơ sở chính
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: 9999, background: '#F1F5F9', color: '#64748B' }}>
+                              Kiêm nhiệm
+                            </span>
+                          )}
+                          <span
+                            style={{
+                              fontSize: '0.68rem',
+                              padding: '2px 6px',
+                              borderRadius: 4,
+                              fontWeight: 600,
+                              background: asg.workingStatus === 'active' ? '#DCFCE7' : '#FEE2E2',
+                              color: asg.workingStatus === 'active' ? '#166534' : '#991B1B',
+                            }}
+                          >
+                            {asg.workingStatus === 'active' ? 'Hoạt động' : 'Tạm dừng'}
                           </span>
-                        ) : (
-                          <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: 9999, background: '#F1F5F9', color: '#64748B' }}>
-                            Kiêm nhiệm
-                          </span>
-                        )}
+                        </div>
                       </div>
 
                       <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 8, padding: 12, margin: '10px 0', fontSize: '0.78rem' }}>
@@ -1278,41 +1343,95 @@ const DoctorDetailWorkspace = () => {
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                      <Link
-                        to={`/system/clinics/${asg.clinicId}`}
-                        style={{
-                          flex: 1,
-                          textAlign: 'center',
-                          padding: '6px 10px',
-                          background: '#FFFFFF',
-                          border: '1px solid #CBD5E1',
-                          borderRadius: 6,
-                          fontSize: '0.78rem',
-                          color: '#334155',
-                          textDecoration: 'none',
-                          fontWeight: 600,
-                        }}
-                      >
-                        Vào Cơ sở
-                      </Link>
-                      <Link
-                        to={`/system/clinics/${asg.clinicId}/specialties/${asg.specialtyId}`}
-                        style={{
-                          flex: 1,
-                          textAlign: 'center',
-                          padding: '6px 10px',
-                          background: '#087F8C',
-                          border: '1px solid #087F8C',
-                          borderRadius: 6,
-                          fontSize: '0.78rem',
-                          color: '#FFFFFF',
-                          textDecoration: 'none',
-                          fontWeight: 600,
-                        }}
-                      >
-                        Vào Chuyên khoa
-                      </Link>
+                    <div>
+                      {/* Action Links */}
+                      <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                        <Link
+                          to={`/system/clinics/${asg.clinicId}`}
+                          style={{
+                            flex: 1,
+                            textAlign: 'center',
+                            padding: '5px 8px',
+                            background: '#FFFFFF',
+                            border: '1px solid #CBD5E1',
+                            borderRadius: 6,
+                            fontSize: '0.76rem',
+                            color: '#334155',
+                            textDecoration: 'none',
+                            fontWeight: 600,
+                          }}
+                        >
+                          Vào Cơ sở
+                        </Link>
+                        <Link
+                          to={`/system/clinics/${asg.clinicId}/specialties/${asg.specialtyId}`}
+                          style={{
+                            flex: 1,
+                            textAlign: 'center',
+                            padding: '5px 8px',
+                            background: '#087F8C',
+                            border: '1px solid #087F8C',
+                            borderRadius: 6,
+                            fontSize: '0.76rem',
+                            color: '#FFFFFF',
+                            textDecoration: 'none',
+                            fontWeight: 600,
+                          }}
+                        >
+                          Vào Chuyên khoa
+                        </Link>
+                      </div>
+
+                      {/* Management Buttons (Edit & Remove) */}
+                      <div style={{ display: 'flex', gap: 6, paddingTop: 6, borderTop: '1px solid #E2E8F0' }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedAffiliationForEdit(asg);
+                            setIsAffiliationModalOpen(true);
+                          }}
+                          style={{
+                            flex: 1,
+                            padding: '5px 8px',
+                            borderRadius: 6,
+                            border: '1px solid #CBD5E1',
+                            background: '#FFFFFF',
+                            color: '#0284C7',
+                            fontSize: '0.76rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 4,
+                          }}
+                        >
+                          <Edit3 size={13} />
+                          <span>Sửa phân bổ</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleUnassignAffiliation(asg.id, asg.clinicName)}
+                          style={{
+                            padding: '5px 10px',
+                            borderRadius: 6,
+                            border: '1px solid #FECDD3',
+                            background: '#FFF1F2',
+                            color: '#E11D48',
+                            fontSize: '0.76rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 4,
+                          }}
+                          title="Rút bác sĩ khỏi cơ sở này"
+                        >
+                          <Trash2 size={13} />
+                          <span>Rút</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1515,6 +1634,19 @@ const DoctorDetailWorkspace = () => {
           </div>
         </div>
       )}
+
+      {/* MODAL 6: Doctor Affiliation Modal (Multi-Facility Management) */}
+      <DoctorAffiliationModal
+        isOpen={isAffiliationModalOpen}
+        onClose={() => {
+          setIsAffiliationModalOpen(false);
+          setSelectedAffiliationForEdit(null);
+        }}
+        doctorId={id}
+        doctorName={profile?.doctorName}
+        editData={selectedAffiliationForEdit}
+        onSuccess={() => fetchWorkspace()}
+      />
     </div>
   );
 };

@@ -19,7 +19,8 @@ import {
   CheckCircle2,
   PauseCircle,
   XCircle,
-  Plus
+  Plus,
+  Hospital,
 } from 'lucide-react';
 import { getAdminDoctorsList, updateDoctorWorkingStatus } from '../../../../services/doctorManageService';
 import { getAllSpecialty } from '../../../../services/specialtyService';
@@ -491,6 +492,11 @@ const DoctorMaster = () => {
                             <Link to={`/system/doctors/${doc.id}?tab=schedule`} className="action-dropdown-item dropdown-item">
                               <Calendar size={13} style={{ color: '#3B82F6' }} />
                               <span>{language === 'vi' ? 'Quản lý lịch khám' : 'Manage Schedule'}</span>
+                            </Link>
+
+                            <Link to={`/system/doctors/${doc.id}?tab=affiliations`} className="action-dropdown-item dropdown-item">
+                              <Hospital size={13} style={{ color: '#087F8C' }} />
+                              <span>{language === 'vi' ? 'Cơ sở công tác' : 'Affiliations'}</span>
                             </Link>
 
                             <button

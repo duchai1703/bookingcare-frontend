@@ -105,6 +105,30 @@ const AppointmentQrModal = ({ isOpen, onClose, booking }) => {
               <span className="meta-k">Bác sĩ:</span>
               <span className="meta-v">{doctorName}</span>
             </div>
+            {(booking.clinicBookingData?.name || booking.clinicData?.name || booking.assignmentData?.clinicData?.name || booking.doctorAssignmentData?.clinicData?.name) && (
+              <div className="meta-row">
+                <span className="meta-k">Cơ sở khám:</span>
+                <strong className="meta-v" style={{ color: '#087f8c' }}>
+                  {booking.clinicBookingData?.name || booking.clinicData?.name || booking.assignmentData?.clinicData?.name || booking.doctorAssignmentData?.clinicData?.name}
+                </strong>
+              </div>
+            )}
+            {(booking.assignmentData?.roomNumber || booking.doctorAssignmentData?.roomNumber) && (
+              <div className="meta-row">
+                <span className="meta-k">Phòng khám:</span>
+                <span className="meta-v" style={{ fontWeight: 600 }}>
+                  {booking.assignmentData?.roomNumber || booking.doctorAssignmentData?.roomNumber}
+                </span>
+              </div>
+            )}
+            {(booking.clinicBookingData?.address || booking.clinicData?.address || booking.assignmentData?.clinicData?.address || booking.doctorAssignmentData?.clinicData?.address) && (
+              <div className="meta-row">
+                <span className="meta-k">Địa chỉ:</span>
+                <span className="meta-v" style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                  {booking.clinicBookingData?.address || booking.clinicData?.address || booking.assignmentData?.clinicData?.address || booking.doctorAssignmentData?.clinicData?.address}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Clinical Instruction */}

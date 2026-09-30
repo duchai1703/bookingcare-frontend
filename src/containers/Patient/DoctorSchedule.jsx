@@ -28,7 +28,7 @@ const TIME_SLOT_START = {
   T8: 16,
 };
 
-const DoctorSchedule = ({ doctorId }) => {
+const DoctorSchedule = ({ doctorId, selectedPractice }) => {
   const language = useSelector((state) => state.app.language);
   // [Phase 9.5] Lấy trạng thái đăng nhập từ Redux
   const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
@@ -91,14 +91,15 @@ const DoctorSchedule = ({ doctorId }) => {
     }
   }, [language]);
 
-  // Gọi API khi selectedDate hoặc doctorId thay đổi
+  // Gọi API khi selectedDate, doctorId hoặc selectedPractice thay đổi
   useEffect(() => {
     const fetchSchedule = async () => {
       if (!doctorId || !selectedDate) return;
 
       setIsLoadingSchedule(true);
       try {
-        const res = await getScheduleByDate(doctorId, selectedDate);
+        const clinicId = selectedPractice?.clinicId || null;
+        const res = await getScheduleByDate(doctorId, selectedDate, clinicId);
         if (res && res.errCode === 0) {
           setSchedules(res.data || []);
         } else {
@@ -112,7 +113,7 @@ const DoctorSchedule = ({ doctorId }) => {
     };
 
     fetchSchedule();
-  }, [doctorId, selectedDate]);
+  }, [doctorId, selectedDate, selectedPractice?.clinicId]);
 
   // ===== LỌC KHUNG GIỜ KHẢ DỤNG =====
   const getDisplaySlots = () => {
@@ -169,12 +170,20 @@ const DoctorSchedule = ({ doctorId }) => {
 
   return (
     <div className="doctor-schedule" id="doctor-schedule">
-      {/* ===== HEADER: Tiêu đề + Dropdown chọn ngày ===== */}
+      {/* ===== HEADER: Tiêu đề + Cơ sở đang chọn + Dropdown chọn ngày ===== */}
       <div className="doctor-schedule__header">
-        <span className="doctor-schedule__title">
-          <i className="fas fa-calendar-alt"></i>
-          <FormattedMessage id="doctor.choose-schedule" />
-        </span>
+        <div className="doctor-schedule__header-left">
+          <span className="doctor-schedule__title">
+            <i className="fas fa-calendar-alt"></i>
+            <FormattedMessage id="doctor.choose-schedule" />
+          </span>
+          {selectedPractice?.clinicData?.name && (
+            <span className="doctor-schedule__clinic-indicator" title={selectedPractice.clinicData.name}>
+              <i className="fas fa-hospital"></i> {selectedPractice.clinicData.name}
+              {selectedPractice.roomNumber ? ` (${selectedPractice.roomNumber})` : ''}
+            </span>
+          )}
+        </div>
 
         <select
           className="doctor-schedule__date-select"
@@ -241,6 +250,7 @@ const DoctorSchedule = ({ doctorId }) => {
           doctorId={doctorId}
           timeSlot={selectedTimeSlot}
           date={selectedDate}
+          selectedPractice={selectedPractice}
         />
       )}
     </div>

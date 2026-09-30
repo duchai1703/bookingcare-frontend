@@ -45,7 +45,7 @@ const POPULAR_BANKS = [
   'MSB',
 ];
 
-const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price }) => {
+const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price, selectedPractice }) => {
   const dispatch = useDispatch();
   const intl = useIntl();
   const language = useSelector((state) => state.app.language);
@@ -329,6 +329,9 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price }) => {
         birthday: patientData.birthday,
         gender: patientData.gender,
         language: language,
+        // Multi-Facility Context
+        clinicId: selectedPractice?.clinicId || null,
+        doctorAssignmentId: selectedPractice?.id || null,
         // Snapshot thông tin tài khoản hoàn tiền
         bankAccountNumber: selectedBank ? selectedBank.accountNumber : '',
         bankAccountName: selectedBank ? selectedBank.accountHolder : '',
@@ -399,12 +402,35 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price }) => {
               <p className="bm__summary-date">{formattedDate}</p>
             </div>
 
+            {/* Thông tin Cơ sở khám bệnh (Multi-Facility) */}
+            {selectedPractice?.clinicData?.name && (
+              <>
+                <div className="bm__summary-divider" />
+                <div className="bm__summary-section">
+                  <p className="bm__summary-label">Cơ sở khám bệnh</p>
+                  <p className="bm__summary-value" style={{ fontWeight: 700, color: '#0f172a' }}>
+                    {selectedPractice.clinicData.name}
+                  </p>
+                  {selectedPractice.roomNumber && (
+                    <p className="bm__summary-date" style={{ color: '#087f8c', fontWeight: 600 }}>
+                      Phòng khám: {selectedPractice.roomNumber}
+                    </p>
+                  )}
+                  {selectedPractice.clinicData.address && (
+                    <p className="bm__summary-date" style={{ fontSize: '0.78rem' }}>
+                      {selectedPractice.clinicData.address}
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
+
             <div className="bm__summary-divider" />
 
             <div className="bm__summary-section">
-              <p className="bm__summary-label">Chi phí đặt lịch</p>
-              <p className="bm__summary-value">
-                <FormattedMessage id="booking-modal.free-booking" />
+              <p className="bm__summary-label">Giá khám dịch vụ</p>
+              <p className="bm__summary-value" style={{ color: '#059669', fontWeight: 700 }}>
+                {selectedPractice?.priceTypeData?.valueVi || (price ? `${price} VNĐ` : 'Miễn phí đặt lịch')}
               </p>
             </div>
 

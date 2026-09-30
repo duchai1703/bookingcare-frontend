@@ -352,11 +352,29 @@ const AppointmentHistory = () => {
   };
 
   const getClinicName = (b) => {
-    return b?.doctorBookingData?.doctorInfoData?.clinicData?.name || '';
+    return (
+      b?.clinicBookingData?.name ||
+      b?.clinicData?.name ||
+      b?.assignmentData?.clinicData?.name ||
+      b?.doctorAssignmentData?.clinicData?.name ||
+      b?.doctorBookingData?.doctorInfoData?.clinicData?.name ||
+      ''
+    );
   };
 
   const getClinicAddress = (b) => {
-    return b?.doctorBookingData?.doctorInfoData?.clinicData?.address || '';
+    return (
+      b?.clinicBookingData?.address ||
+      b?.clinicData?.address ||
+      b?.assignmentData?.clinicData?.address ||
+      b?.doctorAssignmentData?.clinicData?.address ||
+      b?.doctorBookingData?.doctorInfoData?.clinicData?.address ||
+      ''
+    );
+  };
+
+  const getRoomNumber = (b) => {
+    return b?.assignmentData?.roomNumber || b?.doctorAssignmentData?.roomNumber || '';
   };
 
   // Render Status Badge
@@ -524,6 +542,12 @@ const AppointmentHistory = () => {
                     <i className="fas fa-hospital-alt" />
                     <div className="facility-text">
                       <strong className="facility-name">{clinicName}</strong>
+                      {getRoomNumber(b) && (
+                        <span className="facility-room" style={{ color: '#087f8c', fontWeight: 600, fontSize: '0.8rem', display: 'block' }}>
+                          <i className="fas fa-door-open" style={{ marginRight: 4 }} />
+                          Phòng khám: {getRoomNumber(b)}
+                        </span>
+                      )}
                       {clinicAddress && <span className="facility-address">{clinicAddress}</span>}
                     </div>
                   </div>
@@ -790,6 +814,11 @@ const AppointmentHistory = () => {
                   <div className="field-item full-width">
                     <span className="field-label">Cơ sở y tế & Địa điểm:</span>
                     <strong className="field-value">{getClinicName(detailBooking) || 'Phòng khám / Bệnh viện đối tác'}</strong>
+                    {getRoomNumber(detailBooking) && (
+                      <span className="field-sub" style={{ color: '#087f8c', fontWeight: 600, display: 'block', marginTop: 3 }}>
+                        <i className="fas fa-door-open" /> Phòng khám: {getRoomNumber(detailBooking)}
+                      </span>
+                    )}
                     {getClinicAddress(detailBooking) && (
                       <span className="field-sub location-sub">
                         <i className="fas fa-map-marker-alt" /> {getClinicAddress(detailBooking)}

@@ -11,7 +11,7 @@ import { getDoctorDetail } from '../../services/doctorService';
 import { LANGUAGES } from '../../utils/constants';
 import './DoctorExtraInfo.scss';
 
-const DoctorExtraInfo = ({ extraInfo: extraInfoProp, doctorId }) => {
+const DoctorExtraInfo = ({ extraInfo: extraInfoProp, doctorId, selectedPractice }) => {
   const language = useSelector((state) => state.app.language);
   const [showPriceDetail, setShowPriceDetail] = useState(false);
   const [fetchedInfo, setFetchedInfo] = useState(null);
@@ -36,8 +36,20 @@ const DoctorExtraInfo = ({ extraInfo: extraInfoProp, doctorId }) => {
   // Ưu tiên: props → fetched
   const extraInfo = extraInfoProp || fetchedInfo;
 
-  // Nếu chưa có dữ liệu → không render
-  if (!extraInfo) return null;
+  // Nếu chưa có dữ liệu và không có selectedPractice → không render
+  if (!extraInfo && !selectedPractice) return null;
+
+  const clinicName = selectedPractice?.clinicData?.name || extraInfo?.clinicData?.name || '';
+  const clinicAddress = selectedPractice?.clinicData?.address || extraInfo?.clinicData?.address || '';
+  const roomNumber = selectedPractice?.roomNumber || '';
+  const priceValue =
+    (language === LANGUAGES.VI
+      ? selectedPractice?.priceTypeData?.valueVi
+      : selectedPractice?.priceTypeData?.valueEn) ||
+    (language === LANGUAGES.VI
+      ? extraInfo?.priceData?.valueVi
+      : extraInfo?.priceData?.valueEn) ||
+    '';
 
   return (
     <div className="doctor-extra-info" id="doctor-extra-info">
@@ -46,13 +58,20 @@ const DoctorExtraInfo = ({ extraInfo: extraInfoProp, doctorId }) => {
         <h3 className="doctor-extra-info__label">
           <FormattedMessage id="patient.doctor-detail.clinic-address" />
         </h3>
-        {extraInfo.clinicData && (
+        {clinicName && (
           <>
             <p className="doctor-extra-info__clinic-name">
-              {extraInfo.clinicData.name || ''}
+              {clinicName}
             </p>
+            {roomNumber && (
+              <p className="doctor-extra-info__clinic-room" style={{ color: '#087f8c', fontWeight: 600, fontSize: '0.85rem', margin: '2px 0 4px' }}>
+                <i className="fas fa-door-open" style={{ marginRight: 6 }}></i>
+                {language === LANGUAGES.VI ? 'Phòng khám: ' : 'Room: '}
+                {roomNumber}
+              </p>
+            )}
             <p className="doctor-extra-info__clinic-address">
-              {extraInfo.clinicData.address || ''}
+              {clinicAddress}
             </p>
           </>
         )}
@@ -68,9 +87,7 @@ const DoctorExtraInfo = ({ extraInfo: extraInfoProp, doctorId }) => {
         {!showPriceDetail ? (
           <div className="doctor-extra-info__price-row">
             <span className="doctor-extra-info__price-value">
-              {language === LANGUAGES.VI
-                ? extraInfo.priceData?.valueVi
-                : extraInfo.priceData?.valueEn}
+              {priceValue}
             </span>
             <span
               className="doctor-extra-info__toggle"
@@ -88,12 +105,10 @@ const DoctorExtraInfo = ({ extraInfo: extraInfoProp, doctorId }) => {
                   {language === LANGUAGES.VI ? 'Giá khám' : 'Examination price'}
                 </span>
                 <span className="doctor-extra-info__price-bold">
-                  {language === LANGUAGES.VI
-                    ? extraInfo.priceData?.valueVi
-                    : extraInfo.priceData?.valueEn}
+                  {priceValue}
                 </span>
               </div>
-              {extraInfo.note && (
+              {extraInfo?.note && (
                 <p className="doctor-extra-info__note">{extraInfo.note}</p>
               )}
             </div>

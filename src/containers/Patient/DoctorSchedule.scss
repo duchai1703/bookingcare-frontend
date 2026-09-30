@@ -11,6 +11,7 @@
   // ===== HEADER: Tiêu đề + Dropdown =====
   &__header {
     display: flex;
+    justify-content: space-between;
     align-items: center;
     gap: $spacing-md;
     margin-bottom: $spacing-md;
@@ -21,6 +22,30 @@
       flex-direction: column;
       align-items: flex-start;
     }
+  }
+
+  &__header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  &__clinic-indicator {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #087f8c;
+    background: #f0fdfa;
+    border: 1px solid #99f6e4;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 320px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   &__title {
