@@ -35,6 +35,7 @@ export const adminMenu = [
   // ── Nhóm 4: Tài chính & Chính sách ──
   { type: 'group', label: 'Tài chính & Quy định' },
   { name: 'menu.admin.financial-policies', link: path.FINANCIAL_POLICIES },
+  { name: 'menu.admin.financial-liquidity', link: path.FINANCIAL_LIQUIDITY },
 
   // ── Nhóm 5: Cài đặt & Phân quyền ──
   { type: 'group', label: 'Hệ thống' },

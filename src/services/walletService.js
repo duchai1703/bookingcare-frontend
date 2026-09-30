@@ -32,3 +32,41 @@ export const getMyWalletTransactions = (params) => {
 export const verifyVNPayDepositReturn = (params) => {
   return axiosInstance.get('/api/v1/payment/vnpay-wallet-return', { params });
 };
+
+// ═══════════════════════════════════════════════════════════════════════
+// [Phase 4] ADMIN LIQUIDITY & EXECUTIVE LEDGER CONSOLE APIs
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * Lấy các chỉ số thanh khoản, nợ phải trả, bảo chứng quỹ và đối soát sổ cái
+ * @param {Object} params { reserveRatio?: number }
+ */
+export const getAdminLiquidityMetrics = (params) => {
+  return axiosInstance.get('/api/v1/admin/financial/liquidity-metrics', { params });
+};
+
+/**
+ * Tra cứu Sổ cái Giao dịch Toàn sàn (Audit Trail & Ledger Explorer)
+ * @param {Object} params { page?: number, limit?: number, type?: string, direction?: string, search?: string, startDate?: string, endDate?: string }
+ */
+export const getAdminWalletTransactions = (params) => {
+  return axiosInstance.get('/api/v1/admin/financial/ledger-transactions', { params });
+};
+
+/**
+ * Lấy danh sách ví người dùng trên toàn hệ thống
+ * @param {Object} params { page?: number, limit?: number, status?: string, walletType?: string, search?: string }
+ */
+export const getAdminWalletsList = (params) => {
+  return axiosInstance.get('/api/v1/admin/financial/wallets', { params });
+};
+
+/**
+ * Khóa hoặc mở khóa ví người dùng
+ * @param {number} walletId
+ * @param {Object} data { targetStatus: 'ACTIVE' | 'LOCKED' | 'SUSPENDED', adminNote?: string }
+ */
+export const toggleWalletStatus = (walletId, data) => {
+  return axiosInstance.post(`/api/v1/admin/financial/wallets/${walletId}/toggle-status`, data);
+};
+

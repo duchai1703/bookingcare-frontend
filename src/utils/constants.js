@@ -73,6 +73,7 @@ export const path = {
   MEDICINE_MANAGE: '/system/medicine-manage',
   SYSTEM_SETTINGS: '/system/system-settings',
   FINANCIAL_POLICIES: '/system/policies',
+  FINANCIAL_LIQUIDITY: '/system/financial-liquidity',
 
   // [Phase E] Admin Detail Analytics pages
   ANALYTICS_BOOKINGS: '/system/analytics/bookings',

@@ -90,6 +90,7 @@
   "menu.admin.manage-specialty": "Specialty Management",
   "menu.admin.manage-clinic": "Clinic Management",
   "menu.admin.financial-policies": "Financial Policies & Rules",
+  "menu.admin.financial-liquidity": "Liquidity & Ledger",
   "menu.doctor.manage-patient": "Appointments",
   "menu.doctor.manage-schedule": "Work Schedule",
   "common.welcome": "Welcome, ",
