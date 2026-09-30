@@ -297,6 +297,29 @@ const EditClinicModal = ({ isOpen, onClose, clinic, onSuccess }) => {
               />
             </div>
 
+            {/* Tỷ lệ hoa hồng */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: 6 }}>
+                Tỷ lệ chiết khấu hoa hồng (%)
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                step="0.5"
+                value={formData.commissionRate}
+                onChange={(e) => handleInputChange('commissionRate', e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '9px 12px',
+                  borderRadius: 8,
+                  border: '1px solid #CBD5E1',
+                  fontSize: '0.86rem',
+                  outline: 'none',
+                }}
+              />
+            </div>
+
             {/* Trạng thái */}
             <div>
               <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: 6 }}>

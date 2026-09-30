@@ -280,6 +280,11 @@ const ClinicControlCenter = () => {
               <span>Sửa hồ sơ & Slider</span>
             </button>
 
+            <button className="btn-ws-action secondary" onClick={handleUpdateCommission}>
+              <Percent size={14} />
+              <span>Hoa hồng ({profile.commissionRate}%)</span>
+            </button>
+
             <button className="btn-ws-action secondary" onClick={handleToggleStatus}>
               {profile.status === 'active' ? (
                 <>

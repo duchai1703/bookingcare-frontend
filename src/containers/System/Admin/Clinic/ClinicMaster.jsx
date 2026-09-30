@@ -306,6 +306,7 @@ const ClinicMaster = () => {
                 <th>{language === 'vi' ? 'Chuyên khoa thế mạnh' : 'Specialties'}</th>
                 <th>{language === 'vi' ? 'Công suất tuần này' : 'Weekly Capacity'}</th>
                 <th>{language === 'vi' ? 'Doanh thu gộp' : 'Gross Revenue'}</th>
+                <th>{language === 'vi' ? 'Hoa hồng sàn' : 'Commission'}</th>
                 <th>{language === 'vi' ? 'Trạng thái' : 'Status'}</th>
                 <th style={{ textAlign: 'center' }}>{language === 'vi' ? 'Thao tác' : 'Actions'}</th>
               </tr>
@@ -313,7 +314,7 @@ const ClinicMaster = () => {
             <tbody>
               {clinics.length === 0 && !loading ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', padding: '40px 0', color: '#94A3B8' }}>
+                  <td colSpan={8} style={{ textAlign: 'center', padding: '40px 0', color: '#94A3B8' }}>
                     {language === 'vi' ? 'Không tìm thấy cơ sở y tế phù hợp' : 'No facilities found'}
                   </td>
                 </tr>
@@ -438,6 +439,13 @@ const ClinicMaster = () => {
                         </div>
                       </td>
 
+                      {/* Commission */}
+                      <td>
+                        <span style={{ background: '#F1F5F9', padding: '2px 6px', borderRadius: 4, fontWeight: 700, fontSize: '0.78rem' }}>
+                          {clinic.commissionRate}%
+                        </span>
+                      </td>
+
                       {/* Status */}
                       <td>
                         <span className={`status-pill ${statusClass}`}>
@@ -484,6 +492,15 @@ const ClinicMaster = () => {
                               >
                                 <Users size={13} style={{ color: '#8B5CF6' }} />
                                 <span>{language === 'vi' ? 'Gán thêm bác sĩ' : 'Assign Doctor'}</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                className="action-dropdown-item dropdown-item"
+                                onClick={() => { handleUpdateCommission(clinic); setActiveMenuClinicId(null); }}
+                              >
+                                <Percent size={13} style={{ color: '#F59E0B' }} />
+                                <span>{language === 'vi' ? 'Cấu hình hoa hồng viện' : 'Config Commission'}</span>
                               </button>
 
                               <button

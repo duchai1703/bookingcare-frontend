@@ -21,7 +21,8 @@ import {
   Sliders,
   ExternalLink,
   ChevronRight,
-  Info
+  Info,
+  Eye,
 } from 'lucide-react';
 import {
   getAdminPoliciesList,
@@ -29,6 +30,7 @@ import {
   seedDefaultAdminPolicies
 } from '../../../../services/policyService';
 import CreatePolicyModal from './CreatePolicyModal';
+import PolicyDetailDrawer from './PolicyDetailDrawer';
 import './PolicyMaster.scss';
 
 const PolicyMaster = () => {
@@ -48,10 +50,19 @@ const PolicyMaster = () => {
   const [modalMode, setModalMode] = useState('CREATE'); // 'CREATE' | 'NEW_VERSION'
   const [selectedPolicy, setSelectedPolicy] = useState(null);
 
+  // Policy Detail Drawer State
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [drawerPolicyId, setDrawerPolicyId] = useState(null);
+
   // History Drawer / Modal
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [historyDetail, setHistoryDetail] = useState(null);
   const [historyLoading, setHistoryLoading] = useState(false);
+
+  const handleOpenDrawer = (policyId) => {
+    setDrawerPolicyId(policyId);
+    setIsDrawerOpen(true);
+  };
 
   const fetchPolicies = useCallback(async () => {
     setLoading(true);
@@ -248,16 +259,18 @@ const PolicyMaster = () => {
           </div>
         </div>
 
-        {/* Card 4: Locked Immutable Policies */}
-        <div className="kpi-card locked-card">
+        {/* Card 4: Active Policies Count */}
+        <div className="kpi-card stats-card" style={{ borderLeft: '4px solid #059669' }}>
           <div className="kpi-header">
-            <span className="kpi-title">Chính sách đã Khóa Bất biến</span>
-            <Lock size={18} className="text-amber-500" />
+            <span className="kpi-title">Chính sách Đang có Hiệu lực</span>
+            <CheckCircle2 size={18} style={{ color: '#059669' }} />
           </div>
           <div className="kpi-body">
-            <div className="kpi-number text-amber-700">{totalLocked}</div>
+            <div className="kpi-number" style={{ color: '#059669' }}>
+              {policies.filter((p) => p.status === 'ACTIVE').length}
+            </div>
             <div className="kpi-desc text-xs text-gray-500 mt-1">
-              Đã phát sinh booking thực tế — cấm sửa đè, chỉ cho phép nâng version
+              Đang áp dụng trực tiếp cho các lượt đặt khám và tính hoàn phí
             </div>
           </div>
         </div>
@@ -359,7 +372,7 @@ const PolicyMaster = () => {
                 <th>Tóm tắt Tỷ lệ / Quy định</th>
                 <th>Thời gian hiệu lực</th>
                 <th>Trạng thái</th>
-                <th>Bất biến</th>
+                <th>Ca khám áp dụng</th>
                 <th className="text-right">Hành động</th>
               </tr>
             </thead>
@@ -369,7 +382,13 @@ const PolicyMaster = () => {
                 const rules = p.parsedRules || {};
 
                 return (
-                  <tr key={p.id} className={p.status === 'ACTIVE' ? 'active-row' : ''}>
+                  <tr
+                    key={p.id}
+                    className={`policy-row-item ${p.status === 'ACTIVE' ? 'active-row' : ''}`}
+                    onClick={() => handleOpenDrawer(p.id)}
+                    style={{ cursor: 'pointer' }}
+                    title="Nhấp để xem chi tiết Bác sĩ, sổ cái ca khám và dòng tiền"
+                  >
                     {/* Code & Version */}
                     <td>
                       <div className="code-cell">
@@ -467,23 +486,26 @@ const PolicyMaster = () => {
                       </span>
                     </td>
 
-                    {/* Immutable Lock */}
+                    {/* Linked Bookings Count */}
                     <td>
-                      <div className="lock-cell" title={p.isLocked ? `Đã khóa bất biến (${p.linkedBookingCount} ca khám)` : 'Chưa phát sinh ca khám'}>
-                        {p.isLocked ? (
-                          <span className="lock-badge locked">
-                            <Lock size={13} /> Khóa ({p.linkedBookingCount})
-                          </span>
-                        ) : (
-                          <span className="lock-badge unlocked">
-                            <Unlock size={13} /> Mở
-                          </span>
-                        )}
-                      </div>
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        background: p.linkedBookingCount > 0 ? '#E6FFFA' : '#F1F5F9',
+                        color: p.linkedBookingCount > 0 ? '#0D9488' : '#64748B',
+                        border: `1px solid ${p.linkedBookingCount > 0 ? '#99F6E4' : '#E2E8F0'}`,
+                        padding: '3px 8px',
+                        borderRadius: '6px',
+                        fontSize: '0.78rem',
+                        fontWeight: 700
+                      }}>
+                        {p.linkedBookingCount || 0} ca
+                      </span>
                     </td>
 
                     {/* Actions */}
-                    <td className="text-right">
+                    <td className="text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="action-buttons-group">
                         <button
                           type="button"
@@ -496,10 +518,10 @@ const PolicyMaster = () => {
                         <button
                           type="button"
                           className="btn-action-icon btn-history"
-                          onClick={() => handleOpenHistory(p.id)}
-                          title="Xem lịch sử các phiên bản"
+                          onClick={() => handleOpenDrawer(p.id)}
+                          title="Xem chi tiết sổ cái ca khám & lịch sử phiên bản"
                         >
-                          <History size={14} />
+                          <Eye size={14} />
                         </button>
                       </div>
                     </td>
@@ -510,6 +532,14 @@ const PolicyMaster = () => {
           </table>
         )}
       </div>
+
+      {/* ===== POLICY DETAIL DRAWER ===== */}
+      <PolicyDetailDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        policyId={drawerPolicyId}
+        onUpgradeVersion={(policy) => handleOpenNewVersion(policy)}
+      />
 
       {/* ===== CREATE / NEW VERSION MODAL ===== */}
       <CreatePolicyModal

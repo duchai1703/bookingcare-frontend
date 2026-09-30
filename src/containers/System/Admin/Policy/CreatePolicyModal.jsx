@@ -44,8 +44,10 @@ const CreatePolicyModal = ({ isOpen, onClose, existingPolicy = null, isNewVersio
   const [platformFee, setPlatformFee] = useState(
     existingRules.platformFeePercent !== undefined ? existingRules.platformFeePercent : 15
   );
-  const [clinicShare, setClinicShare] = useState(0);
-  const doctorShare = Math.max(0, 100 - platformFee);
+  const [clinicShare, setClinicShare] = useState(
+    existingRules.clinicSharePercent !== undefined ? existingRules.clinicSharePercent : 0
+  );
+  const doctorShare = Math.max(0, 100 - platformFee - clinicShare);
 
   // Refund Rules Tiers
   const defaultTiers = [
@@ -82,6 +84,14 @@ const CreatePolicyModal = ({ isOpen, onClose, existingPolicy = null, isNewVersio
   const handlePlatformFeeChange = (val) => {
     const num = Math.min(100, Math.max(0, parseInt(val, 10) || 0));
     setPlatformFee(num);
+    if (num + clinicShare > 100) {
+      setClinicShare(100 - num);
+    }
+  };
+
+  const handleClinicShareChange = (val) => {
+    const num = Math.min(100 - platformFee, Math.max(0, parseInt(val, 10) || 0));
+    setClinicShare(num);
   };
 
   // Handle Tiers
@@ -337,7 +347,7 @@ const CreatePolicyModal = ({ isOpen, onClose, existingPolicy = null, isNewVersio
                   <Sliders size={16} className="text-teal-600" />
                   <span className="font-semibold text-gray-800">Cấu hình Tỷ lệ % Chia sẻ Doanh thu</span>
                 </div>
-                <span className="text-xs text-gray-500">Tổng 2 bên luôn tự động khớp 100% (Sàn BookingCare + Bác sĩ)</span>
+                <span className="text-xs text-gray-500">Tổng 3 bên luôn tự động khớp 100%</span>
               </div>
 
               <div className="sliders-container">
@@ -365,6 +375,33 @@ const CreatePolicyModal = ({ isOpen, onClose, existingPolicy = null, isNewVersio
                     value={platformFee}
                     onChange={(e) => handlePlatformFeeChange(e.target.value)}
                     className="slider-range accent-teal-600"
+                  />
+                </div>
+
+                {/* Clinic Share */}
+                <div className="slider-row">
+                  <div className="slider-label-row">
+                    <span className="label-text">
+                      <span className="color-dot bg-blue-500" /> Cơ sở Y tế (Clinic Share):
+                    </span>
+                    <div className="input-percent-group">
+                      <input
+                        type="number"
+                        min="0"
+                        max={100 - platformFee}
+                        value={clinicShare}
+                        onChange={(e) => handleClinicShareChange(e.target.value)}
+                      />
+                      <span>%</span>
+                    </div>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max={100 - platformFee}
+                    value={clinicShare}
+                    onChange={(e) => handleClinicShareChange(e.target.value)}
+                    className="slider-range accent-blue-600"
                   />
                 </div>
 
