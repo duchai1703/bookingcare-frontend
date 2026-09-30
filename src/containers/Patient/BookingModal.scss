@@ -392,6 +392,102 @@
   }
 
   // ===================================================
+  // WALLET GUARANTEE CARD (PHASE 4 DEDICATED WALLET FLOW)
+  // ===================================================
+  &__wallet-guarantee-card {
+    background: #ffffff;
+    border: 1.5px solid #99f6e4;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(13, 148, 136, 0.06);
+    margin-bottom: 8px;
+
+    .wallet-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      gap: 12px;
+      flex-wrap: wrap;
+
+      .wallet-brand-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        .wallet-icon-box {
+          width: 40px;
+          height: 40px;
+          border-radius: 10px;
+          background: #ccfbf1;
+          color: #0d9488;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 18px;
+        }
+
+        .wallet-brand-meta {
+          display: flex;
+          flex-direction: column;
+
+          .wallet-title {
+            font-size: 14.5px;
+            font-weight: 700;
+            color: #0f172a;
+          }
+
+          .wallet-badge {
+            font-size: 11px;
+            font-weight: 600;
+            color: #0d9488;
+          }
+        }
+      }
+
+      .wallet-balance-box {
+        text-align: right;
+        display: flex;
+        flex-direction: column;
+
+        .balance-label {
+          font-size: 11px;
+          font-weight: 600;
+          color: #64748b;
+        }
+
+        .balance-value {
+          font-size: 17px;
+          font-weight: 800;
+          color: #0f766e;
+          font-family: monospace;
+          letter-spacing: 0.02em;
+        }
+      }
+    }
+
+    .wallet-status-row {
+      margin-bottom: 12px;
+    }
+
+    .wallet-guarantee-footer {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding-top: 10px;
+      border-top: 1px dashed #e2e8f0;
+      font-size: 11.5px;
+      color: #64748b;
+      line-height: 1.4;
+
+      i {
+        color: #0d9488;
+        margin-top: 2px;
+        flex-shrink: 0;
+      }
+    }
+  }
+
   // PAYMENT METHOD SELECTOR
   // ===================================================
   &__payment-methods {

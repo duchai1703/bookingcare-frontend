@@ -23,7 +23,7 @@ import {
   addPatientBankAccount,
   setPrimaryBankAccount,
 } from '../../services/patientService';
-import { getMyWallet } from '../../services/walletService';
+import { getMyWallet, createDepositPaymentUrl } from '../../services/walletService';
 import { getSystemSettings } from '../../services/catalogService';
 import './BookingModal.scss';
 
@@ -91,9 +91,11 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price, select
   });
   const [isSavingBank, setIsSavingBank] = useState(false);
 
-  // Ví BookingCare & Phương thức thanh toán
+  // Ví BookingCare & Phương thức thanh toán (Chuẩn hóa 100% qua Ví)
   const [walletInfo, setWalletInfo] = useState(null);
-  const [paymentMethod, setPaymentMethod] = useState('WALLET'); // 'WALLET' | 'VNPAY'
+  const [isTopUpLoading, setIsTopUpLoading] = useState(false);
+  const [isRefreshingWallet, setIsRefreshingWallet] = useState(false);
+  const paymentMethod = 'WALLET';
 
   // Tính giá khám dạng số
   const rawPriceStr = selectedPractice?.priceTypeData?.valueVi || String(price || '0');
@@ -162,17 +164,45 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price, select
 
       // Tải thông tin ví nếu đã đăng nhập
       if (userInfo) {
-        try {
-          const wRes = await getMyWallet();
-          if (wRes && wRes.errCode === 0) {
-            setWalletInfo(wRes.data);
-          }
-        } catch (wErr) {
-          console.error('loadWallet error:', wErr);
-        }
+        await loadPatientWallet();
       }
     } catch (e) {
       console.error('loadPatientDetails error:', e);
+    }
+  };
+
+  const loadPatientWallet = async () => {
+    setIsRefreshingWallet(true);
+    try {
+      const wRes = await getMyWallet();
+      if (wRes && wRes.errCode === 0 && wRes.data) {
+        setWalletInfo(wRes.data);
+      }
+    } catch (wErr) {
+      console.error('loadWallet error:', wErr);
+    } finally {
+      setIsRefreshingWallet(false);
+    }
+  };
+
+  const handleQuickTopUp = async () => {
+    const avail = walletInfo?.availableBalance || 0;
+    const missing = Math.max(10000, numericPrice - avail);
+    setIsTopUpLoading(true);
+    try {
+      const res = await createDepositPaymentUrl({ amount: missing });
+      if (res && res.errCode === 0 && res.data?.paymentUrl) {
+        window.open(res.data.paymentUrl, '_blank');
+        toast.info(
+          `Đã mở cổng VNPay nạp ${missing.toLocaleString('vi-VN')} ₫. Sau khi hoàn tất, vui lòng bấm "Làm mới số dư" để đặt lịch ngay!`
+        );
+      } else {
+        toast.error(res?.errMessage || 'Không thể tạo liên kết nạp tiền VNPay');
+      }
+    } catch (err) {
+      toast.error('Lỗi khi kết nối cổng thanh toán VNPay');
+    } finally {
+      setIsTopUpLoading(false);
     }
   };
 
@@ -584,146 +614,94 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price, select
               </div>
             </div>
 
-            {/* 3. PHƯƠNG THỨC THANH TOÁN */}
+            {/* 3. PHƯƠNG THỨC THANH TOÁN (CHUẨN HÓA 100% QUA VÍ BOOKINGCARE) */}
             <div className="bm__section">
               <div className="bm__section-header tw-flex tw-justify-between tw-items-center">
                 <div className="tw-flex tw-items-center tw-gap-2">
                   <span className="bm__section-badge">3</span>
-                  <h3 className="bm__section-title">Phương thức thanh toán</h3>
+                  <h3 className="bm__section-title">Thanh toán qua Ví BookingCare</h3>
                 </div>
-              </div>
-              <p className="bm__section-desc">Chọn phương thức thanh toán an toàn và tiện lợi nhất cho bạn.</p>
-
-              {/* Bộ chọn phương thức thanh toán */}
-              <div className="bm__payment-methods">
-                {/* 1. VÍ ĐIỆN TỬ BOOKINGCARE */}
-                <div
-                  className={`bm__payment-option ${paymentMethod === 'WALLET' ? 'bm__payment-option--selected' : ''}`}
-                  onClick={() => setPaymentMethod('WALLET')}
+                <button
+                  type="button"
+                  className="tw-text-xs tw-text-teal-700 hover:tw-underline tw-font-semibold tw-flex tw-items-center tw-gap-1.5 tw-bg-transparent tw-border-none tw-cursor-pointer"
+                  onClick={loadPatientWallet}
+                  title="Kiểm tra lại số dư ví mới nhất"
+                  disabled={isRefreshingWallet}
                 >
-                  <input
-                    type="radio"
-                    className="payment-radio"
-                    checked={paymentMethod === 'WALLET'}
-                    onChange={() => setPaymentMethod('WALLET')}
-                  />
-                  <div className="payment-icon-wrap payment-icon-wrap--wallet">
-                    <i className="fas fa-wallet" />
-                  </div>
-                  <div className="payment-content">
-                    <div className="payment-title-row">
-                      <span className="payment-title">Ví BookingCare</span>
-                      <span className="recommended-pill">Khuyên dùng · Xác nhận tức thì</span>
-                    </div>
-                    <p className="payment-desc">
-                      Xác nhận lịch khám ngay lập tức không cần chờ duyệt. Hoàn tiền tự động 100% về ví trong tích tắc nếu hủy lịch hợp lệ.
-                    </p>
-                    <div className="payment-balance-badge">
-                      {walletInfo ? (
-                        walletInfo.availableBalance >= numericPrice ? (
-                          <span className="tw-inline-flex tw-items-center tw-gap-1.5 tw-px-2.5 tw-py-1 tw-rounded-md tw-text-xs tw-font-semibold tw-bg-emerald-50 tw-text-emerald-700 tw-border tw-border-emerald-200">
-                            <i className="fas fa-check-circle" /> Số dư khả dụng: {walletInfo.availableBalance.toLocaleString('vi-VN')} ₫ (Đủ thanh toán)
-                          </span>
-                        ) : (
-                          <div className="tw-flex tw-items-center tw-gap-2 tw-flex-wrap">
-                            <span className="tw-inline-flex tw-items-center tw-gap-1.5 tw-px-2.5 tw-py-1 tw-rounded-md tw-text-xs tw-font-semibold tw-bg-amber-50 tw-text-amber-700 tw-border tw-border-amber-200">
-                              <i className="fas fa-exclamation-triangle" /> Số dư khả dụng: {walletInfo.availableBalance.toLocaleString('vi-VN')} ₫ (Thiếu {(numericPrice - walletInfo.availableBalance).toLocaleString('vi-VN')} ₫)
-                            </span>
-                            <a
-                              href="/patient/wallet"
-                              target="_blank"
-                              rel="noreferrer"
-                              className="tw-text-xs tw-font-bold tw-text-teal-700 hover:tw-underline tw-inline-flex tw-items-center tw-gap-1"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <i className="fas fa-plus-circle" /> Nạp tiền vào ví
-                            </a>
-                          </div>
-                        )
-                      ) : (
-                        <span className="tw-text-xs tw-text-slate-400">Đang kiểm tra số dư ví...</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* 2. CỔNG THANH TOÁN VNPAY */}
-                <div
-                  className={`bm__payment-option ${paymentMethod === 'VNPAY' ? 'bm__payment-option--selected' : ''}`}
-                  onClick={() => setPaymentMethod('VNPAY')}
-                >
-                  <input
-                    type="radio"
-                    className="payment-radio"
-                    checked={paymentMethod === 'VNPAY'}
-                    onChange={() => setPaymentMethod('VNPAY')}
-                  />
-                  <div className="payment-icon-wrap payment-icon-wrap--vnpay">
-                    <i className="fas fa-credit-card" />
-                  </div>
-                  <div className="payment-content">
-                    <div className="payment-title-row">
-                      <span className="payment-title">Cổng thanh toán VNPay / Thẻ ngân hàng</span>
-                    </div>
-                    <p className="payment-desc">
-                      Nhận email hướng dẫn thanh toán. Nếu hủy lịch, tiền hoàn sẽ được chuyển khoản thủ công về tài khoản ngân hàng sau khi đối soát.
-                    </p>
-                  </div>
-                </div>
+                  <i className={`fas fa-sync-alt ${isRefreshingWallet ? 'fa-spin tw-text-teal-600' : ''}`} />
+                  <span>{isRefreshingWallet ? 'Đang cập nhật...' : 'Làm mới số dư'}</span>
+                </button>
               </div>
+              <p className="bm__section-desc">
+                Nền tảng thanh toán chuẩn hóa qua Ví BookingCare để xác nhận lịch ngay lập tức và tự động hoàn tiền 100% trong 0 giây nếu hủy lịch hợp lệ.
+              </p>
 
-              {/* Nếu chọn VNPAY: Hiển thị mục cấu hình tài khoản ngân hàng nhận tiền hoàn thủ công */}
-              {paymentMethod === 'VNPAY' && (
-                <div className="tw-mt-3 tw-pt-3 tw-border-t tw-border-slate-200">
-                  <div className="tw-flex tw-justify-between tw-items-center tw-mb-2">
-                    <span className="tw-text-xs tw-font-bold tw-text-slate-700">Tài khoản nhận hoàn tiền (VNPay):</span>
-                    {bankAccounts.length > 1 && (
-                      <button
-                        type="button"
-                        className="bm__switch-bank-btn"
-                        onClick={() => setShowBankSelectModal(true)}
-                      >
-                        <i className="fas fa-exchange-alt" /> Đổi tài khoản
-                      </button>
-                    )}
+              {/* Thẻ Ví BookingCare tinh gọn cao cấp */}
+              <div className="bm__wallet-guarantee-card">
+                <div className="wallet-card-header">
+                  <div className="wallet-brand-row">
+                    <div className="wallet-icon-box">
+                      <i className="fas fa-wallet" />
+                    </div>
+                    <div className="wallet-brand-meta">
+                      <span className="wallet-title">Ví điện tử BookingCare</span>
+                      <span className="wallet-badge">Phương thức thanh toán chính thức · Xác nhận tức thì</span>
+                    </div>
                   </div>
+                  <div className="wallet-balance-box">
+                    <span className="balance-label">Số dư khả dụng</span>
+                    <span className="balance-value">
+                      {walletInfo ? (walletInfo.availableBalance || 0).toLocaleString('vi-VN') + ' ₫' : 'Đang kiểm tra...'}
+                    </span>
+                  </div>
+                </div>
 
-                  {selectedBank ? (
-                    <div className="bm__bank-card">
-                      <div className="bm__bank-card-icon">
-                        <i className="fas fa-university" />
+                {/* Trạng thái đối chiếu số dư */}
+                <div className="wallet-status-row">
+                  {walletInfo ? (
+                    walletInfo.availableBalance >= numericPrice ? (
+                      <div className="tw-flex tw-items-center tw-gap-2 tw-text-emerald-700 tw-bg-emerald-50 tw-p-3 tw-rounded-lg tw-border tw-border-emerald-200 tw-text-xs tw-font-semibold tw-w-full">
+                        <i className="fas fa-check-circle tw-text-base tw-text-emerald-600" />
+                        <span>
+                          Số dư khả dụng đủ thanh toán phí khám ({numericPrice.toLocaleString('vi-VN')} ₫). Sau khi xác nhận, lịch khám sẽ được duyệt và cấp vé ngay lập tức!
+                        </span>
                       </div>
-                      <div className="bm__bank-card-details">
+                    ) : (
+                      <div className="tw-flex tw-items-center tw-justify-between tw-flex-wrap tw-gap-2 tw-text-amber-900 tw-bg-amber-50 tw-p-3 tw-rounded-lg tw-border tw-border-amber-200 tw-text-xs tw-w-full">
                         <div className="tw-flex tw-items-center tw-gap-2">
-                          <span className="bm__bank-card-name">{selectedBank.bankName}</span>
-                          {selectedBank.isPrimary && <span className="bm__bank-card-primary">Chính</span>}
+                          <i className="fas fa-exclamation-triangle tw-text-base tw-text-amber-600" />
+                          <span>
+                            Số dư ví còn thiếu <strong>{(numericPrice - (walletInfo.availableBalance || 0)).toLocaleString('vi-VN')} ₫</strong> để thanh toán ca khám này.
+                          </span>
                         </div>
-                        <span className="bm__bank-card-number">{selectedBank.accountNumber}</span>
-                        <span className="bm__bank-card-holder">Chủ TK: {selectedBank.accountHolder || selectedBank.accountHolderName}</span>
+                        <button
+                          type="button"
+                          className="tw-bg-teal-700 hover:tw-bg-teal-800 tw-text-white tw-px-3 tw-py-1.5 tw-rounded-md tw-font-bold tw-transition-all tw-flex tw-items-center tw-gap-1.5 tw-border-none tw-cursor-pointer"
+                          onClick={handleQuickTopUp}
+                          disabled={isTopUpLoading}
+                        >
+                          {isTopUpLoading ? (
+                            <i className="fas fa-spinner fa-spin" />
+                          ) : (
+                            <i className="fas fa-bolt" />
+                          )}
+                          <span>Nạp thiếu {(numericPrice - (walletInfo.availableBalance || 0)).toLocaleString('vi-VN')} ₫ qua VNPay</span>
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        className="bm__bank-card-edit"
-                        onClick={() => setShowBankSelectModal(true)}
-                        title="Thay đổi tài khoản"
-                      >
-                        <i className="fas fa-pencil-alt" />
-                      </button>
-                    </div>
+                    )
                   ) : (
-                    <div className="bm__bank-empty">
-                      <span>Chưa có tài khoản hoàn tiền trong hồ sơ.</span>
-                      <button
-                        type="button"
-                        className="bm__bank-add-btn"
-                        onClick={handleOpenAddBank}
-                      >
-                        <i className="fas fa-plus" /> Thêm tài khoản ngân hàng
-                      </button>
-                    </div>
+                    <div className="tw-text-xs tw-text-slate-400 tw-italic">Đang kiểm tra số dư ví...</div>
                   )}
                 </div>
-              )}
+
+                {/* Chính sách bảo chứng hoàn tiền tức thì */}
+                <div className="wallet-guarantee-footer">
+                  <i className="fas fa-shield-alt text-teal" />
+                  <span>
+                    <strong>Bảo chứng Zero-Admin:</strong> Khi hủy lịch hợp lệ theo chính sách, tiền hoàn sẽ được hệ thống cộng tự động 100% vào Ví của bạn ngay tức thì, không cần chờ Admin xét duyệt hay chuyển khoản ngân hàng.
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -733,21 +711,41 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price, select
           <button className="bm__btn bm__btn--cancel" onClick={handleCloseModal}>
             <FormattedMessage id="booking-modal.cancel-btn" />
           </button>
-          <button
-            className="bm__btn bm__btn--confirm"
-            onClick={handleSubmit}
-            disabled={uiState === 'loading'}
-          >
-            {uiState === 'loading' ? (
-              <>
-                <i className="fas fa-spinner fa-spin" /> Đang xử lý...
-              </>
-            ) : language === LANGUAGES.VI ? (
-              'Xác nhận đặt lịch'
-            ) : (
-              'Confirm Booking'
-            )}
-          </button>
+
+          {walletInfo && (walletInfo.availableBalance || 0) < numericPrice ? (
+            <button
+              className="bm__btn bm__btn--confirm tw-bg-teal-700 hover:tw-bg-teal-800 tw-text-white tw-font-bold"
+              onClick={handleQuickTopUp}
+              disabled={isTopUpLoading}
+              title="Nạp nhanh số tiền còn thiếu qua VNPay để hoàn tất đặt lịch"
+            >
+              {isTopUpLoading ? (
+                <>
+                  <i className="fas fa-spinner fa-spin tw-mr-1.5" /> Đang chuyển hướng VNPay...
+                </>
+              ) : (
+                <>
+                  <i className="fas fa-bolt tw-mr-1.5" /> Nạp thiếu {(numericPrice - (walletInfo.availableBalance || 0)).toLocaleString('vi-VN')} ₫ & Đặt lịch
+                </>
+              )}
+            </button>
+          ) : (
+            <button
+              className="bm__btn bm__btn--confirm"
+              onClick={handleSubmit}
+              disabled={uiState === 'loading'}
+            >
+              {uiState === 'loading' ? (
+                <>
+                  <i className="fas fa-spinner fa-spin tw-mr-1.5" /> Đang xử lý...
+                </>
+              ) : language === LANGUAGES.VI ? (
+                'Xác nhận đặt lịch & Thanh toán'
+              ) : (
+                'Confirm & Pay with Wallet'
+              )}
+            </button>
+          )}
         </div>
       </div>
 
