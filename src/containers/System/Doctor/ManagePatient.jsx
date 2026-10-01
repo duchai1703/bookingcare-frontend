@@ -10,6 +10,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
 import { getListPatientForDoctor, cancelBooking } from '../../../services/doctorService';
+import { getOrCreateConversationForBooking } from '../../../services/chatApiService';
 import { processLogout } from '../../../redux/slices/userSlice';
 import { LANGUAGES, BOOKING_STATUS } from '../../../utils/constants';
 import RemedyModal from './RemedyModal';
@@ -43,6 +44,8 @@ import {
   Eye,
   FileCheck,
   Building2,
+  MessageSquare,
+
 } from 'lucide-react';
 
 import './ManagePatient.scss';
@@ -884,6 +887,39 @@ const ManagePatient = () => {
                     >
                       <Eye size={16} />
                       <span>Xem hồ sơ phiên khám (Encounter)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="btn-action-chat"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '8px 14px',
+                        background: '#e6fffa',
+                        color: '#0d9488',
+                        border: '1px solid #99f6e4',
+                        borderRadius: '8px',
+                        fontWeight: 600,
+                        fontSize: '0.85rem',
+                        cursor: 'pointer',
+                      }}
+                      onClick={async () => {
+                        try {
+                          const res = await getOrCreateConversationForBooking(selectedBooking.id);
+                          if (res && res.errCode === 0) {
+                            navigate('/doctor-dashboard/messages');
+                          } else {
+                            toast.error(res?.message || 'Không thể mở hội thoại.');
+                          }
+                        } catch (err) {
+                          toast.error('Lỗi khi mở cuộc trò chuyện.');
+                        }
+                      }}
+                    >
+                      <MessageSquare size={16} />
+                      <span>Trao đổi sau khám</span>
                     </button>
                   </div>
                 )}

@@ -1,0 +1,352 @@
+// src/containers/DoctorPortal/Messages/DoctorMessagesWorkspace.scss
+
+.doctor-messages-workspace {
+  display: flex;
+  height: calc(100vh - 120px);
+  min-height: 600px;
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  margin: 16px;
+
+  // ─────────────────────────────────────────────────────────────
+  // 1. MASTER PANE: CONVERSATION LIST
+  // ─────────────────────────────────────────────────────────────
+  .messages-master-pane {
+    width: 380px;
+    border-right: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    background: #fcfdfe;
+    flex-shrink: 0;
+
+    .master-header {
+      padding: 18px 18px 12px;
+      border-bottom: 1px solid #f1f5f9;
+
+      .master-title-row {
+        margin-bottom: 12px;
+
+        .title-with-badge {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+
+          h3 {
+            margin: 0;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #0f172a;
+          }
+
+          .total-badge {
+            background: #e0f2fe;
+            color: #0284c7;
+            font-size: 0.76rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 999px;
+          }
+        }
+      }
+
+      .master-search-bar {
+        position: relative;
+        margin-bottom: 10px;
+
+        .search-icon {
+          position: absolute;
+          left: 12px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #94a3b8;
+        }
+
+        input {
+          width: 100%;
+          padding: 8px 12px 8px 36px;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          font-size: 0.85rem;
+          background: #ffffff;
+          outline: none;
+          transition: border-color 0.2s;
+
+          &:focus {
+            border-color: #0d9488;
+            box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.1);
+          }
+        }
+      }
+
+      .master-filter-tabs {
+        display: flex;
+        gap: 6px;
+
+        .filter-btn {
+          flex: 1;
+          background: #f1f5f9;
+          border: none;
+          padding: 5px 8px;
+          border-radius: 6px;
+          font-size: 0.76rem;
+          font-weight: 600;
+          color: #64748b;
+          cursor: pointer;
+          transition: all 0.2s;
+          position: relative;
+
+          &:hover {
+            background: #e2e8f0;
+            color: #1e293b;
+          }
+
+          &.is-active {
+            background: #0d9488;
+            color: #ffffff;
+          }
+
+          .unread-dot {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 6px;
+            height: 6px;
+            background: #ef4444;
+            border-radius: 50%;
+          }
+        }
+      }
+    }
+
+    .conversations-scroll-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+
+      .conv-loading-state,
+      .conv-empty-state {
+        padding: 40px 16px;
+        text-align: center;
+        color: #94a3b8;
+        font-size: 0.86rem;
+
+        svg {
+          margin-bottom: 8px;
+          opacity: 0.6;
+        }
+      }
+
+      .text-teal {
+        color: #0d9488;
+        margin-right: 8px;
+      }
+
+      .conversation-item-card {
+        display: flex;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        margin-bottom: 6px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        border: 1px solid transparent;
+
+        &:hover {
+          background: #f1f5f9;
+        }
+
+        &.is-selected {
+          background: #f0fdfa;
+          border-color: #99f6e4;
+        }
+
+        .item-avatar {
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          background: #e2e8f0;
+          flex-shrink: 0;
+          overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+          }
+
+          .avatar-fallback {
+            color: #64748b;
+          }
+        }
+
+        .item-body {
+          flex: 1;
+          min-width: 0;
+
+          .item-top-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 3px;
+
+            .item-patient-name {
+              margin: 0;
+              font-size: 0.92rem;
+              font-weight: 600;
+              color: #1e293b;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+
+            .item-time {
+              font-size: 0.72rem;
+              color: #94a3b8;
+              flex-shrink: 0;
+            }
+          }
+
+          .item-sub-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+
+            .item-booking-tag {
+              font-size: 0.72rem;
+              color: #64748b;
+            }
+
+            .item-status-tag {
+              font-size: 0.68rem;
+              font-weight: 600;
+              padding: 1px 6px;
+              border-radius: 4px;
+
+              &.tag-open {
+                background: #ecfdf5;
+                color: #059669;
+              }
+
+              &.tag-closed {
+                background: #f1f5f9;
+                color: #64748b;
+              }
+            }
+          }
+
+          .item-bottom-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+
+            .item-snippet {
+              margin: 0;
+              font-size: 0.8rem;
+              color: #64748b;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              line-height: 1.3;
+            }
+
+            .item-unread-badge {
+              background: #0d9488;
+              color: #ffffff;
+              font-size: 0.68rem;
+              font-weight: 700;
+              min-width: 18px;
+              height: 18px;
+              border-radius: 9px;
+              padding: 0 5px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              flex-shrink: 0;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // 2. DETAIL PANE: ACTIVE CHAT OR PLACEHOLDER
+  // ─────────────────────────────────────────────────────────────
+  .messages-detail-pane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #f8fafc;
+    min-width: 0;
+
+    .active-chat-wrapper {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+
+      .chat-window-container {
+        height: 100%;
+        border-radius: 0;
+        box-shadow: none;
+      }
+    }
+
+    .no-chat-selected-placeholder {
+      margin: auto;
+      text-align: center;
+      max-width: 420px;
+      padding: 40px 20px;
+      color: #64748b;
+
+      .placeholder-icon-wrap {
+        width: 80px;
+        height: 80px;
+        background: #f0fdfa;
+        color: #0d9488;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 16px;
+      }
+
+      h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 8px;
+      }
+
+      p {
+        font-size: 0.88rem;
+        line-height: 1.6;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .doctor-messages-workspace {
+    flex-direction: column;
+    height: auto;
+
+    .messages-master-pane {
+      width: 100%;
+      height: 300px;
+      border-right: none;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .messages-detail-pane {
+      height: 500px;
+    }
+  }
+}

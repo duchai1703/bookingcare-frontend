@@ -1,0 +1,112 @@
+// src/containers/PatientPortal/PatientChatModal.scss
+
+.patient-chat-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeInModal 0.2s ease-out;
+
+  .patient-chat-modal-dialog {
+    width: 100%;
+    max-width: 650px;
+    height: 80vh;
+    max-height: 700px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: slideUpModal 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+
+    .chat-modal-loading {
+      margin: auto;
+      text-align: center;
+      padding: 40px 20px;
+      color: #64748b;
+
+      .text-teal {
+        color: #0d9488 !important;
+        width: 2.5rem;
+        height: 2.5rem;
+        margin-bottom: 16px;
+      }
+
+      p {
+        font-size: 0.95rem;
+        font-weight: 500;
+      }
+    }
+
+    .chat-modal-error {
+      margin: auto;
+      text-align: center;
+      padding: 40px 24px;
+      max-width: 400px;
+
+      .error-icon-wrap {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background-color: #fee2e2;
+        color: #ef4444;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 16px;
+      }
+
+      h4 {
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 8px;
+      }
+
+      p {
+        font-size: 0.9rem;
+        color: #64748b;
+        line-height: 1.5;
+        margin-bottom: 20px;
+      }
+
+      .btn-close-error {
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+        padding: 8px 20px;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+
+        &:hover {
+          background: #e2e8f0;
+          color: #0f172a;
+        }
+      }
+    }
+  }
+}
+
+@keyframes fadeInModal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUpModal {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

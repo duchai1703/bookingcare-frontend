@@ -41,6 +41,7 @@ import DoctorProfile from './System/Doctor/DoctorProfile';
 import DoctorRevenue from './System/Doctor/DoctorRevenue';
 import DoctorScheduleWorkspace from './System/Doctor/DoctorScheduleWorkspace';
 import EncounterWorkspace from './System/Doctor/EncounterWorkspace';
+import DoctorMessagesWorkspace from './DoctorPortal/Messages/DoctorMessagesWorkspace';
 
 // [Phase C] Admin new pages
 import MedicalCatalogManage from './System/Admin/MedicalCatalogManage';
@@ -274,6 +275,8 @@ const App = () => {
             <Route path="doctor-profile" element={<DoctorProfile />} />
             <Route path="doctor-revenue" element={<DoctorRevenue />} />
             <Route path="encounter/:bookingId" element={<EncounterWorkspace />} />
+            <Route path="messages" element={<DoctorMessagesWorkspace />} />
+            <Route path="messages/:conversationId" element={<DoctorMessagesWorkspace />} />
           </Route>
         </Route>
 

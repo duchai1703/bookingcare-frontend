@@ -23,6 +23,8 @@ import CommonUtils from '../../utils/CommonUtils';
 import RatingModal from './RatingModal';
 import AppointmentQrModal from './AppointmentQrModal';
 import SmartRescheduleModal from './SmartRescheduleModal';
+import PatientChatModal from './PatientChatModal';
+
 import './AppointmentHistory.scss';
 
 // Bộ lọc trạng thái
@@ -54,6 +56,11 @@ const AppointmentHistory = () => {
   const [rescheduleModal, setRescheduleModal] = useState({ isOpen: false, bookingId: null, booking: null });
   const [detailBooking, setDetailBooking] = useState(null);
   const [showQrModal, setShowQrModal] = useState(false);
+  const [chatModal, setChatModal] = useState({ isOpen: false, booking: null });
+
+  const handleOpenChat = (booking) => {
+    setChatModal({ isOpen: true, booking });
+  };
 
   // Attachments state
   const [attachmentsList, setAttachmentsList] = useState([]);
@@ -669,24 +676,35 @@ const AppointmentHistory = () => {
                     )
                   )}
 
-                  {/* Nút đánh giá: chỉ hiện khi S3 */}
+                  {/* Nút đánh giá & Nhắn tin: chỉ hiện khi S3 */}
                   {b.statusId === 'S3' && (
-                    b.isReviewed ? (
-                      <span className="reviewed-badge">
-                        <i className="fas fa-check" /> Đã đánh giá
-                      </span>
-                    ) : (
+                    <>
+                      {b.isReviewed ? (
+                        <span className="reviewed-badge">
+                          <i className="fas fa-check" /> Đã đánh giá
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn-card-action btn-card-review"
+                          onClick={() => setRatingModal({
+                            isOpen: true,
+                            bookingData: { bookingId: b.id, doctorId: b.doctorId },
+                          })}
+                        >
+                          <i className="fas fa-star" /> Đánh giá
+                        </button>
+                      )}
+
                       <button
                         type="button"
-                        className="btn-card-action btn-card-review"
-                        onClick={() => setRatingModal({
-                          isOpen: true,
-                          bookingData: { bookingId: b.id, doctorId: b.doctorId },
-                        })}
+                        className="btn-card-action btn-card-chat"
+                        onClick={() => handleOpenChat(b)}
+                        title="Nhắn tin trao đổi sau khám với bác sĩ"
                       >
-                        <i className="fas fa-star" /> Đánh giá bác sĩ
+                        <i className="fas fa-comments" /> Nhắn tin với bác sĩ
                       </button>
-                    )
+                    </>
                   )}
                 </div>
               </div>
@@ -783,6 +801,16 @@ const AppointmentHistory = () => {
                           Đánh giá
                         </button>
                       )}
+                      {b.statusId === 'S3' && (
+                        <button
+                          type="button"
+                          className="btn-tbl-chat"
+                          onClick={() => handleOpenChat(b)}
+                          title="Nhắn tin với bác sĩ"
+                        >
+                          Nhắn tin
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -838,6 +866,18 @@ const AppointmentHistory = () => {
                     <i className="fas fa-qrcode" />
                     <span>Mã QR</span>
                   </button>
+
+                  {detailBooking.statusId === 'S3' && (
+                    <button
+                      type="button"
+                      className="btn-modal-chat"
+                      onClick={() => handleOpenChat(detailBooking)}
+                      title="Nhắn tin trao đổi sau khám với bác sĩ"
+                    >
+                      <i className="fas fa-comments" />
+                      <span>Nhắn tin với bác sĩ</span>
+                    </button>
+                  )}
                 </div>
               </div>
               <button
@@ -1327,6 +1367,15 @@ const AppointmentHistory = () => {
           fetchBookings();
           setActiveTab('upcoming');
         }}
+      />
+
+      {/* ═══════════════════════════════════════════════════════════
+          MODAL NHẮN TIN SAU KHÁM VỚI BÁC SĨ (S3)
+      ═══════════════════════════════════════════════════════════ */}
+      <PatientChatModal
+        isOpen={chatModal.isOpen}
+        onClose={() => setChatModal({ isOpen: false, booking: null })}
+        booking={chatModal.booking}
       />
     </div>
   );

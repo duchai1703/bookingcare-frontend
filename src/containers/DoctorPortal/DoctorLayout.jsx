@@ -25,6 +25,8 @@ import {
   Clock,
   ShieldCheck,
   Building2,
+  MessageSquare,
+
 } from 'lucide-react';
 import { getMyPractices } from '../../services/doctorService';
 import './DoctorLayout.scss';
@@ -43,6 +45,11 @@ const DOCTOR_NAV_GROUPS = [
         icon: CalendarCheck,
         label: 'Lịch trực & Ca khám',
         to: '/doctor-dashboard/manage-schedule',
+      },
+      {
+        icon: MessageSquare,
+        label: 'Tin nhắn sau khám',
+        to: '/doctor-dashboard/messages',
       },
     ],
   },
