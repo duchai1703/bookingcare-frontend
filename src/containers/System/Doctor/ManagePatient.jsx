@@ -259,7 +259,7 @@ const ManagePatient = () => {
         toast.error(res?.message || 'Không thể hủy lịch!');
       }
     } catch (err) {
-      toast.error('Lỗi khi thực hiện hủy lịch hẹn!');
+      toast.error(err?.response?.data?.message || 'Lỗi khi thực hiện hủy lịch hẹn!');
     }
   };
 
