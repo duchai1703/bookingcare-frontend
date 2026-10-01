@@ -78,6 +78,9 @@ const PatientChatModal = ({ isOpen, onClose, booking }) => {
           <ChatWindow
             conversation={conversation}
             onClose={onClose}
+            onStatusChange={(newStatus) => {
+              setConversation((prev) => (prev ? { ...prev, status: newStatus } : prev));
+            }}
             isDrawer={false}
           />
         )}
