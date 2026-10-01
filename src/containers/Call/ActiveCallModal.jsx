@@ -1,6 +1,8 @@
 // src/containers/Call/ActiveCallModal.jsx
 import React, { useRef, useEffect } from 'react';
+import { Mic, MicOff, Video, VideoOff, PhoneOff } from 'lucide-react';
 import { useCall } from './CallContext';
+import Avatar from '../../components/Common/Avatar';
 import './Call.scss';
 
 const formatDuration = (seconds) => {
@@ -50,13 +52,11 @@ const ActiveCallModal = () => {
   }, [remoteStream]);
 
   // [FIX] Attach remote stream to hidden audio element — ensures audio playback
-  // for BOTH audio-only and video calls. Without this, audio-only calls have
-  // NO media element to output the remote peer's audio.
+  // for BOTH audio-only and video calls.
   useEffect(() => {
     if (remoteAudioRef.current) {
       if (remoteStream) {
         remoteAudioRef.current.srcObject = remoteStream;
-        // Ensure playback starts (browsers may block autoplay)
         remoteAudioRef.current.play().catch(() => {});
       } else {
         remoteAudioRef.current.srcObject = null;
@@ -105,7 +105,7 @@ const ActiveCallModal = () => {
   return (
     <div className="active-call-modal-overlay">
       <div className="active-call-container">
-        {/* [FIX] Hidden audio element — always plays remote audio stream */}
+        {/* Hidden audio element — always plays remote audio stream */}
         <audio
           ref={remoteAudioRef}
           autoPlay
@@ -117,13 +117,11 @@ const ActiveCallModal = () => {
         {/* Top Header Bar */}
         <div className="call-top-bar">
           <div className="partner-info">
-            {partnerAvatar ? (
-              <img src={partnerAvatar} alt={partnerName} className="avatar-sm" />
-            ) : (
-              <div className="avatar-sm-placeholder">
-                {partnerName ? partnerName.charAt(0).toUpperCase() : 'U'}
-              </div>
-            )}
+            <Avatar
+              src={partnerAvatar}
+              name={partnerName || 'User'}
+              size={40}
+            />
             <div className="name-wrapper">
               <h4 className="partner-name-display">{partnerName || 'Đối tác'}</h4>
               <p className="call-subtitle">
@@ -155,15 +153,14 @@ const ActiveCallModal = () => {
                   callStatus === 'CONNECTED' ? 'talking' : ''
                 }`}
               >
-                {partnerAvatar ? (
-                  <img src={partnerAvatar} alt={partnerName} className="avatar-huge" />
-                ) : (
-                  <div className="avatar-huge-placeholder">
-                    {partnerName ? partnerName.charAt(0).toUpperCase() : 'U'}
-                  </div>
-                )}
+                <Avatar
+                  src={partnerAvatar}
+                  name={partnerName || 'User'}
+                  size={104}
+                  pulseRing={callStatus === 'RINGING'}
+                />
               </div>
-              <h3 style={{ color: '#f8fafc', margin: '8px 0 0' }}>{partnerName}</h3>
+              <h3 style={{ color: '#f8fafc', margin: '12px 0 4px', fontSize: '1.25rem' }}>{partnerName}</h3>
               <p style={{ color: '#94a3b8', fontSize: '14px', margin: 0 }}>
                 {callStatus === 'RINGING' ? 'Đang đợi trả lời...' : 'Cuộc gọi thoại bảo mật P2P'}
               </p>
@@ -193,7 +190,7 @@ const ActiveCallModal = () => {
                 />
               ) : (
                 <div className="local-video-off">
-                  <i className="fas fa-video-slash" />
+                  <VideoOff size={20} />
                   <span className="ml-1">Camera tắt</span>
                 </div>
               )}
@@ -211,8 +208,9 @@ const ActiveCallModal = () => {
             onClick={toggleMic}
             title={isAudioMuted ? 'Bật micro' : 'Tắt micro'}
             id="btn-toggle-mic"
+            aria-label={isAudioMuted ? 'Bật micro' : 'Tắt micro'}
           >
-            <i className={`fas ${isAudioMuted ? 'fa-microphone-slash' : 'fa-microphone'}`} />
+            {isAudioMuted ? <MicOff size={20} /> : <Mic size={20} />}
           </button>
 
           {/* Toggle Camera */}
@@ -223,8 +221,9 @@ const ActiveCallModal = () => {
               onClick={toggleCamera}
               title={isVideoMuted ? 'Bật camera' : 'Tắt camera'}
               id="btn-toggle-camera"
+              aria-label={isVideoMuted ? 'Bật camera' : 'Tắt camera'}
             >
-              <i className={`fas ${isVideoMuted ? 'fa-video-slash' : 'fa-video'}`} />
+              {isVideoMuted ? <VideoOff size={20} /> : <Video size={20} />}
             </button>
           )}
 
@@ -235,8 +234,9 @@ const ActiveCallModal = () => {
             onClick={endActiveCall}
             title="Kết thúc cuộc gọi"
             id="btn-end-active-call"
+            aria-label="Kết thúc cuộc gọi"
           >
-            <i className="fas fa-phone-slash" />
+            <PhoneOff size={22} />
           </button>
         </div>
       </div>

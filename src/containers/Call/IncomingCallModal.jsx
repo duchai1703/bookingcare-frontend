@@ -1,6 +1,8 @@
 // src/containers/Call/IncomingCallModal.jsx
 import React from 'react';
+import { Phone, PhoneOff, Video } from 'lucide-react';
 import { useCall } from './CallContext';
+import Avatar from '../../components/Common/Avatar';
 import './Call.scss';
 
 const IncomingCallModal = () => {
@@ -20,54 +22,59 @@ const IncomingCallModal = () => {
   const roleLabel = callerRole === 'R2' ? 'Bác sĩ' : 'Bệnh nhân';
 
   return (
-    <div className="incoming-call-modal-overlay">
+    <div className="incoming-call-modal-overlay" role="dialog" aria-modal="true" aria-label="Cuộc gọi đến">
       <div className="incoming-call-card">
+        {/* Caller Avatar with Pulse Ring */}
         <div className="caller-avatar-wrapper">
-          <div className="avatar-pulse-ring" />
-          {callerAvatar ? (
-            <img src={callerAvatar} alt={callerName} className="caller-avatar" />
-          ) : (
-            <div className="avatar-placeholder">
-              {callerName ? callerName.charAt(0).toUpperCase() : 'U'}
-            </div>
-          )}
-          <div className="call-type-badge">
-            <i className={`fas ${isVideo ? 'fa-video' : 'fa-phone-alt'}`} />
-          </div>
+          <Avatar
+            src={callerAvatar}
+            name={callerName || 'User'}
+            size={104}
+            pulseRing={true}
+            status="ringing"
+          />
         </div>
 
+        {/* Caller Identity */}
         <h3 className="caller-name">{callerName || 'Người dùng'}</h3>
         <p className="caller-role-booking">
           {roleLabel} • Lịch khám #{bookingId}
         </p>
-        <span className="call-type-label">
-          <i className={`fas ${isVideo ? 'fa-video' : 'fa-phone-alt'} mr-1`} />
-          {isVideo ? 'Cuộc gọi Video sau khám' : 'Cuộc gọi Thoại sau khám'}
-        </span>
 
+        {/* Call Type Badge (Isolated block with clear spacing) */}
+        <div className="call-type-pill">
+          {isVideo ? <Video size={16} className="pill-icon" /> : <Phone size={16} className="pill-icon" />}
+          <span className="pill-text">
+            {isVideo ? 'Cuộc gọi video sau khám' : 'Cuộc gọi thoại sau khám'}
+          </span>
+        </div>
+
+        {/* Action Buttons: Reject (Left) & Accept (Right) */}
         <div className="actions-row">
+          {/* Reject Call */}
           <button
             type="button"
             className="btn-call-action reject"
             onClick={rejectIncomingCall}
             id="btn-reject-incoming-call"
-            title="Từ chối cuộc gọi"
+            aria-label="Từ chối cuộc gọi"
           >
             <div className="action-circle reject">
-              <i className="fas fa-phone-slash" />
+              <PhoneOff size={28} />
             </div>
             <span className="action-text">Từ chối</span>
           </button>
 
+          {/* Accept Call */}
           <button
             type="button"
             className="btn-call-action accept"
             onClick={acceptIncomingCall}
             id="btn-accept-incoming-call"
-            title="Trả lời cuộc gọi"
+            aria-label="Trả lời cuộc gọi"
           >
             <div className="action-circle accept">
-              <i className={`fas ${isVideo ? 'fa-video' : 'fa-phone-alt'}`} />
+              {isVideo ? <Video size={28} /> : <Phone size={28} />}
             </div>
             <span className="action-text">Trả lời</span>
           </button>
