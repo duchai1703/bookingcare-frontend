@@ -97,13 +97,17 @@ import Loading from '../components/Loading/Loading';
 // [Phase 12] AI Chatbot — Floating widget
 import AIChatbot from './Patient/AIChatbot/AIChatbot';
 
+// [WebRTC 1-1 Audio/Video Call Manager]
+import { CallProvider } from './Call/CallContext';
+
 import './App.scss';
 
 const App = () => {
   return (
-    <div className="app-container">
-      {/* Loading spinner overlay */}
-      <Loading />
+    <CallProvider>
+      <div className="app-container">
+        {/* Loading spinner overlay */}
+        <Loading />
 
       <Routes>
         {/* ===== PUBLIC ROUTES ===== */}
@@ -308,6 +312,7 @@ const App = () => {
       {/* [Phase 12] AI Chatbot — Floating widget, render ngoài Routes */}
       <AIChatbot />
     </div>
+  </CallProvider>
   );
 };
 
