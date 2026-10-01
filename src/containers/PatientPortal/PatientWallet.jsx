@@ -104,28 +104,45 @@ const PatientWallet = () => {
 
   // 3. Kiểm tra query param trả về từ VNPay
   useEffect(() => {
-    const isWalletDeposit = searchParams.get('type') === 'wallet_deposit';
-    const txnRef = searchParams.get('txnRef') || searchParams.get('vnp_TxnRef');
-    const responseCode = searchParams.get('vnp_ResponseCode');
+    const txnRef = searchParams.get('vnp_TxnRef') || searchParams.get('txnRef');
+    const isVnpayReturn =
+      (searchParams.has('vnp_SecureHash') || searchParams.has('vnp_ResponseCode')) &&
+      txnRef &&
+      (txnRef.startsWith('WAL_DEP_') || searchParams.get('type') === 'wallet_deposit');
 
-    if (isWalletDeposit && txnRef) {
-      const isSuccess = responseCode === '00';
-      setReturnNotice({
-        isSuccess,
-        txnRef,
-        message: isSuccess
-          ? 'Nạp tiền vào ví BookingCare thành công! Số dư khả dụng của bạn đã được cập nhật ngay lập tức.'
-          : 'Giao dịch nạp tiền qua VNPay không thành công hoặc đã bị hủy.',
-      });
+    if (isVnpayReturn) {
+      const allParams = Object.fromEntries(searchParams.entries());
 
-      // Reload ví để cập nhật số dư mới nhất
-      fetchWallet();
-      fetchTransactions(1, 'ALL');
+      // Dọn dẹp query param ngay để URL sạch sẽ và không bị gọi lặp lại khi render
+      setSearchParams(new URLSearchParams(), { replace: true });
 
-      // Dọn dẹp query param để URL sạch sẽ
-      searchParams.delete('type');
-      searchParams.delete('txnRef');
-      setSearchParams(searchParams, { replace: true });
+      // Xác thực chữ ký và kích hoạt cộng tiền tức thì (kể cả khi không chạy ngrok)
+      verifyVNPayDepositReturn(allParams)
+        .then((res) => {
+          const resData = res?.data;
+          const isSuccess = resData?.errCode === 0 && resData?.data?.isSuccess;
+
+          setReturnNotice({
+            isSuccess,
+            txnRef,
+            message: isSuccess
+              ? 'Nạp tiền vào ví BookingCare thành công! Số dư khả dụng của bạn đã được cập nhật ngay lập tức.'
+              : (resData?.data?.message || resData?.errMessage || 'Giao dịch nạp tiền qua VNPay không thành công hoặc đã bị hủy.'),
+          });
+
+          fetchWallet();
+          fetchTransactions(1, 'ALL');
+        })
+        .catch((err) => {
+          console.error('Verify return error:', err);
+          setReturnNotice({
+            isSuccess: false,
+            txnRef,
+            message: 'Lỗi kết nối khi xác thực giao dịch với máy chủ.',
+          });
+          fetchWallet();
+          fetchTransactions(1, 'ALL');
+        });
     }
   }, [searchParams, setSearchParams, fetchWallet, fetchTransactions]);
 
