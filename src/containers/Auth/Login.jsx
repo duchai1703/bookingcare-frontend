@@ -1,12 +1,14 @@
 // src/containers/Auth/Login.jsx
 // Trang đăng nhập — SRS REQ-AU-001, 007, 009
 // [Phase 9.3] Thêm link Đăng ký + Quên MK + Open Redirect Protection
-import React, { useState, useEffect } from 'react';
+// [Fix Multi-Tab] Cho phép đăng nhập tài khoản khác khi đã có phiên đăng nhập từ tab khác
+import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { FormattedMessage, useIntl } from 'react-intl';
-import { loginUser, clearLoginError } from '../../redux/slices/userSlice';
+import { loginUser, clearLoginError, processLogout } from '../../redux/slices/userSlice';
 import { USER_ROLE, path } from '../../utils/constants';
+import chatSocketService from '../../services/chatSocketService';
 import './Login.scss';
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -38,17 +40,32 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Redirect nếu đã login — SRS REQ-AU-005
-  // [Phase 9.5] Luồng: DoctorSchedule redirect → /login?redirect=/doctor/123
-  // Sau khi login thành công → useEffect chạy → lấy ?redirect → validate → navigate CHÍNH XÁC về trang cũ
+  // [Fix Multi-Tab] Track whether user wants to switch accounts
+  // When true, we show the login form even if already logged in
+  const [wantsSwitchAccount, setWantsSwitchAccount] = useState(false);
+  // Track if the current login was initiated by THIS form submission (not rehydrated)
+  const justLoggedInRef = useRef(false);
+
+  // [Fix Multi-Tab] Auto-detect switchAccount query param
+  // URL: /login?switchAccount=true → auto-logout and show login form
   useEffect(() => {
-    if (isLoggedIn && userInfo) {
-      // [Phase 9.5] Lấy redirect URL từ query params (khi bị chặn từ DoctorSchedule hoặc PrivateRoute)
-      // validateRedirectUrl() đảm bảo Open Redirect Prevention — chỉ chấp nhận relative path
+    if (searchParams.get('switchAccount') === 'true') {
+      chatSocketService.disconnect();
+      dispatch(processLogout());
+      setWantsSwitchAccount(true);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Redirect nếu đã login — SRS REQ-AU-005
+  // [Fix Multi-Tab] Chỉ redirect khi user THỰC SỰ login từ form này (justLoggedInRef),
+  // KHÔNG redirect nếu state được rehydrate từ tab khác
+  useEffect(() => {
+    if (isLoggedIn && userInfo && justLoggedInRef.current) {
+      justLoggedInRef.current = false; // Reset flag
+
       const redirectTo = validateRedirectUrl(searchParams.get('redirect'));
 
       if (redirectTo) {
-        // Redirect CHÍNH XÁC về trang Chi tiết Bác sĩ (hoặc bất kỳ trang nội bộ nào)
         navigate(redirectTo, { replace: true });
         return;
       }
@@ -79,13 +96,31 @@ const Login = () => {
 
     setIsSubmitting(true);
     try {
+      // [Fix Multi-Tab] Nếu đang có phiên đăng nhập cũ → logout trước
+      if (isLoggedIn) {
+        chatSocketService.disconnect();
+        dispatch(processLogout());
+        // Chờ 1 tick để Redux state cập nhật
+        await new Promise((r) => setTimeout(r, 50));
+      }
+
+      justLoggedInRef.current = true; // Mark that THIS form initiated the login
       await dispatch(loginUser({ email, password })).unwrap();
+      setWantsSwitchAccount(false);
       // Redirect sẽ được xử lý bởi useEffect ở trên
     } catch {
+      justLoggedInRef.current = false;
       // Lỗi đã được lưu vào loginError qua Redux rejected
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // [Fix Multi-Tab] Handler to switch accounts
+  const handleSwitchAccount = () => {
+    chatSocketService.disconnect();
+    dispatch(processLogout());
+    setWantsSwitchAccount(true);
   };
 
   // Xóa lỗi khi user gõ lại
@@ -95,6 +130,64 @@ const Login = () => {
       dispatch(clearLoginError());
     }
   };
+
+  // [Fix Multi-Tab] Nếu đã đăng nhập VÀ user chưa chọn switch → hiển thị "Already logged in" UI
+  // Điều này xảy ra khi user mở /login ở tab mới trong khi tab cũ đã đăng nhập
+  if (isLoggedIn && userInfo && !wantsSwitchAccount) {
+    const getRoleDashboard = () => {
+      switch (userInfo.roleId) {
+        case USER_ROLE.ADMIN: return '/system/dashboard';
+        case USER_ROLE.DOCTOR: return '/doctor-dashboard/manage-patient';
+        default: return '/';
+      }
+    };
+    const getRoleName = () => {
+      switch (userInfo.roleId) {
+        case USER_ROLE.ADMIN: return 'Admin';
+        case USER_ROLE.DOCTOR: return 'Bác sĩ';
+        default: return 'Bệnh nhân';
+      }
+    };
+
+    return (
+      <div className="login-background">
+        <div className="login-container">
+          <div className="login-form" style={{ textAlign: 'center' }}>
+            <h2 className="login-title">
+              <i className="fas fa-user-check" /> Đã đăng nhập
+            </h2>
+            <div style={{ margin: '20px 0', color: '#555', lineHeight: 1.6 }}>
+              <p>Bạn đang đăng nhập với tài khoản:</p>
+              <p style={{ fontWeight: 700, fontSize: '1.1rem', color: '#45c3d2' }}>
+                {userInfo.email || `${userInfo.firstName || ''} ${userInfo.lastName || ''}`.trim()}
+              </p>
+              <p style={{ fontSize: '0.9rem', color: '#888' }}>
+                ({getRoleName()})
+              </p>
+            </div>
+            <button
+              className="login-btn"
+              onClick={() => navigate(getRoleDashboard(), { replace: true })}
+              style={{ marginBottom: '12px' }}
+            >
+              <i className="fas fa-arrow-right" /> Tiếp tục vào hệ thống
+            </button>
+            <button
+              className="login-btn"
+              onClick={handleSwitchAccount}
+              style={{
+                background: 'transparent',
+                color: '#45c3d2',
+                border: '2px solid #45c3d2',
+              }}
+            >
+              <i className="fas fa-exchange-alt" /> Đăng nhập tài khoản khác
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="login-background">

@@ -392,7 +392,7 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price, select
         address: patientData.address,
         reason: reason.trim(),
         birthday: patientData.birthday,
-        gender: patientData.gender,
+        gender: patientData.gender || undefined,
         language: language,
         // Multi-Facility Context
         clinicId: selectedPractice?.clinicId || null,
@@ -425,7 +425,12 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price, select
         setUiState('idle');
       }
     } catch (err) {
-      toast.error('Lỗi kết nối máy chủ!');
+      const errorMsg =
+        err.response?.data?.message ||
+        err.response?.data?.errMessage ||
+        err.message ||
+        'Lỗi kết nối máy chủ!';
+      toast.error(errorMsg);
       setUiState('idle');
     }
   };
