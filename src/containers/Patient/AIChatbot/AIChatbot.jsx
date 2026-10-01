@@ -6,7 +6,7 @@
 
 import React, { useState, useRef, useCallback, useEffect, memo } from 'react';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { MessageCircle, Trash2, X, ChevronDown } from 'lucide-react';
 import MessageItem from './MessageItem';
 import ChatInput from './ChatInput';
@@ -39,6 +39,7 @@ class ChatErrorBoundary extends React.Component {
 const AIChatbot = memo(() => {
   const intl = useIntl();
   const navigate = useNavigate();
+  const location = useLocation();
   const handleLoginRedirect = useCallback(() => {
     setIsOpen(false);
     navigate('/login');
@@ -48,6 +49,12 @@ const AIChatbot = memo(() => {
   const userInfo = useSelector((state) => state.user.userInfo);
   const accessToken = useSelector((state) => state.user.accessToken);
   const language = useSelector((state) => state.app.language);
+
+  // Do not render patient booking chatbot on Doctor Portal routes or for doctors
+  const isDoctorRoute = location.pathname.startsWith('/doctor') || userInfo?.roleId === 'R2';
+  if (isDoctorRoute) {
+    return null;
+  }
 
   const userId = userInfo?.id;
   const { messages, setMessages, addMessage, clearMessages, saveMessages } =
