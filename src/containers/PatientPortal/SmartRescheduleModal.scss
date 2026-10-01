@@ -1,0 +1,610 @@
+// src/containers/PatientPortal/SmartRescheduleModal.scss
+// Giao diện Đổi lịch khám Thông minh 1-Click chuẩn y tế
+
+.smart-reschedule-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeInModal 0.25s ease-out;
+}
+
+@keyframes fadeInModal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.smart-reschedule-modal {
+  background: #ffffff;
+  width: 100%;
+  max-width: 780px;
+  max-height: 90vh;
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideUpModal 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+
+  @keyframes slideUpModal {
+    from {
+      opacity: 0;
+      transform: translateY(24px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  // Header
+  .reschedule-modal-header {
+    background: linear-gradient(135deg, #087f8c 0%, #065f69 100%);
+    color: #ffffff;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: relative;
+
+    .header-icon-box {
+      width: 48px;
+      height: 48px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      flex-shrink: 0;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+    }
+
+    .header-text {
+      flex: 1;
+
+      h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+
+      p {
+        margin: 4px 0 0 0;
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.85);
+        line-height: 1.35;
+      }
+    }
+
+    .btn-close-modal {
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 1.25rem;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 8px;
+      transition: all 0.2s;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+      }
+    }
+  }
+
+  // Loading
+  .reschedule-modal-loading {
+    padding: 60px 20px;
+    text-align: center;
+    color: #64748b;
+
+    p {
+      margin-top: 14px;
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+  }
+
+  // Body
+  .reschedule-modal-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+
+    // Cancellation Summary Card
+    .cancellation-summary-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+
+      @media (max-width: 640px) {
+        grid-template-columns: 1fr;
+      }
+
+      .summary-col-info {
+        display: flex;
+        gap: 12px;
+
+        .doc-avatar-box {
+          width: 56px;
+          height: 56px;
+          border-radius: 10px;
+          overflow: hidden;
+          background: #e2e8f0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #94a3b8;
+          font-size: 1.5rem;
+          flex-shrink: 0;
+
+          img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+          }
+        }
+
+        .doc-details {
+          h4 {
+            margin: 0;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #0f172a;
+          }
+
+          .specialty-label {
+            font-size: 0.8rem;
+            color: #64748b;
+            display: block;
+            margin: 2px 0 6px 0;
+          }
+
+          .old-time {
+            font-size: 0.82rem;
+            color: #475569;
+          }
+        }
+      }
+
+      .summary-col-reason {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 6px;
+
+        .reason-badge {
+          font-size: 0.78rem;
+          font-weight: 700;
+          color: #dc2626;
+          text-transform: uppercase;
+          letter-spacing: 0.03em;
+        }
+
+        .reason-content {
+          font-size: 0.85rem;
+          color: #334155;
+          font-style: italic;
+          background: #fff;
+          border: 1px dashed #fca5a5;
+          padding: 6px 10px;
+          border-radius: 6px;
+        }
+
+        .refund-guarantee-pill {
+          font-size: 0.8rem;
+          color: #059669;
+          background: #ecfdf5;
+          padding: 4px 10px;
+          border-radius: 6px;
+          display: inline-flex;
+          align-items: center;
+          align-self: flex-start;
+          font-weight: 500;
+        }
+      }
+    }
+
+    // Tabs
+    .doctor-choice-tabs {
+      display: flex;
+      gap: 10px;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 8px;
+
+      .tab-btn {
+        background: transparent;
+        border: none;
+        padding: 8px 14px;
+        border-radius: 8px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.2s;
+
+        &:hover {
+          color: #087f8c;
+          background: #f0fdfa;
+        }
+
+        &.active {
+          color: #087f8c;
+          background: #e6fffa;
+          box-shadow: 0 1px 3px rgba(8, 127, 140, 0.15);
+        }
+      }
+    }
+
+    // Schedule Picker Section
+    .schedule-picker-section {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+
+      .empty-slots-alert {
+        padding: 32px 20px;
+        text-align: center;
+        background: #f8fafc;
+        border-radius: 12px;
+        color: #64748b;
+
+        h5 {
+          font-size: 0.95rem;
+          font-weight: 700;
+          color: #334155;
+        }
+
+        p {
+          font-size: 0.85rem;
+          margin-top: 6px;
+        }
+      }
+
+      .field-label {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #334155;
+        margin-bottom: 8px;
+        display: block;
+      }
+
+      // Date pills
+      .date-pills-row {
+        .pills-scroll {
+          display: flex;
+          gap: 10px;
+          overflow-x: auto;
+          padding-bottom: 6px;
+
+          &::-webkit-scrollbar {
+            height: 4px;
+          }
+          &::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+          }
+
+          .date-pill {
+            flex-shrink: 0;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 8px 14px;
+            cursor: pointer;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            transition: all 0.2s;
+
+            .pill-day {
+              font-size: 0.82rem;
+              font-weight: 700;
+              color: #1e293b;
+              text-transform: capitalize;
+            }
+
+            .pill-count {
+              font-size: 0.72rem;
+              color: #087f8c;
+              font-weight: 600;
+            }
+
+            &:hover {
+              border-color: #087f8c;
+              background: #f8fafc;
+            }
+
+            &.active {
+              background: #087f8c;
+              border-color: #087f8c;
+
+              .pill-day, .pill-count {
+                color: #ffffff;
+              }
+            }
+          }
+        }
+      }
+
+      // Slots Grid
+      .slots-grid-section {
+        .slots-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+          gap: 10px;
+
+          .slot-card {
+            background: #ffffff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+
+            .slot-time {
+              font-size: 0.88rem;
+              font-weight: 700;
+              color: #0f172a;
+            }
+
+            .slot-capacity {
+              font-size: 0.72rem;
+              color: #64748b;
+              margin-top: 2px;
+            }
+
+            &:hover {
+              border-color: #087f8c;
+              transform: translateY(-2px);
+              box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            }
+
+            &.selected {
+              background: #f0fdfa;
+              border-color: #087f8c;
+              box-shadow: 0 0 0 2px rgba(8, 127, 140, 0.2);
+
+              .slot-time {
+                color: #087f8c;
+              }
+
+              .slot-capacity {
+                color: #0d9488;
+                font-weight: 600;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Alternative Doctors Section
+    .alt-doctors-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+
+      .section-hint {
+        font-size: 0.83rem;
+        color: #64748b;
+        margin: 0;
+      }
+
+      .alt-doctors-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        .alt-doctor-card {
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          padding: 14px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+
+          .alt-doc-header {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+
+            .alt-avatar {
+              width: 44px;
+              height: 44px;
+              border-radius: 50%;
+              overflow: hidden;
+              background: #e2e8f0;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: #94a3b8;
+
+              img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+              }
+            }
+
+            .alt-info {
+              flex: 1;
+
+              h5 {
+                margin: 0;
+                font-size: 0.92rem;
+                font-weight: 700;
+                color: #0f172a;
+              }
+
+              .alt-clinic {
+                font-size: 0.78rem;
+                color: #64748b;
+                display: block;
+              }
+
+              .alt-price {
+                font-size: 0.78rem;
+                color: #475569;
+              }
+            }
+          }
+
+          .alt-slots-list {
+            border-top: 1px dashed #cbd5e1;
+            padding-top: 8px;
+
+            .slots-title {
+              font-size: 0.75rem;
+              font-weight: 700;
+              color: #475569;
+              margin-bottom: 6px;
+              display: block;
+            }
+
+            .alt-chips-row {
+              display: flex;
+              gap: 8px;
+              flex-wrap: wrap;
+
+              .alt-slot-chip {
+                background: #ffffff;
+                border: 1px solid #cbd5e1;
+                border-radius: 6px;
+                padding: 4px 10px;
+                font-size: 0.78rem;
+                font-weight: 600;
+                color: #334155;
+                cursor: pointer;
+                transition: all 0.2s;
+
+                &:hover {
+                  border-color: #087f8c;
+                  color: #087f8c;
+                }
+
+                &.active {
+                  background: #087f8c;
+                  border-color: #087f8c;
+                  color: #ffffff;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Settlement Summary Box
+    .reschedule-settlement-box {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+
+      .settlement-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.85rem;
+        color: #475569;
+
+        &.highlight {
+          font-size: 0.95rem;
+          padding-top: 6px;
+          border-top: 1px dashed #cbd5e1;
+          margin-top: 4px;
+        }
+
+        .st-label {
+          display: flex;
+          align-items: center;
+        }
+
+        .st-val {
+          font-weight: 600;
+        }
+      }
+
+      .settlement-note {
+        margin-top: 4px;
+        font-size: 0.76rem;
+        color: #64748b;
+      }
+    }
+  }
+
+  // Footer
+  .reschedule-modal-footer {
+    padding: 16px 24px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+
+    .btn-cancel {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: #475569;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:hover:not(:disabled) {
+        background: #f1f5f9;
+        color: #0f172a;
+      }
+    }
+
+    .btn-confirm-reschedule {
+      background: linear-gradient(135deg, #087f8c 0%, #065f69 100%);
+      color: #ffffff;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.92rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      box-shadow: 0 4px 6px -1px rgba(8, 127, 140, 0.3);
+      transition: all 0.2s;
+
+      &:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 10px -1px rgba(8, 127, 140, 0.4);
+      }
+
+      &:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+        box-shadow: none;
+      }
+    }
+  }
+}

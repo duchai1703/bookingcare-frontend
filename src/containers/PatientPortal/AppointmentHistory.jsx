@@ -22,6 +22,7 @@ import { LANGUAGES, path } from '../../utils/constants';
 import CommonUtils from '../../utils/CommonUtils';
 import RatingModal from './RatingModal';
 import AppointmentQrModal from './AppointmentQrModal';
+import SmartRescheduleModal from './SmartRescheduleModal';
 import './AppointmentHistory.scss';
 
 // Bộ lọc trạng thái
@@ -50,6 +51,7 @@ const AppointmentHistory = () => {
   // Modals state
   const [cancelModal, setCancelModal] = useState({ isOpen: false, bookingId: null, booking: null, isCancelling: false });
   const [ratingModal, setRatingModal] = useState({ isOpen: false, bookingData: null });
+  const [rescheduleModal, setRescheduleModal] = useState({ isOpen: false, bookingId: null, booking: null });
   const [detailBooking, setDetailBooking] = useState(null);
   const [showQrModal, setShowQrModal] = useState(false);
 
@@ -378,7 +380,7 @@ const AppointmentHistory = () => {
   };
 
   // Render Status Badge
-  const renderStatusBadge = (statusId) => {
+  const renderStatusBadge = (statusId, booking = null) => {
     switch (statusId) {
       case 'S1':
         return (
@@ -402,6 +404,22 @@ const AppointmentHistory = () => {
           </span>
         );
       case 'S4':
+        if (booking?.cancellationType === 'DOCTOR') {
+          return (
+            <span className="appt-badge appt-badge--doctor-cancel">
+              <span className="badge-dot" />
+              Bác sĩ báo bận
+            </span>
+          );
+        }
+        if (booking?.cancellationType === 'ADMIN') {
+          return (
+            <span className="appt-badge appt-badge--admin-cancel">
+              <span className="badge-dot" />
+              Cơ sở y tế hủy
+            </span>
+          );
+        }
         return (
           <span className="appt-badge appt-badge--cancelled">
             <span className="badge-dot" />
@@ -525,7 +543,7 @@ const AppointmentHistory = () => {
                 {/* Header Card */}
                 <div className="card-top-bar">
                   <div className="badge-group">
-                    {renderStatusBadge(b.statusId)}
+                    {renderStatusBadge(b.statusId, b)}
                     {b.paymentStatus && renderPaymentBadge(b.paymentStatus, b)}
                   </div>
                   <span className="booking-code">#BK-{b.id}</span>
@@ -596,6 +614,20 @@ const AppointmentHistory = () => {
                       <span className="reason-text">{b.reason}</span>
                     </div>
                   )}
+
+                  {/* [Phase 2] Thông báo bác sĩ báo bận & Hoàn tiền ví */}
+                  {b.statusId === 'S4' && (b.cancellationType === 'DOCTOR' || b.cancellationType === 'ADMIN') && (
+                    <div className="doctor-cancel-notice">
+                      <div className="notice-reason">
+                        <i className="fas fa-user-clock me-1 text-danger" />
+                        <b>Bác sĩ báo bận:</b> <i>"{b.cancellationReason || 'Có lịch bận/sự cố đột xuất'}"</i>
+                      </div>
+                      <div className="notice-refund">
+                        <i className="fas fa-check-circle me-1 text-success" />
+                        Đã hoàn 100% ({CommonUtils.formatCurrency(b.refundAmount || b.bookingPrice)} ₫) vào Ví BookingCare
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Footer Action Buttons */}
@@ -617,6 +649,24 @@ const AppointmentHistory = () => {
                     >
                       <i className="fas fa-ban" /> Hủy lịch
                     </button>
+                  )}
+
+                  {/* [Phase 2] Nút đổi lịch khám thông minh: Hiện khi Bác sĩ báo bận */}
+                  {b.statusId === 'S4' && (b.cancellationType === 'DOCTOR' || b.cancellationType === 'ADMIN') && (
+                    b.rescheduledToBookingId ? (
+                      <span className="rescheduled-link-badge">
+                        <i className="fas fa-check-double text-teal me-1" />
+                        Đã đổi #BK-{b.rescheduledToBookingId}
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        className="btn-card-action btn-card-reschedule"
+                        onClick={() => setRescheduleModal({ isOpen: true, bookingId: b.id, booking: b })}
+                      >
+                        <i className="fas fa-calendar-check me-1" /> Đổi lịch khám
+                      </button>
+                    )
                   )}
 
                   {/* Nút đánh giá: chỉ hiện khi S3 */}
@@ -683,7 +733,7 @@ const AppointmentHistory = () => {
                   <td className="text-xs text-slate-500 font-mono">
                     {formatCreatedAt(b.createdAt)}
                   </td>
-                  <td>{renderStatusBadge(b.statusId)}</td>
+                  <td>{renderStatusBadge(b.statusId, b)}</td>
                   <td className="text-right">
                     <div className="table-actions-cell">
                       <button
@@ -703,6 +753,22 @@ const AppointmentHistory = () => {
                         >
                           Hủy
                         </button>
+                      )}
+                      {b.statusId === 'S4' && (b.cancellationType === 'DOCTOR' || b.cancellationType === 'ADMIN') && (
+                        b.rescheduledToBookingId ? (
+                          <span className="tbl-rescheduled-badge">
+                            Đã đổi #{b.rescheduledToBookingId}
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            className="btn-tbl-reschedule"
+                            onClick={() => setRescheduleModal({ isOpen: true, bookingId: b.id, booking: b })}
+                            title="Đổi lịch khám thông minh"
+                          >
+                            Đổi lịch
+                          </button>
+                        )
                       )}
                       {b.statusId === 'S3' && !b.isReviewed && (
                         <button
@@ -1093,6 +1159,26 @@ const AppointmentHistory = () => {
                   <i className="fas fa-ban" /> Hủy lịch hẹn này
                 </button>
               )}
+              {detailBooking.statusId === 'S4' && (detailBooking.cancellationType === 'DOCTOR' || detailBooking.cancellationType === 'ADMIN') && (
+                detailBooking.rescheduledToBookingId ? (
+                  <span className="rescheduled-link-badge">
+                    <i className="fas fa-check-double text-teal me-1" />
+                    Đã đổi sang ca #{detailBooking.rescheduledToBookingId}
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn-footer-reschedule"
+                    onClick={() => {
+                      const target = detailBooking;
+                      setDetailBooking(null);
+                      setRescheduleModal({ isOpen: true, bookingId: target.id, booking: target });
+                    }}
+                  >
+                    <i className="fas fa-calendar-plus me-1" /> Đổi lịch khám thông minh
+                  </button>
+                )
+              )}
               <button
                 type="button"
                 className="btn-footer-close"
@@ -1228,6 +1314,19 @@ const AppointmentHistory = () => {
         isOpen={showQrModal}
         onClose={() => setShowQrModal(false)}
         booking={detailBooking}
+      />
+
+      {/* ═══════════════════════════════════════════════════════════
+          [Phase 2] MODAL ĐỔI LỊCH KHÁM THÔNG MINH (1-CLICK RESCHEDULE)
+      ═══════════════════════════════════════════════════════════ */}
+      <SmartRescheduleModal
+        isOpen={rescheduleModal.isOpen}
+        bookingId={rescheduleModal.bookingId}
+        onClose={() => setRescheduleModal({ isOpen: false, bookingId: null, booking: null })}
+        onSuccess={() => {
+          fetchBookings();
+          setActiveTab('upcoming');
+        }}
       />
     </div>
   );

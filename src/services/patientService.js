@@ -95,4 +95,19 @@ export const deletePatientBankAccount = (id) => {
   return axiosInstance.delete(`/api/v1/patient/bank-accounts/${id}`);
 };
 
+// ═══════════════════════════════════════════════════════════════════════
+// [Phase 2] Smart Reschedule APIs (Đổi lịch khám thông minh 1-Click)
+// ═══════════════════════════════════════════════════════════════════════
+
+// Lấy các tùy chọn đổi lịch khám cho ca bị hủy do Bác sĩ báo bận
+export const getRescheduleOptions = (bookingId) => {
+  return axiosInstance.get(`/api/v1/patient/bookings/${bookingId}/reschedule-options`);
+};
+
+// Thực hiện đổi lịch khám thông minh bằng ví BookingCare
+export const rescheduleBooking = (bookingId, data) => {
+  return axiosInstance.post(`/api/v1/patient/bookings/${bookingId}/reschedule`, data);
+};
+
+
 

@@ -173,6 +173,28 @@ $border-color: #e2e8f0;
         background: #94a3b8;
       }
     }
+
+    &--doctor-cancel {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+      font-weight: 700;
+
+      .badge-dot {
+        background: #ef4444;
+      }
+    }
+
+    &--admin-cancel {
+      background: #fff7ed;
+      color: #9a3412;
+      border: 1px solid #ffedd5;
+      font-weight: 700;
+
+      .badge-dot {
+        background: #f97316;
+      }
+    }
   }
 
   .payment-tag {
@@ -398,6 +420,27 @@ $border-color: #e2e8f0;
             line-height: 1.3;
           }
         }
+
+        .doctor-cancel-notice {
+          background: #fef2f2;
+          border: 1px dashed #fca5a5;
+          border-radius: 8px;
+          padding: 8px 12px;
+          margin-top: 8px;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          font-size: 0.8rem;
+
+          .notice-reason {
+            color: #991b1b;
+          }
+
+          .notice-refund {
+            color: #065f46;
+            font-weight: 600;
+          }
+        }
       }
 
       .card-actions-footer {
@@ -440,6 +483,30 @@ $border-color: #e2e8f0;
             background: #fef2f2;
             border-color: #f87171;
           }
+        }
+
+        .btn-card-reschedule {
+          background: linear-gradient(135deg, #087f8c 0%, #065f69 100%);
+          border: none;
+          color: #ffffff;
+          font-weight: 700;
+
+          &:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(8, 127, 140, 0.35);
+          }
+        }
+
+        .rescheduled-link-badge {
+          background: #f0fdfa;
+          border: 1px solid #99f6e4;
+          color: #0d9488;
+          font-weight: 700;
+          font-size: 0.78rem;
+          padding: 6px 10px;
+          border-radius: 6px;
+          display: inline-flex;
+          align-items: center;
         }
 
         .btn-card-review {
@@ -562,6 +629,29 @@ $border-color: #e2e8f0;
           &:hover {
             background: #fee2e2;
           }
+        }
+
+        .btn-tbl-reschedule {
+          background: #087f8c;
+          border: 1px solid #087f8c;
+          color: #ffffff;
+          font-weight: 700;
+
+          &:hover {
+            background: #065f69;
+            border-color: #065f69;
+          }
+        }
+
+        .tbl-rescheduled-badge {
+          background: #f0fdfa;
+          border: 1px solid #99f6e4;
+          color: #0d9488;
+          font-weight: 700;
+          font-size: 0.75rem;
+          padding: 3px 8px;
+          border-radius: 6px;
+          display: inline-block;
         }
 
         .btn-tbl-review {
@@ -1205,6 +1295,27 @@ $border-color: #e2e8f0;
 
           &:hover {
             background: #fef2f2;
+          }
+        }
+
+        .btn-footer-reschedule {
+          padding: 8px 20px;
+          border-radius: 8px;
+          background: linear-gradient(135deg, #087f8c 0%, #065f69 100%);
+          border: none;
+          color: #ffffff;
+          font-weight: 700;
+          font-size: 0.85rem;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          box-shadow: 0 2px 4px rgba(8, 127, 140, 0.25);
+          transition: all 0.2s;
+
+          &:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(8, 127, 140, 0.35);
           }
         }
       }

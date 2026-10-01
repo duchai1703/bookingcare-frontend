@@ -389,6 +389,12 @@ const CancellationCenter = () => {
                         {(Number(detailData.totalRefundAmount) || 0).toLocaleString('vi-VN')} ₫
                       </span>
                     </div>
+                    <div className="metric-box">
+                      <span className="m-label">Đã đổi lịch lại</span>
+                      <span className="m-val text-emerald-700 tw-font-bold">
+                        {detailData.targets?.filter(t => t.targetType === 'BOOKING' && t.bookingData?.rescheduledToBookingId).length || 0} / {detailData.affectedBookingsCount || 0}
+                      </span>
+                    </div>
                   </div>
 
                   {/* List of Affected Targets */}
@@ -427,6 +433,11 @@ const CancellationCenter = () => {
                                   <div className="tw-text-[10px] tw-text-emerald-600 tw-flex tw-items-center tw-gap-1 tw-justify-end">
                                     <CheckCircle2 className="tw-w-3 tw-h-3" /> Hoàn vào Ví Bệnh nhân
                                   </div>
+                                  {tgt.bookingData?.rescheduledToBookingId && (
+                                    <div className="tw-text-[10px] tw-text-teal-700 tw-font-bold tw-flex tw-items-center tw-gap-1 tw-justify-end tw-mt-0.5">
+                                      <RefreshCw className="tw-w-3 tw-h-3" /> Đã đổi sang #BK-{tgt.bookingData.rescheduledToBookingId}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             ) : (
