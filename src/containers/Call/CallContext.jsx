@@ -215,6 +215,12 @@ export const CallProvider = ({ children }) => {
       finishCall('Không có phản hồi');
     });
 
+    const unsubMissed = chatSocketService.on('call:missed', () => {
+      soundSynthesizer.playBusyTone();
+      setIncomingCall(null);
+      finishCall('Không có phản hồi');
+    });
+
     const unsubBusy = chatSocketService.on('call:busy', () => {
       soundSynthesizer.playBusyTone();
       finishCall('Người dùng đang bận trong cuộc gọi khác');
@@ -231,6 +237,7 @@ export const CallProvider = ({ children }) => {
       unsubCancelled();
       unsubEnded();
       unsubTimeout();
+      unsubMissed();
       unsubBusy();
     };
   }, [isLoggedIn, activeCall, finishCall]);

@@ -110,9 +110,24 @@ const DoctorMessagesWorkspace = () => {
       });
     });
 
+    // Realtime conversation status changes (OPEN / CLOSED via reopen or close)
+    const unsubStatusUpdate = chatSocketService.on('chat:conversation:status', (data) => {
+      if (!data) return;
+      setConversations((prev) =>
+        prev.map((c) => (c.id === data.conversationId ? { ...c, status: data.status } : c))
+      );
+      setSelectedConversation((prev) => {
+        if (prev && prev.id === data.conversationId) {
+          return { ...prev, status: data.status };
+        }
+        return prev;
+      });
+    });
+
     return () => {
       unsubConvUpdate();
       unsubNewMsg();
+      unsubStatusUpdate();
     };
   }, [selectedConversation, fetchConversations]);
 
@@ -126,14 +141,16 @@ const DoctorMessagesWorkspace = () => {
   };
 
   // Status change handler (OPEN / CLOSED)
-  const handleStatusChange = (newStatus) => {
-    if (!selectedConversation) return;
-    const updated = { ...selectedConversation, status: newStatus };
-    setSelectedConversation(updated);
-    setConversations((prev) =>
-      prev.map((c) => (c.id === updated.id ? updated : c))
-    );
-  };
+  const handleStatusChange = useCallback((newStatus) => {
+    setSelectedConversation((prev) => {
+      if (!prev) return null;
+      const updated = { ...prev, status: newStatus };
+      setConversations((cList) =>
+        cList.map((c) => (c.id === updated.id ? updated : c))
+      );
+      return updated;
+    });
+  }, []);
 
   // Filter conversations
   const filteredConversations = conversations.filter((c) => {

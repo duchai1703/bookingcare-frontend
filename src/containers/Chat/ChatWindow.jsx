@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
@@ -9,10 +9,7 @@ import {
   AlertTriangle,
   Clock,
   Check,
-  CheckCheck,
   RotateCcw,
-  Wifi,
-  WifiOff,
   User,
   Stethoscope,
   X,
@@ -28,7 +25,8 @@ import {
   updateConversationStatus,
 } from '../../services/chatApiService';
 import { useCall } from '../Call/CallContext';
-import CommonUtils from '../../utils/CommonUtils';
+import Avatar from '../../components/Common/Avatar';
+import CallHistoryItem from './CallHistoryItem';
 import './ChatWindow.scss';
 
 const ChatWindow = ({
@@ -41,9 +39,11 @@ const ChatWindow = ({
   const isDoctor = userInfo?.roleId === 'R2';
 
   const [messages, setMessages] = useState([]);
+  const [callHistory, setCallHistory] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [isTogglingStatus, setIsTogglingStatus] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [nextCursor, setNextCursor] = useState(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -54,9 +54,38 @@ const ChatWindow = ({
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const textareaRef = useRef(null);
+
+  const onStatusChangeRef = useRef(onStatusChange);
+  useEffect(() => {
+    onStatusChangeRef.current = onStatusChange;
+  });
+
+  const conversationBookingId = conversation?.bookingId || conversation?.bookingData?.id;
+  const bookingIdRef = useRef(conversationBookingId);
+  useEffect(() => {
+    bookingIdRef.current = conversationBookingId;
+  });
+
+  const isNearBottomRef = useRef(true);
+  const isInitialLoadDoneRef = useRef(false);
+
+  const handleScroll = useCallback(() => {
+    if (!messagesContainerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+    // Consider near bottom if within 120px of the bottom
+    isNearBottomRef.current = scrollHeight - scrollTop - clientHeight < 120;
+  }, []);
 
   const conversationId = conversation?.id;
   const { initiateCall } = useCall();
+
+  // Sync currentStatus when conversation prop updates
+  useEffect(() => {
+    if (conversation?.status) {
+      setCurrentStatus(conversation.status);
+    }
+  }, [conversation?.status]);
 
   // Determine follow-up 7-day window status
   const consultationCompletedAt =
@@ -91,13 +120,13 @@ const ChatWindow = ({
     ? moment(parseInt(conversation.bookingData.date, 10)).format('DD/MM/YYYY')
     : '';
 
-  const handleStartCall = (callType) => {
+  const handleStartCall = useCallback((callType) => {
     if (!isFollowUpActive || currentStatus === 'CLOSED' || isReadOnly) {
       toast.warning('Cuộc gọi chỉ khả dụng khi lịch hẹn trong thời hạn 7 ngày và cuộc trò chuyện đang mở.');
       return;
     }
     const receiverId = isDoctor ? conversation.patientId : conversation.doctorId;
-    const partnerAvatar = partner?.image ? CommonUtils.decodeBase64Image(partner.image) : null;
+    const partnerAvatar = partner?.image || null;
 
     initiateCall({
       bookingId: conversation.bookingId,
@@ -107,24 +136,25 @@ const ChatWindow = ({
       partnerAvatar,
       partnerRole: partner?.roleId || (isDoctor ? 'R3' : 'R2'),
     });
-  };
+  }, [isFollowUpActive, currentStatus, isReadOnly, isDoctor, conversation, partner, partnerName, initiateCall]);
 
-  // 1. Initial Load of Messages
-  const loadMessages = useCallback(async () => {
+  // 1. Initial Load of Messages & Call History
+  const loadMessages = useCallback(async (isSilent = false) => {
     if (!conversationId) return;
     try {
-      setIsLoading(true);
+      if (!isSilent) setIsLoading(true);
       const res = await getConversationMessages(conversationId, { limit: 40 });
       if (res && res.errCode === 0 && res.data) {
         setMessages(res.data.messages || []);
+        setCallHistory(res.data.callHistory || res.meta?.callHistory || []);
         setHasMore(res.data.hasMore || false);
         setNextCursor(res.data.nextCursor || null);
       }
     } catch (err) {
       console.error('Failed to load messages:', err);
-      toast.error('Không thể tải tin nhắn.');
+      if (!isSilent) toast.error('Không thể tải tin nhắn.');
     } finally {
-      setIsLoading(false);
+      if (!isSilent) setIsLoading(false);
     }
   }, [conversationId]);
 
@@ -164,6 +194,7 @@ const ChatWindow = ({
   useEffect(() => {
     if (!conversationId) return;
 
+    isInitialLoadDoneRef.current = false;
     chatSocketService.connect();
 
     // Join conversation room
@@ -185,7 +216,6 @@ const ChatWindow = ({
     const unsubNewMessage = chatSocketService.on('chat:message:new', (data) => {
       if (data && data.conversationId === conversationId && data.message) {
         setMessages((prev) => {
-          // Check if message already exists by id or clientMessageId
           const exists = prev.some(
             (m) => m.id === data.message.id || (m.clientMessageId && m.clientMessageId === data.message.clientMessageId)
           );
@@ -232,6 +262,68 @@ const ChatWindow = ({
       setConnectionStatus(status);
     });
 
+    // Listen for realtime conversation status changes (OPEN / CLOSED)
+    const unsubStatusChange = chatSocketService.on('chat:conversation:status', (data) => {
+      if (data && data.conversationId === conversationId && data.status) {
+        setCurrentStatus(data.status);
+        if (onStatusChangeRef.current) {
+          onStatusChangeRef.current(data.status);
+        }
+      }
+    });
+
+    // Listen for realtime Call History records
+    const handleCallHistoryRecord = (data) => {
+      if (!data) return;
+      const dataConvId = data.conversationId ? parseInt(data.conversationId, 10) : null;
+      const curConvId = conversationId ? parseInt(conversationId, 10) : null;
+      const dataBookId = data.bookingId ? parseInt(data.bookingId, 10) : null;
+      const curBookId = bookingIdRef.current ? parseInt(bookingIdRef.current, 10) : null;
+
+      const isMatch =
+        (dataConvId && curConvId && dataConvId === curConvId) ||
+        (dataBookId && curBookId && dataBookId === curBookId);
+
+      if (isMatch) {
+        setCallHistory((prev) => {
+          const exists = prev.some(
+            (c) =>
+              (c.callId && data.callId && c.callId === data.callId) ||
+              (c.id && data.callSessionId && c.id === data.callSessionId) ||
+              (c.id && data.id && c.id === data.id)
+          );
+          if (exists) {
+            return prev.map((c) =>
+              ((c.callId && c.callId === data.callId) ||
+                (c.id && (c.id === data.callSessionId || c.id === data.id)))
+                ? { ...c, ...data }
+                : c
+            );
+          }
+          return [...prev, data];
+        });
+      }
+    };
+
+    const unsubCallHistory = chatSocketService.on('call:history:record', handleCallHistoryRecord);
+
+    // Also auto-refresh call history when signaling completes to guarantee zero-reload parity
+    const unsubCallEnded = chatSocketService.on('call:ended', () => {
+      setTimeout(() => loadMessages(true), 350);
+    });
+    const unsubCallCancelled = chatSocketService.on('call:cancelled', () => {
+      setTimeout(() => loadMessages(true), 350);
+    });
+    const unsubCallRejected = chatSocketService.on('call:rejected', () => {
+      setTimeout(() => loadMessages(true), 350);
+    });
+    const unsubCallTimeout = chatSocketService.on('call:timeout', () => {
+      setTimeout(() => loadMessages(true), 350);
+    });
+    const unsubCallMissed = chatSocketService.on('call:missed', () => {
+      setTimeout(() => loadMessages(true), 350);
+    });
+
     // Listen for errors
     const unsubError = chatSocketService.on('chat:error', (data) => {
       if (data?.message) {
@@ -248,28 +340,74 @@ const ChatWindow = ({
       unsubMessageRead();
       unsubTyping();
       unsubConn();
+      unsubStatusChange();
+      unsubCallHistory();
+      unsubCallEnded();
+      unsubCallCancelled();
+      unsubCallRejected();
+      unsubCallTimeout();
+      unsubCallMissed();
       unsubError();
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
     };
-  }, [conversationId, loadMessages, userInfo?.id]);
+  }, [conversationId, loadMessages]);
 
-  // Scroll to bottom on new messages
+  // Combine and sort messages and call history items chronologically into a single timeline stream
+  const timelineItems = useMemo(() => {
+    const formattedMessages = messages.map((m) => ({
+      ...m,
+      _timelineType: 'MESSAGE',
+      _sortTime: new Date(m.createdAt).getTime() || 0,
+      _key: `msg_${m.id || m.clientMessageId}`,
+    }));
+
+    const formattedCalls = callHistory.map((c) => ({
+      ...c,
+      _timelineType: 'CALL',
+      _sortTime: new Date(c.createdAt || c.startedAt || c.endedAt || Date.now()).getTime() || 0,
+      _key: `call_${c.callId || c.id}`,
+    }));
+
+    return [...formattedMessages, ...formattedCalls].sort((a, b) => a._sortTime - b._sortTime);
+  }, [messages, callHistory]);
+
+  // 1. Initial load: immediately jump to bottom with NO smooth animated travel from top
   useEffect(() => {
-    if (!isLoadingMore && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (!isLoading && messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      isInitialLoadDoneRef.current = true;
     }
-  }, [messages, isLoadingMore]);
+  }, [isLoading]);
+
+  // 2. Realtime messages arrival: if user is at bottom, keep them at bottom without jarring animations
+  useEffect(() => {
+    if (!isInitialLoadDoneRef.current || isLoadingMore || !messagesContainerRef.current) return;
+
+    if (isNearBottomRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
+    // If user is reading older messages higher up, do NOT force scroll down!
+  }, [timelineItems.length, isLoadingMore]);
+
+  // Auto-grow textarea
+  const adjustTextareaHeight = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      const scrollH = textareaRef.current.scrollHeight;
+      textareaRef.current.style.height = `${Math.min(Math.max(scrollH, 42), 120)}px`;
+    }
+  };
 
   // Handle typing debounce
   const handleInputChange = (e) => {
     const val = e.target.value;
     setInputText(val);
+    adjustTextareaHeight();
 
     if (!conversationId) return;
 
-    // Emit typing true
     chatSocketService.sendTyping(conversationId, true);
 
     if (typingTimeoutRef.current) {
@@ -305,7 +443,35 @@ const ChatWindow = ({
     const clientMsgId = uuidv4();
     setIsSending(true);
 
-    // Stop typing state
+    // Optimistic message: renders instantly at bottom without any page or container scroll animation
+    const optimisticMsg = {
+      id: null,
+      clientMessageId: clientMsgId,
+      conversationId,
+      senderId: userInfo?.id,
+      content: trimmed,
+      messageType: 'TEXT',
+      createdAt: new Date().toISOString(),
+      sender: {
+        id: userInfo?.id,
+        firstName: userInfo?.firstName,
+        lastName: userInfo?.lastName,
+        image: userInfo?.image,
+        roleId: userInfo?.roleId,
+      },
+    };
+
+    setMessages((prev) => [...prev, optimisticMsg]);
+    setInputText('');
+    if (textareaRef.current) {
+      textareaRef.current.style.height = '42px';
+    }
+
+    isNearBottomRef.current = true;
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
+
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
@@ -318,10 +484,11 @@ const ChatWindow = ({
         content: trimmed,
         messageType: 'TEXT',
       });
-      setInputText('');
     } catch (err) {
       console.error('Send message error:', err);
       toast.error(err.message || 'Gửi tin nhắn thất bại. Vui lòng thử lại.');
+      // Rollback optimistic message on failure
+      setMessages((prev) => prev.filter((m) => m.clientMessageId !== clientMsgId));
     } finally {
       setIsSending(false);
     }
@@ -335,17 +502,24 @@ const ChatWindow = ({
     }
   };
 
-  // Handle Doctor closing / reopening conversation
+  // Handle Doctor closing / reopening conversation with robust error handling
   const handleToggleStatus = async () => {
-    if (!isDoctor || !conversationId) return;
+    if (!isDoctor || !conversationId || isTogglingStatus) return;
     const newStatus = currentStatus === 'OPEN' ? 'CLOSED' : 'OPEN';
     const actionText = newStatus === 'CLOSED' ? 'đóng' : 'mở lại';
 
+    // Strict frontend validation: Cannot reopen expired conversation
+    if (newStatus === 'OPEN' && !isFollowUpActive) {
+      toast.warning('Thời hạn hỗ trợ 7 ngày sau khám đã kết thúc. Không thể mở lại cuộc trò chuyện.');
+      return;
+    }
+
     try {
+      setIsTogglingStatus(true);
       const res = await updateConversationStatus(conversationId, newStatus);
       if (res && res.errCode === 0) {
         setCurrentStatus(newStatus);
-        toast.success(`Đã ${actionText} cuộc trao đổi.`);
+        toast.success(`Đã ${actionText} cuộc trao đổi thành công.`);
         if (onStatusChange) {
           onStatusChange(newStatus);
         }
@@ -353,7 +527,13 @@ const ChatWindow = ({
         toast.error(res?.message || `Không thể ${actionText} cuộc trao đổi.`);
       }
     } catch (err) {
-      toast.error(`Lỗi khi ${actionText} cuộc trao đổi.`);
+      const errorMsg =
+        err?.response?.data?.message ||
+        err?.message ||
+        `Lỗi máy chủ khi ${actionText} cuộc trao đổi.`;
+      toast.error(errorMsg);
+    } finally {
+      setIsTogglingStatus(false);
     }
   };
 
@@ -364,19 +544,12 @@ const ChatWindow = ({
       {/* ───────────────────────────────────────────────────────────── */}
       <div className="chat-window-header">
         <div className="header-partner-info">
-          <div className="partner-avatar">
-            {partner?.image ? (
-              <img src={CommonUtils.decodeBase64Image(partner.image)} alt={partnerName} />
-            ) : (
-              <div className="avatar-fallback">
-                {isDoctor ? <User size={20} /> : <Stethoscope size={20} />}
-              </div>
-            )}
-            <span
-              className={`online-indicator ${connectionStatus === 'connected' ? 'is-online' : 'is-offline'}`}
-              title={connectionStatus === 'connected' ? 'Đã kết nối' : 'Mất kết nối'}
-            />
-          </div>
+          <Avatar
+            src={partner?.image}
+            name={partnerName}
+            size={42}
+            status={connectionStatus === 'connected' ? 'online' : 'offline'}
+          />
 
           <div className="partner-meta">
             <div className="name-status-row">
@@ -384,11 +557,11 @@ const ChatWindow = ({
               <span className={`status-pill status-${currentStatus.toLowerCase()}`}>
                 {currentStatus === 'OPEN' ? (
                   <>
-                    <Unlock size={12} /> Đang mở
+                    <Unlock size={12} /> <span>Đang mở</span>
                   </>
                 ) : (
                   <>
-                    <Lock size={12} /> Đã đóng
+                    <Lock size={12} /> <span>Đã đóng</span>
                   </>
                 )}
               </span>
@@ -405,7 +578,7 @@ const ChatWindow = ({
         </div>
 
         <div className="header-actions">
-          {/* WebRTC Audio & Video Call buttons */}
+          {/* Audio Call Button */}
           <button
             type="button"
             className="btn-call-trigger btn-audio-call"
@@ -419,11 +592,13 @@ const ChatWindow = ({
                 : 'Gọi thoại bảo mật P2P'
             }
             id="btn-chat-audio-call"
+            aria-label="Gọi thoại"
           >
-            <Phone size={14} />
+            <Phone size={15} />
             <span>Gọi thoại</span>
           </button>
 
+          {/* Video Call Button */}
           <button
             type="button"
             className="btn-call-trigger btn-video-call"
@@ -437,20 +612,31 @@ const ChatWindow = ({
                 : 'Gọi video trực tiếp sau khám'
             }
             id="btn-chat-video-call"
+            aria-label="Gọi video"
           >
-            <Video size={14} />
+            <Video size={15} />
             <span>Gọi video</span>
           </button>
 
-          {/* Status toggle button for Doctors */}
+          {/* Status Toggle Button (Doctor only) */}
           {isDoctor && (
             <button
               type="button"
               className={`btn-toggle-status ${currentStatus === 'OPEN' ? 'btn-close-conv' : 'btn-reopen-conv'}`}
               onClick={handleToggleStatus}
-              title={currentStatus === 'OPEN' ? 'Đóng phiên tư vấn' : 'Mở lại phiên tư vấn'}
+              disabled={isTogglingStatus || (currentStatus === 'CLOSED' && !isFollowUpActive)}
+              title={
+                currentStatus === 'OPEN'
+                  ? 'Đóng phiên tư vấn'
+                  : !isFollowUpActive
+                  ? 'Thời hạn 7 ngày sau khám đã kết thúc. Không thể mở lại.'
+                  : 'Mở lại phiên tư vấn'
+              }
+              aria-label={currentStatus === 'OPEN' ? 'Đóng phiên' : 'Mở lại'}
             >
-              {currentStatus === 'OPEN' ? (
+              {isTogglingStatus ? (
+                <span className="spinner-border spinner-border-sm" />
+              ) : currentStatus === 'OPEN' ? (
                 <>
                   <Lock size={14} /> <span>Đóng phiên</span>
                 </>
@@ -462,13 +648,14 @@ const ChatWindow = ({
             </button>
           )}
 
-          {/* Close button (when rendered inside drawer/modal) */}
+          {/* Close button (when inside modal/drawer) */}
           {onClose && (
             <button
               type="button"
               className="btn-chat-close"
               onClick={onClose}
               title="Đóng cửa sổ chat"
+              aria-label="Đóng cửa sổ"
             >
               <X size={18} />
             </button>
@@ -477,11 +664,11 @@ const ChatWindow = ({
       </div>
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* 2. 7-DAY FOLLOW-UP ACCESS WINDOW BANNER                       */}
+      {/* 2. ACCESS WINDOW BANNER (Active / Expired)                    */}
       {/* ───────────────────────────────────────────────────────────── */}
       {isFollowUpActive ? (
         <div className="followup-window-banner active">
-          <Clock size={16} className="banner-icon" />
+          <Clock size={15} className="banner-icon" />
           <div className="banner-content">
             <strong>Thời hạn tư vấn sau khám 7 ngày:</strong> Có hiệu lực đến{' '}
             {followUpExpiresAt ? moment(followUpExpiresAt).format('HH:mm DD/MM/YYYY') : 'hết 168 giờ'}.
@@ -490,10 +677,9 @@ const ChatWindow = ({
         </div>
       ) : (
         <div className="followup-window-banner expired">
-          <AlertTriangle size={16} className="banner-icon" />
+          <AlertTriangle size={15} className="banner-icon" />
           <div className="banner-content">
-            <strong>Thời hạn hỗ trợ sau khám 7 ngày đã kết thúc</strong>
-            {followUpExpiresAt ? ` (Hết hạn lúc ${moment(followUpExpiresAt).format('HH:mm DD/MM/YYYY')})` : ''}.
+            <strong>Thời hạn hỗ trợ sau khám 7 ngày đã kết thúc.</strong>{' '}
             Toàn bộ lịch sử trao đổi được bảo lưu ở chế độ chỉ đọc. Không thể gửi tin nhắn hoặc bắt đầu cuộc gọi mới.
           </div>
         </div>
@@ -503,7 +689,7 @@ const ChatWindow = ({
       {/* 3. MEDICAL ADVISORY DISCLAIMER BANNER                         */}
       {/* ───────────────────────────────────────────────────────────── */}
       <div className="medical-chat-disclaimer">
-        <AlertTriangle size={16} className="disclaimer-icon" />
+        <AlertTriangle size={15} className="disclaimer-icon" />
         <div className="disclaimer-content">
           <strong>Lưu ý theo dõi sau khám:</strong> Kênh chat dùng để hỏi đáp và làm rõ hướng dẫn
           chăm sóc sau buổi khám đã hoàn tất. Bác sĩ có thể không phản hồi tức thời. Trong trường
@@ -512,9 +698,9 @@ const ChatWindow = ({
       </div>
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* 3. MESSAGE STREAM                                            */}
+      {/* 4. CHAT TIMELINE STREAM (Messages + Call History)             */}
       {/* ───────────────────────────────────────────────────────────── */}
-      <div className="chat-messages-stream" ref={messagesContainerRef}>
+      <div className="chat-messages-stream" ref={messagesContainerRef} onScroll={handleScroll}>
         {/* Load more button */}
         {hasMore && (
           <div className="load-more-container">
@@ -539,7 +725,7 @@ const ChatWindow = ({
         )}
 
         {/* Empty state */}
-        {!isLoading && messages.length === 0 && (
+        {!isLoading && timelineItems.length === 0 && (
           <div className="chat-empty-state">
             <div className="empty-icon-wrap">
               <FileText size={32} />
@@ -552,49 +738,61 @@ const ChatWindow = ({
           </div>
         )}
 
-        {/* Messages List */}
+        {/* Unified Timeline: Chronological messages and call items */}
         {!isLoading &&
-          messages.map((msg, index) => {
-            const isMe = msg.senderId === userInfo?.id;
-            const msgTime = moment(msg.createdAt).format('HH:mm');
+          timelineItems.map((item) => {
+            // Render Call History Item
+            if (item._timelineType === 'CALL') {
+              return (
+                <CallHistoryItem
+                  key={item._key}
+                  call={item}
+                  currentUserId={userInfo?.id}
+                  onCallAgain={handleStartCall}
+                  canCallAgain={isFollowUpActive && currentStatus === 'OPEN' && !isReadOnly}
+                />
+              );
+            }
+
+            // Render Message Bubble
+            const isMe = item.senderId === userInfo?.id;
+            const msgTime = moment(item.createdAt).format('HH:mm');
+            const senderName = item.sender
+              ? `${item.sender.lastName || ''} ${item.sender.firstName || ''}`.trim()
+              : partnerName;
 
             return (
               <div
-                key={msg.id || msg.clientMessageId || index}
+                key={item._key}
                 className={`chat-bubble-row ${isMe ? 'row-me' : 'row-partner'}`}
               >
                 {!isMe && (
-                  <div className="bubble-avatar">
-                    {msg.sender?.image ? (
-                      <img src={CommonUtils.decodeBase64Image(msg.sender.image)} alt="" />
-                    ) : (
-                      <div className="bubble-avatar-fallback">
-                        {isDoctor ? <User size={14} /> : <Stethoscope size={14} />}
-                      </div>
-                    )}
+                  <div className="bubble-avatar-wrap">
+                    <Avatar
+                      src={item.sender?.image}
+                      name={senderName}
+                      size={32}
+                    />
                   </div>
                 )}
 
                 <div className="bubble-payload">
                   {!isMe && (
-                    <span className="bubble-sender-name">
-                      {msg.sender ? `${msg.sender.lastName || ''} ${msg.sender.firstName || ''}`.trim() : partnerName}
-                    </span>
+                    <span className="bubble-sender-name">{senderName}</span>
                   )}
 
                   <div className="bubble-card">
-                    {/* Safe plain text render — ZERO dangerouslySetInnerHTML */}
-                    <div className="bubble-text">{msg.content}</div>
+                    <div className="bubble-text">{item.content}</div>
 
                     <div className="bubble-meta">
                       <span className="bubble-time">{msgTime}</span>
+                      {/* FIX: Exactly 1 clean check status supported by real backend */}
                       {isMe && (
-                        <span className="bubble-read-status" title={msg.readAt ? 'Đã xem' : 'Đã gửi'}>
-                          {msg.readAt ? (
-                            <CheckCheck size={14} className="icon-read" />
-                          ) : (
-                            <Check size={14} className="icon-sent" />
-                          )}
+                        <span
+                          className={`bubble-status-icon ${item.readAt ? 'is-read' : 'is-sent'}`}
+                          title={item.readAt ? `Đã xem (${moment(item.readAt).format('HH:mm')})` : 'Đã gửi'}
+                        >
+                          <Check size={13} strokeWidth={2.4} />
                         </span>
                       )}
                     </div>
@@ -620,53 +818,56 @@ const ChatWindow = ({
       </div>
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* 4. CHAT INPUT BAR                                            */}
+      {/* 5. BALANCED MESSAGE COMPOSER                                 */}
       {/* ───────────────────────────────────────────────────────────── */}
       <div className="chat-input-toolbar">
         {currentStatus === 'CLOSED' ? (
           <div className="chat-closed-notice">
             <Lock size={16} />
             <span>
-              Phiên tư vấn này đã kết thúc. Bạn có thể xem lại lịch sử nhưng không thể gửi tin nhắn
-              mới.
+              Phiên tư vấn này đã đóng. Bạn có thể xem lại toàn bộ lịch sử trao đổi.
+              {isDoctor && isFollowUpActive && ' Nhấn "Mở lại" ở thanh tiêu đề nếu cần tiếp tục hỗ trợ.'}
             </span>
           </div>
         ) : (!isFollowUpActive || isReadOnly) ? (
-          <div className="chat-closed-notice">
+          <div className="chat-closed-notice expired-notice">
             <Lock size={16} />
             <span>
-              Thời hạn hỗ trợ sau khám 7 ngày đã kết thúc. Cuộc trò chuyện đã chuyển sang chế độ xem lại (chỉ đọc).
+              Thời hạn hỗ trợ sau khám 7 ngày đã kết thúc. Cuộc trò chuyện chuyển sang chế độ chỉ đọc.
             </span>
           </div>
         ) : (
-          <form className="chat-input-form" onSubmit={handleSendMessage}>
-            <textarea
-              className="chat-textarea"
-              placeholder="Nhập nội dung trao đổi (Enter để gửi, Shift+Enter để xuống dòng)..."
-              value={inputText}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              rows={2}
-              maxLength={2000}
-              disabled={isSending}
-            />
-
-            <div className="input-actions-bar">
-              <span className="char-counter">{inputText.length}/2000</span>
-              <button
-                type="submit"
-                className="btn-send-message"
-                disabled={isSending || !inputText.trim()}
-              >
-                {isSending ? (
-                  <span className="spinner-border spinner-border-sm" />
-                ) : (
-                  <>
-                    <span>Gửi</span> <Send size={15} />
-                  </>
-                )}
-              </button>
+          <form className="chat-composer-row" onSubmit={handleSendMessage}>
+            <div className="composer-textarea-container">
+              <textarea
+                ref={textareaRef}
+                className="chat-textarea"
+                placeholder="Nhập nội dung trao đổi (Enter để gửi, Shift+Enter để xuống dòng)..."
+                value={inputText}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
+                rows={1}
+                maxLength={2000}
+                disabled={isSending}
+              />
+              {inputText.length > 1500 && (
+                <span className="composer-char-counter">{inputText.length}/2000</span>
+              )}
             </div>
+
+            <button
+              type="submit"
+              className="btn-send-message"
+              disabled={isSending || !inputText.trim()}
+              title="Gửi tin nhắn (Enter)"
+              aria-label="Gửi tin nhắn"
+            >
+              {isSending ? (
+                <span className="spinner-border spinner-border-sm" />
+              ) : (
+                <Send size={18} />
+              )}
+            </button>
           </form>
         )}
       </div>
