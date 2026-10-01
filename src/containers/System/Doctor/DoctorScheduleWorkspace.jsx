@@ -15,6 +15,10 @@ import {
   getDoctorOwnProfile,
   toggleCloseScheduleSlot,
 } from '../../../services/doctorService';
+import {
+  reopenDoctorScheduleSlot,
+  getDoctorReliabilityScore,
+} from '../../../services/doctorCancellationService';
 import { processLogout } from '../../../redux/slices/userSlice';
 import CreateScheduleModal from './CreateScheduleModal';
 import DoctorCancellationDrawer from './DoctorCancellationDrawer';
@@ -42,6 +46,7 @@ import {
   Copy,
   Minus,
   Plus,
+  RotateCcw,
 } from 'lucide-react';
 
 import './DoctorScheduleWorkspace.scss';
@@ -74,21 +79,28 @@ const DoctorScheduleWorkspace = () => {
   // Modal & Drawer
   const [isOpenCreateModal, setIsOpenCreateModal] = useState(false);
   const [isOpenCancelDrawer, setIsOpenCancelDrawer] = useState(false);
+  const [reliabilityData, setReliabilityData] = useState(null);
 
-  // 1. Fetch Doctor Profile (Facility, Specialty)
+  // 1. Fetch Doctor Profile & Reliability Score
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchProfileAndReliability = async () => {
       try {
-        const res = await getDoctorOwnProfile();
-        if (res && res.errCode === 0) {
-          setDoctorProfile(res.data);
+        const [profileRes, relRes] = await Promise.all([
+          getDoctorOwnProfile(),
+          getDoctorReliabilityScore(userInfo?.id, { days: 30 }),
+        ]);
+        if (profileRes && profileRes.errCode === 0) {
+          setDoctorProfile(profileRes.data);
+        }
+        if (relRes && relRes.errCode === 0) {
+          setReliabilityData(relRes.data);
         }
       } catch (err) {
-        console.error('Error fetching doctor profile:', err);
+        console.error('Error fetching doctor profile & reliability:', err);
       }
     };
     if (userInfo?.id) {
-      fetchProfile();
+      fetchProfileAndReliability();
     }
   }, [userInfo?.id]);
 
@@ -264,6 +276,26 @@ const DoctorScheduleWorkspace = () => {
     }
   };
 
+  // [PHASE 3] Thao tác: Mở lại khung giờ đã từng bị báo bận (Reopen Slot)
+  const handleReopenSlot = async (slot) => {
+    const isConfirm = window.confirm(
+      `Bạn có chắc chắn muốn mở lại khung giờ ${slot.timeTypeData?.valueVi || slot.timeType}? Slot sẽ sẵn sàng cho bệnh nhân tiếp tục đặt lịch.`
+    );
+    if (!isConfirm) return;
+
+    try {
+      const res = await reopenDoctorScheduleSlot({ scheduleId: slot.id });
+      if (res && res.errCode === 0) {
+        toast.success(res.message || 'Mở lại khung giờ thành công!');
+        fetchSchedules(currentDate);
+      } else {
+        toast.error(res?.message || 'Không thể mở lại khung giờ!');
+      }
+    } catch (err) {
+      toast.error('Lỗi khi mở lại khung giờ khám!');
+    }
+  };
+
   // Thao tác: Xóa slot an toàn
   const handleDeleteSlot = async (slot) => {
     if (slot.currentNumber > 0) {
@@ -291,6 +323,16 @@ const DoctorScheduleWorkspace = () => {
 
   // Render Badge trạng thái Slot
   const renderSlotStatusBadge = (slot) => {
+    if (slot.status === 'CLOSED_BY_DOCTOR') {
+      return (
+        <span
+          className="slot-badge slot-badge--doctor-closed"
+          style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', fontWeight: 600 }}
+        >
+          ⛔ Bác sĩ báo bận
+        </span>
+      );
+    }
     const status = getSlotStatus(slot);
     switch (status) {
       case 'OPEN':
@@ -408,6 +450,28 @@ const DoctorScheduleWorkspace = () => {
         </div>
 
         <div className="dsw-bar-right">
+          {reliabilityData && (
+            <div
+              className="dsw-reliability-pill"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 14px',
+                borderRadius: '20px',
+                background: reliabilityData.reliabilityScore >= 85 ? '#f0fdf4' : '#fffbeb',
+                color: reliabilityData.reliabilityScore >= 85 ? '#16a34a' : '#d97706',
+                border: `1px solid ${reliabilityData.reliabilityScore >= 85 ? '#bbf7d0' : '#fde68a'}`,
+                fontSize: '0.84rem',
+                fontWeight: 600,
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+              }}
+              title={`Tổng ca khám: ${reliabilityData.totalBookings} | Đã hủy: ${reliabilityData.cancelledByDoctor} (Sát giờ: ${reliabilityData.lateCancelledCount}) | Tỷ lệ hủy: ${reliabilityData.cancellationRate}%`}
+            >
+              <span>⭐ Độ tin cậy: {reliabilityData.reliabilityScore}%</span>
+              <span style={{ fontSize: '0.76rem', opacity: 0.85 }}>({reliabilityData.tierLabel})</span>
+            </div>
+          )}
           <button
             type="button"
             className="btn-reload"
@@ -777,23 +841,48 @@ const DoctorScheduleWorkspace = () => {
                 </div>
 
                 <div className="dsf-right">
-                  <button
-                    type="button"
-                    className={`btn-toggle-slot ${selectedSlot.maxNumber === selectedSlot.currentNumber ? 'btn-open-slot' : 'btn-close-slot'}`}
-                    onClick={() => handleToggleCloseSlot(selectedSlot)}
-                  >
-                    {selectedSlot.maxNumber === selectedSlot.currentNumber ? (
-                      <>
-                        <Unlock size={15} />
-                        <span>Mở lại nhận lịch</span>
-                      </>
-                    ) : (
-                      <>
-                        <Lock size={15} />
-                        <span>Đóng nhận lịch</span>
-                      </>
-                    )}
-                  </button>
+                  {selectedSlot.status === 'CLOSED_BY_DOCTOR' ? (
+                    <button
+                      type="button"
+                      className="btn-reopen-slot"
+                      style={{
+                        background: '#0d9488',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        padding: '9px 16px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 4px rgba(13, 148, 136, 0.25)',
+                      }}
+                      onClick={() => handleReopenSlot(selectedSlot)}
+                      title="Khôi phục khung giờ này để tiếp tục nhận bệnh nhân mới"
+                    >
+                      <RotateCcw size={15} />
+                      <span>Khôi phục / Mở lại slot</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className={`btn-toggle-slot ${selectedSlot.maxNumber === selectedSlot.currentNumber ? 'btn-open-slot' : 'btn-close-slot'}`}
+                      onClick={() => handleToggleCloseSlot(selectedSlot)}
+                    >
+                      {selectedSlot.maxNumber === selectedSlot.currentNumber ? (
+                        <>
+                          <Unlock size={15} />
+                          <span>Mở lại nhận lịch</span>
+                        </>
+                      ) : (
+                        <>
+                          <Lock size={15} />
+                          <span>Đóng nhận lịch</span>
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

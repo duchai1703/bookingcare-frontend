@@ -22,20 +22,34 @@ import {
   FileText,
   DollarSign,
   ChevronLeft,
+  Activity,
+  TrendingUp,
+  History,
+  RotateCcw,
+  Percent,
+  Star,
+  Award,
+  ShieldCheck,
 } from 'lucide-react';
 import {
   getDoctorCancellationHistory,
   getDoctorCancellationDetail,
+  getCancellationAnalytics,
 } from '../../../../services/doctorCancellationService';
 import './CancellationCenter.scss';
 
 const CancellationCenter = () => {
+  const [activeMainTab, setActiveMainTab] = useState('LOG'); // 'LOG' | 'ANALYTICS'
   const [cancellations, setCancellations] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [pageSize] = useState(10);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Analytics State
+  const [analyticsData, setAnalyticsData] = useState(null);
+  const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
 
   // Filters
   const [scopeFilter, setScopeFilter] = useState('ALL');
@@ -72,6 +86,29 @@ const CancellationCenter = () => {
   useEffect(() => {
     fetchHistory();
   }, [fetchHistory]);
+
+  const fetchAnalytics = useCallback(async () => {
+    setIsLoadingAnalytics(true);
+    try {
+      const res = await getCancellationAnalytics();
+      if (res && res.errCode === 0 && res.data) {
+        setAnalyticsData(res.data);
+      } else {
+        toast.error(res?.message || 'Không thể tải dữ liệu báo cáo phân tích');
+      }
+    } catch (err) {
+      console.error('fetchAnalytics error:', err);
+      toast.error('Lỗi khi tải dữ liệu báo cáo phân tích vận hành!');
+    } finally {
+      setIsLoadingAnalytics(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeMainTab === 'ANALYTICS') {
+      fetchAnalytics();
+    }
+  }, [activeMainTab, fetchAnalytics]);
 
   const handleOpenDetail = async (cancellationId) => {
     setSelectedCancellationId(cancellationId);
@@ -142,14 +179,44 @@ const CancellationCenter = () => {
         </div>
 
         <div className="cc-header__actions">
-          <button type="button" className="cc-btn cc-btn--refresh" onClick={fetchHistory} disabled={isLoading}>
-            <RefreshCw className={`tw-w-4 tw-h-4 ${isLoading ? 'tw-animate-spin' : ''}`} />
+          <button
+            type="button"
+            className="cc-btn cc-btn--refresh"
+            onClick={activeMainTab === 'LOG' ? fetchHistory : fetchAnalytics}
+            disabled={isLoading || isLoadingAnalytics}
+          >
+            <RefreshCw className={`tw-w-4 tw-h-4 ${(isLoading || isLoadingAnalytics) ? 'tw-animate-spin' : ''}`} />
             <span>Làm mới</span>
           </button>
         </div>
       </div>
 
-      {/* 2. Filter & Controls Bar */}
+      {/* Main Tabs Navigation */}
+      <div className="cc-main-nav-tabs">
+        <button
+          type="button"
+          className={`cc-main-tab-btn ${activeMainTab === 'LOG' ? 'active' : ''}`}
+          onClick={() => setActiveMainTab('LOG')}
+        >
+          <History className="tw-w-4 tw-h-4" />
+          <span>Nhật ký Giám sát Hủy lịch ({totalCount})</span>
+        </button>
+        <button
+          type="button"
+          className={`cc-main-tab-btn ${activeMainTab === 'ANALYTICS' ? 'active' : ''}`}
+          onClick={() => {
+            setActiveMainTab('ANALYTICS');
+            if (!analyticsData) fetchAnalytics();
+          }}
+        >
+          <Activity className="tw-w-4 tw-h-4" />
+          <span>Báo cáo Vận hành & Độ tin cậy Bác sĩ</span>
+        </button>
+      </div>
+
+      {activeMainTab === 'LOG' && (
+        <>
+          {/* 2. Filter & Controls Bar */}
       <div className="cc-filter-bar">
         <div className="cc-search-box">
           <Search className="tw-w-4 tw-h-4 tw-text-slate-400" />
@@ -313,6 +380,210 @@ const CancellationCenter = () => {
           </div>
         )}
       </div>
+      </>
+      )}
+
+      {/* 3. BÁO CÁO VẬN HÀNH & ĐỘ TIN CẬY BÁC SĨ (PHASE 3) */}
+      {activeMainTab === 'ANALYTICS' && (
+        <div className="cc-analytics-container">
+          {isLoadingAnalytics ? (
+            <div className="tw-py-20 tw-text-center tw-text-slate-500">
+              <RefreshCw className="tw-w-8 tw-h-8 tw-animate-spin tw-mx-auto tw-text-teal-600 tw-mb-3" />
+              <p className="tw-font-semibold tw-text-sm">Đang tổng hợp báo cáo vận hành & điểm tin cậy bác sĩ...</p>
+            </div>
+          ) : analyticsData ? (
+            <>
+              {/* Analytics Summary Cards */}
+              <div className="cc-analytics-kpi-grid">
+                <div className="kpi-box">
+                  <div className="kpi-icon kpi-icon--rose"><ShieldAlert className="tw-w-5 tw-h-5" /></div>
+                  <div className="kpi-content">
+                    <span className="kpi-label">Tổng đợt báo bận</span>
+                    <strong className="kpi-val">{analyticsData.summary?.totalEvents || 0}</strong>
+                    <span className="kpi-hint">Sự kiện trên toàn sàn</span>
+                  </div>
+                </div>
+
+                <div className="kpi-box">
+                  <div className="kpi-icon kpi-icon--amber"><AlertTriangle className="tw-w-5 tw-h-5" /></div>
+                  <div className="kpi-content">
+                    <span className="kpi-label">Tổng ca khám hủy</span>
+                    <strong className="kpi-val text-rose">{analyticsData.summary?.totalAffectedBookings || 0}</strong>
+                    <span className="kpi-hint">Đã hoàn tiền 100% về ví</span>
+                  </div>
+                </div>
+
+                <div className="kpi-box">
+                  <div className="kpi-icon kpi-icon--teal"><Wallet className="tw-w-5 tw-h-5" /></div>
+                  <div className="kpi-content">
+                    <span className="kpi-label">Tổng tiền hoàn bảo chứng</span>
+                    <strong className="kpi-val text-teal">
+                      +{new Intl.NumberFormat('vi-VN').format(analyticsData.summary?.totalRefundAmount || 0)} ₫
+                    </strong>
+                    <span className="kpi-hint">Sổ cái kế toán kép ghi nhận</span>
+                  </div>
+                </div>
+
+                <div className="kpi-box">
+                  <div className="kpi-icon kpi-icon--emerald"><RotateCcw className="tw-w-5 tw-h-5" /></div>
+                  <div className="kpi-content">
+                    <span className="kpi-label">Khôi phục / Mở lại slot</span>
+                    <strong className="kpi-val text-emerald">{analyticsData.summary?.reopenRate || 0}%</strong>
+                    <span className="kpi-hint">
+                      {analyticsData.summary?.totalReopenedSlots || 0} / {analyticsData.summary?.totalClosedSlots || 0} slot đã mở lại
+                    </span>
+                  </div>
+                </div>
+
+                <div className="kpi-box">
+                  <div className="kpi-icon kpi-icon--indigo"><UserCheck className="tw-w-5 tw-h-5" /></div>
+                  <div className="kpi-content">
+                    <span className="kpi-label">Tỷ lệ giữ chân đổi lịch</span>
+                    <strong className="kpi-val text-indigo">{analyticsData.summary?.rescheduleRetentionRate || 0}%</strong>
+                    <span className="kpi-hint">{analyticsData.summary?.rescheduledCount || 0} ca đã đổi lịch thành công</span>
+                  </div>
+                </div>
+
+                <div className="kpi-box">
+                  <div className="kpi-icon kpi-icon--red"><Clock className="tw-w-5 tw-h-5" /></div>
+                  <div className="kpi-content">
+                    <span className="kpi-label">Tỷ lệ hủy sát giờ (&lt;24h)</span>
+                    <strong className="kpi-val text-red">{analyticsData.summary?.lateCancellationRate || 0}%</strong>
+                    <span className="kpi-hint">{analyticsData.summary?.lateCancellationsCount || 0} ca hủy khẩn cấp</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bảng Giám sát Độ tin cậy Bác sĩ */}
+              <div className="cc-section-card">
+                <div className="cc-section-card__header">
+                  <div className="tw-flex tw-items-center tw-gap-2">
+                    <Award className="tw-w-5 tw-h-5 tw-text-teal-600" />
+                    <h3 className="tw-font-bold tw-text-base tw-text-slate-800">
+                      Bảng Giám sát & Đánh giá Độ tin cậy Bác sĩ (Doctor Reliability Center)
+                    </h3>
+                  </div>
+                  <span className="tw-text-xs tw-text-slate-500">
+                    Dữ liệu 30 ngày gần nhất · Xếp loại uy tín tự động
+                  </span>
+                </div>
+
+                <div className="table-responsive">
+                  <table className="cc-table">
+                    <thead>
+                      <tr>
+                        <th>Bác sĩ</th>
+                        <th>Chuyên khoa & Cơ sở</th>
+                        <th className="tw-text-center">Số đợt hủy</th>
+                        <th className="tw-text-center">Ca khám bị hủy</th>
+                        <th className="tw-text-center">Hủy sát giờ (&lt;24h)</th>
+                        <th className="tw-text-center">Tỷ lệ hủy</th>
+                        <th className="tw-text-center">Điểm tin cậy</th>
+                        <th className="tw-text-center">Xếp loại & Cảnh báo</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {analyticsData.doctorWatchlist && analyticsData.doctorWatchlist.length > 0 ? (
+                        analyticsData.doctorWatchlist.map((doc) => {
+                          const score = doc.reliabilityScore ?? 100;
+                          const tier = doc.tier || 'EXCELLENT';
+
+                          return (
+                            <tr key={doc.doctorId}>
+                              <td>
+                                <div className="cc-doctor-cell">
+                                  <div className="cc-avatar">
+                                    {doc.avatar ? (
+                                      <img src={doc.avatar} alt={doc.doctorName} />
+                                    ) : (
+                                      <User className="tw-w-4 tw-h-4 tw-text-slate-400" />
+                                    )}
+                                  </div>
+                                  <div className="cc-doctor-meta">
+                                    <strong>{doc.doctorName}</strong>
+                                    <span>#{doc.doctorId} · {doc.email}</span>
+                                  </div>
+                                </div>
+                              </td>
+                              <td>
+                                <div className="tw-flex tw-flex-col tw-gap-1">
+                                  <span className="tw-font-medium tw-text-xs tw-text-slate-800">{doc.specialty}</span>
+                                  <span className="tw-text-[11px] tw-text-slate-500">{doc.clinic}</span>
+                                </div>
+                              </td>
+                              <td className="tw-text-center">
+                                <span className="tw-font-bold tw-text-xs tw-text-slate-700">{doc.eventsCount}</span>
+                              </td>
+                              <td className="tw-text-center">
+                                <span className="tw-font-bold tw-text-xs tw-text-rose-600">{doc.affectedBookings}</span>
+                              </td>
+                              <td className="tw-text-center">
+                                <span className={`tw-font-bold tw-text-xs ${doc.lateCancelledCount > 0 ? 'tw-text-red-600' : 'tw-text-slate-500'}`}>
+                                  {doc.lateCancelledCount || 0}
+                                </span>
+                              </td>
+                              <td className="tw-text-center">
+                                <span className="tw-text-xs tw-font-semibold tw-text-slate-700">
+                                  {doc.cancellationRate}%
+                                </span>
+                              </td>
+                              <td className="tw-text-center">
+                                <div className="tw-inline-flex tw-flex-col tw-items-center tw-gap-1">
+                                  <span className="tw-font-extrabold tw-text-sm tw-text-slate-800">
+                                    {score}%
+                                  </span>
+                                  <div
+                                    style={{
+                                      width: '60px',
+                                      height: '5px',
+                                      background: '#e2e8f0',
+                                      borderRadius: '4px',
+                                      overflow: 'hidden',
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        width: `${score}%`,
+                                        height: '100%',
+                                        background: score >= 90 ? '#10b981' : score >= 75 ? '#f59e0b' : '#ef4444',
+                                        borderRadius: '4px',
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="tw-text-center">
+                                {tier === 'EXCELLENT' && (
+                                  <span className="cc-badge cc-badge--excellent">🟢 Xuất sắc</span>
+                                )}
+                                {tier === 'GOOD' && (
+                                  <span className="cc-badge cc-badge--good">🔵 Tốt</span>
+                                )}
+                                {tier === 'WARNING' && (
+                                  <span className="cc-badge cc-badge--warning">🟠 Cần lưu ý</span>
+                                )}
+                                {tier === 'CRITICAL' && (
+                                  <span className="cc-badge cc-badge--critical">🔴 Nguy cấp (Can thiệp)</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      ) : (
+                        <tr>
+                          <td colSpan="8" className="tw-py-8 tw-text-center tw-text-slate-400">
+                            Chưa có bác sĩ nào phát sinh hủy lịch trong kỳ đối soát.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          ) : null}
+        </div>
+      )}
 
       {/* 4. DETAIL DRAWER (MASTER-DETAIL AUDIT) */}
       {isOpenDrawer && (

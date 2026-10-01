@@ -27,3 +27,27 @@ export const getDoctorCancellationHistory = (params) => {
 export const getDoctorCancellationDetail = (id) => {
   return axiosInstance.get(`/api/v1/doctor-cancellations/${id}`);
 };
+
+/**
+ * [PHASE 3] Khôi phục / Mở lại khung giờ khám đã từng bị báo bận (Reopen Slot)
+ */
+export const reopenDoctorScheduleSlot = (data) => {
+  return axiosInstance.post('/api/v1/doctor-cancellations/reopen-schedule', data);
+};
+
+/**
+ * [PHASE 3] Lấy điểm số độ tin cậy và thống kê chất lượng của bác sĩ
+ */
+export const getDoctorReliabilityScore = (doctorId, params) => {
+  const url = doctorId
+    ? `/api/v1/doctor-cancellations/doctor-reliability/${doctorId}`
+    : '/api/v1/doctor-cancellations/doctor-reliability';
+  return axiosInstance.get(url, { params });
+};
+
+/**
+ * [PHASE 3] Báo cáo thống kê toàn diện & Quản trị độ tin cậy toàn sàn (Admin)
+ */
+export const getCancellationAnalytics = (params) => {
+  return axiosInstance.get('/api/v1/doctor-cancellations/analytics', { params });
+};

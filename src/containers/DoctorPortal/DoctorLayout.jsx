@@ -1,7 +1,7 @@
 // src/containers/DoctorPortal/DoctorLayout.jsx
 // [Doctor Portal Redesign] Clinical Workspace Layout — Giao diện chuyên biệt cho Bác sĩ (Doctor Portal)
 // Phân biệt hoàn toàn với Admin Panel: Clinical Teal/Slate Palette, Medical Identity, Doctor Profile Card, Smooth Collapse
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { processLogout } from '../../redux/slices/userSlice';
