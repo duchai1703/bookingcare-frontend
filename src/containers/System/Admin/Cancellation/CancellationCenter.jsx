@@ -145,6 +145,8 @@ const CancellationCenter = () => {
         return <span className="cc-scope-badge cc-scope-badge--booking">Một bệnh nhân</span>;
       case 'DATE_RANGE':
         return <span className="cc-scope-badge cc-scope-badge--range">Khoảng ngày</span>;
+      case 'BATCH':
+        return <span className="cc-scope-badge cc-scope-badge--batch">Phân cấp / Hàng loạt</span>;
       default:
         return <span className="cc-scope-badge">{s}</span>;
     }
@@ -231,6 +233,7 @@ const CancellationCenter = () => {
         <div className="cc-scope-tabs">
           {[
             { key: 'ALL', label: 'Tất cả phạm vi' },
+            { key: 'BATCH', label: 'Phân cấp / Hàng loạt' },
             { key: 'SLOT', label: 'Theo khung giờ' },
             { key: 'DAY', label: 'Theo cả ngày' },
             { key: 'BOOKING', label: 'Theo bệnh nhân' },
