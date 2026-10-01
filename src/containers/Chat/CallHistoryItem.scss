@@ -1,0 +1,145 @@
+// src/containers/Chat/CallHistoryItem.scss
+
+.bc-call-history-row {
+  display: flex;
+  justify-content: center;
+  margin: 14px 0;
+  width: 100%;
+  animation: fadeInCallRow 0.25s ease-out;
+
+  .call-history-card {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    border-radius: 16px;
+    padding: 10px 16px;
+    min-width: 280px;
+    max-width: 420px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+      border-color: #cbd5e1;
+    }
+
+    .call-icon-bubble {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: transform 0.2s;
+
+      &.type-audio {
+        background: #ecfdf5;
+        color: #10b981;
+      }
+
+      &.type-video {
+        background: #eff6ff;
+        color: #2563eb;
+      }
+
+      // Any cancelled, missed, rejected, failed call MUST be RED on soft pink (Hình 2)
+      &.status-missed,
+      &.status-rejected,
+      &.status-cancelled,
+      &.status-failed {
+        background: #fee2e2 !important;
+        color: #ef4444 !important;
+      }
+    }
+
+    .call-info-body {
+      flex: 1;
+      min-width: 0;
+
+      .call-header-line {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 3px;
+
+        .call-title {
+          font-size: 0.88rem;
+          font-weight: 600;
+          color: #1e293b;
+        }
+
+        .call-time {
+          font-size: 0.72rem;
+          color: #94a3b8;
+          font-weight: 500;
+        }
+      }
+
+      .call-sub-line {
+        display: flex;
+        align-items: center;
+
+        .call-status-badge {
+          font-size: 0.76rem;
+          font-weight: 500;
+          color: #64748b;
+
+          &.status-success {
+            color: #059669;
+            font-weight: 600;
+          }
+
+          &.status-missed,
+          &.status-rejected,
+          &.status-cancelled,
+          &.status-failed {
+            color: #dc2626 !important;
+            font-weight: 600;
+          }
+        }
+      }
+    }
+
+    .btn-call-again {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: #0d9488;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+
+      &:hover {
+        background: #0d9488;
+        color: #ffffff;
+        border-color: #0d9488;
+      }
+
+      &:active {
+        transform: scale(0.96);
+      }
+    }
+  }
+}
+
+@keyframes fadeInCallRow {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
