@@ -79,6 +79,7 @@ import SpecialtyDetailWorkspace from './System/Admin/Specialty/SpecialtyDetailWo
 // [Financial Policy Engine] Immutable Policies & Rules
 import PolicyMaster from './System/Admin/Policy/PolicyMaster';
 import LiquidityDashboard from './System/Admin/Financial/LiquidityDashboard';
+import CancellationCenter from './System/Admin/Cancellation/CancellationCenter';
 
 // [Phase 9.4] Patient Portal
 import PatientLayout from './PatientPortal/PatientLayout';
@@ -251,6 +252,8 @@ const App = () => {
             <Route path="policies" element={<PolicyMaster />} />
             {/* [Phase 4] Financial Liquidity & Executive Ledger Console */}
             <Route path="financial-liquidity" element={<LiquidityDashboard />} />
+            {/* [Doctor Schedule Cancellation & Compensation Center] */}
+            <Route path="cancellation-center" element={<CancellationCenter />} />
 
             {/* [Phase E] Admin Detail Analytics pages */}
             <Route path="analytics/bookings" element={<BookingAnalytics />} />

@@ -22,6 +22,7 @@ export const adminMenu = [
   // ── Nhóm 2: Quản trị Vận hành & Bệnh nhân ──
   { type: 'group', label: 'Vận hành Y tế' },
   { name: 'menu.admin.manage-doctor',        link: path.DOCTOR_OPERATIONS },
+  { name: 'menu.admin.cancellation-center',  link: path.CANCELLATION_CENTER },
   { name: 'menu.admin.doctor-verification',  link: path.DOCTOR_VERIFICATION },
   { name: 'menu.admin.manage-patient',       link: path.PATIENT_MANAGE },
 

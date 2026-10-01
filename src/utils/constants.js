@@ -74,6 +74,7 @@ export const path = {
   SYSTEM_SETTINGS: '/system/system-settings',
   FINANCIAL_POLICIES: '/system/policies',
   FINANCIAL_LIQUIDITY: '/system/financial-liquidity',
+  CANCELLATION_CENTER: '/system/cancellation-center',
 
   // [Phase E] Admin Detail Analytics pages
   ANALYTICS_BOOKINGS: '/system/analytics/bookings',

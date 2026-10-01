@@ -83,6 +83,32 @@
     }
 
     .dsw-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+
+      .btn-dsw-danger {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 18px;
+        background: #fff1f2;
+        color: #e11d48;
+        border: 1.5px solid #fecdd3;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+
+        &:hover {
+          background: #ffe4e6;
+          border-color: #fda4af;
+          transform: translateY(-1px);
+        }
+      }
+
       .btn-dsw-primary {
         display: flex;
         align-items: center;
@@ -933,6 +959,26 @@
             &:disabled {
               opacity: 0.4;
               cursor: not-allowed;
+            }
+          }
+
+          .btn-cancel-slot-emergency {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: #fff1f2;
+            color: #e11d48;
+            border: 1px solid #fecdd3;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+
+            &:hover {
+              background: #ffe4e6;
+              border-color: #fda4af;
             }
           }
 

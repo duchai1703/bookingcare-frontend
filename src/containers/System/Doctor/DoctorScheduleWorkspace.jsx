@@ -17,11 +17,13 @@ import {
 } from '../../../services/doctorService';
 import { processLogout } from '../../../redux/slices/userSlice';
 import CreateScheduleModal from './CreateScheduleModal';
+import DoctorCancellationDrawer from './DoctorCancellationDrawer';
 
 import {
   CalendarDays,
   Clock,
   PlusCircle,
+  ShieldAlert,
   Building2,
   Stethoscope,
   ChevronLeft,
@@ -69,8 +71,9 @@ const DoctorScheduleWorkspace = () => {
   const [editCapacityVal, setEditCapacityVal] = useState(10);
   const [isUpdatingCapacity, setIsUpdatingCapacity] = useState(false);
 
-  // Modal
+  // Modal & Drawer
   const [isOpenCreateModal, setIsOpenCreateModal] = useState(false);
+  const [isOpenCancelDrawer, setIsOpenCancelDrawer] = useState(false);
 
   // 1. Fetch Doctor Profile (Facility, Specialty)
   useEffect(() => {
@@ -336,6 +339,16 @@ const DoctorScheduleWorkspace = () => {
         </div>
 
         <div className="dsw-header-actions">
+          <button
+            type="button"
+            className="btn-dsw-danger"
+            onClick={() => setIsOpenCancelDrawer(true)}
+            title="Bác sĩ có việc bận đột xuất? Nhấp để đóng lịch và hoàn tiền 100% tự động cho bệnh nhân"
+          >
+            <ShieldAlert size={18} />
+            <span>Báo bận / Hủy lịch</span>
+          </button>
+
           <button
             type="button"
             className="btn-dsw-primary"
@@ -749,6 +762,18 @@ const DoctorScheduleWorkspace = () => {
                     <Trash2 size={15} />
                     <span>Xóa slot</span>
                   </button>
+
+                  {(selectedSlot.currentNumber || 0) > 0 && (
+                    <button
+                      type="button"
+                      className="btn-cancel-slot-emergency"
+                      onClick={() => setIsOpenCancelDrawer(true)}
+                      title="Bác sĩ bận đột xuất? Nhấp để đóng khung giờ này và hoàn tiền 100% tự động cho bệnh nhân"
+                    >
+                      <ShieldAlert size={15} />
+                      <span>Hủy ca & Hoàn tiền</span>
+                    </button>
+                  )}
                 </div>
 
                 <div className="dsf-right">
@@ -792,6 +817,19 @@ const DoctorScheduleWorkspace = () => {
           practices={practices}
           defaultClinicId={selectedClinicId}
           onSaved={() => fetchSchedules(currentDate, selectedClinicId)}
+        />
+      )}
+
+      {/* 6. DRAWER BÁO BẬN / HỦY LỊCH KHÁM & HOÀN TIỀN VÍ 100% */}
+      {isOpenCancelDrawer && (
+        <DoctorCancellationDrawer
+          isOpen={isOpenCancelDrawer}
+          onClose={() => setIsOpenCancelDrawer(false)}
+          doctorId={userInfo?.id}
+          currentDate={currentDate}
+          schedules={schedules}
+          selectedSlot={selectedSlot}
+          onSuccess={() => fetchSchedules(currentDate, selectedClinicId)}
         />
       )}
     </div>

@@ -28,7 +28,8 @@ import {
   ChevronDown,
   ChevronRight,
   BarChart3,
-  Scale
+  Scale,
+  ShieldAlert,
 } from 'lucide-react';
 import './Navigator.scss';
 
@@ -45,6 +46,7 @@ const MENU_ICONS = {
   // Admin Clinical Operations
   'menu.admin.manage-patient': Contact,
   'menu.admin.manage-doctor': Stethoscope,
+  'menu.admin.cancellation-center': ShieldAlert,
   'menu.admin.doctor-verification': UserCheck,
   'menu.admin.manage-schedule': Calendar,
   'menu.admin.manage-clinic': Building2,

@@ -91,6 +91,7 @@
   "menu.admin.manage-clinic": "Quản lý phòng khám",
   "menu.admin.financial-policies": "Chính sách & Tỷ lệ phí",
   "menu.admin.financial-liquidity": "Thanh khoản & Sổ cái",
+  "menu.admin.cancellation-center": "Giám sát hủy lịch",
   "menu.doctor.manage-patient": "Lịch khám",
   "menu.doctor.manage-schedule": "Lịch làm việc",
   "common.welcome": "Xin chào, ",
