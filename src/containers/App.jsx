@@ -3,6 +3,7 @@
 // [Phase 9.3] Auth Pages + [Phase 9.4] Patient Portal
 import React, { useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { FormattedMessage } from 'react-intl';
 import { path, USER_ROLE } from '../utils/constants';
 import PrivateRoute from '../routes/PrivateRoute';
@@ -113,6 +114,20 @@ const ScrollToTop = () => {
 };
 
 const App = () => {
+  const { userInfo } = useSelector((state) => state.user);
+  const { pathname } = useLocation();
+
+  // Role-based Chatbot Guard:
+  // Patient / Guest browsing portal -> AI Chatbot is VISIBLE
+  // Doctor (R2) / Admin (R1) -> AI Chatbot is STRICTLY HIDDEN
+  const isDoctorOrAdmin =
+    userInfo?.roleId === USER_ROLE.DOCTOR ||
+    userInfo?.roleId === USER_ROLE.ADMIN ||
+    pathname.startsWith('/system') ||
+    pathname.startsWith('/doctor-dashboard');
+
+  const showAIChatbot = !isDoctorOrAdmin;
+
   return (
     <CallProvider>
       <div className="app-container">
@@ -351,8 +366,8 @@ const App = () => {
         />
       </Routes>
 
-      {/* [Phase 12] AI Chatbot — Floating widget, render ngoài Routes */}
-      <AIChatbot />
+      {/* [Phase 12] AI Chatbot — Patient Portal only; strictly hidden for Doctor & Admin */}
+      {showAIChatbot && <AIChatbot />}
     </div>
   </CallProvider>
   );

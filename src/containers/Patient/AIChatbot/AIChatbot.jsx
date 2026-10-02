@@ -13,6 +13,7 @@ import ChatInput from './ChatInput';
 import SuggestionChips from './SuggestionChips';
 import { useChatStorage } from './useChatStorage';
 import { FormattedMessage, useIntl } from 'react-intl';
+import { USER_ROLE } from '../../../utils/constants';
 import './AIChatbot.scss';
 
 // ═══ [ErrorBoundary — Bẫy Async setError] ═══
@@ -50,12 +51,14 @@ const AIChatbot = memo(() => {
   const accessToken = useSelector((state) => state.user.accessToken);
   const language = useSelector((state) => state.app.language);
 
-  // Do not render patient booking chatbot on Doctor Portal routes or for doctors
-  // Note: /doctor/:id and /doctors/:id are patient doctor detail pages, where AI is allowed
-  const isDoctorPortal =
-    (location.pathname.startsWith('/doctor/') && !location.pathname.match(/^\/doctors?\/\d+$/)) ||
-    location.pathname.startsWith('/system/doctor') ||
-    userInfo?.roleId === 'R2';
+  // Role-based Chatbot Guard:
+  // Patient / Guest browsing portal -> AI Chatbot is VISIBLE
+  // Doctor (R2) / Admin (R1) -> AI Chatbot is STRICTLY HIDDEN
+  const isDoctorOrAdmin =
+    userInfo?.roleId === USER_ROLE.ADMIN ||
+    userInfo?.roleId === USER_ROLE.DOCTOR ||
+    location.pathname.startsWith('/system') ||
+    location.pathname.startsWith('/doctor-dashboard');
 
   const userId = userInfo?.id;
   const { messages, setMessages, addMessage, clearMessages, saveMessages } =
@@ -444,7 +447,7 @@ const AIChatbot = memo(() => {
   const closeTitle = intl.formatMessage({ id: 'chatbot.btn-close' });
   const scrollDownTitle = intl.formatMessage({ id: 'chatbot.btn-scroll-down' });
 
-  if (isDoctorPortal) {
+  if (isDoctorOrAdmin) {
     return null;
   }
 
