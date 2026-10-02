@@ -1,19 +1,72 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { MessageSquare, AlertCircle } from 'lucide-react';
+import { MessageSquare, AlertCircle, Users, User } from 'lucide-react';
 import { getOrCreateConversationForBooking } from '../../services/chatApiService';
 import ChatWindow from '../Chat/ChatWindow';
 import './PatientChatModal.scss';
 
-const PatientChatModal = ({ isOpen, onClose, booking }) => {
+// Ánh xạ relationship code sang tên tiếng Việt
+const RELATIONSHIP_LABEL = {
+  CHILD: 'Con',
+  PARENT: 'Bố / Mẹ',
+  SPOUSE: 'Vợ / Chồng',
+  SIBLING: 'Anh / Chị / Em',
+  GRANDPARENT: 'Ông / Bà',
+  RELATIVE: 'Người thân',
+};
+
+/**
+ * [Phase 3] Medical Context Banner
+ * Hiển thị cảnh báo y khoa rõ ràng khi phiên tư vấn dành cho người thân,
+ * giúp bác sĩ không nhầm lẫn giữa chủ tài khoản và người được khám.
+ */
+const MedicalContextBanner = ({ familyContext, guardianName }) => {
+  if (!familyContext || !familyContext.isFamilyBooking) return null;
+
+  const relLabel = RELATIONSHIP_LABEL[familyContext.relationship] || 'Người thân';
+
+  return (
+    <div className="medical-context-banner">
+      <div className="banner-icon-wrap">
+        <Users size={20} />
+      </div>
+      <div className="banner-body">
+        <div className="banner-title">
+          <span className="badge-family">Khám cho người thân</span>
+          Phiên tư vấn này dành cho{' '}
+          <strong>{familyContext.patientName}</strong>
+          {' '}({relLabel})
+        </div>
+        <div className="banner-meta">
+          <span>
+            <i className="fas fa-user-shield me-1" />
+            Người đặt / Giám hộ:{' '}
+            <strong>{guardianName || 'Chủ tài khoản'}</strong>
+          </span>
+          {familyContext.medicalHistory && (
+            <span className="banner-allergy">
+              <i className="fas fa-exclamation-triangle me-1 text-warning" />
+              Tiền sử:{' '}
+              <strong>{familyContext.medicalHistory}</strong>
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const PatientChatModal = ({ isOpen, onClose, booking, guardianName }) => {
   const [conversation, setConversation] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
+  const [familyContext, setFamilyContext] = useState(null);
 
   useEffect(() => {
     if (!isOpen || !booking?.id) {
       setConversation(null);
       setErrorMsg(null);
+      setFamilyContext(null);
       return;
     }
 
@@ -31,6 +84,10 @@ const PatientChatModal = ({ isOpen, onClose, booking }) => {
         if (!isMounted) return;
         if (res && res.errCode === 0 && res.data) {
           setConversation(res.data);
+          // [Phase 3] Nhận familyContext từ API response
+          if (res.data.familyContext) {
+            setFamilyContext(res.data.familyContext);
+          }
         } else {
           setErrorMsg(res?.message || 'Không thể mở cuộc trò chuyện với bác sĩ.');
         }
@@ -75,14 +132,21 @@ const PatientChatModal = ({ isOpen, onClose, booking }) => {
         )}
 
         {!isLoading && conversation && (
-          <ChatWindow
-            conversation={conversation}
-            onClose={onClose}
-            onStatusChange={(newStatus) => {
-              setConversation((prev) => (prev ? { ...prev, status: newStatus } : prev));
-            }}
-            isDrawer={false}
-          />
+          <>
+            {/* [Phase 3] Medical Context Banner — hiển thị trên đầu chat nếu booking cho người thân */}
+            <MedicalContextBanner
+              familyContext={familyContext}
+              guardianName={guardianName}
+            />
+            <ChatWindow
+              conversation={conversation}
+              onClose={onClose}
+              onStatusChange={(newStatus) => {
+                setConversation((prev) => (prev ? { ...prev, status: newStatus } : prev));
+              }}
+              isDrawer={false}
+            />
+          </>
         )}
       </div>
     </div>

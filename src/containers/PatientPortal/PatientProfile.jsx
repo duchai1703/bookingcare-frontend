@@ -246,7 +246,8 @@ const PatientProfile = () => {
         toast.error(res.message || 'Thêm tài khoản thất bại!');
       }
     } catch (err) {
-      toast.error('Lỗi hệ thống khi thêm tài khoản!');
+      const msg = err?.response?.data?.message || 'Lỗi hệ thống khi thêm tài khoản!';
+      toast.error(msg);
     } finally {
       setIsSavingBank(false);
     }
@@ -262,7 +263,8 @@ const PatientProfile = () => {
         toast.error(res.message || 'Không thể đặt tài khoản làm chính!');
       }
     } catch (err) {
-      toast.error('Lỗi khi cập nhật tài khoản chính!');
+      const msg = err?.response?.data?.message || 'Lỗi khi cập nhật tài khoản chính!';
+      toast.error(msg);
     }
   };
 

@@ -92,6 +92,92 @@
         }
       }
     }
+
+    // ══════════════════════════════════════════════════════
+    // [Phase 3] Medical Context Banner — Phân tách người thân
+    // Hiển thị cảnh báo y khoa trên đầu chat để bác sĩ
+    // nhận biết đây là phiên khám cho CON/BỐ MẸ, không phải chủ tài khoản
+    // ══════════════════════════════════════════════════════
+    .medical-context-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 16px;
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+      border-bottom: 2px solid #f59e0b;
+      flex-shrink: 0;
+
+      .banner-icon-wrap {
+        flex-shrink: 0;
+        width: 36px;
+        height: 36px;
+        background: #f59e0b;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+      }
+
+      .banner-body {
+        flex: 1;
+
+        .banner-title {
+          font-size: 0.86rem;
+          font-weight: 600;
+          color: #92400e;
+          line-height: 1.4;
+          margin-bottom: 4px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          flex-wrap: wrap;
+
+          .badge-family {
+            display: inline-flex;
+            align-items: center;
+            background: #f59e0b;
+            color: #ffffff;
+            border-radius: 4px;
+            padding: 1px 6px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+          }
+
+          strong {
+            color: #78350f;
+          }
+        }
+
+        .banner-meta {
+          display: flex;
+          gap: 12px;
+          flex-wrap: wrap;
+          font-size: 0.78rem;
+          color: #92400e;
+
+          span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+          }
+
+          .banner-allergy {
+            background: #fff7ed;
+            border: 1px solid #fdba74;
+            border-radius: 4px;
+            padding: 1px 8px;
+            color: #c2410c;
+
+            strong {
+              color: #9a3412;
+            }
+          }
+        }
+      }
+    }
   }
 }
 

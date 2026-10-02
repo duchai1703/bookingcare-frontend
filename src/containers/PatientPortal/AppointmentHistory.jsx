@@ -1221,25 +1221,57 @@ const AppointmentHistory = () => {
                     </div>
                   </div>
 
-                  {/* Đơn thuốc */}
+                  {/* Kế hoạch điều trị — luôn hiển thị nếu S3 */}
                   <div className="med-row">
-                    <span className="med-label">Đơn thuốc chỉ định:</span>
+                    <span className="med-label">
+                      <i className="fas fa-clipboard-list me-1 text-teal" />
+                      Kế hoạch điều trị:
+                    </span>
+                    <div className="med-content">
+                      {detailBooking.treatmentPlan ? (
+                        <p className="treatment-plan-text">{detailBooking.treatmentPlan}</p>
+                      ) : (
+                        <span className="text-muted-italic">Bác sĩ chưa ghi kế hoạch điều trị</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Đơn thuốc — mở rộng với usageInstructions */}
+                  <div className="med-row">
+                    <span className="med-label">
+                      <i className="fas fa-pills me-1 text-teal" />
+                      Đơn thuốc chỉ định:
+                    </span>
                     <div className="med-content">
                       {detailBooking.bookingMedicines && detailBooking.bookingMedicines.length > 0 ? (
                         <table className="prescription-table">
                           <thead>
                             <tr>
+                              <th>#</th>
                               <th>Tên thuốc</th>
                               <th>Số lượng</th>
-                              <th>Liều dùng & Hướng dẫn</th>
+                              <th>Liều dùng</th>
+                              <th>Hướng dẫn sử dụng</th>
                             </tr>
                           </thead>
                           <tbody>
-                            {detailBooking.bookingMedicines.map((bm) => (
+                            {detailBooking.bookingMedicines.map((bm, idx) => (
                               <tr key={bm.id}>
-                                <td className="font-semibold">{bm.medicineData?.name || `#${bm.medicineId}`}</td>
-                                <td>{bm.quantity} {bm.medicineData?.unit || ''}</td>
-                                <td>{bm.dosage || 'Theo chỉ dẫn của bác sĩ'}</td>
+                                <td className="rx-idx">{idx + 1}</td>
+                                <td className="rx-name">
+                                  <strong>{bm.medicineData?.name || `Thuốc #${bm.medicineId}`}</strong>
+                                </td>
+                                <td className="rx-qty">
+                                  {bm.quantity} {bm.medicineData?.unit || ''}
+                                </td>
+                                <td className="rx-dosage">{bm.dosage || '—'}</td>
+                                <td className="rx-usage">
+                                  {bm.usageInstructions ? (
+                                    <span className="rx-usage-badge">{bm.usageInstructions}</span>
+                                  ) : (
+                                    <span className="text-muted-italic">Theo chỉ dẫn của bác sĩ</span>
+                                  )}
+                                </td>
                               </tr>
                             ))}
                           </tbody>
@@ -1250,24 +1282,49 @@ const AppointmentHistory = () => {
                     </div>
                   </div>
 
-                  {/* Hướng dẫn chăm sóc & Tái khám */}
-                  {detailBooking.careInstructions && (
-                    <div className="med-row">
-                      <span className="med-label">Hướng dẫn chăm sóc:</span>
-                      <div className="med-content">
-                        <p>{detailBooking.careInstructions}</p>
-                      </div>
+                  {/* Hướng dẫn chăm sóc tại nhà — luôn hiển thị */}
+                  <div className="med-row">
+                    <span className="med-label">
+                      <i className="fas fa-home me-1 text-teal" />
+                      Hướng dẫn chăm sóc tại nhà:
+                    </span>
+                    <div className="med-content">
+                      {detailBooking.careInstructions ? (
+                        <p className="care-instructions-text">{detailBooking.careInstructions}</p>
+                      ) : (
+                        <span className="text-muted-italic">Bác sĩ chưa có hướng dẫn chăm sóc cụ thể</span>
+                      )}
                     </div>
-                  )}
+                  </div>
 
-                  {detailBooking.followUpDate && (
-                    <div className="med-row">
-                      <span className="med-label">Lịch hẹn tái khám:</span>
-                      <div className="med-content text-teal font-semibold">
-                        <i className="far fa-calendar-alt" /> {detailBooking.followUpDate}
-                      </div>
+                  {/* Lịch hẹn tái khám — luôn hiển thị + nút đặt hẹn 1-click */}
+                  <div className="med-row followup-row">
+                    <span className="med-label">
+                      <i className="fas fa-calendar-check me-1 text-teal" />
+                      Lịch hẹn tái khám:
+                    </span>
+                    <div className="med-content followup-content">
+                      {detailBooking.followUpDate ? (
+                        <div className="followup-date-wrap">
+                          <span className="followup-date-badge">
+                            <i className="far fa-calendar-alt me-1" />
+                            {detailBooking.followUpDate}
+                          </span>
+                          <Link
+                            to={`/detail-doctor/${detailBooking.doctorId}`}
+                            className="btn-followup-rebook"
+                            onClick={() => setDetailBooking(null)}
+                            title="Đặt hẹn tái khám với cùng bác sĩ theo lịch hẹn"
+                          >
+                            <i className="fas fa-calendar-plus me-1" />
+                            Đặt hẹn tái khám ngay
+                          </Link>
+                        </div>
+                      ) : (
+                        <span className="text-muted-italic">Bác sĩ không yêu cầu tái khám</span>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1460,6 +1517,7 @@ const AppointmentHistory = () => {
         isOpen={chatModal.isOpen}
         onClose={() => setChatModal({ isOpen: false, booking: null })}
         booking={chatModal.booking}
+        guardianName={userInfo ? `${userInfo.lastName || ''} ${userInfo.firstName || ''}`.trim() : ''}
       />
     </div>
   );

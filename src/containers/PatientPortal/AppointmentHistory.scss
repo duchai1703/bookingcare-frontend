@@ -1179,11 +1179,114 @@ $border-color: #e2e8f0;
                 border: 1px solid #e2e8f0;
                 color: #475569;
                 text-align: left;
+                font-weight: 600;
               }
 
               td {
                 padding: 7px 10px;
                 border: 1px solid #e2e8f0;
+                vertical-align: top;
+              }
+
+              .rx-idx {
+                width: 36px;
+                text-align: center;
+                color: #64748b;
+                font-size: 0.78rem;
+              }
+
+              .rx-name strong {
+                color: #1e293b;
+                font-size: 0.84rem;
+              }
+
+              .rx-qty {
+                white-space: nowrap;
+                color: #334155;
+              }
+
+              .rx-dosage {
+                color: #475569;
+              }
+
+              .rx-usage {
+                .rx-usage-badge {
+                  display: inline-block;
+                  background: #f0fdfa;
+                  border: 1px solid #99f6e4;
+                  color: #0f766e;
+                  border-radius: 5px;
+                  padding: 2px 8px;
+                  font-size: 0.78rem;
+                  font-weight: 500;
+                }
+              }
+            }
+
+            // Trường điều trị & chăm sóc mới
+            .treatment-plan-text,
+            .care-instructions-text {
+              margin: 0;
+              line-height: 1.6;
+              color: #1e293b;
+              font-size: 0.84rem;
+              white-space: pre-line;
+            }
+
+            // Followup row
+            .followup-row {
+              background: #f0fdfa;
+              border-radius: 8px;
+              border: 1px solid #99f6e4;
+
+              .followup-content {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                flex-wrap: wrap;
+              }
+
+              .followup-date-wrap {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                flex-wrap: wrap;
+              }
+
+              .followup-date-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                background: #ccfbf1;
+                border: 1px solid #5eead4;
+                color: #0f766e;
+                border-radius: 6px;
+                padding: 4px 12px;
+                font-weight: 600;
+                font-size: 0.85rem;
+              }
+
+              .btn-followup-rebook {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                background: #45c3d2;
+                color: #ffffff;
+                border: none;
+                border-radius: 8px;
+                padding: 6px 14px;
+                font-size: 0.82rem;
+                font-weight: 600;
+                text-decoration: none;
+                cursor: pointer;
+                transition: background 0.2s ease, transform 0.1s ease;
+
+                &:hover {
+                  background: #2a9bb5;
+                  transform: translateY(-1px);
+                  text-decoration: none;
+                  color: #ffffff;
+                }
               }
             }
           }
