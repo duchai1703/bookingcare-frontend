@@ -70,3 +70,72 @@ export const toggleWalletStatus = (walletId, data) => {
   return axiosInstance.post(`/api/v1/admin/financial/wallets/${walletId}/toggle-status`, data);
 };
 
+// ═══════════════════════════════════════════════════════════════════════
+// [Phase 3] WITHDRAWAL FLOW & DOCTOR WALLET APIs
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * Bệnh nhân gửi yêu cầu rút tiền về tài khoản ngân hàng
+ * @param {Object} data { amount: number, patientBankAccountId?: number, bankInfo?: Object, userNote?: string }
+ */
+export const requestWithdrawal = (data) => {
+  return axiosInstance.post('/api/v1/patient/wallet/withdrawal', data);
+};
+
+/**
+ * Lấy lịch sử yêu cầu rút tiền của bệnh nhân
+ * @param {Object} params { page?: number, limit?: number, status?: string }
+ */
+export const getMyWithdrawalRequests = (params) => {
+  return axiosInstance.get('/api/v1/patient/wallet/withdrawals', { params });
+};
+
+/**
+ * Bệnh nhân hủy yêu cầu rút tiền khi còn PENDING
+ * @param {number} id ID của yêu cầu rút tiền
+ */
+export const cancelMyWithdrawalRequest = (id) => {
+  return axiosInstance.post(`/api/v1/patient/wallet/withdrawals/${id}/cancel`);
+};
+
+/**
+ * Lấy thông tin tổng quan Ví Bác sĩ
+ */
+export const getDoctorWallet = () => {
+  return axiosInstance.get('/api/v1/doctor/wallet');
+};
+
+/**
+ * Bác sĩ gửi yêu cầu rút tiền từ Ví Bác sĩ
+ * @param {Object} data { amount: number, bankInfo?: Object, userNote?: string }
+ */
+export const requestDoctorWithdrawal = (data) => {
+  return axiosInstance.post('/api/v1/doctor/wallet/withdrawal', data);
+};
+
+/**
+ * Bác sĩ xem lịch sử yêu cầu rút tiền
+ * @param {Object} params { page?: number, limit?: number, status?: string }
+ */
+export const getDoctorWithdrawalRequests = (params) => {
+  return axiosInstance.get('/api/v1/doctor/wallet/withdrawals', { params });
+};
+
+/**
+ * Admin lấy danh sách yêu cầu rút tiền toàn hệ thống kèm thống kê
+ * @param {Object} params { page?: number, limit?: number, status?: string, search?: string, startDate?: string, endDate?: string }
+ */
+export const getAdminWithdrawalRequests = (params) => {
+  return axiosInstance.get('/api/v1/admin/financial/withdrawals', { params });
+};
+
+/**
+ * Admin phê duyệt chuyển khoản hoặc từ chối yêu cầu rút tiền
+ * @param {number} id ID của yêu cầu rút tiền
+ * @param {Object} data { action: 'TRANSFER' | 'REJECT', adminNote?: string, bankTransactionRef?: string, receiptImage?: string }
+ */
+export const processAdminWithdrawal = (id, data) => {
+  return axiosInstance.post(`/api/v1/admin/financial/withdrawals/${id}/process`, data);
+};
+
+

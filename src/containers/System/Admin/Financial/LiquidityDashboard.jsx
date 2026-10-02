@@ -20,18 +20,25 @@ import {
   Wallet,
   Building2,
   Sliders,
-  FileSpreadsheet
+  FileSpreadsheet,
+  CheckCircle,
+  XCircle,
+  Clock,
+  ExternalLink,
+  Copy
 } from 'lucide-react';
 import {
   getAdminLiquidityMetrics,
   getAdminWalletTransactions,
   getAdminWalletsList,
-  toggleWalletStatus
+  toggleWalletStatus,
+  getAdminWithdrawalRequests,
+  processAdminWithdrawal
 } from '../../../../services/walletService';
 import './LiquidityDashboard.scss';
 
 const LiquidityDashboard = () => {
-  // Tabs: 'solvency' | 'ledger' | 'wallets'
+  // Tabs: 'solvency' | 'ledger' | 'wallets' | 'withdrawals'
   const [activeTab, setActiveTab] = useState('solvency');
 
   // Solvency Metrics State
@@ -58,6 +65,24 @@ const LiquidityDashboard = () => {
   const [walletSearch, setWalletSearch] = useState('');
   const [loadingWallets, setLoadingWallets] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState(null);
+
+  // [PHASE 3] Withdrawals Center State
+  const [withdrawals, setWithdrawals] = useState([]);
+  const [withdrawalStats, setWithdrawalStats] = useState(null);
+  const [withdrawalsTotal, setWithdrawalsTotal] = useState(0);
+  const [withdrawalsPage, setWithdrawalsPage] = useState(1);
+  const [withdrawalsLimit] = useState(15);
+  const [withdrawalStatusFilter, setWithdrawalStatusFilter] = useState('ALL');
+  const [withdrawalSearch, setWithdrawalSearch] = useState('');
+  const [loadingWithdrawals, setLoadingWithdrawals] = useState(false);
+
+  // Modal xử lý rút tiền
+  const [selectedWithdrawal, setSelectedWithdrawal] = useState(null);
+  const [processAction, setProcessAction] = useState('TRANSFER'); // 'TRANSFER' | 'REJECT'
+  const [adminProcessNote, setAdminProcessNote] = useState('');
+  const [bankTxnRef, setBankTxnRef] = useState('');
+  const [receiptImg, setReceiptImg] = useState('');
+  const [isProcessingAction, setIsProcessingAction] = useState(false);
 
   // Format currency
   const formatMoney = (amount) => {
@@ -124,18 +149,43 @@ const LiquidityDashboard = () => {
     }
   }, [walletsPage, walletsLimit, walletStatusFilter, walletSearch]);
 
+  // [PHASE 3] Load Withdrawals List
+  const loadWithdrawals = useCallback(async () => {
+    setLoadingWithdrawals(true);
+    try {
+      const res = await getAdminWithdrawalRequests({
+        page: withdrawalsPage,
+        limit: withdrawalsLimit,
+        status: withdrawalStatusFilter !== 'ALL' ? withdrawalStatusFilter : undefined,
+        search: withdrawalSearch.trim() || undefined,
+      });
+      if (res && res.errCode === 0 && res.data) {
+        setWithdrawals(res.data.requests || []);
+        setWithdrawalsTotal(res.data.total || 0);
+        setWithdrawalStats(res.data.stats || {});
+      }
+    } catch (err) {
+      toast.error('Lỗi khi tải danh sách yêu cầu rút tiền');
+    } finally {
+      setLoadingWithdrawals(false);
+    }
+  }, [withdrawalsPage, withdrawalsLimit, withdrawalStatusFilter, withdrawalSearch]);
+
   // Initial load
   useEffect(() => {
     loadMetrics();
-  }, [loadMetrics]);
+    loadWithdrawals(); // tải sớm để lấy badge pending count
+  }, [loadMetrics, loadWithdrawals]);
 
   useEffect(() => {
     if (activeTab === 'ledger') {
       loadTransactions();
     } else if (activeTab === 'wallets') {
       loadWallets();
+    } else if (activeTab === 'withdrawals') {
+      loadWithdrawals();
     }
-  }, [activeTab, loadTransactions, loadWallets]);
+  }, [activeTab, loadTransactions, loadWallets, loadWithdrawals]);
 
   // Handle Slider Change
   const handleReserveRatioChange = (e) => {
@@ -169,6 +219,60 @@ const LiquidityDashboard = () => {
       toast.error('Lỗi hệ thống khi cập nhật trạng thái ví');
     } finally {
       setActionLoadingId(null);
+    }
+  };
+
+  // [PHASE 3] Modal Handlers for Processing Withdrawal
+  const handleOpenProcessModal = (reqItem) => {
+    setSelectedWithdrawal(reqItem);
+    setProcessAction('TRANSFER');
+    setBankTxnRef(`NAPAS247-${Date.now().toString().slice(-6)}`);
+    setAdminProcessNote('');
+    setReceiptImg('');
+  };
+
+  const handleCopyAccountNumber = (accNum) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(accNum);
+      toast.info(`Đã sao chép số tài khoản: ${accNum}`);
+    }
+  };
+
+  const handleProcessWithdrawalSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedWithdrawal) return;
+
+    if (processAction === 'TRANSFER' && !bankTxnRef.trim()) {
+      toast.warning('Vui lòng nhập Mã giao dịch ngân hàng / Ủy nhiệm chi.');
+      return;
+    }
+
+    if (processAction === 'REJECT' && !adminProcessNote.trim()) {
+      toast.warning('Vui lòng nhập lý do từ chối yêu cầu rút tiền.');
+      return;
+    }
+
+    setIsProcessingAction(true);
+    try {
+      const res = await processAdminWithdrawal(selectedWithdrawal.id, {
+        action: processAction,
+        adminNote: adminProcessNote.trim(),
+        bankTransactionRef: bankTxnRef.trim(),
+        receiptImage: receiptImg || null,
+      });
+
+      if (res && res.errCode === 0) {
+        toast.success(res.errMessage || 'Đã xử lý yêu cầu rút tiền thành công!');
+        setSelectedWithdrawal(null);
+        loadWithdrawals();
+        loadMetrics();
+      } else {
+        toast.error(res?.errMessage || 'Không thể xử lý yêu cầu rút tiền');
+      }
+    } catch (err) {
+      toast.error('Lỗi khi xử lý yêu cầu rút tiền');
+    } finally {
+      setIsProcessingAction(false);
     }
   };
 
@@ -211,7 +315,12 @@ const LiquidityDashboard = () => {
           <button
             type="button"
             className="btn-refresh"
-            onClick={() => loadMetrics()}
+            onClick={() => {
+              loadMetrics();
+              if (activeTab === 'withdrawals') loadWithdrawals();
+              if (activeTab === 'ledger') loadTransactions();
+              if (activeTab === 'wallets') loadWallets();
+            }}
             disabled={loadingMetrics}
           >
             <RotateCw size={14} className={loadingMetrics ? 'tw-animate-spin' : ''} />
@@ -248,80 +357,99 @@ const LiquidityDashboard = () => {
 
       {/* ===== 4 EXECUTIVE KPI CARDS ===== */}
       <div className="ld-kpi-grid">
-        {/* Thẻ 1: Tổng tiền nạp cổng */}
-        <div className="kpi-card">
-          <div className="kpi-top-row">
-            <span className="kpi-title">Dòng tiền nạp thực tế</span>
-            <div className="kpi-icon-wrap blue">
+        {/* KPI 1: Tổng Nợ Nghĩa Vụ */}
+        <div className="kpi-card kpi-card--liability">
+          <div className="kpi-card-header">
+            <span className="kpi-title">Tổng Nghĩa Vụ Phải Trả</span>
+            <div className="kpi-icon-wrap tw-bg-amber-50 tw-text-amber-600">
               <Coins size={18} />
             </div>
           </div>
-          <div className="kpi-value">{formatMoney(summary.totalCashInflow)}</div>
-          <div className="kpi-subtitle">
-            <span>Tổng cộng:</span>
-            <span className="highlight-text">{summary.totalDepositCount || 0} giao dịch VNPay thành công</span>
-          </div>
-        </div>
-
-        {/* Thẻ 2: Tổng nghĩa vụ nợ */}
-        <div className="kpi-card kpi-card--liabilities">
-          <div className="kpi-top-row">
-            <span className="kpi-title">Tổng nghĩa vụ nợ</span>
-            <div className="kpi-icon-wrap amber">
-              <AlertOctagon size={18} />
+          <div className="kpi-value">{formatMoney(summary.totalLiabilities)}</div>
+          <div className="kpi-breakdown">
+            <div className="breakdown-item">
+              <span>Ví bệnh nhân khả dụng:</span>
+              <strong>{formatMoney(summary.patientAvailableLiability)}</strong>
+            </div>
+            <div className="breakdown-item">
+              <span>Ký quỹ giữ chỗ (Hold):</span>
+              <strong>{formatMoney(summary.escrowActiveHolds)}</strong>
+            </div>
+            <div className="breakdown-item">
+              <span>Thù lao chờ trả Bác sĩ:</span>
+              <strong>{formatMoney(summary.doctorPayables)}</strong>
             </div>
           </div>
-          <div className="kpi-value">{formatMoney(summary.totalLiabilities)}</div>
-          <div className="kpi-subtitle">
-            <span>Khả dụng ví:</span>
-            <span className="highlight-text">{formatMoney(summary.patientAvailableLiability)}</span>
+        </div>
+
+        {/* KPI 2: Dòng tiền thực tế nạp */}
+        <div className="kpi-card kpi-card--inflow">
+          <div className="kpi-card-header">
+            <span className="kpi-title">Dòng Tiền Thực Tế Nạp Vào</span>
+            <div className="kpi-icon-wrap tw-bg-emerald-50 tw-text-emerald-600">
+              <ArrowDownLeft size={18} />
+            </div>
+          </div>
+          <div className="kpi-value">{formatMoney(summary.totalCashInflow)}</div>
+          <div className="kpi-meta">
+            <span>Tổng cộng <strong>{summary.totalDepositCount || 0}</strong> lượt nạp qua VNPay</span>
+            <span className="kpi-subtext">Đã capture doanh thu: {formatMoney(summary.totalCapturedRevenue)}</span>
           </div>
         </div>
 
-        {/* Thẻ 3: Dự trữ bắt buộc */}
-        <div className="kpi-card">
-          <div className="kpi-top-row">
-            <span className="kpi-title">Quỹ dự trữ bắt buộc</span>
-            <div className="kpi-icon-wrap purple">
-              <Sliders size={18} />
+        {/* KPI 3: Quỹ dự trữ bắt buộc */}
+        <div className="kpi-card kpi-card--reserve">
+          <div className="kpi-card-header">
+            <span className="kpi-title">Quỹ Dự Trữ Thanh Khoản ({reserveRatio}%)</span>
+            <div className="kpi-icon-wrap tw-bg-sky-50 tw-text-sky-600">
+              <Lock size={18} />
             </div>
           </div>
           <div className="kpi-value">{formatMoney(solvency.mandatoryReserveCash)}</div>
-          <div className="reserve-slider-control">
-            <div className="slider-label">
-              <span>Hệ số an toàn:</span>
-              <strong className="text-teal-700">{reserveRatio}%</strong>
+          <div className="kpi-meta">
+            <span className="tw-text-amber-600 tw-font-semibold">
+              Khóa cứng bảo chứng hoàn tiền — Không được rút
+            </span>
+            <div className="reserve-slider-wrap tw-mt-2">
+              <div className="tw-flex tw-justify-between tw-text-xs tw-text-slate-500 tw-mb-1">
+                <span>Tỷ lệ dự trữ:</span>
+                <span className="tw-font-bold tw-text-slate-800">{reserveRatio}%</span>
+              </div>
+              <input
+                type="range"
+                min="10"
+                max="80"
+                step="5"
+                value={reserveRatio}
+                onChange={handleReserveRatioChange}
+                className="tw-w-full tw-h-1.5 tw-bg-slate-200 tw-rounded-lg tw-appearance-none tw-cursor-pointer"
+              />
             </div>
-            <input
-              type="range"
-              min="10"
-              max="80"
-              step="5"
-              value={reserveRatio}
-              onChange={handleReserveRatioChange}
-              title="Kéo thanh trượt để thử nghiệm tỷ lệ dự trữ"
-            />
           </div>
         </div>
 
-        {/* Thẻ 4: Vốn được phép rút đầu tư */}
+        {/* KPI 4: Tiền được phép rút đi đầu tư */}
         <div className="kpi-card kpi-card--withdrawable">
-          <div className="kpi-top-row">
-            <span className="kpi-title">Vốn an toàn rút đầu tư</span>
-            <div className="kpi-icon-wrap green">
+          <div className="kpi-card-header">
+            <span className="kpi-title">Vốn Khả Dụng Rút Đầu Tư</span>
+            <div className="kpi-icon-wrap tw-bg-indigo-50 tw-text-indigo-600">
               <TrendingUp size={18} />
             </div>
           </div>
-          <div className="kpi-value">{formatMoney(solvency.netWithdrawableLiquidity)}</div>
-          <div className="kpi-subtitle">
-            <CheckCircle2 size={13} className="text-emerald-600" />
-            <span className="text-emerald-700 font-semibold">Bảo chứng 100% không mất thanh khoản</span>
+          <div className="kpi-value tw-text-indigo-600">
+            {formatMoney(solvency.netWithdrawableLiquidity)}
+          </div>
+          <div className="kpi-meta">
+            <span>Chủ sàn được phép điều phối vốn mà không làm ảnh hưởng thanh khoản</span>
+            <span className="tw-text-emerald-600 tw-font-medium">
+              Đảm bảo 100% khả năng hoàn tiền tức thì khi hủy lịch
+            </span>
           </div>
         </div>
       </div>
 
-      {/* ===== TABS CONTAINER ===== */}
-      <div className="ld-tabs-container">
+      {/* ===== NAVIGATION TABS ===== */}
+      <div className="ld-tabs-container tw-mt-6">
         <div className="ld-tabs-nav">
           <button
             type="button"
@@ -330,6 +458,20 @@ const LiquidityDashboard = () => {
           >
             <Scale size={15} />
             <span>Phân Bổ Vốn & Đối Soát Kế Toán Kép</span>
+          </button>
+
+          <button
+            type="button"
+            className={`tab-btn ${activeTab === 'withdrawals' ? 'active' : ''}`}
+            onClick={() => setActiveTab('withdrawals')}
+          >
+            <ArrowUpRight size={15} />
+            <span>Trung Tâm Duyệt Rút Tiền</span>
+            {withdrawalStats?.pendingCount > 0 && (
+              <span className="tab-badge" style={{ background: '#fee2e2', color: '#b91c1c' }}>
+                {withdrawalStats.pendingCount} chờ duyệt
+              </span>
+            )}
           </button>
 
           <button
@@ -448,64 +590,302 @@ const LiquidityDashboard = () => {
                   <span className="box-tag">Tự động</span>
                 </div>
 
-                <div className={`reconciliation-status-card ${!rec.isLedgerBalanced ? 'reconciliation-status-card--warn' : ''}`}>
-                  <div className="rec-head">
+                <div className="reconciliation-card">
+                  <div className="reconciliation-status">
                     {rec.isLedgerBalanced ? (
-                      <>
+                      <div className="status-badge-rec status-badge-rec--ok">
                         <CheckCircle2 size={16} />
-                        <span>SỔ CÁI BẤT BIẾN CÂN ĐỐI TUYỆT ĐỐI (100%)</span>
-                      </>
+                        <span>Sổ Cái Cân Bằng Hoàn Hảo (Zero Discrepancy)</span>
+                      </div>
                     ) : (
-                      <>
-                        <AlertOctagon size={16} className="text-amber-600" />
-                        <span className="text-amber-800">PHÁT HIỆN ĐỘ LỆCH SỐ DƯ VỚI SỔ CÁI</span>
-                      </>
+                      <div className="status-badge-rec status-badge-rec--error">
+                        <AlertOctagon size={16} />
+                        <span>Phát hiện Lệch Sổ Cái: {formatMoney(rec.discrepancy)}</span>
+                      </div>
                     )}
                   </div>
-                  <p className="rec-desc">
-                    Đối chiếu so sánh giữa tổng số dư lưu hành trên các bảng Ví với tổng bút toán phát sinh trong Sổ cái giao dịch bất biến (`Wallet_Transactions`).
-                  </p>
 
-                  <div className="rec-metrics">
-                    <div className="rec-item">
-                      <span>Tổng số dư trên các Ví:</span>
-                      <strong>{formatMoney(rec.sumWalletsBalance)}</strong>
+                  <div className="rec-table tw-mt-4">
+                    <div className="rec-row">
+                      <span>Tổng phát sinh Có (CREDIT - Nạp & Hoàn):</span>
+                      <strong className="tw-text-emerald-600">+{formatMoney(rec.ledgerCredits)}</strong>
                     </div>
-                    <div className="rec-item">
-                      <span>Biến động ròng Sổ cái:</span>
-                      <strong>{formatMoney(rec.netLedgerBalance)}</strong>
+                    <div className="rec-row">
+                      <span>Tổng phát sinh Nợ (DEBIT - Chi tiêu & Rút):</span>
+                      <strong className="tw-text-rose-600">-{formatMoney(rec.ledgerDebits)}</strong>
                     </div>
-                    <div className="rec-item">
-                      <span>Tổng bút toán CREDIT:</span>
-                      <strong className="text-emerald-600">+{formatMoney(rec.ledgerCredits)}</strong>
+                    <div className="rec-divider" />
+                    <div className="rec-row tw-font-bold">
+                      <span>Biến động số dư Sổ cái ròng (Net Ledger):</span>
+                      <span>{formatMoney(rec.netLedgerBalance)}</span>
                     </div>
-                    <div className="rec-item">
-                      <span>Tổng bút toán DEBIT:</span>
-                      <strong className="text-rose-600">-{formatMoney(rec.ledgerDebits)}</strong>
+                    <div className="rec-row tw-font-bold">
+                      <span>Tổng số dư ghi nhận trên bảng Wallets:</span>
+                      <span>{formatMoney(rec.sumWalletsBalance)}</span>
                     </div>
                   </div>
-                </div>
 
-                <div className="tw-mt-4 tw-p-3 tw-bg-emerald-50 tw-rounded-lg tw-border tw-border-emerald-200 tw-text-xs tw-text-emerald-800">
-                  <div className="tw-font-bold tw-flex tw-items-center tw-gap-1.5 tw-mb-1">
-                    <CheckCircle2 size={14} /> Zero-Admin Automatic Protection
+                  <div className="tw-mt-4 tw-p-3 tw-bg-emerald-50 tw-rounded-lg tw-border tw-border-emerald-200 tw-text-xs tw-text-emerald-800">
+                    <div className="tw-font-bold tw-mb-1">Tính bất biến của Sổ cái (Ledger Immutability):</div>
+                    Bảng <code>Wallet_Transactions</code> thiết lập <code>updatedAt: false</code> và cấm lệnh DELETE/UPDATE. Mọi biến động tài sản đều được ký snapshot <code>balanceAfter</code> và ràng buộc khóa duy nhất <code>idempotencyKey</code>.
                   </div>
-                  Mọi giao dịch hoàn tiền tự động (Instant Refund) hoặc đặt lịch đều được ghi nhận song song vào Sổ cái bất biến với mã khóa `idempotencyKey`, ngăn chặn triệt để tình trạng double-spend hoặc mất mát tiền tệ.
                 </div>
               </div>
             </div>
           )}
 
-          {/* ══════════════ TAB 2: AUDIT TRAIL & LEDGER EXPLORER ══════════════ */}
-          {activeTab === 'ledger' && (
-            <div>
-              {/* Filter bar */}
-              <div className="ld-filter-bar">
-                <div className="search-box">
+          {/* ══════════════ TAB 2: [PHASE 3] TRUNG TÂM DUYỆT RÚT TIỀN ══════════════ */}
+          {activeTab === 'withdrawals' && (
+            <div className="tab-withdrawals-layout">
+              {/* Thống kê nhanh */}
+              <div className="tw-grid tw-grid-cols-4 tw-gap-4 tw-mb-5">
+                <div className="tw-bg-slate-50 tw-p-3 tw-rounded-xl tw-border tw-border-slate-200">
+                  <div className="tw-text-xs tw-text-slate-500 tw-font-semibold">Tổng yêu cầu rút tiền</div>
+                  <div className="tw-text-xl tw-font-extrabold tw-text-slate-800 tw-mt-1">
+                    {withdrawalStats?.totalRequests || 0}
+                  </div>
+                </div>
+
+                <div className="tw-bg-amber-50 tw-p-3 tw-rounded-xl tw-border tw-border-amber-200">
+                  <div className="tw-text-xs tw-text-amber-700 tw-font-semibold">Đang chờ xử lý (Pending)</div>
+                  <div className="tw-text-xl tw-font-extrabold tw-text-amber-800 tw-mt-1">
+                    {withdrawalStats?.pendingCount || 0} ca
+                    <span className="tw-text-xs tw-font-bold tw-text-amber-600 tw-ml-2">
+                      ({formatMoney(withdrawalStats?.pendingAmount)})
+                    </span>
+                  </div>
+                </div>
+
+                <div className="tw-bg-emerald-50 tw-p-3 tw-rounded-xl tw-border tw-border-emerald-200">
+                  <div className="tw-text-xs tw-text-emerald-700 tw-font-semibold">Đã chuyển khoản (Transferred)</div>
+                  <div className="tw-text-xl tw-font-extrabold tw-text-emerald-800 tw-mt-1">
+                    {withdrawalStats?.transferredCount || 0} ca
+                  </div>
+                </div>
+
+                <div className="tw-bg-rose-50 tw-p-3 tw-rounded-xl tw-border tw-border-rose-200">
+                  <div className="tw-text-xs tw-text-rose-700 tw-font-semibold">Bị từ chối (Rejected)</div>
+                  <div className="tw-text-xl tw-font-extrabold tw-text-rose-800 tw-mt-1">
+                    {withdrawalStats?.rejectedCount || 0} ca
+                  </div>
+                </div>
+              </div>
+
+              {/* Bộ lọc & Tìm kiếm */}
+              <div className="ld-filters-bar">
+                <div className="ld-search-box">
                   <Search size={14} />
                   <input
                     type="text"
-                    placeholder="Tìm theo Idempotency Key, Mã ca khám, Mô tả..."
+                    placeholder="Tìm theo Tên, Email, SĐT, STK, Ngân hàng, Mã GD..."
+                    value={withdrawalSearch}
+                    onChange={(e) => {
+                      setWithdrawalSearch(e.target.value);
+                      setWithdrawalsPage(1);
+                    }}
+                  />
+                </div>
+
+                <div className="ld-filter-selects">
+                  <select
+                    value={withdrawalStatusFilter}
+                    onChange={(e) => {
+                      setWithdrawalStatusFilter(e.target.value);
+                      setWithdrawalsPage(1);
+                    }}
+                  >
+                    <option value="ALL">Tất cả trạng thái</option>
+                    <option value="PENDING">Chờ xử lý (PENDING)</option>
+                    <option value="TRANSFERRED">Đã chuyển khoản (TRANSFERRED)</option>
+                    <option value="REJECTED">Bị từ chối (REJECTED)</option>
+                    <option value="CANCELLED">Đã hủy (CANCELLED)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Bảng danh sách yêu cầu rút tiền */}
+              <div className="ld-table-wrapper tw-mt-4">
+                <table className="ld-data-table">
+                  <thead>
+                    <tr>
+                      <th>Mã & Ngày gửi</th>
+                      <th>Người yêu cầu</th>
+                      <th>Tài khoản nhận tiền</th>
+                      <th>Số tiền rút</th>
+                      <th>Trạng thái</th>
+                      <th>Thông tin xử lý</th>
+                      <th>Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loadingWithdrawals ? (
+                      <tr>
+                        <td colSpan="7" className="tw-text-center tw-py-8 tw-text-slate-400">
+                          <RotateCw size={18} className="tw-animate-spin tw-inline tw-mr-2" />
+                          Đang tải danh sách yêu cầu rút tiền...
+                        </td>
+                      </tr>
+                    ) : withdrawals.length === 0 ? (
+                      <tr>
+                        <td colSpan="7" className="tw-text-center tw-py-8 tw-text-slate-400">
+                          Không tìm thấy yêu cầu rút tiền nào phù hợp
+                        </td>
+                      </tr>
+                    ) : (
+                      withdrawals.map((req) => {
+                        const owner = req.wallet?.owner;
+                        const isDoctor = req.wallet?.walletType === 'DOCTOR';
+                        return (
+                          <tr key={req.id}>
+                            <td>
+                              <div className="tw-font-bold tw-text-slate-800">#WTH-{req.id}</div>
+                              <div className="tw-text-xs tw-text-slate-400">
+                                {moment(req.createdAt).format('DD/MM/YYYY HH:mm')}
+                              </div>
+                            </td>
+                            <td>
+                              <div className="tw-font-semibold tw-text-slate-800">
+                                {owner?.lastName} {owner?.firstName}
+                                {isDoctor && (
+                                  <span className="tw-ml-1.5 tw-px-1.5 tw-py-0.5 tw-bg-indigo-100 tw-text-indigo-700 tw-rounded tw-text-2xs tw-font-bold">
+                                    BÁC SĨ
+                                  </span>
+                                )}
+                              </div>
+                              <div className="tw-text-xs tw-text-slate-500">{owner?.email}</div>
+                              <div className="tw-text-xs tw-text-slate-400">{owner?.phoneNumber}</div>
+                            </td>
+                            <td>
+                              <div className="tw-font-semibold tw-text-slate-800 tw-flex tw-items-center tw-gap-1">
+                                {req.bankName}
+                              </div>
+                              <div className="tw-text-xs tw-text-slate-700 tw-font-mono tw-flex tw-items-center tw-gap-1.5">
+                                STK: <strong>{req.accountNumber}</strong>
+                                <button
+                                  type="button"
+                                  className="tw-text-slate-400 hover:tw-text-slate-600"
+                                  onClick={() => handleCopyAccountNumber(req.accountNumber)}
+                                  title="Sao chép STK"
+                                >
+                                  <Copy size={11} />
+                                </button>
+                              </div>
+                              <div className="tw-text-xs tw-text-slate-500">Chủ TK: {req.accountHolderName}</div>
+                            </td>
+                            <td>
+                              <span className="tw-font-bold tw-text-rose-600 tw-text-sm">
+                                {formatMoney(req.amount)}
+                              </span>
+                            </td>
+                            <td>
+                              {req.status === 'PENDING' && (
+                                <span className="badge-tag" style={{ background: '#fef3c7', color: '#b45309' }}>
+                                  <Clock size={10} className="tw-inline tw-mr-1" /> Chờ duyệt
+                                </span>
+                              )}
+                              {req.status === 'TRANSFERRED' && (
+                                <span className="badge-tag" style={{ background: '#dcfce7', color: '#15803d' }}>
+                                  <CheckCircle size={10} className="tw-inline tw-mr-1" /> Đã chuyển
+                                </span>
+                              )}
+                              {req.status === 'REJECTED' && (
+                                <span className="badge-tag" style={{ background: '#fee2e2', color: '#b91c1c' }}>
+                                  <XCircle size={10} className="tw-inline tw-mr-1" /> Bị từ chối
+                                </span>
+                              )}
+                              {req.status === 'CANCELLED' && (
+                                <span className="badge-tag" style={{ background: '#f1f5f9', color: '#64748b' }}>
+                                  Đã hủy
+                                </span>
+                              )}
+                            </td>
+                            <td>
+                              {req.bankTransactionRef && (
+                                <div className="tw-text-xs tw-text-emerald-700 tw-font-semibold">
+                                  GD: {req.bankTransactionRef}
+                                </div>
+                              )}
+                              {req.adminNote && (
+                                <div className="tw-text-xs tw-text-slate-600 tw-max-w-xs tw-truncate" title={req.adminNote}>
+                                  {req.adminNote}
+                                </div>
+                              )}
+                              {req.admin && (
+                                <div className="tw-text-2xs tw-text-slate-400">
+                                  Duyệt bởi: {req.admin.lastName} {req.admin.firstName}
+                                </div>
+                              )}
+                              {req.userNote && (
+                                <div className="tw-text-2xs tw-text-slate-400 tw-italic">
+                                  Lời nhắn: "{req.userNote}"
+                                </div>
+                              )}
+                            </td>
+                            <td>
+                              {req.status === 'PENDING' ? (
+                                <button
+                                  type="button"
+                                  className="tw-px-3 tw-py-1.5 tw-bg-teal-600 hover:tw-bg-teal-700 tw-text-white tw-rounded-lg tw-text-xs tw-font-bold tw-flex tw-items-center tw-gap-1 tw-shadow-sm"
+                                  onClick={() => handleOpenProcessModal(req)}
+                                >
+                                  <ArrowUpRight size={13} />
+                                  <span>Xử lý</span>
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="tw-px-2.5 tw-py-1 tw-bg-slate-100 hover:tw-bg-slate-200 tw-text-slate-600 tw-rounded tw-text-xs tw-font-medium"
+                                  onClick={() => handleOpenProcessModal(req)}
+                                >
+                                  Xem chi tiết
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Phân trang */}
+              <div className="ld-pagination">
+                <span>
+                  Hiển thị {(withdrawalsPage - 1) * withdrawalsLimit + 1} - {Math.min(withdrawalsPage * withdrawalsLimit, withdrawalsTotal)} trong tổng số {withdrawalsTotal} yêu cầu
+                </span>
+                <div className="tw-flex tw-gap-2">
+                  <button
+                    type="button"
+                    className="btn-page"
+                    disabled={withdrawalsPage <= 1}
+                    onClick={() => setWithdrawalsPage((p) => Math.max(1, p - 1))}
+                  >
+                    Trang trước
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-page"
+                    disabled={withdrawalsPage * withdrawalsLimit >= withdrawalsTotal}
+                    onClick={() => setWithdrawalsPage((p) => p + 1)}
+                  >
+                    Trang sau
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ══════════════ TAB 3: SỔ CÁI GIAO DỊCH TOÀN SÀN (LEDGER) ══════════════ */}
+          {activeTab === 'ledger' && (
+            <div className="tab-ledger-layout">
+              {/* Filters */}
+              <div className="ld-filters-bar">
+                <div className="ld-search-box">
+                  <Search size={14} />
+                  <input
+                    type="text"
+                    placeholder="Tìm theo Idempotency Key, Reference ID, Diễn giải..."
                     value={txSearch}
                     onChange={(e) => {
                       setTxSearch(e.target.value);
@@ -514,93 +894,128 @@ const LiquidityDashboard = () => {
                   />
                 </div>
 
-                <select
-                  value={txType}
-                  onChange={(e) => {
-                    setTxType(e.target.value);
-                    setTxPage(1);
-                  }}
-                >
-                  <option value="ALL">Tất cả loại giao dịch</option>
-                  <option value="DEPOSIT">DEPOSIT (Nạp tiền VNPay)</option>
-                  <option value="BOOKING_PAYMENT">BOOKING_PAYMENT (Thanh toán lịch)</option>
-                  <option value="REFUND">REFUND (Hoàn tiền hủy khám)</option>
-                  <option value="WITHDRAWAL">WITHDRAWAL (Rút tiền về NH)</option>
-                </select>
+                <div className="ld-filter-selects">
+                  <select
+                    value={txType}
+                    onChange={(e) => {
+                      setTxType(e.target.value);
+                      setTxPage(1);
+                    }}
+                  >
+                    <option value="ALL">Tất cả loại giao dịch</option>
+                    <option value="DEPOSIT">DEPOSIT (Nạp VNPay)</option>
+                    <option value="BOOKING_PAYMENT">BOOKING_PAYMENT (Thanh toán)</option>
+                    <option value="REFUND">REFUND (Hoàn tiền)</option>
+                    <option value="WITHDRAWAL">WITHDRAWAL (Rút tiền)</option>
+                    <option value="DOCTOR_SHARE">DOCTOR_SHARE (Thù lao bác sĩ)</option>
+                  </select>
 
-                <select
-                  value={txDirection}
-                  onChange={(e) => {
-                    setTxDirection(e.target.value);
-                    setTxPage(1);
-                  }}
-                >
-                  <option value="ALL">Tất cả hướng tiền</option>
-                  <option value="CREDIT">CREDIT (+ Tiền vào ví)</option>
-                  <option value="DEBIT">DEBIT (- Tiền ra khỏi ví)</option>
-                </select>
+                  <select
+                    value={txDirection}
+                    onChange={(e) => {
+                      setTxDirection(e.target.value);
+                      setTxPage(1);
+                    }}
+                  >
+                    <option value="ALL">Tất cả chiều tiền</option>
+                    <option value="CREDIT">Phát sinh Có (CREDIT +)</option>
+                    <option value="DEBIT">Phát sinh Nợ (DEBIT -)</option>
+                  </select>
+                </div>
               </div>
 
-              {/* Table */}
-              <div className="ld-table-wrap">
-                <table>
+              {/* Data Table */}
+              <div className="ld-table-wrapper tw-mt-4">
+                <table className="ld-data-table">
                   <thead>
                     <tr>
                       <th>Thời gian</th>
-                      <th>Bệnh nhân / Chủ ví</th>
+                      <th>Chủ ví (Owner)</th>
                       <th>Loại giao dịch</th>
-                      <th>Hướng</th>
+                      <th>Chiều</th>
                       <th>Số tiền</th>
                       <th>Số dư sau GD</th>
-                      <th>Khóa Idempotency</th>
-                      <th>Ghi chú</th>
+                      <th>Diễn giải & Idempotency Key</th>
                     </tr>
                   </thead>
                   <tbody>
                     {loadingTx ? (
                       <tr>
-                        <td colSpan="8" className="tw-text-center tw-py-8 tw-text-slate-400">
-                          <RotateCw size={18} className="tw-animate-spin tw-inline tw-mr-2" /> Đang tra cứu sổ cái...
+                        <td colSpan="7" className="tw-text-center tw-py-8 tw-text-slate-400">
+                          <RotateCw size={18} className="tw-animate-spin tw-inline tw-mr-2" />
+                          Đang tải sổ cái...
                         </td>
                       </tr>
                     ) : transactions.length === 0 ? (
                       <tr>
-                        <td colSpan="8" className="tw-text-center tw-py-8 tw-text-slate-400">
-                          Không tìm thấy giao dịch nào phù hợp với bộ lọc.
+                        <td colSpan="7" className="tw-text-center tw-py-8 tw-text-slate-400">
+                          Không tìm thấy bản ghi sổ cái nào phù hợp
                         </td>
                       </tr>
                     ) : (
-                      transactions.map((tx) => (
-                        <tr key={tx.id}>
-                          <td>{moment(tx.createdAt).format('DD/MM/YYYY HH:mm:ss')}</td>
-                          <td>
-                            <div className="tw-font-semibold tw-text-slate-900">
-                              {[tx.wallet?.owner?.lastName, tx.wallet?.owner?.firstName].filter(Boolean).join(' ') || 'Chưa đặt tên'}
-                            </div>
-                            <div className="tw-text-xs tw-text-slate-500">{tx.wallet?.owner?.email}</div>
-                          </td>
-                          <td>
-                            <span className="tw-font-bold tw-text-xs tw-text-slate-700">{tx.transactionType}</span>
-                          </td>
-                          <td>
-                            <span className={`badge-tag badge-tag--${tx.direction?.toLowerCase()}`}>
-                              {tx.direction === 'CREDIT' ? '+ CREDIT' : '- DEBIT'}
-                            </span>
-                          </td>
-                          <td>
-                            <span className={`tw-font-bold ${tx.direction === 'CREDIT' ? 'tw-text-emerald-600' : 'tw-text-rose-600'}`}>
-                              {tx.direction === 'CREDIT' ? '+' : '-'}{formatMoney(tx.amount)}
-                            </span>
-                          </td>
-                          <td className="tw-font-medium">{formatMoney(tx.balanceAfter)}</td>
-                          <td>
-                            <span className="code-text" title={tx.idempotencyKey}>
-                              {tx.idempotencyKey ? `${tx.idempotencyKey.slice(0, 24)}...` : '—'}
-                            </span>
-                          </td>
-                          <td className="tw-text-xs tw-text-slate-500">{tx.description || '—'}</td>
-                        </tr>
-                      ))
+                      transactions.map((tx) => {
+                        const isCredit = tx.direction === 'CREDIT';
+                        const owner = tx.wallet?.owner;
+                        return (
+                          <tr key={tx.id}>
+                            <td>
+                              <div className="tw-font-medium tw-text-slate-700">
+                                {moment(tx.createdAt).format('DD/MM/YYYY')}
+                              </div>
+                              <div className="tw-text-xs tw-text-slate-400">
+                                {moment(tx.createdAt).format('HH:mm:ss')}
+                              </div>
+                            </td>
+                            <td>
+                              <div className="tw-font-semibold tw-text-slate-800">
+                                {owner?.lastName} {owner?.firstName}
+                              </div>
+                              <div className="tw-text-xs tw-text-slate-500">{owner?.email}</div>
+                              <span className="code-text">WAL-{String(tx.walletId).padStart(7, '0')}</span>
+                            </td>
+                            <td>
+                              <span className="tw-font-semibold tw-text-xs tw-text-slate-700">
+                                {tx.transactionType}
+                              </span>
+                            </td>
+                            <td>
+                              <span
+                                className={`badge-tag ${
+                                  isCredit ? 'badge-tag--credit' : 'badge-tag--debit'
+                                }`}
+                              >
+                                {tx.direction}
+                              </span>
+                            </td>
+                            <td>
+                              <span
+                                className={`tw-font-bold tw-text-sm ${
+                                  isCredit ? 'tw-text-emerald-600' : 'tw-text-rose-600'
+                                }`}
+                              >
+                                {isCredit ? '+' : '-'}
+                                {formatMoney(tx.amount)}
+                              </span>
+                            </td>
+                            <td>
+                              <span className="tw-font-semibold tw-text-slate-700">
+                                {formatMoney(tx.balanceAfter)}
+                              </span>
+                            </td>
+                            <td>
+                              <div className="tw-text-xs tw-text-slate-800 tw-font-medium">
+                                {tx.description}
+                              </div>
+                              <div
+                                className="tw-text-2xs tw-text-slate-400 tw-font-mono tw-truncate tw-max-w-xs"
+                                title={tx.idempotencyKey}
+                              >
+                                IDEM: {tx.idempotencyKey}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
                     )}
                   </tbody>
                 </table>
@@ -633,16 +1048,16 @@ const LiquidityDashboard = () => {
             </div>
           )}
 
-          {/* ══════════════ TAB 3: USER WALLETS CONTROL ══════════════ */}
+          {/* ══════════════ TAB 4: DANH SÁCH VÍ BỆNH NHÂN (WALLETS) ══════════════ */}
           {activeTab === 'wallets' && (
-            <div>
-              {/* Filter bar */}
-              <div className="ld-filter-bar">
-                <div className="search-box">
+            <div className="tab-wallets-layout">
+              {/* Filters */}
+              <div className="ld-filters-bar">
+                <div className="ld-search-box">
                   <Search size={14} />
                   <input
                     type="text"
-                    placeholder="Tìm theo Tên bệnh nhân, Email, Số điện thoại..."
+                    placeholder="Tìm theo Tên, Email, Số điện thoại..."
                     value={walletSearch}
                     onChange={(e) => {
                       setWalletSearch(e.target.value);
@@ -651,86 +1066,91 @@ const LiquidityDashboard = () => {
                   />
                 </div>
 
-                <select
-                  value={walletStatusFilter}
-                  onChange={(e) => {
-                    setWalletStatusFilter(e.target.value);
-                    setWalletsPage(1);
-                  }}
-                >
-                  <option value="ALL">Tất cả trạng thái ví</option>
-                  <option value="ACTIVE">ACTIVE (Đang hoạt động)</option>
-                  <option value="LOCKED">LOCKED (Đang bị khóa)</option>
-                </select>
+                <div className="ld-filter-selects">
+                  <select
+                    value={walletStatusFilter}
+                    onChange={(e) => {
+                      setWalletStatusFilter(e.target.value);
+                      setWalletsPage(1);
+                    }}
+                  >
+                    <option value="ALL">Tất cả trạng thái</option>
+                    <option value="ACTIVE">Hoạt động (ACTIVE)</option>
+                    <option value="LOCKED">Đang khóa (LOCKED)</option>
+                    <option value="SUSPENDED">Đình chỉ (SUSPENDED)</option>
+                  </select>
+                </div>
               </div>
 
-              {/* Table */}
-              <div className="ld-table-wrap">
-                <table>
+              {/* Data Table */}
+              <div className="ld-table-wrapper tw-mt-4">
+                <table className="ld-data-table">
                   <thead>
                     <tr>
                       <th>Mã Ví</th>
-                      <th>Chủ sở hữu (Bệnh nhân)</th>
-                      <th>Email / SĐT</th>
+                      <th>Chủ tài khoản</th>
                       <th>Số dư khả dụng</th>
-                      <th>Số dư giữ cọc (Hold)</th>
-                      <th>Tổng số dư</th>
-                      <th>Trạng thái ví</th>
-                      <th>Thao tác quản trị</th>
+                      <th>Tiền tạm giữ (Hold)</th>
+                      <th>Tổng tài sản</th>
+                      <th>Trạng thái</th>
+                      <th>Thao tác</th>
                     </tr>
                   </thead>
                   <tbody>
                     {loadingWallets ? (
                       <tr>
-                        <td colSpan="8" className="tw-text-center tw-py-8 tw-text-slate-400">
-                          <RotateCw size={18} className="tw-animate-spin tw-inline tw-mr-2" /> Đang tải danh sách ví...
+                        <td colSpan="7" className="tw-text-center tw-py-8 tw-text-slate-400">
+                          <RotateCw size={18} className="tw-animate-spin tw-inline tw-mr-2" />
+                          Đang tải danh sách ví...
                         </td>
                       </tr>
                     ) : wallets.length === 0 ? (
                       <tr>
-                        <td colSpan="8" className="tw-text-center tw-py-8 tw-text-slate-400">
-                          Không tìm thấy ví người dùng nào.
+                        <td colSpan="7" className="tw-text-center tw-py-8 tw-text-slate-400">
+                          Không tìm thấy ví nào phù hợp
                         </td>
                       </tr>
                     ) : (
                       wallets.map((w) => {
+                        const owner = w.owner;
                         const avail = Number(w.availableBalance) || 0;
-                        const reserved = Number(w.reservedBalance) || 0;
-                        const total = avail + reserved;
+                        const resv = Number(w.reservedBalance) || 0;
                         const isActionLoading = actionLoadingId === w.id;
 
                         return (
                           <tr key={w.id}>
-                            <td className="tw-font-bold tw-text-slate-800">#WAL-{w.id}</td>
                             <td>
-                              <div className="tw-font-semibold tw-text-slate-900">
-                                {[w.owner?.lastName, w.owner?.firstName].filter(Boolean).join(' ') || 'Bệnh nhân'}
+                              <span className="code-text">WAL-{String(w.id).padStart(7, '0')}</span>
+                            </td>
+                            <td>
+                              <div className="tw-font-semibold tw-text-slate-800">
+                                {owner?.lastName} {owner?.firstName}
                               </div>
+                              <div className="tw-text-xs tw-text-slate-500">{owner?.email}</div>
+                              <div className="tw-text-xs tw-text-slate-400">{owner?.phoneNumber}</div>
                             </td>
                             <td>
-                              <div>{w.owner?.email || '—'}</div>
-                              <div className="tw-text-xs tw-text-slate-500">{w.owner?.phoneNumber || '—'}</div>
+                              <strong className="tw-text-emerald-700">{formatMoney(avail)}</strong>
                             </td>
                             <td>
-                              <span className="tw-font-bold tw-text-emerald-700">{formatMoney(avail)}</span>
+                              <span className="tw-text-amber-700 tw-font-semibold">{formatMoney(resv)}</span>
                             </td>
                             <td>
-                              <span className="tw-font-semibold tw-text-amber-700">{formatMoney(reserved)}</span>
+                              <strong className="tw-text-slate-900">{formatMoney(avail + resv)}</strong>
                             </td>
-                            <td className="tw-font-bold tw-text-slate-900">{formatMoney(total)}</td>
                             <td>
-                              <span className={`badge-tag badge-tag--${w.status?.toLowerCase()}`}>
-                                {w.status === 'ACTIVE' ? 'Đang hoạt động' : 'Đã khóa'}
+                              <span
+                                className={`badge-tag ${
+                                  w.status === 'ACTIVE' ? 'badge-tag--active' : 'badge-tag--locked'
+                                }`}
+                              >
+                                {w.status}
                               </span>
                             </td>
                             <td>
                               <button
                                 type="button"
-                                className={`tw-inline-flex tw-items-center tw-gap-1.5 tw-px-3 tw-py-1.5 tw-rounded-lg tw-text-xs tw-font-bold tw-transition-all ${
-                                  w.status === 'ACTIVE'
-                                    ? 'tw-bg-rose-50 tw-text-rose-700 hover:tw-bg-rose-100'
-                                    : 'tw-bg-emerald-50 tw-text-emerald-700 hover:tw-bg-emerald-100'
-                                }`}
+                                className={`btn-action-lock ${w.status === 'ACTIVE' ? 'btn-lock' : 'btn-unlock'}`}
                                 onClick={() => handleToggleStatus(w)}
                                 disabled={isActionLoading}
                               >
@@ -783,6 +1203,221 @@ const LiquidityDashboard = () => {
           )}
         </div>
       </div>
+
+      {/* ===== MODAL: [PHASE 3] DUYỆT RÚT TIỀN / TỪ CHỐI ===== */}
+      {selectedWithdrawal && (
+        <div
+          className="ops-modal-backdrop"
+          onClick={() => !isProcessingAction && setSelectedWithdrawal(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+          }}
+        >
+          <div
+            className="tw-bg-white tw-rounded-2xl tw-shadow-2xl tw-w-full tw-max-w-lg tw-overflow-hidden tw-border tw-border-slate-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header Modal */}
+            <div className="tw-px-6 tw-py-4 tw-border-b tw-border-slate-100 tw-flex tw-justify-between tw-items-center tw-bg-slate-50">
+              <div className="tw-flex tw-items-center tw-gap-2">
+                <ArrowUpRight size={18} className="tw-text-teal-600" />
+                <h3 className="tw-font-bold tw-text-slate-800 tw-m-0 tw-text-base">
+                  Xử lý Yêu cầu Rút tiền #WTH-{selectedWithdrawal.id}
+                </h3>
+              </div>
+              <button
+                type="button"
+                className="tw-text-slate-400 hover:tw-text-slate-600 tw-text-xl tw-border-none tw-bg-transparent tw-cursor-pointer"
+                onClick={() => !isProcessingAction && setSelectedWithdrawal(null)}
+              >
+                &times;
+              </button>
+            </div>
+
+            <form onSubmit={handleProcessWithdrawalSubmit} className="tw-p-6">
+              {/* Thẻ thông tin thụ hưởng */}
+              <div className="tw-bg-slate-50 tw-p-4 tw-rounded-xl tw-border tw-border-slate-200 tw-mb-4">
+                <div className="tw-flex tw-justify-between tw-items-center tw-mb-2">
+                  <span className="tw-text-xs tw-text-slate-500 tw-font-semibold">Tài khoản thụ hưởng:</span>
+                  <button
+                    type="button"
+                    className="tw-text-xs tw-text-teal-600 hover:tw-underline tw-font-semibold tw-border-none tw-bg-transparent tw-cursor-pointer tw-flex tw-items-center tw-gap-1"
+                    onClick={() => handleCopyAccountNumber(selectedWithdrawal.accountNumber)}
+                  >
+                    <Copy size={12} /> Sao chép STK
+                  </button>
+                </div>
+
+                <div className="tw-text-sm tw-font-bold tw-text-slate-900">{selectedWithdrawal.bankName}</div>
+                <div className="tw-text-base tw-font-mono tw-font-bold tw-text-indigo-700 tw-mt-0.5">
+                  STK: {selectedWithdrawal.accountNumber}
+                </div>
+                <div className="tw-text-xs tw-text-slate-600 tw-mt-0.5">
+                  Chủ TK: <strong>{selectedWithdrawal.accountHolderName}</strong>
+                </div>
+
+                <div className="tw-border-t tw-border-slate-200 tw-mt-3 tw-pt-2 tw-flex tw-justify-between tw-items-center">
+                  <span className="tw-text-xs tw-text-slate-500">Số tiền cần chuyển khoản:</span>
+                  <span className="tw-text-lg tw-font-black tw-text-rose-600">
+                    {formatMoney(selectedWithdrawal.amount)}
+                  </span>
+                </div>
+              </div>
+
+              {selectedWithdrawal.status !== 'PENDING' ? (
+                <div className="tw-p-3 tw-bg-slate-100 tw-rounded-xl tw-text-xs tw-text-slate-700">
+                  <div className="tw-font-bold tw-mb-1">Yêu cầu này đã được xử lý:</div>
+                  <div>Trạng thái: <strong>{selectedWithdrawal.status}</strong></div>
+                  {selectedWithdrawal.bankTransactionRef && <div>Mã GD: <strong>{selectedWithdrawal.bankTransactionRef}</strong></div>}
+                  {selectedWithdrawal.adminNote && <div>Ghi chú: {selectedWithdrawal.adminNote}</div>}
+                  {selectedWithdrawal.transferredAt && <div>Thời gian: {moment(selectedWithdrawal.transferredAt).format('DD/MM/YYYY HH:mm')}</div>}
+                </div>
+              ) : (
+                <>
+                  {/* Hành động */}
+                  <div className="tw-mb-4">
+                    <label className="tw-block tw-text-xs tw-font-bold tw-text-slate-700 tw-mb-2">
+                      Chọn hành động phê duyệt:
+                    </label>
+                    <div className="tw-grid tw-grid-cols-2 tw-gap-3">
+                      <label
+                        className={`tw-border tw-rounded-xl tw-p-3 tw-cursor-pointer tw-flex tw-items-center tw-gap-2.5 tw-transition ${
+                          processAction === 'TRANSFER'
+                            ? 'tw-border-emerald-500 tw-bg-emerald-50 tw-text-emerald-900 tw-font-bold'
+                            : 'tw-border-slate-200 tw-text-slate-600'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="procAction"
+                          value="TRANSFER"
+                          checked={processAction === 'TRANSFER'}
+                          onChange={() => setProcessAction('TRANSFER')}
+                        />
+                        <span>Đã chuyển khoản (Duyệt)</span>
+                      </label>
+
+                      <label
+                        className={`tw-border tw-rounded-xl tw-p-3 tw-cursor-pointer tw-flex tw-items-center tw-gap-2.5 tw-transition ${
+                          processAction === 'REJECT'
+                            ? 'tw-border-rose-500 tw-bg-rose-50 tw-text-rose-900 tw-font-bold'
+                            : 'tw-border-slate-200 tw-text-slate-600'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="procAction"
+                          value="REJECT"
+                          checked={processAction === 'REJECT'}
+                          onChange={() => setProcessAction('REJECT')}
+                        />
+                        <span>Từ chối yêu cầu (Hoàn tiền)</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {processAction === 'TRANSFER' ? (
+                    <div className="tw-mb-4">
+                      <label className="tw-block tw-text-xs tw-font-bold tw-text-slate-700 tw-mb-1">
+                        Mã tham chiếu GD ngân hàng / Ủy nhiệm chi *:
+                      </label>
+                      <input
+                        type="text"
+                        className="tw-w-full tw-p-2.5 tw-border tw-border-slate-300 tw-rounded-lg tw-text-sm tw-font-mono"
+                        placeholder="VD: FT26091800192, NAPAS247-992..."
+                        value={bankTxnRef}
+                        onChange={(e) => setBankTxnRef(e.target.value)}
+                        required
+                      />
+                      <small className="tw-text-2xs tw-text-slate-400 tw-mt-1 tw-block">
+                        Mã này sẽ được lưu cố định vào Sổ cái bất biến để đối soát kế toán.
+                      </small>
+                    </div>
+                  ) : (
+                    <div className="tw-mb-4">
+                      <label className="tw-block tw-text-xs tw-font-bold tw-text-slate-700 tw-mb-1">
+                        Lý do từ chối yêu cầu rút tiền *:
+                      </label>
+                      <textarea
+                        rows={2}
+                        className="tw-w-full tw-p-2.5 tw-border tw-border-rose-300 tw-rounded-lg tw-text-sm"
+                        placeholder="VD: Thông tin tên chủ thẻ không trùng khớp với hồ sơ bệnh nhân..."
+                        value={adminProcessNote}
+                        onChange={(e) => setAdminProcessNote(e.target.value)}
+                        required
+                      />
+                      <small className="tw-text-2xs tw-text-rose-500 tw-mt-1 tw-block">
+                        Lý do này sẽ hiển thị trực tiếp cho người dùng. Số tiền tạm giữ sẽ được hoàn lại số dư khả dụng ngay lập tức.
+                      </small>
+                    </div>
+                  )}
+
+                  <div className="tw-mb-4">
+                    <label className="tw-block tw-text-xs tw-font-bold tw-text-slate-700 tw-mb-1">
+                      Ghi chú nội bộ Admin (Tùy chọn):
+                    </label>
+                    <input
+                      type="text"
+                      className="tw-w-full tw-p-2 tw-border tw-border-slate-300 tw-rounded-lg tw-text-xs"
+                      placeholder="Ghi chú thêm về ca đối soát này..."
+                      value={processAction === 'TRANSFER' ? adminProcessNote : ''}
+                      onChange={(e) => processAction === 'TRANSFER' && setAdminProcessNote(e.target.value)}
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Nút hành động */}
+              <div className="tw-flex tw-justify-end tw-gap-2 tw-mt-5">
+                <button
+                  type="button"
+                  className="tw-px-4 tw-py-2 tw-bg-slate-100 hover:tw-bg-slate-200 tw-text-slate-700 tw-rounded-lg tw-text-sm tw-font-semibold tw-border-none tw-cursor-pointer"
+                  onClick={() => setSelectedWithdrawal(null)}
+                  disabled={isProcessingAction}
+                >
+                  Đóng
+                </button>
+
+                {selectedWithdrawal.status === 'PENDING' && (
+                  <button
+                    type="submit"
+                    className={`tw-px-5 tw-py-2 tw-text-white tw-rounded-lg tw-text-sm tw-font-bold tw-border-none tw-cursor-pointer tw-flex tw-items-center tw-gap-1.5 tw-shadow-sm ${
+                      processAction === 'TRANSFER'
+                        ? 'tw-bg-emerald-600 hover:tw-bg-emerald-700'
+                        : 'tw-bg-rose-600 hover:tw-bg-rose-700'
+                    }`}
+                    disabled={isProcessingAction}
+                  >
+                    {isProcessingAction ? (
+                      <>
+                        <RotateCw size={14} className="tw-animate-spin" />
+                        <span>Đang xử lý...</span>
+                      </>
+                    ) : processAction === 'TRANSFER' ? (
+                      <>
+                        <CheckCircle2 size={14} />
+                        <span>Xác nhận Đã chuyển khoản</span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle size={14} />
+                        <span>Xác nhận Từ chối</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

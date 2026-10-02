@@ -131,6 +131,7 @@ const DoctorPayoutModal = ({ isOpen, onClose, doctor, onSuccess }) => {
               <label>Hình thức thanh toán</label>
               <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
                 <option value="bank_transfer">Chuyển khoản Ngân hàng (Internet Banking / 247)</option>
+                <option value="wallet">Chuyển vào Ví Bác sĩ nội bộ (Doctor Wallet)</option>
                 <option value="cash">Tiền mặt tại phòng tài chính</option>
                 <option value="other">Hình thức khác</option>
               </select>
