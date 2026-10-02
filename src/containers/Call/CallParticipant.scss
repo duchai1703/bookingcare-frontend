@@ -1,0 +1,126 @@
+// src/containers/Call/CallParticipant.scss
+
+.call-participant-root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto;
+  box-sizing: border-box;
+
+  .participant-avatar-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin: 0 auto 18px;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .participant-meta-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
+    margin: 0 auto;
+
+    .participant-display-name {
+      font-size: 22px;
+      font-weight: 700;
+      color: #ffffff;
+      margin: 0 auto 6px;
+      line-height: 1.3;
+      letter-spacing: -0.2px;
+      text-align: center;
+      width: 100%;
+      max-width: 340px;
+      overflow-wrap: break-word;
+      word-break: break-word;
+
+      @media (max-width: 480px) {
+        font-size: 20px;
+      }
+    }
+
+    .participant-role-line {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 14px;
+      color: #94a3b8;
+      margin: 0 auto 16px;
+      text-align: center;
+      line-height: 1.4;
+
+      .role-text {
+        font-weight: 500;
+        color: #cbd5e1;
+      }
+
+      .dot-divider {
+        color: #64748b;
+        font-size: 12px;
+        line-height: 1;
+      }
+
+      .booking-ref {
+        font-weight: 500;
+        color: #94a3b8;
+      }
+    }
+
+    .participant-extra-subtitle {
+      font-size: 13px;
+      color: #94a3b8;
+      margin: 0 auto 12px;
+      text-align: center;
+      line-height: 1.35;
+    }
+  }
+
+  .call-type-center-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 6px 18px;
+    border-radius: 999px;
+    margin: 0 auto 28px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+
+    &.type-video {
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+    }
+
+    &.type-audio {
+      color: #34d399;
+      background: rgba(52, 211, 153, 0.12);
+      border: 1px solid rgba(52, 211, 153, 0.28);
+    }
+
+    .type-icon-box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .type-label-text {
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+    }
+  }
+}

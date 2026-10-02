@@ -25,6 +25,10 @@
     color: #f8fafc;
     position: relative;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 
     .caller-avatar-wrapper {
       position: relative;

@@ -1,8 +1,7 @@
-// src/containers/Call/IncomingCallModal.jsx
 import React from 'react';
 import { Phone, PhoneOff, Video } from 'lucide-react';
 import { useCall } from './CallContext';
-import Avatar from '../../components/Common/Avatar';
+import CallParticipant from './CallParticipant';
 import './Call.scss';
 
 const IncomingCallModal = () => {
@@ -19,35 +18,22 @@ const IncomingCallModal = () => {
   } = incomingCall;
 
   const isVideo = callType === 'VIDEO';
-  const roleLabel = callerRole === 'R2' ? 'Bác sĩ' : 'Bệnh nhân';
 
   return (
     <div className="incoming-call-modal-overlay" role="dialog" aria-modal="true" aria-label="Cuộc gọi đến">
       <div className="incoming-call-card">
-        {/* Caller Avatar with Pulse Ring */}
-        <div className="caller-avatar-wrapper">
-          <Avatar
-            src={callerAvatar}
-            name={callerName || 'User'}
-            size={104}
-            pulseRing={true}
-            status="ringing"
-          />
-        </div>
-
-        {/* Caller Identity */}
-        <h3 className="caller-name">{callerName || 'Người dùng'}</h3>
-        <p className="caller-role-booking">
-          {roleLabel} • Lịch khám #{bookingId}
-        </p>
-
-        {/* Call Type Badge (Isolated block with clear spacing) */}
-        <div className="call-type-pill">
-          {isVideo ? <Video size={16} className="pill-icon" /> : <Phone size={16} className="pill-icon" />}
-          <span className="pill-text">
-            {isVideo ? 'Cuộc gọi video sau khám' : 'Cuộc gọi thoại sau khám'}
-          </span>
-        </div>
+        {/* Unified Call Participant Info on Perfect Center Axis */}
+        <CallParticipant
+          avatar={callerAvatar}
+          name={callerName || 'Người dùng'}
+          role={callerRole}
+          bookingId={bookingId}
+          callType={callType}
+          showCallType={true}
+          status="ringing"
+          pulseRing={true}
+          avatarSize={104}
+        />
 
         {/* Action Buttons: Reject (Left) & Accept (Right) */}
         <div className="actions-row">

@@ -3,6 +3,7 @@ import React, { useRef, useEffect } from 'react';
 import { Mic, MicOff, Video, VideoOff, PhoneOff } from 'lucide-react';
 import { useCall } from './CallContext';
 import Avatar from '../../components/Common/Avatar';
+import CallParticipant from './CallParticipant';
 import './Call.scss';
 
 const formatDuration = (seconds) => {
@@ -148,22 +149,18 @@ const ActiveCallModal = () => {
             />
           ) : (
             <div className="remote-audio-placeholder">
-              <div
-                className={`avatar-huge-wrapper ${
-                  callStatus === 'CONNECTED' ? 'talking' : ''
-                }`}
-              >
-                <Avatar
-                  src={partnerAvatar}
-                  name={partnerName || 'User'}
-                  size={104}
-                  pulseRing={callStatus === 'RINGING'}
-                />
-              </div>
-              <h3 style={{ color: '#f8fafc', margin: '12px 0 4px', fontSize: '1.25rem' }}>{partnerName}</h3>
-              <p style={{ color: '#94a3b8', fontSize: '14px', margin: 0 }}>
-                {callStatus === 'RINGING' ? 'Đang đợi trả lời...' : 'Cuộc gọi thoại bảo mật P2P'}
-              </p>
+              <CallParticipant
+                avatar={partnerAvatar}
+                name={partnerName || 'User'}
+                role={roleLabel}
+                bookingId={bookingId}
+                callType={callType}
+                showCallType={false}
+                status={callStatus === 'CONNECTED' ? 'talking' : 'ringing'}
+                pulseRing={callStatus === 'RINGING'}
+                avatarSize={104}
+                subTitle={callStatus === 'RINGING' ? 'Đang đợi trả lời...' : 'Cuộc gọi thoại bảo mật P2P'}
+              />
               {callStatus === 'CONNECTED' && (
                 <div className="audio-wave-animation">
                   <span />
