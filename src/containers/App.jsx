@@ -1,8 +1,8 @@
 // src/containers/App.jsx
 // Main application component — Chứa tất cả routes
 // [Phase 9.3] Auth Pages + [Phase 9.4] Patient Portal
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { FormattedMessage } from 'react-intl';
 import { path, USER_ROLE } from '../utils/constants';
 import PrivateRoute from '../routes/PrivateRoute';
@@ -102,10 +102,20 @@ import { CallProvider } from './Call/CallContext';
 
 import './App.scss';
 
+// Tự động cuộn trang lên đỉnh (0, 0) khi chuyển route SPA
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [pathname]);
+  return null;
+};
+
 const App = () => {
   return (
     <CallProvider>
       <div className="app-container">
+        <ScrollToTop />
         {/* Loading spinner overlay */}
         <Loading />
 

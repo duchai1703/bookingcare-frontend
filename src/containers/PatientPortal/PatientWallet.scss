@@ -740,22 +740,24 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(15, 23, 42, 0.6);
-    backdrop-filter: blur(4px);
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(6px);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1050;
+    z-index: 9999;
     animation: fadeIn 0.2s ease-in-out;
     padding: 16px;
 
-    .deposit-modal-card {
+    .deposit-modal-card,
+    .deposit-modal-content {
       background: #ffffff;
       width: 100%;
-      max-width: 520px;
+      max-width: 540px;
+      max-height: 90vh;
+      overflow-y: auto;
       border-radius: 20px;
-      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.2);
-      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
       animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 
       @keyframes modalSlideUp {
@@ -770,24 +772,28 @@
         }
       }
 
-      .modal-header {
+      .modal-header,
+      .modal-header-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
         padding: 20px 24px;
         border-bottom: 1px solid #f1f5f9;
 
-        .modal-title-box {
+        .modal-title-box,
+        .modal-title-group {
           display: flex;
           align-items: center;
           gap: 12px;
 
-          .modal-icon {
+          .modal-icon,
+          i {
             font-size: 1.6rem;
             color: #0d9488;
           }
 
-          .modal-title {
+          .modal-title,
+          h3 {
             font-size: 1.2rem;
             font-weight: 700;
             color: #1e293b;
@@ -800,7 +806,8 @@
           }
         }
 
-        .modal-close-btn {
+        .modal-close-btn,
+        .btn-close-modal {
           background: none;
           border: none;
           font-size: 1.6rem;
@@ -814,7 +821,8 @@
         }
       }
 
-      .modal-form {
+      .modal-form,
+      .deposit-form {
         padding: 20px 24px;
 
         .form-group {

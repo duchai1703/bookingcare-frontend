@@ -51,10 +51,11 @@ const AIChatbot = memo(() => {
   const language = useSelector((state) => state.app.language);
 
   // Do not render patient booking chatbot on Doctor Portal routes or for doctors
-  const isDoctorRoute = location.pathname.startsWith('/doctor') || userInfo?.roleId === 'R2';
-  if (isDoctorRoute) {
-    return null;
-  }
+  // Note: /doctor/:id and /doctors/:id are patient doctor detail pages, where AI is allowed
+  const isDoctorPortal =
+    (location.pathname.startsWith('/doctor/') && !location.pathname.match(/^\/doctors?\/\d+$/)) ||
+    location.pathname.startsWith('/system/doctor') ||
+    userInfo?.roleId === 'R2';
 
   const userId = userInfo?.id;
   const { messages, setMessages, addMessage, clearMessages, saveMessages } =
@@ -442,6 +443,10 @@ const AIChatbot = memo(() => {
   const clearHistoryTitle = intl.formatMessage({ id: 'chatbot.btn-clear-history' });
   const closeTitle = intl.formatMessage({ id: 'chatbot.btn-close' });
   const scrollDownTitle = intl.formatMessage({ id: 'chatbot.btn-scroll-down' });
+
+  if (isDoctorPortal) {
+    return null;
+  }
 
   return (
     <ChatErrorBoundary>
