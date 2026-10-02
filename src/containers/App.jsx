@@ -132,7 +132,7 @@ const App = () => {
         <Route path={path.DOCTOR_REGISTER} element={<DoctorRegisterWizard />} />
         <Route path={path.DOCTOR_ONBOARDING_STATUS} element={<DoctorApplicationStatus />} />
 
-        {/* Chi tiết bác sĩ — SRS 3.8 */}
+        {/* Chi tiết bác sĩ — SRS 3.8 (Hỗ trợ cả /doctor/:id và /doctors/:id) */}
         <Route
           path={path.DOCTOR_DETAIL}
           element={
@@ -143,8 +143,18 @@ const App = () => {
             </>
           }
         />
+        <Route
+          path="/doctors/:id"
+          element={
+            <>
+              <Header />
+              <DoctorDetail />
+              <Footer />
+            </>
+          }
+        />
 
-        {/* Chi tiết chuyên khoa — SRS 3.7 */}
+        {/* Chi tiết chuyên khoa — SRS 3.7 (Hỗ trợ cả /specialty/:id và /specialties/:id) */}
         <Route
           path={path.SPECIALTY_DETAIL}
           element={
@@ -155,10 +165,30 @@ const App = () => {
             </>
           }
         />
+        <Route
+          path="/specialties/:id"
+          element={
+            <>
+              <Header />
+              <SpecialtyDetail />
+              <Footer />
+            </>
+          }
+        />
 
-        {/* Chi tiết phòng khám — SRS 3.7 */}
+        {/* Chi tiết phòng khám — SRS 3.7 (Hỗ trợ cả /clinic/:id và /clinics/:id) */}
         <Route
           path={path.CLINIC_DETAIL}
+          element={
+            <>
+              <Header />
+              <ClinicDetail />
+              <Footer />
+            </>
+          }
+        />
+        <Route
+          path="/clinics/:id"
           element={
             <>
               <Header />

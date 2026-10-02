@@ -207,17 +207,16 @@ const DoctorDetail = () => {
                 </p>
 
                 {/* Địa chỉ phòng khám (nếu có) */}
-                {doctorInfo.Doctor_Info &&
-                  doctorInfo.Doctor_Info.provinceData && (
-                    <div className="doctor-detail__location">
-                      <i className="fas fa-map-marker-alt"></i>
-                      <span>
-                        {language === LANGUAGES.VI
-                          ? doctorInfo.Doctor_Info.provinceData.valueVi
-                          : doctorInfo.Doctor_Info.provinceData.valueEn}
-                      </span>
-                    </div>
-                  )}
+                {(doctorInfo.doctorInfoData || doctorInfo.Doctor_Info)?.provinceData && (
+                  <div className="doctor-detail__location">
+                    <i className="fas fa-map-marker-alt"></i>
+                    <span>
+                      {language === LANGUAGES.VI
+                        ? (doctorInfo.doctorInfoData || doctorInfo.Doctor_Info).provinceData.valueVi
+                        : (doctorInfo.doctorInfoData || doctorInfo.Doctor_Info).provinceData.valueEn}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -309,8 +308,9 @@ const DoctorDetail = () => {
               {/* Cột phải — Giá khám, phòng khám */}
               <div className="doctor-detail__schedule-right">
                 <DoctorExtraInfo
-                  extraInfo={doctorInfo?.Doctor_Info}
+                  extraInfo={doctorInfo?.doctorInfoData || doctorInfo?.Doctor_Info}
                   selectedPractice={selectedPractice}
+                  doctorId={id}
                 />
               </div>
             </div>

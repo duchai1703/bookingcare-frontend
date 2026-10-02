@@ -119,8 +119,8 @@ const DoctorExtraInfo = ({ extraInfo: extraInfoProp, doctorId, selectedPractice 
               </span>
               <span>
                 {language === LANGUAGES.VI
-                  ? extraInfo.paymentData?.valueVi
-                  : extraInfo.paymentData?.valueEn}
+                  ? extraInfo?.paymentData?.valueVi || 'Tiền mặt'
+                  : extraInfo?.paymentData?.valueEn || 'Cash'}
               </span>
             </div>
 
