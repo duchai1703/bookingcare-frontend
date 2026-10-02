@@ -138,4 +138,42 @@ export const processAdminWithdrawal = (id, data) => {
   return axiosInstance.post(`/api/v1/admin/financial/withdrawals/${id}/process`, data);
 };
 
+/**
+ * Lấy chính sách SLA rút tiền đang active (Public / Patient / Admin)
+ */
+export const getActiveWithdrawalPolicy = () => {
+  return axiosInstance.get('/api/v1/policies/withdrawal-sla');
+};
+
+/**
+ * Tính toán nhanh hạn chót cam kết dựa trên số tiền rút (Dynamic Preview cho Modal)
+ * @param {number} amount 
+ */
+export const calculateWithdrawalSlaPreview = (amount) => {
+  return axiosInstance.get('/api/v1/policies/calculate-sla', { params: { amount } });
+};
+
+/**
+ * Admin cập nhật chính sách SLA rút tiền linh hoạt (kèm bắt buộc reason để ghi Audit Log)
+ * @param {Object} data 
+ */
+export const updateAdminWithdrawalPolicy = (data) => {
+  return axiosInstance.put('/api/v1/admin/policies-withdrawal-sla', data);
+};
+
+/**
+ * Admin tra cứu lịch sử các phiên bản chính sách SLA rút tiền
+ */
+export const getAdminWithdrawalPolicyVersions = () => {
+  return axiosInstance.get('/api/v1/admin/policies-withdrawal-sla/versions');
+};
+
+/**
+ * Admin tra cứu nhật ký kiểm toán chính sách bất biến (Audit Trail)
+ * @param {Object} params { policyType?: string, page?: number, limit?: number, startDate?: string, endDate?: string }
+ */
+export const getAdminPolicyAuditLogs = (params) => {
+  return axiosInstance.get('/api/v1/admin/policies-audit-logs', { params });
+};
+
 

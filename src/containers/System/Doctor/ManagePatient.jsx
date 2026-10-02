@@ -567,8 +567,12 @@ const ManagePatient = () => {
                     )}
 
                     <div className="patient-name-row">
-
                       <strong>{pName}</strong>
+                      {item.bookingFor === 'FAMILY' && (
+                        <span className="tw-text-[11px] tw-bg-teal-50 tw-text-teal-700 tw-border tw-border-teal-200 tw-px-1.5 tw-py-0.5 tw-rounded tw-font-semibold">
+                          👨‍👩‍👧 {item.relationship === 'CHILD' ? 'Con' : item.relationship === 'PARENT' ? 'Bố/Mẹ' : item.relationship === 'SPOUSE' ? 'Vợ/Chồng' : 'Người thân'}
+                        </span>
+                      )}
                       {item.patientData?.genderData && (
                         <span className="gender-tag">
                           {language === LANGUAGES.VI
@@ -657,6 +661,25 @@ const ManagePatient = () => {
                     <h4>Thông tin bệnh nhân</h4>
                   </div>
                   <div className="sec-grid">
+                    {selectedBooking.bookingFor === 'FAMILY' && (
+                      <div className="sec-item full-col" style={{ background: '#f0fdfa', padding: '8px 10px', borderRadius: '6px', border: '1px solid #ccfbf1', marginBottom: '8px' }}>
+                        <label style={{ color: '#0f766e', fontWeight: 600 }}>Đối tượng khám (Người thân)</label>
+                        <div style={{ color: '#0d9488', fontWeight: 700, fontSize: '0.9rem' }}>
+                          👨‍👩‍👧 {selectedBooking.relationship === 'CHILD' ? 'Con cái' : selectedBooking.relationship === 'PARENT' ? 'Bố / Mẹ' : selectedBooking.relationship === 'SPOUSE' ? 'Vợ / Chồng' : 'Người thân'}: {selectedBooking.patientName}
+                        </div>
+                        {selectedBooking.patientData && (
+                          <div style={{ fontSize: '0.8rem', color: '#475569', marginTop: '4px' }}>
+                            <strong>Người giám hộ / Liên hệ:</strong> {selectedBooking.patientData.lastName} {selectedBooking.patientData.firstName} {selectedBooking.patientData.phoneNumber ? `(${selectedBooking.patientData.phoneNumber})` : ''}
+                          </div>
+                        )}
+                        {selectedBooking.familyMemberData?.medicalHistory && (
+                          <div style={{ marginTop: '6px', color: '#be123c', background: '#fff1f2', padding: '4px 8px', borderRadius: '4px', fontSize: '0.78rem' }}>
+                            <strong>Tiền sử dị ứng & bệnh lý:</strong> {selectedBooking.familyMemberData.medicalHistory}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     <div className="sec-item">
                       <label>Họ và tên</label>
                       <strong>

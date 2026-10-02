@@ -25,6 +25,7 @@ import {
 } from '../../services/patientService';
 import { getMyWallet, createDepositPaymentUrl } from '../../services/walletService';
 import { getSystemSettings } from '../../services/catalogService';
+import { getFamilyMembers, createFamilyMember } from '../../services/familyMemberService';
 import './BookingModal.scss';
 
 const POPULAR_BANKS = [
@@ -97,6 +98,22 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price, select
   const [isRefreshingWallet, setIsRefreshingWallet] = useState(false);
   const paymentMethod = 'WALLET';
 
+  // [Family Members & Dependents] Đặt cho Bản thân hay Người thân
+  const [bookingFor, setBookingFor] = useState('SELF'); // 'SELF' | 'FAMILY'
+  const [familyMembers, setFamilyMembers] = useState([]);
+  const [selectedFamilyMember, setSelectedFamilyMember] = useState(null);
+  const [isLoadingFamily, setIsLoadingFamily] = useState(false);
+  const [showAddFamilyModal, setShowAddFamilyModal] = useState(false);
+  const [newFamilyForm, setNewFamilyForm] = useState({
+    fullName: '',
+    relationship: 'CHILD',
+    gender: 'MALE',
+    birthday: '',
+    phoneNumber: '',
+    medicalHistory: '',
+  });
+  const [isSavingFamily, setIsSavingFamily] = useState(false);
+
   // Tính giá khám dạng số
   const rawPriceStr = selectedPractice?.priceTypeData?.valueVi || String(price || '0');
   const numericPrice = parseInt(rawPriceStr.replace(/[^0-9]/g, ''), 10) || 0;
@@ -134,8 +151,28 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price, select
     if (isOpen) {
       loadPatientDetails();
       loadPatientBanks();
+      if (userInfo) {
+        loadFamilyMembers();
+      }
     }
   }, [isOpen, userInfo]);
+
+  const loadFamilyMembers = async () => {
+    setIsLoadingFamily(true);
+    try {
+      const res = await getFamilyMembers();
+      if (res && res.errCode === 0 && Array.isArray(res.data)) {
+        setFamilyMembers(res.data);
+        if (res.data.length > 0 && !selectedFamilyMember) {
+          setSelectedFamilyMember(res.data[0]);
+        }
+      }
+    } catch (err) {
+      console.error('loadFamilyMembers error:', err);
+    } finally {
+      setIsLoadingFamily(false);
+    }
+  };
 
   const loadPatientDetails = async () => {
     try {
@@ -344,6 +381,47 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price, select
     }
   };
 
+  // Lưu hồ sơ người thân mới (Quick Add ngay trong Modal)
+  const handleSaveNewFamilyMember = async (e) => {
+    e.preventDefault();
+    if (!newFamilyForm.fullName || newFamilyForm.fullName.trim().length < 2) {
+      toast.error('Họ và tên người thân tối thiểu 2 ký tự!');
+      return;
+    }
+    setIsSavingFamily(true);
+    try {
+      const res = await createFamilyMember({
+        ...newFamilyForm,
+        phoneNumber: newFamilyForm.phoneNumber || patientData.phoneNumber,
+        address: patientData.address,
+      });
+      if (res && res.errCode === 0) {
+        toast.success('Đã thêm hồ sơ người thân vào Sổ Y Bạ Gia Đình!');
+        setShowAddFamilyModal(false);
+        setNewFamilyForm({
+          fullName: '',
+          relationship: 'CHILD',
+          gender: 'MALE',
+          birthday: '',
+          phoneNumber: '',
+          medicalHistory: '',
+        });
+        const listRes = await getFamilyMembers();
+        if (listRes && listRes.errCode === 0 && Array.isArray(listRes.data)) {
+          setFamilyMembers(listRes.data);
+          const created = listRes.data.find((m) => m.id === res.data.id) || listRes.data[0];
+          setSelectedFamilyMember(created);
+        }
+      } else {
+        toast.error(res?.message || 'Không thể thêm hồ sơ người thân!');
+      }
+    } catch (err) {
+      toast.error('Lỗi khi lưu hồ sơ người thân!');
+    } finally {
+      setIsSavingFamily(false);
+    }
+  };
+
   // Xử lý gửi đặt lịch khám
   const handleSubmit = async () => {
     if (!reason || reason.trim().length === 0) {
@@ -361,6 +439,11 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price, select
     if (!patientData.phoneNumber) {
       toast.error('Vui lòng cập nhật Số điện thoại liên hệ!');
       handleOpenEditPatient();
+      return;
+    }
+
+    if (bookingFor === 'FAMILY' && !selectedFamilyMember) {
+      toast.error('Vui lòng chọn hoặc thêm hồ sơ người thân để đặt lịch!');
       return;
     }
 
@@ -386,14 +469,18 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price, select
         doctorId,
         date,
         timeType: timeSlot.timeType,
-        fullName: patientData.fullName,
+        fullName: bookingFor === 'FAMILY' ? selectedFamilyMember?.fullName : patientData.fullName,
         email: patientData.email || userInfo?.email || '',
-        phoneNumber: patientData.phoneNumber,
-        address: patientData.address,
+        phoneNumber: bookingFor === 'FAMILY' ? (selectedFamilyMember?.phoneNumber || patientData.phoneNumber) : patientData.phoneNumber,
+        address: bookingFor === 'FAMILY' ? (selectedFamilyMember?.address || patientData.address) : patientData.address,
         reason: reason.trim(),
-        birthday: patientData.birthday,
-        gender: patientData.gender || undefined,
+        birthday: bookingFor === 'FAMILY' ? (selectedFamilyMember?.birthday || '') : patientData.birthday,
+        gender: bookingFor === 'FAMILY' ? (selectedFamilyMember?.gender || 'G1') : (patientData.gender || undefined),
         language: language,
+        // Context Đặt lịch cho người thân
+        bookingFor: bookingFor,
+        familyMemberId: bookingFor === 'FAMILY' ? selectedFamilyMember?.id : null,
+        relationship: bookingFor === 'FAMILY' ? selectedFamilyMember?.relationship : null,
         // Multi-Facility Context
         clinicId: selectedPractice?.clinicId || null,
         doctorAssignmentId: selectedPractice?.id || null,
@@ -556,67 +643,219 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price, select
               {reasonError && <span className="bm__error">{reasonError}</span>}
             </div>
 
-            {/* 2. THÔNG TIN BỆNH NHÂN (DẠNG THẺ TĨNH CÓ BÚT CHÌ CHỈNH SỬA) */}
+            {/* 2. ĐỐI TƯỢNG & THÔNG TIN NGƯỜI KHÁM */}
             <div className="bm__section">
               <div className="bm__section-header tw-flex tw-justify-between tw-items-center">
                 <div className="tw-flex tw-items-center tw-gap-2">
                   <span className="bm__section-badge">2</span>
                   <h3 className="bm__section-title">Thông tin người khám</h3>
                 </div>
+                {bookingFor === 'SELF' ? (
+                  <button
+                    type="button"
+                    className="bm__edit-profile-btn"
+                    onClick={handleOpenEditPatient}
+                    title="Chỉnh sửa thông tin hồ sơ"
+                  >
+                    <i className="fas fa-pencil-alt" /> <span>Chỉnh sửa</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="bm__edit-profile-btn"
+                    onClick={() => setShowAddFamilyModal(true)}
+                    title="Thêm hồ sơ người thân mới"
+                  >
+                    <i className="fas fa-user-plus" /> <span>+ Thêm người thân</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Segmented Control Chọn Bản thân hay Người thân */}
+              <div className="bm__booking-for-tabs">
                 <button
                   type="button"
-                  className="bm__edit-profile-btn"
-                  onClick={handleOpenEditPatient}
-                  title="Chỉnh sửa thông tin hồ sơ"
+                  className={`bm__booking-for-btn ${bookingFor === 'SELF' ? 'active' : ''}`}
+                  onClick={() => setBookingFor('SELF')}
                 >
-                  <i className="fas fa-pencil-alt" /> <span>Chỉnh sửa</span>
+                  <i className="fas fa-user" />
+                  <span>Đặt cho Bản thân</span>
+                </button>
+                <button
+                  type="button"
+                  className={`bm__booking-for-btn ${bookingFor === 'FAMILY' ? 'active' : ''}`}
+                  onClick={() => {
+                    setBookingFor('FAMILY');
+                    if (familyMembers.length > 0 && !selectedFamilyMember) {
+                      setSelectedFamilyMember(familyMembers[0]);
+                    }
+                  }}
+                >
+                  <i className="fas fa-users" />
+                  <span>Đặt cho Người thân</span>
+                  {familyMembers.length > 0 && (
+                    <span className="bm__booking-for-badge">{familyMembers.length}</span>
+                  )}
                 </button>
               </div>
-              <p className="bm__section-desc">Thông tin cố định từ hồ sơ cá nhân của bạn, được lưu độc lập vào hồ sơ lịch hẹn này.</p>
 
-              {/* Lưới thẻ thông tin cá nhân */}
-              <div className="bm__profile-grid">
-                <div className="bm__info-tile">
-                  <span className="bm__info-tile-label">Họ và tên</span>
-                  <span className="bm__info-tile-val">{patientData.fullName || '—'}</span>
-                </div>
+              {bookingFor === 'SELF' ? (
+                <>
+                  <p className="bm__section-desc">Thông tin cố định từ hồ sơ cá nhân của bạn, được lưu độc lập vào hồ sơ lịch hẹn này.</p>
 
-                <div className="bm__info-tile">
-                  <span className="bm__info-tile-label">Số điện thoại</span>
-                  <span className="bm__info-tile-val">{patientData.phoneNumber || '—'}</span>
-                </div>
+                  {/* Lưới thẻ thông tin cá nhân */}
+                  <div className="bm__profile-grid">
+                    <div className="bm__info-tile">
+                      <span className="bm__info-tile-label">Họ và tên</span>
+                      <span className="bm__info-tile-val">{patientData.fullName || '—'}</span>
+                    </div>
 
-                <div className="bm__info-tile">
-                  <span className="bm__info-tile-label">Ngày sinh</span>
-                  <span className="bm__info-tile-val">
-                    {patientData.birthday ? moment(patientData.birthday).format('DD/MM/YYYY') : 'Chưa cập nhật'}
-                  </span>
-                </div>
+                    <div className="bm__info-tile">
+                      <span className="bm__info-tile-label">Số điện thoại</span>
+                      <span className="bm__info-tile-val">{patientData.phoneNumber || '—'}</span>
+                    </div>
 
-                <div className="bm__info-tile">
-                  <span className="bm__info-tile-label">Giới tính</span>
-                  <span className="bm__info-tile-val">{getGenderLabel()}</span>
-                </div>
+                    <div className="bm__info-tile">
+                      <span className="bm__info-tile-label">Ngày sinh</span>
+                      <span className="bm__info-tile-val">
+                        {patientData.birthday ? moment(patientData.birthday).format('DD/MM/YYYY') : 'Chưa cập nhật'}
+                      </span>
+                    </div>
 
-                <div className="bm__info-tile bm__info-tile--full">
-                  <span className="bm__info-tile-label">Địa chỉ</span>
-                  <span className="bm__info-tile-val">{patientData.address || 'Chưa cập nhật'}</span>
-                </div>
-              </div>
+                    <div className="bm__info-tile">
+                      <span className="bm__info-tile-label">Giới tính</span>
+                      <span className="bm__info-tile-val">{getGenderLabel()}</span>
+                    </div>
 
-              {/* Email cố định liên kết tài khoản */}
-              <div className="bm__email-card">
-                <div className="bm__email-card-icon">
-                  <i className="fas fa-envelope-open-text" />
-                </div>
-                <div className="bm__email-card-info">
-                  <div className="tw-flex tw-items-center tw-gap-2">
-                    <span className="bm__email-val">{patientData.email}</span>
-                    <span className="bm__email-badge">Tài khoản</span>
+                    <div className="bm__info-tile bm__info-tile--full">
+                      <span className="bm__info-tile-label">Địa chỉ</span>
+                      <span className="bm__info-tile-val">{patientData.address || 'Chưa cập nhật'}</span>
+                    </div>
                   </div>
-                  <span className="bm__email-hint">Email nhận vé khám và link thanh toán trực tuyến (không thể thay đổi).</span>
-                </div>
-              </div>
+
+                  {/* Email cố định liên kết tài khoản */}
+                  <div className="bm__email-card">
+                    <div className="bm__email-card-icon">
+                      <i className="fas fa-envelope-open-text" />
+                    </div>
+                    <div className="bm__email-card-info">
+                      <div className="tw-flex tw-items-center tw-gap-2">
+                        <span className="bm__email-val">{patientData.email}</span>
+                        <span className="bm__email-badge">Tài khoản</span>
+                      </div>
+                      <span className="bm__email-hint">Email nhận vé khám và link thanh toán trực tuyến (không thể thay đổi).</span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="bm__section-desc">
+                    Hồ sơ khám bệnh và tiền sử dị ứng sẽ được ghi nhận riêng cho người thân. Bác sĩ tiếp nhận thông tin bệnh nhân chính xác (ví dụ: con nhỏ 3 tuổi).
+                  </p>
+
+                  {/* Danh sách người thân để chọn */}
+                  {isLoadingFamily ? (
+                    <div className="bm__family-loading">
+                      <i className="fas fa-spinner fa-spin" /> Đang tải danh sách người thân...
+                    </div>
+                  ) : familyMembers.length === 0 ? (
+                    <div className="bm__family-empty">
+                      <div className="bm__family-empty-icon">
+                        <i className="fas fa-user-friends" />
+                      </div>
+                      <p>Bạn chưa lưu hồ sơ người thân nào trong Sổ Y Bạ Gia Đình.</p>
+                      <button
+                        type="button"
+                        className="bm__btn-quick-add-family"
+                        onClick={() => setShowAddFamilyModal(true)}
+                      >
+                        <i className="fas fa-plus" /> Thêm hồ sơ người thân ngay
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="bm__family-selector">
+                      <div className="bm__family-pill-list">
+                        {familyMembers.map((fm) => {
+                          const isSel = selectedFamilyMember?.id === fm.id;
+                          const relText = fm.relationship === 'CHILD' ? 'Con' : fm.relationship === 'PARENT' ? 'Bố/Mẹ' : fm.relationship === 'SPOUSE' ? 'Vợ/Chồng' : 'Người thân';
+                          return (
+                            <button
+                              key={fm.id}
+                              type="button"
+                              className={`bm__family-pill ${isSel ? 'selected' : ''}`}
+                              onClick={() => setSelectedFamilyMember(fm)}
+                            >
+                              <span className="fm-icon">
+                                <i className={fm.relationship === 'CHILD' ? 'fas fa-child' : fm.relationship === 'PARENT' ? 'fas fa-user-friends' : 'fas fa-user'} />
+                              </span>
+                              <span className="fm-name">{fm.fullName}</span>
+                              <span className="fm-rel">({relText})</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Thẻ chi tiết người thân được chọn */}
+                      {selectedFamilyMember && (
+                        <div className="bm__selected-member-card">
+                          <div className="sm-header">
+                            <div className="sm-name-row">
+                              <span className="sm-name">{selectedFamilyMember.fullName}</span>
+                              <span className="sm-rel-badge">
+                                {selectedFamilyMember.relationship === 'CHILD' ? '👶 Con cái' : selectedFamilyMember.relationship === 'PARENT' ? '🧓 Bố/Mẹ' : selectedFamilyMember.relationship === 'SPOUSE' ? '❤️ Vợ/Chồng' : '👤 Người thân'}
+                              </span>
+                            </div>
+                            <span className="sm-gender">
+                              {selectedFamilyMember.gender === 'FEMALE' ? 'Nữ' : 'Nam'}
+                            </span>
+                          </div>
+
+                          <div className="sm-body-grid">
+                            <div className="sm-item">
+                              <span className="sm-label">Ngày sinh:</span>
+                              <span className="sm-val">
+                                {selectedFamilyMember.birthday ? moment(selectedFamilyMember.birthday).format('DD/MM/YYYY') : 'Chưa cập nhật'}
+                              </span>
+                            </div>
+                            <div className="sm-item">
+                              <span className="sm-label">SĐT liên hệ:</span>
+                              <span className="sm-val">
+                                {selectedFamilyMember.phoneNumber || patientData.phoneNumber || 'Theo người giám hộ'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {selectedFamilyMember.medicalHistory && (
+                            <div className="sm-medical-alert">
+                              <i className="fas fa-exclamation-triangle" />
+                              <div>
+                                <strong>Tiền sử dị ứng / bệnh lý: </strong>
+                                <span>{selectedFamilyMember.medicalHistory}</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Thẻ thông tin Người giám hộ & Tài khoản thanh toán */}
+                  <div className="bm__guardian-card">
+                    <div className="bm__guardian-icon">
+                      <i className="fas fa-shield-alt" />
+                    </div>
+                    <div className="bm__guardian-info">
+                      <div className="guardian-title">Người giám hộ & Đặt lịch</div>
+                      <div className="guardian-detail">
+                        <strong>{patientData.fullName}</strong> • {patientData.email}
+                      </div>
+                      <div className="guardian-note">
+                        Phiếu khám và link theo dõi sẽ được gửi về email tài khoản của bạn.
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* 3. PHƯƠNG THỨC THANH TOÁN (CHUẨN HÓA 100% QUA VÍ BOOKINGCARE) */}
@@ -1013,6 +1252,132 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price, select
                   disabled={isSavingBank}
                 >
                   {isSavingBank ? <i className="fas fa-spinner fa-spin" /> : 'Lưu tài khoản'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ===== POPUP 4: THÊM HỒ SƠ NGƯỜI THÂN (QUICK ADD) ===== */}
+      {showAddFamilyModal && (
+        <div className="bm-submodal-overlay" onClick={() => !isSavingFamily && setShowAddFamilyModal(false)}>
+          <div className="bm-submodal" onClick={(e) => e.stopPropagation()}>
+            <div className="bm-submodal__header">
+              <h3>
+                <i className="fas fa-user-plus tw-text-teal-600 tw-mr-2" /> Thêm hồ sơ người thân vào Sổ Y Bạ
+              </h3>
+              <button
+                type="button"
+                className="bm-submodal__close"
+                onClick={() => !isSavingFamily && setShowAddFamilyModal(false)}
+              >
+                &times;
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveNewFamilyMember} className="bm-submodal__form">
+              <div className="bm-submodal__field">
+                <label className="bm__label">
+                  Họ và tên người thân <span className="tw-text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  className="bm__input"
+                  placeholder="Ví dụ: Bé Nguyễn Gia An, Bà Trần Thị Mai..."
+                  value={newFamilyForm.fullName}
+                  onChange={(e) => setNewFamilyForm((p) => ({ ...p, fullName: e.target.value }))}
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div className="tw-grid tw-grid-cols-2 tw-gap-3">
+                <div className="bm-submodal__field">
+                  <label className="bm__label">
+                    Quan hệ <span className="tw-text-red-500">*</span>
+                  </label>
+                  <select
+                    className="bm__select"
+                    value={newFamilyForm.relationship}
+                    onChange={(e) => setNewFamilyForm((p) => ({ ...p, relationship: e.target.value }))}
+                  >
+                    <option value="CHILD">Con cái</option>
+                    <option value="PARENT">Bố / Mẹ</option>
+                    <option value="SPOUSE">Vợ / Chồng</option>
+                    <option value="OTHER">Người thân khác</option>
+                  </select>
+                </div>
+
+                <div className="bm-submodal__field">
+                  <label className="bm__label">
+                    Giới tính <span className="tw-text-red-500">*</span>
+                  </label>
+                  <select
+                    className="bm__select"
+                    value={newFamilyForm.gender}
+                    onChange={(e) => setNewFamilyForm((p) => ({ ...p, gender: e.target.value }))}
+                  >
+                    <option value="MALE">Nam</option>
+                    <option value="FEMALE">Nữ</option>
+                    <option value="OTHER">Khác</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="tw-grid tw-grid-cols-2 tw-gap-3">
+                <div className="bm-submodal__field">
+                  <label className="bm__label">Ngày sinh</label>
+                  <input
+                    type="date"
+                    className="bm__input"
+                    value={newFamilyForm.birthday}
+                    onChange={(e) => setNewFamilyForm((p) => ({ ...p, birthday: e.target.value }))}
+                  />
+                </div>
+
+                <div className="bm-submodal__field">
+                  <label className="bm__label">SĐT liên hệ</label>
+                  <input
+                    type="tel"
+                    className="bm__input"
+                    placeholder="Để trống nếu dùng SĐT của bạn"
+                    value={newFamilyForm.phoneNumber}
+                    onChange={(e) => setNewFamilyForm((p) => ({ ...p, phoneNumber: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="bm-submodal__field">
+                <label className="bm__label">
+                  <i className="fas fa-allergies tw-text-rose-500 tw-mr-1" /> Tiền sử dị ứng & bệnh lý
+                </label>
+                <input
+                  type="text"
+                  className="bm__input"
+                  placeholder="Ví dụ: Dị ứng Amoxicillin, hen suyễn..."
+                  value={newFamilyForm.medicalHistory}
+                  onChange={(e) => setNewFamilyForm((p) => ({ ...p, medicalHistory: e.target.value }))}
+                />
+                <span className="tw-text-[11px] tw-text-slate-500 tw-mt-1">
+                  Thông tin này sẽ được cảnh báo trực tiếp cho Bác sĩ khi khám.
+                </span>
+              </div>
+
+              <div className="bm-submodal__footer">
+                <button
+                  type="button"
+                  className="bm__btn bm__btn--cancel"
+                  onClick={() => setShowAddFamilyModal(false)}
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="bm__btn bm__btn--confirm"
+                  disabled={isSavingFamily}
+                >
+                  {isSavingFamily ? <i className="fas fa-spinner fa-spin" /> : 'Lưu hồ sơ người thân'}
                 </button>
               </div>
             </form>

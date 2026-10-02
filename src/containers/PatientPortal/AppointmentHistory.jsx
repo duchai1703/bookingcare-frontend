@@ -18,6 +18,7 @@ import {
   downloadBookingAttachment,
   deleteBookingAttachment,
 } from '../../services/patientService';
+import { getFamilyMembers } from '../../services/familyMemberService';
 import { LANGUAGES, path } from '../../utils/constants';
 import CommonUtils from '../../utils/CommonUtils';
 import RatingModal from './RatingModal';
@@ -40,11 +41,14 @@ const PAGE_SIZE = 6;
 const AppointmentHistory = () => {
   const intl = useIntl();
   const language = useSelector((state) => state.app.language);
+  const userInfo = useSelector((state) => state.user.userInfo);
 
   // State
   const [activeTab, setActiveTab] = useState('upcoming');
   const [viewMode, setViewMode] = useState('cards'); // 'cards' | 'table'
   const [bookings, setBookings] = useState([]);
+  const [familyList, setFamilyList] = useState([]);
+  const [familyFilter, setFamilyFilter] = useState('ALL');
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -202,6 +206,17 @@ const AppointmentHistory = () => {
     }
   };
 
+  // Tải danh sách người thân để phục vụ bộ lọc
+  useEffect(() => {
+    getFamilyMembers()
+      .then((res) => {
+        if (res && res.errCode === 0 && Array.isArray(res.data)) {
+          setFamilyList(res.data);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   // Fetch bookings
   const fetchBookings = useCallback(async () => {
     setIsLoading(true);
@@ -213,6 +228,9 @@ const AppointmentHistory = () => {
       };
       if (tabConfig.status) {
         params.status = tabConfig.status;
+      }
+      if (familyFilter && familyFilter !== 'ALL') {
+        params.familyMemberId = familyFilter;
       }
 
       const result = await getPatientBookings(params);
@@ -232,7 +250,7 @@ const AppointmentHistory = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [activeTab, currentPage]);
+  }, [activeTab, currentPage, familyFilter]);
 
   useEffect(() => {
     fetchBookings();
@@ -386,6 +404,24 @@ const AppointmentHistory = () => {
     return b?.assignmentData?.roomNumber || b?.doctorAssignmentData?.roomNumber || '';
   };
 
+  // Render Patient Target Badge (Bản thân hay Người thân)
+  const renderPatientTargetBadge = (b) => {
+    if (b?.bookingFor === 'FAMILY') {
+      const relLabel = b.relationship === 'CHILD' ? 'Con' : b.relationship === 'PARENT' ? 'Bố/Mẹ' : b.relationship === 'SPOUSE' ? 'Vợ/Chồng' : 'Người thân';
+      const name = b.familyMemberData?.fullName || b.patientName || 'Người thân';
+      return (
+        <span className="patient-target-badge patient-target-badge--family" title={`Đặt cho người thân: ${name} (${relLabel})`}>
+          <i className="fas fa-users" /> {name} ({relLabel})
+        </span>
+      );
+    }
+    return (
+      <span className="patient-target-badge patient-target-badge--self" title="Khám cho chính bản thân">
+        <i className="fas fa-user" /> Bản thân
+      </span>
+    );
+  };
+
   // Render Status Badge
   const renderStatusBadge = (statusId, booking = null) => {
     switch (statusId) {
@@ -506,18 +542,42 @@ const AppointmentHistory = () => {
         </div>
       </div>
 
-      {/* ===== FILTER TABS ===== */}
-      <div className="ah-filter-tabs">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            className={`tab-btn ${activeTab === tab.key ? 'active' : ''}`}
-            onClick={() => handleChangeTab(tab.key)}
-          >
-            {language === LANGUAGES.VI ? tab.labelVi : tab.labelEn}
-          </button>
-        ))}
+      {/* ===== FILTER TABS & FAMILY FILTER ===== */}
+      <div className="ah-filter-row">
+        <div className="ah-filter-tabs">
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              className={`tab-btn ${activeTab === tab.key ? 'active' : ''}`}
+              onClick={() => handleChangeTab(tab.key)}
+            >
+              {language === LANGUAGES.VI ? tab.labelVi : tab.labelEn}
+            </button>
+          ))}
+        </div>
+
+        {familyList.length > 0 && (
+          <div className="ah-family-filter">
+            <span className="filter-label"><i className="fas fa-filter" /> Đối tượng:</span>
+            <select
+              className="family-select"
+              value={familyFilter}
+              onChange={(e) => {
+                setFamilyFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+            >
+              <option value="ALL">👥 Tất cả người khám</option>
+              <option value="SELF">👤 Bản thân ({userInfo?.lastName} {userInfo?.firstName})</option>
+              {familyList.map((m) => (
+                <option key={m.id} value={m.id}>
+                  👨‍👩‍👧 {m.fullName} ({m.relationship === 'CHILD' ? 'Con' : m.relationship === 'PARENT' ? 'Bố/Mẹ' : m.relationship === 'SPOUSE' ? 'Vợ/Chồng' : 'Người thân'})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {/* ===== CONTENT LIST ===== */}
@@ -552,6 +612,7 @@ const AppointmentHistory = () => {
                   <div className="badge-group">
                     {renderStatusBadge(b.statusId, b)}
                     {b.paymentStatus && renderPaymentBadge(b.paymentStatus, b)}
+                    {renderPatientTargetBadge(b)}
                   </div>
                   <span className="booking-code">#BK-{b.id}</span>
                 </div>
@@ -987,8 +1048,31 @@ const AppointmentHistory = () => {
                   )}
 
                   <div className="field-item">
-                    <span className="field-label">Bệnh nhân đặt khám:</span>
-                    <span className="field-value">{detailBooking.patientName || '--'}</span>
+                    <span className="field-label">Đối tượng khám:</span>
+                    <span className="field-value">
+                      {detailBooking.bookingFor === 'FAMILY' ? (
+                        <span style={{ color: '#0d9488', fontWeight: 600 }}>
+                          <i className="fas fa-users" style={{ marginRight: 4 }} />
+                          {detailBooking.familyMemberData?.fullName || detailBooking.patientName} (
+                          {detailBooking.relationship === 'CHILD'
+                            ? 'Con cái'
+                            : detailBooking.relationship === 'PARENT'
+                            ? 'Bố / Mẹ'
+                            : detailBooking.relationship === 'SPOUSE'
+                            ? 'Vợ / Chồng'
+                            : 'Người thân'}
+                          )
+                        </span>
+                      ) : (
+                        <span><i className="fas fa-user" style={{ marginRight: 4 }} /> Bản thân</span>
+                      )}
+                    </span>
+                  </div>
+                  <div className="field-item">
+                    <span className="field-label">Người đặt / Giám hộ:</span>
+                    <span className="field-value">
+                      {userInfo ? `${userInfo.lastName || ''} ${userInfo.firstName || ''}`.trim() : detailBooking.patientName}
+                    </span>
                   </div>
                 </div>
               </div>

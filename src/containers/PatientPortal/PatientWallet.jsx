@@ -13,6 +13,7 @@ import {
   requestWithdrawal,
   getMyWithdrawalRequests,
   cancelMyWithdrawalRequest,
+  calculateWithdrawalSlaPreview,
 } from '../../services/walletService';
 import { getPatientBankAccounts } from '../../services/patientService';
 import './PatientWallet.scss';
@@ -63,6 +64,8 @@ const PatientWallet = () => {
   const [selectedBankAccountId, setSelectedBankAccountId] = useState('');
   const [userWithdrawNote, setUserWithdrawNote] = useState('');
   const [isWithdrawSubmitting, setIsWithdrawSubmitting] = useState(false);
+  const [slaPreview, setSlaPreview] = useState(null);
+  const [isLoadingSla, setIsLoadingSla] = useState(false);
 
   const [withdrawRequests, setWithdrawRequests] = useState([]);
   const [withdrawTotal, setWithdrawTotal] = useState(0);
@@ -97,6 +100,26 @@ const PatientWallet = () => {
       setIsLoading(false);
     }
   }, []);
+
+  // [SLA Dynamic Preview] Tính toán thời hạn cam kết khi mở modal hoặc đổi số tiền rút
+  useEffect(() => {
+    if (!showWithdrawModal) return;
+    let isMounted = true;
+    setIsLoadingSla(true);
+    calculateWithdrawalSlaPreview(withdrawAmount)
+      .then((res) => {
+        if (isMounted && res && res.errCode === 0) {
+          setSlaPreview(res.data);
+        }
+      })
+      .catch((err) => console.error('Lỗi khi tính SLA:', err))
+      .finally(() => {
+        if (isMounted) setIsLoadingSla(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [showWithdrawModal, withdrawAmount]);
 
   // 2. Tải lịch sử giao dịch (Sổ cái)
   const fetchTransactions = useCallback(async (targetPage = 1, type = filterType) => {
@@ -767,33 +790,54 @@ const PatientWallet = () => {
                     <th>Mã & Ngày gửi</th>
                     <th>Tài khoản nhận tiền</th>
                     <th>Số tiền rút</th>
+                    <th>Hạn chót cam kết (SLA)</th>
                     <th>Trạng thái</th>
                     <th>Ghi chú / Mã giao dịch</th>
                     <th>Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {withdrawRequests.map((req) => (
-                    <tr key={req.id}>
-                      <td className="col-time">
-                        <strong className="tw-text-slate-800">#WTH-{req.id}</strong>
-                        <span className="time-date">{moment(req.createdAt).format('DD/MM/YYYY HH:mm')}</span>
-                      </td>
-                      <td className="col-desc">
-                        <div className="desc-main" style={{ fontWeight: 600 }}>
-                          {req.bankName}
-                        </div>
-                        <div style={{ fontSize: '0.85rem', color: '#475569' }}>
-                          STK: <strong>{req.accountNumber}</strong>
-                        </div>
-                        <div style={{ fontSize: '0.78rem', color: '#64748B' }}>
-                          Chủ TK: {req.accountHolderName}
-                        </div>
-                      </td>
-                      <td className="col-amount debit">
-                        <strong>-{formatCurrency(req.amount)}</strong>
-                      </td>
-                      <td className="col-type">{renderWithdrawStatusBadge(req.status)}</td>
+                  {withdrawRequests.map((req) => {
+                    const isOverdue = Boolean(
+                      req.status === 'PENDING' &&
+                      req.promisedPayoutDate &&
+                      moment().isAfter(moment(req.promisedPayoutDate))
+                    );
+                    return (
+                      <tr key={req.id}>
+                        <td className="col-time">
+                          <strong className="tw-text-slate-800">#WTH-{req.id}</strong>
+                          <span className="time-date">{moment(req.createdAt).format('DD/MM/YYYY HH:mm')}</span>
+                        </td>
+                        <td className="col-desc">
+                          <div className="desc-main" style={{ fontWeight: 600 }}>
+                            {req.bankName}
+                          </div>
+                          <div style={{ fontSize: '0.85rem', color: '#475569' }}>
+                            STK: <strong>{req.accountNumber}</strong>
+                          </div>
+                          <div style={{ fontSize: '0.78rem', color: '#64748B' }}>
+                            Chủ TK: {req.accountHolderName}
+                          </div>
+                        </td>
+                        <td className="col-amount debit">
+                          <strong>-{formatCurrency(req.amount)}</strong>
+                        </td>
+                        <td className="col-desc">
+                          <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0f766e' }}>
+                            <i className="fas fa-clock tw-mr-1" />
+                            {req.appliedSlaDays ? `${req.appliedSlaDays} ngày` : 'Mặc định'}
+                          </div>
+                          <div style={{ fontSize: '0.78rem', color: isOverdue ? '#dc2626' : '#64748b' }}>
+                            Hạn: <strong>{req.promisedPayoutDate ? moment(req.promisedPayoutDate).format('DD/MM/YYYY') : 'Đang xử lý'}</strong>
+                          </div>
+                          {isOverdue && (
+                            <span className="tw-px-1.5 tw-py-0.5 tw-bg-rose-100 tw-text-rose-700 tw-rounded tw-text-2xs tw-font-bold tw-inline-block tw-mt-1">
+                              Quá hạn SLA
+                            </span>
+                          )}
+                        </td>
+                        <td className="col-type">{renderWithdrawStatusBadge(req.status)}</td>
                       <td className="col-desc">
                         {req.bankTransactionRef && (
                           <div style={{ fontSize: '0.82rem', color: '#059669', fontWeight: 600 }}>
@@ -832,7 +876,8 @@ const PatientWallet = () => {
                         )}
                       </td>
                     </tr>
-                  ))}
+                  );
+                })}
                 </tbody>
               </table>
             </div>
@@ -1144,8 +1189,39 @@ const PatientWallet = () => {
                 </div>
               </div>
 
+              {/* Thẻ Cam kết Thời hạn Giải ngân Linh hoạt (SLA & Audit) */}
+              <div className="tw-p-3.5 tw-bg-teal-50/80 tw-rounded-xl tw-border tw-border-teal-200 tw-text-xs tw-mt-2">
+                <div className="tw-flex tw-items-center tw-justify-between tw-mb-1">
+                  <span className="tw-font-bold tw-text-teal-900 tw-flex tw-items-center tw-gap-1.5">
+                    <i className="fas fa-business-time tw-text-teal-600" /> Cam kết giải ngân (SLA):
+                  </span>
+                  <span className="tw-px-2 tw-py-0.5 tw-bg-teal-700 tw-text-white tw-text-2xs tw-font-bold tw-rounded-full">
+                    {isLoadingSla ? 'Đang tính...' : `${slaPreview?.appliedSlaDays || 7} ngày làm việc`}
+                  </span>
+                </div>
+                <div className="tw-text-xs tw-text-teal-800">
+                  Dự kiến tiền về tài khoản trước ngày:{' '}
+                  <strong className="tw-text-teal-950">
+                    {slaPreview?.promisedPayoutDate
+                      ? moment(slaPreview.promisedPayoutDate).format('DD/MM/YYYY')
+                      : moment().add(7, 'days').format('DD/MM/YYYY')}
+                  </strong>
+                </div>
+                {slaPreview?.matchedTier?.label && (
+                  <div className="tw-text-2xs tw-text-teal-700 tw-mt-1 tw-font-medium">
+                    <i className="fas fa-check-circle tw-mr-1" />
+                    Áp dụng: {slaPreview.matchedTier.label}
+                  </div>
+                )}
+                {slaPreview?.policyNoticeVi && (
+                  <div className="tw-text-2xs tw-text-slate-600 tw-mt-1.5 tw-pt-1.5 tw-border-t tw-border-teal-200/60">
+                    <i className="fas fa-info-circle tw-mr-1" /> {slaPreview.policyNoticeVi}
+                  </div>
+                )}
+              </div>
+
               <div className="tw-p-2 tw-bg-amber-50 tw-rounded-lg tw-border tw-border-amber-200 tw-text-xs tw-text-amber-800 tw-mt-2">
-                <i className="fas fa-shield-alt" /> <strong>Quy định bảo chứng (AML):</strong> BookingCare chỉ chuyển khoản về đúng tài khoản ngân hàng chính chủ của bệnh nhân. Tiền sẽ được tạm giữ (Hold) an toàn trong khi Admin xử lý chuyển khoản (tối đa 24h làm việc).
+                <i className="fas fa-shield-alt" /> <strong>Quy định bảo chứng (AML):</strong> BookingCare chỉ chuyển khoản về đúng tài khoản ngân hàng chính chủ của bệnh nhân. Tiền sẽ được tạm giữ (Hold) an toàn trong khi Admin xử lý chuyển khoản theo cam kết SLA.
               </div>
 
               {/* Nút xác nhận */}

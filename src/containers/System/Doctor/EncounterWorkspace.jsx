@@ -433,7 +433,7 @@ const EncounterWorkspace = () => {
               </span>
             </div>
             <h1 className="ew-header__patient-summary">
-              {patientName} <span className="meta">· {encounter.patientAge || 35} tuổi · {patientGender} · {encounter.patientCode || `#PT-${encounter.patientId}`}</span>
+              {patientName} <span className="meta">· {encounter.patientAge || 35} tuổi · {patientGender} {encounter.bookingFor === 'FAMILY' ? `· 👨‍👩‍👧 ${encounter.relationship === 'CHILD' ? 'Con cái' : encounter.relationship === 'PARENT' ? 'Bố/Mẹ' : encounter.relationship === 'SPOUSE' ? 'Vợ/Chồng' : 'Người thân'}` : ''} · {encounter.patientCode || `#PT-${encounter.patientId}`}</span>
             </h1>
           </div>
         </div>
@@ -504,6 +504,14 @@ const EncounterWorkspace = () => {
             </div>
 
             <div className="patient-meta-list">
+              {encounter.bookingFor === 'FAMILY' && (
+                <div className="meta-row" style={{ background: '#f0fdfa', padding: '6px 8px', borderRadius: '6px', border: '1px solid #ccfbf1' }}>
+                  <span className="meta-label" style={{ color: '#0f766e', fontWeight: 700 }}>Đối tượng khám:</span>
+                  <span className="meta-value" style={{ color: '#0d9488', fontWeight: 700 }}>
+                    👨‍👩‍👧 {encounter.relationship === 'CHILD' ? 'Con cái' : encounter.relationship === 'PARENT' ? 'Bố/Mẹ' : encounter.relationship === 'SPOUSE' ? 'Vợ/Chồng' : 'Người thân'}
+                  </span>
+                </div>
+              )}
               <div className="meta-row">
                 <span className="meta-label">Tuổi & Giới tính:</span>
                 <span className="meta-value">{encounter.patientAge} tuổi · {patientGender}</span>
@@ -521,7 +529,26 @@ const EncounterWorkspace = () => {
                   {encounter.patientAddress || encounter.patientData?.address || 'TP. Hồ Chí Minh'}
                 </span>
               </div>
+
+              {encounter.bookingFor === 'FAMILY' && encounter.patientData && (
+                <div className="meta-row" style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed #e2e8f0' }}>
+                  <span className="meta-label" style={{ color: '#64748b' }}>Người giám hộ:</span>
+                  <span className="meta-value" style={{ fontWeight: 600, color: '#334155' }}>
+                    {encounter.patientData.lastName} {encounter.patientData.firstName} {encounter.patientData.phoneNumber ? `(${encounter.patientData.phoneNumber})` : ''}
+                  </span>
+                </div>
+              )}
             </div>
+
+            {/* Cảnh báo tiền sử dị ứng / bệnh lý của người thân */}
+            {encounter.familyMemberData?.medicalHistory && (
+              <div style={{ marginTop: '12px', background: '#fff1f2', border: '1px solid #ffe4e6', borderRadius: '8px', padding: '8px 10px', fontSize: '0.8rem', color: '#be123c' }}>
+                <div style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px', color: '#e11d48' }}>
+                  <AlertCircle size={14} /> Tiền sử bệnh & Dị ứng:
+                </div>
+                <div>{encounter.familyMemberData.medicalHistory}</div>
+              </div>
+            )}
           </div>
 
           {/* Card: Current Encounter Info */}

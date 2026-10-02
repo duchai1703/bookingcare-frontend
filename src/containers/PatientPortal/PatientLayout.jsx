@@ -93,6 +93,14 @@ const PatientLayout = () => {
                 </NavLink>
 
                 <NavLink
+                  to="/patient/family"
+                  className={({ isActive }) => `portal-nav-item ${isActive ? 'active' : ''}`}
+                >
+                  <i className="fas fa-users" />
+                  <span>Sổ y bạ gia đình</span>
+                </NavLink>
+
+                <NavLink
                   to="/patient/profile"
                   className={({ isActive }) => `portal-nav-item ${isActive ? 'active' : ''}`}
                 >

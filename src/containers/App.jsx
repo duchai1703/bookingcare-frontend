@@ -88,6 +88,7 @@ import PatientOverview from './PatientPortal/PatientOverview';
 import PatientProfile from './PatientPortal/PatientProfile';
 import AppointmentHistory from './PatientPortal/AppointmentHistory';
 import PatientWallet from './PatientPortal/PatientWallet';
+import FamilyMembers from './PatientPortal/FamilyMembers';
 
 // ===== Layout =====
 import Header from '../components/Header/Header';
@@ -333,6 +334,7 @@ const App = () => {
             <Route path="profile" element={<PatientProfile />} />
             <Route path="history" element={<AppointmentHistory />} />
             <Route path="wallet" element={<PatientWallet />} />
+            <Route path="family" element={<FamilyMembers />} />
           </Route>
         </Route>
 

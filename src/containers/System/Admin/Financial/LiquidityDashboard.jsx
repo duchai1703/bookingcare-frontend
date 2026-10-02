@@ -35,6 +35,7 @@ import {
   getAdminWithdrawalRequests,
   processAdminWithdrawal
 } from '../../../../services/walletService';
+import WithdrawalPolicyAuditTab from './WithdrawalPolicyAuditTab';
 import './LiquidityDashboard.scss';
 
 const LiquidityDashboard = () => {
@@ -493,6 +494,16 @@ const LiquidityDashboard = () => {
             <span>Danh Sách Ví Bệnh Nhân</span>
             <span className="tab-badge">{walletsTotal}</span>
           </button>
+
+          <button
+            type="button"
+            className={`tab-btn ${activeTab === 'withdrawal-policy' ? 'active' : ''}`}
+            onClick={() => setActiveTab('withdrawal-policy')}
+          >
+            <Clock size={15} />
+            <span>Chính Sách Hoàn Tiền / SLA & Kiểm Toán</span>
+            <span className="tab-badge" style={{ background: '#e0e7ff', color: '#3730a3' }}>Linh hoạt</span>
+          </button>
         </div>
 
         <div className="ld-tab-body">
@@ -638,35 +649,52 @@ const LiquidityDashboard = () => {
           {activeTab === 'withdrawals' && (
             <div className="tab-withdrawals-layout">
               {/* Thống kê nhanh */}
-              <div className="tw-grid tw-grid-cols-4 tw-gap-4 tw-mb-5">
+              <div className="tw-grid tw-grid-cols-5 tw-gap-3.5 tw-mb-5">
                 <div className="tw-bg-slate-50 tw-p-3 tw-rounded-xl tw-border tw-border-slate-200">
-                  <div className="tw-text-xs tw-text-slate-500 tw-font-semibold">Tổng yêu cầu rút tiền</div>
+                  <div className="tw-text-xs tw-text-slate-500 tw-font-semibold">Tổng yêu cầu rút</div>
                   <div className="tw-text-xl tw-font-extrabold tw-text-slate-800 tw-mt-1">
                     {withdrawalStats?.totalRequests || 0}
                   </div>
                 </div>
 
                 <div className="tw-bg-amber-50 tw-p-3 tw-rounded-xl tw-border tw-border-amber-200">
-                  <div className="tw-text-xs tw-text-amber-700 tw-font-semibold">Đang chờ xử lý (Pending)</div>
+                  <div className="tw-text-xs tw-text-amber-700 tw-font-semibold">Đang chờ xử lý</div>
                   <div className="tw-text-xl tw-font-extrabold tw-text-amber-800 tw-mt-1">
                     {withdrawalStats?.pendingCount || 0} ca
-                    <span className="tw-text-xs tw-font-bold tw-text-amber-600 tw-ml-2">
+                    <span className="tw-text-xs tw-font-bold tw-text-amber-600 tw-ml-1">
                       ({formatMoney(withdrawalStats?.pendingAmount)})
                     </span>
                   </div>
                 </div>
 
                 <div className="tw-bg-emerald-50 tw-p-3 tw-rounded-xl tw-border tw-border-emerald-200">
-                  <div className="tw-text-xs tw-text-emerald-700 tw-font-semibold">Đã chuyển khoản (Transferred)</div>
+                  <div className="tw-text-xs tw-text-emerald-700 tw-font-semibold">Đã chuyển khoản</div>
                   <div className="tw-text-xl tw-font-extrabold tw-text-emerald-800 tw-mt-1">
                     {withdrawalStats?.transferredCount || 0} ca
                   </div>
                 </div>
 
                 <div className="tw-bg-rose-50 tw-p-3 tw-rounded-xl tw-border tw-border-rose-200">
-                  <div className="tw-text-xs tw-text-rose-700 tw-font-semibold">Bị từ chối (Rejected)</div>
+                  <div className="tw-text-xs tw-text-rose-700 tw-font-semibold">Bị từ chối</div>
                   <div className="tw-text-xl tw-font-extrabold tw-text-rose-800 tw-mt-1">
                     {withdrawalStats?.rejectedCount || 0} ca
+                  </div>
+                </div>
+
+                <div className={`tw-p-3 tw-rounded-xl tw-border ${
+                  withdrawalStats?.overdueCount > 0
+                    ? 'tw-bg-rose-100/90 tw-border-rose-300'
+                    : 'tw-bg-slate-50 tw-border-slate-200'
+                }`}>
+                  <div className={`tw-text-xs tw-font-semibold ${
+                    withdrawalStats?.overdueCount > 0 ? 'tw-text-rose-800' : 'tw-text-slate-500'
+                  }`}>
+                    Quá hạn cam kết (SLA)
+                  </div>
+                  <div className={`tw-text-xl tw-font-extrabold tw-mt-1 ${
+                    withdrawalStats?.overdueCount > 0 ? 'tw-text-rose-700' : 'tw-text-slate-700'
+                  }`}>
+                    {withdrawalStats?.overdueCount || 0} ca
                   </div>
                 </div>
               </div>
@@ -712,6 +740,7 @@ const LiquidityDashboard = () => {
                       <th>Người yêu cầu</th>
                       <th>Tài khoản nhận tiền</th>
                       <th>Số tiền rút</th>
+                      <th>Hạn chót cam kết (SLA)</th>
                       <th>Trạng thái</th>
                       <th>Thông tin xử lý</th>
                       <th>Thao tác</th>
@@ -776,6 +805,19 @@ const LiquidityDashboard = () => {
                               <span className="tw-font-bold tw-text-rose-600 tw-text-sm">
                                 {formatMoney(req.amount)}
                               </span>
+                            </td>
+                            <td>
+                              <div className="tw-font-bold tw-text-teal-700 tw-text-xs">
+                                {req.appliedSlaDays ? `${req.appliedSlaDays} ngày` : 'Mặc định'}
+                              </div>
+                              <div className={`tw-text-2xs ${req.isOverdue ? 'tw-text-rose-600 tw-font-bold' : 'tw-text-slate-500'}`}>
+                                Hạn: {req.promisedPayoutDate ? moment(req.promisedPayoutDate).format('DD/MM/YYYY') : '---'}
+                              </div>
+                              {req.isOverdue && (
+                                <span className="tw-px-1.5 tw-py-0.5 tw-bg-rose-100 tw-text-rose-700 tw-rounded tw-text-3xs tw-font-bold tw-inline-block tw-mt-0.5">
+                                  Quá hạn SLA
+                                </span>
+                              )}
                             </td>
                             <td>
                               {req.status === 'PENDING' && (
@@ -1200,6 +1242,11 @@ const LiquidityDashboard = () => {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* ══════════════ TAB 5: CHÍNH SÁCH SLA & KIỂM TOÁN BẤT BIẾN ══════════════ */}
+          {activeTab === 'withdrawal-policy' && (
+            <WithdrawalPolicyAuditTab />
           )}
         </div>
       </div>
