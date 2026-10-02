@@ -749,14 +749,14 @@ const LiquidityDashboard = () => {
                   <tbody>
                     {loadingWithdrawals ? (
                       <tr>
-                        <td colSpan="7" className="tw-text-center tw-py-8 tw-text-slate-400">
+                        <td colSpan="8" className="tw-text-center tw-py-8 tw-text-slate-400">
                           <RotateCw size={18} className="tw-animate-spin tw-inline tw-mr-2" />
                           Đang tải danh sách yêu cầu rút tiền...
                         </td>
                       </tr>
                     ) : withdrawals.length === 0 ? (
                       <tr>
-                        <td colSpan="7" className="tw-text-center tw-py-8 tw-text-slate-400">
+                        <td colSpan="8" className="tw-text-center tw-py-8 tw-text-slate-400">
                           Không tìm thấy yêu cầu rút tiền nào phù hợp
                         </td>
                       </tr>

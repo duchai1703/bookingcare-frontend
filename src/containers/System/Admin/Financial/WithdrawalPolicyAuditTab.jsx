@@ -16,7 +16,8 @@ import {
   AlertCircle,
   HelpCircle,
   Lock,
-  ArrowRight
+  ArrowRight,
+  Info
 } from 'lucide-react';
 import {
   getActiveWithdrawalPolicy,
@@ -216,118 +217,111 @@ const WithdrawalPolicyAuditTab = () => {
   const totalAuditPages = Math.ceil(auditTotal / auditLimit) || 1;
 
   return (
-    <div className="tw-space-y-6">
+    <div className="policy-tab-layout">
       {/* ══════════════ 1. BANNER THÔNG TIN CHÍNH SÁCH HIỆN TẠI ══════════════ */}
-      <div className="tw-bg-white tw-rounded-2xl tw-p-6 tw-shadow-sm tw-border tw-border-slate-200">
-        <div className="tw-flex tw-justify-between tw-items-start tw-flex-wrap tw-gap-4">
-          <div>
-            <div className="tw-flex tw-items-center tw-gap-2.5 tw-mb-2">
-              <span className="tw-px-3 tw-py-1 tw-bg-teal-100 tw-text-teal-800 tw-text-xs tw-font-extrabold tw-rounded-full tw-flex tw-items-center tw-gap-1.5">
+      <div className="policy-hero-card">
+        <div className="hero-top">
+          <div className="hero-title-group">
+            <div className="hero-badges">
+              <span className="badge-version">
                 <ShieldCheck size={14} /> CHÍNH SÁCH ĐANG HIỆU LỰC: PHIÊN BẢN v{activePolicy?.version || 1}
               </span>
-              <span className="tw-px-2.5 tw-py-0.5 tw-bg-emerald-50 tw-text-emerald-700 tw-border tw-border-emerald-200 tw-text-2xs tw-font-bold tw-rounded-md">
+              <span className="badge-active">
                 ACTIVE
               </span>
               {isBusinessDaysOnly && (
-                <span className="tw-px-2.5 tw-py-0.5 tw-bg-sky-50 tw-text-sky-700 tw-border tw-border-sky-200 tw-text-2xs tw-font-bold tw-rounded-md">
+                <span className="badge-biz">
                   Chỉ tính ngày làm việc
                 </span>
               )}
             </div>
-            <h3 className="tw-text-xl tw-font-extrabold tw-text-slate-900 tw-m-0">
+            <h3 className="hero-heading">
               {activePolicy?.name || 'Chính Sách Cam Kết Thời Hạn Hoàn Tiền / Rút Tiền Linh Hoạt'}
             </h3>
-            <p className="tw-text-xs tw-text-slate-500 tw-mt-1 tw-mb-0">
-              Mã chính sách: <code>{activePolicy?.code}</code> | Hiệu lực từ:{' '}
+            <p className="hero-meta">
+              Mã chính sách: <code>{activePolicy?.code || 'POL_WITHDRAWAL_SLA'}</code> | Hiệu lực từ:{' '}
               <strong>{moment(activePolicy?.effectiveFrom).format('DD/MM/YYYY HH:mm')}</strong> | Ban hành bởi:{' '}
               <strong>{activePolicy?.creator?.email || 'Hệ thống Quản trị'}</strong>
             </p>
           </div>
 
-          <div className="tw-flex tw-items-center tw-gap-2">
-            <button
-              type="button"
-              className="tw-px-3 tw-py-2 tw-bg-slate-100 hover:tw-bg-slate-200 tw-text-slate-700 tw-rounded-xl tw-text-xs tw-font-bold tw-flex tw-items-center tw-gap-1.5 tw-border-none tw-cursor-pointer"
-              onClick={() => {
-                loadPolicy();
-                loadAuditLogs(auditPage);
-              }}
-              disabled={isLoadingPolicy || isLoadingAudit}
-            >
-              <RotateCw size={13} className={isLoadingPolicy || isLoadingAudit ? 'tw-animate-spin' : ''} />
-              <span>Đồng bộ</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            className="btn-sync-policy"
+            onClick={() => {
+              loadPolicy();
+              loadAuditLogs(auditPage);
+            }}
+            disabled={isLoadingPolicy || isLoadingAudit}
+          >
+            <RotateCw size={13} className={isLoadingPolicy || isLoadingAudit ? 'tw-animate-spin' : ''} />
+            <span>Đồng bộ</span>
+          </button>
         </div>
 
         {/* 4 Cards tóm tắt SLA */}
-        <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-4 tw-gap-4 tw-mt-5 tw-pt-5 tw-border-t tw-border-slate-100">
-          <div className="tw-p-3.5 tw-bg-slate-50 tw-rounded-xl tw-border tw-border-slate-200">
-            <div className="tw-text-2xs tw-text-slate-500 tw-font-bold tw-uppercase">SLA Tiêu Chuẩn Mặc Định</div>
-            <div className="tw-text-2xl tw-font-black tw-text-teal-700 tw-mt-1">
-              {defaultSlaDays} <span className="tw-text-sm tw-font-bold">ngày {isBusinessDaysOnly ? 'làm việc' : ''}</span>
+        <div className="hero-kpi-grid">
+          <div className="hero-kpi-item">
+            <div className="kpi-label">SLA Tiêu Chuẩn Mặc Định</div>
+            <div className="kpi-value teal">
+              {defaultSlaDays} <span>ngày {isBusinessDaysOnly ? 'làm việc' : ''}</span>
             </div>
-            <div className="tw-text-2xs tw-text-slate-400 tw-mt-1">Áp dụng cho mọi yêu cầu rút không trùng bậc riêng</div>
+            <div className="kpi-hint">Áp dụng cho mọi yêu cầu rút không trùng bậc riêng</div>
           </div>
 
-          <div className="tw-p-3.5 tw-bg-slate-50 tw-rounded-xl tw-border tw-border-slate-200">
-            <div className="tw-text-2xs tw-text-slate-500 tw-font-bold tw-uppercase">Số Bậc Phân Tầng (Tiers)</div>
-            <div className="tw-text-2xl tw-font-black tw-text-indigo-700 tw-mt-1">
-              {tiers.length} <span className="tw-text-sm tw-font-bold">bậc hạn mức</span>
+          <div className="hero-kpi-item">
+            <div className="kpi-label">Số Bậc Phân Tầng (Tiers)</div>
+            <div className="kpi-value indigo">
+              {tiers.length} <span>bậc hạn mức</span>
             </div>
-            <div className="tw-text-2xs tw-text-slate-400 tw-mt-1">Cam kết rút nhanh hạn mức nhỏ, thẩm định hạn mức lớn</div>
+            <div className="kpi-hint">Cam kết rút nhanh hạn mức nhỏ, thẩm định hạn mức lớn</div>
           </div>
 
-          <div className="tw-p-3.5 tw-bg-slate-50 tw-rounded-xl tw-border tw-border-slate-200">
-            <div className="tw-text-2xs tw-text-slate-500 tw-font-bold tw-uppercase">Lịch Sử Phiên Bản</div>
-            <div className="tw-text-2xl tw-font-black tw-text-slate-800 tw-mt-1">
-              {policyVersions.length} <span className="tw-text-sm tw-font-bold">phiên bản</span>
+          <div className="hero-kpi-item">
+            <div className="kpi-label">Lịch Sử Phiên Bản</div>
+            <div className="kpi-value slate">
+              {policyVersions.length} <span>phiên bản</span>
             </div>
-            <div className="tw-text-2xs tw-text-slate-400 tw-mt-1">Lưu trữ bất biến, không bị ghi đè dữ liệu cũ</div>
+            <div className="kpi-hint">Lưu trữ bất biến, không bị ghi đè dữ liệu cũ</div>
           </div>
 
-          <div className="tw-p-3.5 tw-bg-slate-50 tw-rounded-xl tw-border tw-border-slate-200">
-            <div className="tw-text-2xs tw-text-slate-500 tw-font-bold tw-uppercase">Tổng Nhật Ký Kiểm Toán</div>
-            <div className="tw-text-2xl tw-font-black tw-text-amber-700 tw-mt-1">
-              {auditTotal} <span className="tw-text-sm tw-font-bold">bản ghi</span>
+          <div className="hero-kpi-item">
+            <div className="kpi-label">Tổng Nhật Ký Kiểm Toán</div>
+            <div className="kpi-value amber">
+              {auditTotal} <span>bản ghi</span>
             </div>
-            <div className="tw-text-2xs tw-text-slate-400 tw-mt-1">Append-only audit trail lưu vết toàn bộ thay đổi</div>
+            <div className="kpi-hint">Append-only audit trail lưu vết toàn bộ thay đổi</div>
           </div>
         </div>
       </div>
 
       {/* ══════════════ 2. FORM ĐIỀU CHỈNH CHÍNH SÁCH LINH HOẠT ══════════════ */}
-      <form onSubmit={handleOpenConfirmModal} className="tw-bg-white tw-rounded-2xl tw-p-6 tw-shadow-sm tw-border tw-border-slate-200">
-        <div className="tw-flex tw-items-center tw-justify-between tw-mb-4 tw-pb-3 tw-border-b tw-border-slate-100">
-          <div>
-            <h4 className="tw-text-base tw-font-extrabold tw-text-slate-800 tw-m-0 tw-flex tw-items-center tw-gap-2">
+      <form onSubmit={handleOpenConfirmModal} className="policy-form-card">
+        <div className="card-header-bar">
+          <div className="header-title-box">
+            <h4>
               <Clock size={18} className="tw-text-teal-600" />
               Thiết Lập Thời Hạn Hoàn Tiền / Rút Tiền Linh Hoạt ($N$ Ngày)
             </h4>
-            <p className="tw-text-xs tw-text-slate-500 tw-m-0 tw-mt-0.5">
+            <p>
               Cho phép tùy chọn bất kỳ số ngày nào (1, 3, 7, 14, 30... ngày). Mọi điều chỉnh sẽ được ghi log bắt buộc kèm lý do giải trình.
             </p>
           </div>
-          <span className="tw-text-2xs tw-text-amber-700 tw-bg-amber-50 tw-border tw-border-amber-200 tw-px-2.5 tw-py-1 tw-rounded-lg tw-font-semibold tw-flex tw-items-center tw-gap-1">
-            <Lock size={11} /> Kiểm toán bảo mật
+          <span className="audit-secure-badge">
+            <Lock size={12} /> Kiểm toán bảo mật
           </span>
         </div>
 
-        {/* Cấu hình Số ngày mặc định */}
-        <div className="tw-mb-5">
-          <label className="tw-block tw-text-xs tw-font-bold tw-text-slate-700 tw-mb-2">
-            1. Chọn nhanh số ngày cam kết giải ngân mặc định (SLA Days):
-          </label>
-          <div className="tw-flex tw-flex-wrap tw-gap-2 tw-mb-3">
+        {/* 1. Quick Presets */}
+        <div className="form-section">
+          <div className="section-title">1. Chọn nhanh số ngày cam kết giải ngân mặc định (SLA Days):</div>
+          <div className="section-desc">Bấm chọn nhanh một trong các mức cam kết tiêu chuẩn phổ biến trong ngành y tế</div>
+          <div className="presets-pill-row">
             {SLA_PRESETS.map((d) => (
               <button
                 key={d}
                 type="button"
-                className={`tw-px-3.5 tw-py-1.5 tw-rounded-xl tw-text-xs tw-font-bold tw-border tw-cursor-pointer tw-transition-all ${
-                  defaultSlaDays === d
-                    ? 'tw-bg-teal-600 tw-text-white tw-border-teal-600 tw-shadow-sm'
-                    : 'tw-bg-slate-50 tw-text-slate-700 tw-border-slate-200 hover:tw-bg-slate-100'
-                }`}
+                className={`pill-preset ${defaultSlaDays === d ? 'active' : ''}`}
                 onClick={() => handleSelectPreset(d)}
               >
                 {d} ngày
@@ -335,56 +329,45 @@ const WithdrawalPolicyAuditTab = () => {
             ))}
           </div>
 
-          <div className="tw-flex tw-items-center tw-gap-3">
-            <div className="tw-flex-1 tw-max-w-xs">
-              <label className="tw-block tw-text-2xs tw-text-slate-500 tw-font-semibold tw-mb-1">
-                Hoặc nhập số ngày tùy chỉnh bất kỳ (từ 1 đến 365 ngày):
-              </label>
-              <div className="tw-relative">
+          <div className="sla-custom-grid tw-mt-3">
+            <div className="custom-input-box">
+              <label>Hoặc nhập số ngày tùy chỉnh bất kỳ (1 đến 365 ngày):</label>
+              <div className="input-suffix-wrapper">
                 <input
                   type="text"
-                  className="tw-w-full tw-p-2 tw-pr-12 tw-border tw-border-slate-300 tw-rounded-xl tw-text-sm tw-font-bold tw-text-slate-800"
                   value={customSlaInput}
                   onChange={handleCustomSlaChange}
                   placeholder="VD: 14"
                 />
-                <span className="tw-absolute tw-right-3 tw-top-2.5 tw-text-xs tw-text-slate-400 tw-font-semibold">
-                  ngày
-                </span>
+                <span className="suffix">ngày</span>
               </div>
             </div>
 
-            <div className="tw-flex-1 tw-mt-4">
-              <label className="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer tw-text-xs tw-font-bold tw-text-slate-700">
-                <input
-                  type="checkbox"
-                  className="tw-w-4 tw-h-4 tw-rounded tw-text-teal-600"
-                  checked={isBusinessDaysOnly}
-                  onChange={(e) => setIsBusinessDaysOnly(e.target.checked)}
-                />
-                <span>Chỉ tính ngày làm việc (Loại trừ Thứ Bảy và Chủ Nhật khi tính thời hạn)</span>
+            <div className="biz-days-card">
+              <input
+                type="checkbox"
+                id="bizDaysCheck"
+                checked={isBusinessDaysOnly}
+                onChange={(e) => setIsBusinessDaysOnly(e.target.checked)}
+              />
+              <label htmlFor="bizDaysCheck" className="biz-text">
+                <span className="biz-title">Chỉ tính ngày làm việc (Loại trừ Thứ Bảy và Chủ Nhật)</span>
+                <span className="biz-hint">Nếu bật, khi người dùng yêu cầu vào thứ Sáu, thời hạn 3 ngày làm việc sẽ kết thúc vào thứ Tư tuần kế tiếp.</span>
               </label>
-              <small className="tw-text-2xs tw-text-slate-400 tw-block tw-mt-0.5">
-                Nếu bật, khi người dùng yêu cầu vào thứ Sáu, thời gian 3 ngày làm việc sẽ kết thúc vào thứ Tư tuần sau.
-              </small>
             </div>
           </div>
         </div>
 
-        {/* Cấu hình Phân tầng hạn mức (Tiers) */}
-        <div className="tw-mb-5 tw-pt-4 tw-border-t tw-border-slate-100">
-          <div className="tw-flex tw-justify-between tw-items-center tw-mb-2">
+        {/* 2. Cấu hình Phân tầng hạn mức (Tier Cards) */}
+        <div className="tier-section">
+          <div className="tier-header-bar">
             <div>
-              <label className="tw-block tw-text-xs tw-font-bold tw-text-slate-700">
-                2. Phân tầng thời hạn cam kết theo hạn mức rút tiền (Tiered SLAs):
-              </label>
-              <small className="tw-text-2xs tw-text-slate-500">
-                Cấu hình số ngày xử lý khác nhau tùy thuộc vào số tiền rút (Khoản nhỏ chuyển nhanh, khoản lớn đối soát kỹ)
-              </small>
+              <div className="section-title tw-m-0">2. Phân tầng thời hạn cam kết theo hạn mức rút tiền (Tiered SLAs):</div>
+              <div className="section-desc tw-m-0 tw-mt-0.5">Cấu hình số ngày xử lý khác nhau tùy thuộc vào số tiền rút (Khoản nhỏ chuyển nhanh, khoản lớn đối soát kỹ)</div>
             </div>
             <button
               type="button"
-              className="tw-px-3 tw-py-1.5 tw-bg-indigo-50 hover:tw-bg-indigo-100 tw-text-indigo-700 tw-rounded-xl tw-text-xs tw-font-bold tw-flex tw-items-center tw-gap-1 tw-border-none tw-cursor-pointer"
+              className="btn-add-tier"
               onClick={handleAddTier}
             >
               <Plus size={14} /> Thêm bậc hạn mức
@@ -396,94 +379,93 @@ const WithdrawalPolicyAuditTab = () => {
               Chưa thiết lập bậc hạn mức riêng nào. Tất cả giao dịch sẽ áp dụng mức mặc định ({defaultSlaDays} ngày).
             </div>
           ) : (
-            <div className="tw-space-y-2.5">
+            <div className="tier-cards-container">
               {tiers.map((tier, idx) => (
-                <div
-                  key={idx}
-                  className="tw-flex tw-items-center tw-gap-2 tw-p-3 tw-bg-slate-50 tw-rounded-xl tw-border tw-border-slate-200"
-                >
-                  <span className="tw-px-2 tw-py-1 tw-bg-slate-200 tw-text-slate-700 tw-rounded tw-text-2xs tw-font-bold">
-                    Bậc #{idx + 1}
-                  </span>
+                <div key={idx} className="tier-card-item">
+                  <div className="tier-top-row">
+                    <span className="tier-num-badge">
+                      Bậc #{idx + 1}
+                    </span>
+                    <button
+                      type="button"
+                      className="btn-del-tier"
+                      onClick={() => handleRemoveTier(idx)}
+                      title="Xóa bậc hạn mức"
+                      aria-label="Xóa bậc hạn mức"
+                    >
+                      <Trash2 size={13} /> Xóa bậc
+                    </button>
+                  </div>
 
-                  <div className="tw-flex-1 tw-grid tw-grid-cols-4 tw-gap-2">
-                    <div>
-                      <span className="tw-block tw-text-3xs tw-text-slate-400 tw-font-bold">TỪ (VNĐ):</span>
+                  <div className="tier-fields-grid">
+                    <div className="field-col">
+                      <label>HẠN MỨC TỪ (VNĐ):</label>
                       <input
                         type="number"
-                        className="tw-w-full tw-p-1.5 tw-border tw-border-slate-300 tw-rounded-lg tw-text-xs tw-font-semibold"
                         value={tier.minAmount}
                         onChange={(e) => handleTierChange(idx, 'minAmount', e.target.value)}
                         placeholder="VD: 50000"
                       />
                     </div>
-                    <div>
-                      <span className="tw-block tw-text-3xs tw-text-slate-400 tw-font-bold">ĐẾN (VNĐ - Trống = Không giới hạn):</span>
+                    <div className="field-col">
+                      <label>HẠN MỨC ĐẾN (VNĐ - TRỐNG = VÔ CỰC):</label>
                       <input
                         type="number"
-                        className="tw-w-full tw-p-1.5 tw-border tw-border-slate-300 tw-rounded-lg tw-text-xs tw-font-semibold"
                         value={tier.maxAmount ?? ''}
                         onChange={(e) => handleTierChange(idx, 'maxAmount', e.target.value)}
                         placeholder="Để trống nếu là vô cực"
                       />
                     </div>
-                    <div>
-                      <span className="tw-block tw-text-3xs tw-text-slate-400 tw-font-bold">SLA (SỐ NGÀY):</span>
+                    <div className="field-col">
+                      <label>SLA (SỐ NGÀY CAM KẾT):</label>
                       <input
                         type="number"
                         min="1"
                         max="365"
-                        className="tw-w-full tw-p-1.5 tw-border tw-border-slate-300 tw-rounded-lg tw-text-xs tw-font-bold tw-text-teal-700"
+                        className="sla-input"
                         value={tier.slaDays}
                         onChange={(e) => handleTierChange(idx, 'slaDays', e.target.value)}
                         placeholder="Số ngày"
                       />
                     </div>
-                    <div>
-                      <span className="tw-block tw-text-3xs tw-text-slate-400 tw-font-bold">TÊN HIỂN THỊ (LABEL):</span>
-                      <input
-                        type="text"
-                        className="tw-w-full tw-p-1.5 tw-border tw-border-slate-300 tw-rounded-lg tw-text-xs"
-                        value={tier.label || ''}
-                        onChange={(e) => handleTierChange(idx, 'label', e.target.value)}
-                        placeholder="VD: Khoản nhỏ - Duyệt nhanh trong 24h"
-                      />
-                    </div>
                   </div>
 
-                  <button
-                    type="button"
-                    className="tw-p-2 tw-text-rose-500 hover:tw-bg-rose-50 tw-rounded-lg tw-border-none tw-cursor-pointer tw-transition-all"
-                    onClick={() => handleRemoveTier(idx)}
-                    title="Xóa bậc này"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  <div className="tier-label-row">
+                    <label>TÊN HIỂN THỊ QUY ĐỊNH (LABEL):</label>
+                    <input
+                      type="text"
+                      value={tier.label || ''}
+                      onChange={(e) => handleTierChange(idx, 'label', e.target.value)}
+                      placeholder="VD: Khoản tiêu chuẩn (5 - 20 triệu) — Đối soát trong 3 ngày"
+                    />
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        {/* Thông báo chính sách tới bệnh nhân */}
-        <div className="tw-mb-5 tw-pt-4 tw-border-t tw-border-slate-100">
-          <label className="tw-block tw-text-xs tw-font-bold tw-text-slate-700 tw-mb-1">
-            3. Thông báo quy định hiển thị tới người bệnh khi rút tiền:
-          </label>
+        {/* 3. Thông báo quy định hiển thị tới người bệnh khi rút tiền */}
+        <div className="policy-notice-section">
+          <label>3. Thông báo quy định hiển thị tới người bệnh khi rút tiền:</label>
+          <span className="helper-text">Văn bản này hiển thị trực tiếp cho bệnh nhân tại giao diện rút tiền để bảo đảm tính minh bạch pháp lý.</span>
           <textarea
-            rows="2"
-            className="tw-w-full tw-p-2.5 tw-border tw-border-slate-300 tw-rounded-xl tw-text-xs tw-text-slate-800"
+            rows={2}
             value={policyNoticeVi}
             onChange={(e) => setPolicyNoticeVi(e.target.value)}
             placeholder="VD: Thời gian hoàn tất rút tiền từ 1 đến 14 ngày tùy thuộc vào hạn mức giao dịch và thời gian đối soát của ngân hàng..."
           />
         </div>
 
-        {/* Nút hành động */}
-        <div className="tw-flex tw-justify-end tw-items-center tw-gap-3 tw-pt-4 tw-border-t tw-border-slate-100">
+        {/* 4. Footer hành động */}
+        <div className="form-actions-footer">
+          <div className="audit-info-hint">
+            <Info size={14} className="tw-text-slate-400" />
+            <span>Mọi thay đổi chính sách yêu cầu bắt buộc giải trình kiểm toán theo tiêu chuẩn quản trị tài chính.</span>
+          </div>
           <button
             type="submit"
-            className="tw-px-6 tw-py-2.5 tw-bg-teal-600 hover:tw-bg-teal-700 tw-text-white tw-rounded-xl tw-text-xs tw-font-bold tw-shadow-sm tw-flex tw-items-center tw-gap-2 tw-border-none tw-cursor-pointer"
+            className="btn-save-policy"
           >
             <ShieldCheck size={16} /> Lưu Cập Nhật Chính Sách (Ghi Nhận Kiểm Toán)
           </button>
@@ -491,50 +473,53 @@ const WithdrawalPolicyAuditTab = () => {
       </form>
 
       {/* ══════════════ 3. BẢNG NHẬT KÝ KIỂM TOÁN BẤT BIẾN (AUDIT TRAIL) ══════════════ */}
-      <div className="tw-bg-white tw-rounded-2xl tw-p-6 tw-shadow-sm tw-border tw-border-slate-200">
-        <div className="tw-flex tw-justify-between tw-items-center tw-mb-4">
-          <div>
-            <h4 className="tw-text-base tw-font-extrabold tw-text-slate-800 tw-m-0 tw-flex tw-items-center tw-gap-2">
+      <div className="policy-audit-card">
+        <div className="audit-header-bar">
+          <div className="audit-heading-box">
+            <h4>
               <History size={18} className="tw-text-indigo-600" />
               Nhật Ký Kiểm Toán Thay Đổi Chính Sách Bất Biến (Immutable Audit Trail)
             </h4>
-            <p className="tw-text-xs tw-text-slate-500 tw-m-0 tw-mt-0.5">
+            <p>
               Hệ thống lưu vết vĩnh viễn (Append-Only) mọi hành vi điều chỉnh chính sách, Quản trị viên thực hiện, lý do giải trình và IP máy trạm.
             </p>
           </div>
-          <span className="tw-text-2xs tw-bg-indigo-50 tw-text-indigo-700 tw-border tw-border-indigo-200 tw-px-3 tw-py-1 tw-rounded-full tw-font-bold">
+          <span className="audit-count-badge">
             Tổng cộng: {auditTotal} bản ghi
           </span>
         </div>
 
-        {/* Bảng danh sách log */}
-        <div className="tw-overflow-x-auto">
-          <table className="tw-w-full tw-text-left tw-border-collapse">
-            <thead>
-              <tr className="tw-border-b tw-border-slate-200 tw-bg-slate-50">
-                <th className="tw-p-3 tw-text-2xs tw-font-bold tw-text-slate-600 tw-uppercase">Thời Điểm</th>
-                <th className="tw-p-3 tw-text-2xs tw-font-bold tw-text-slate-600 tw-uppercase">Quản Trị Viên</th>
-                <th className="tw-p-3 tw-text-2xs tw-font-bold tw-text-slate-600 tw-uppercase">Hành Động</th>
-                <th className="tw-p-3 tw-text-2xs tw-font-bold tw-text-slate-600 tw-uppercase">Lý Do Giải Trình (Bắt Buộc)</th>
-                <th className="tw-p-3 tw-text-2xs tw-font-bold tw-text-slate-600 tw-uppercase">Địa Chỉ IP</th>
-                <th className="tw-p-3 tw-text-2xs tw-font-bold tw-text-slate-600 tw-uppercase tw-text-center">Chi Tiết Diff</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoadingAudit ? (
-                <tr>
-                  <td colSpan="6" className="tw-p-8 tw-text-center tw-text-slate-400">
-                    <RotateCw size={18} className="tw-animate-spin tw-inline tw-mr-2" /> Đang tải dữ liệu kiểm toán...
-                  </td>
+        {/* Bảng danh sách log / Empty State */}
+        {isLoadingAudit ? (
+          <div className="audit-empty-state">
+            <RotateCw size={24} className="tw-animate-spin tw-text-slate-400 tw-mb-2" />
+            <div className="empty-title">Đang tải dữ liệu kiểm toán...</div>
+          </div>
+        ) : auditLogs.length === 0 ? (
+          <div className="audit-empty-state">
+            <div className="empty-icon-circle">
+              <History size={24} />
+            </div>
+            <div className="empty-title">Chưa có bản ghi kiểm toán</div>
+            <div className="empty-desc">
+              Các thay đổi chính sách sẽ được ghi nhận và lưu vết bất biến vĩnh viễn tại đây kèm chữ ký quản trị viên và địa chỉ IP.
+            </div>
+          </div>
+        ) : (
+          <div className="tw-overflow-x-auto">
+            <table className="tw-w-full tw-text-left tw-border-collapse">
+              <thead>
+                <tr className="tw-border-b tw-border-slate-200 tw-bg-slate-50">
+                  <th className="tw-p-3 tw-text-2xs tw-font-bold tw-text-slate-600 tw-uppercase">Thời Điểm</th>
+                  <th className="tw-p-3 tw-text-2xs tw-font-bold tw-text-slate-600 tw-uppercase">Quản Trị Viên</th>
+                  <th className="tw-p-3 tw-text-2xs tw-font-bold tw-text-slate-600 tw-uppercase">Hành Động</th>
+                  <th className="tw-p-3 tw-text-2xs tw-font-bold tw-text-slate-600 tw-uppercase">Lý Do Giải Trình (Bắt Buộc)</th>
+                  <th className="tw-p-3 tw-text-2xs tw-font-bold tw-text-slate-600 tw-uppercase">Địa Chỉ IP</th>
+                  <th className="tw-p-3 tw-text-2xs tw-font-bold tw-text-slate-600 tw-uppercase tw-text-center">Chi Tiết Diff</th>
                 </tr>
-              ) : auditLogs.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="tw-p-8 tw-text-center tw-text-slate-400">
-                    Chưa có bản ghi nhật ký kiểm toán nào được ghi nhận.
-                  </td>
-                </tr>
-              ) : (
-                auditLogs.map((log) => (
+              </thead>
+              <tbody>
+                {auditLogs.map((log) => (
                   <tr key={log.id} className="tw-border-b tw-border-slate-100 hover:tw-bg-slate-50/60">
                     <td className="tw-p-3 tw-text-xs">
                       <div className="tw-font-bold tw-text-slate-800">
@@ -575,11 +560,11 @@ const WithdrawalPolicyAuditTab = () => {
                       </button>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         {/* Phân trang Audit Logs */}
         {totalAuditPages > 1 && (
