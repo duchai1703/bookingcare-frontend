@@ -151,7 +151,10 @@ const DoctorAnalytics = () => {
           <button
             className="btn-filter-preset"
             style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', border: '1px solid #cbd5e1', borderRadius: 8, padding: '6px 12px' }}
-            onClick={() => fetchCapacity()}
+            onClick={() => {
+              const ctrl = new AbortController();
+              fetchCapacity(ctrl.signal);
+            }}
           >
             <RotateCw size={14} className={loading ? 'fa-spin' : ''} />
             <span>{language === 'vi' ? 'Làm mới' : 'Refresh'}</span>
@@ -200,15 +203,15 @@ const DoctorAnalytics = () => {
         <div className="detail-kpi-card">
           <div className="kpi-title">{language === 'vi' ? 'Số slot đã có bệnh nhân' : 'Occupied Slots'}</div>
           <div className="kpi-num" style={{ color: '#087F8C' }}>
-            {summary.occupiedSlots.toLocaleString()}
+            {(summary.occupiedSlots || 0).toLocaleString()}
           </div>
           <div className="kpi-desc">{language === 'vi' ? 'Lượt khám đã book' : 'Booked appointments'}</div>
         </div>
 
         <div className="detail-kpi-card">
           <div className="kpi-title">{language === 'vi' ? 'Công suất bình quân' : 'Average Utilization'}</div>
-          <div className="kpi-num" style={{ color: summary.avgUtilization >= 60 ? '#059669' : '#D97706' }}>
-            {summary.avgUtilization}%
+          <div className="kpi-num" style={{ color: (summary.avgUtilization || 0) >= 60 ? '#059669' : '#D97706' }}>
+            {(summary.avgUtilization || 0)}%
           </div>
           <div className="kpi-desc">{language === 'vi' ? 'Tỷ lệ lấp đầy toàn viện' : 'System fill rate'}</div>
         </div>

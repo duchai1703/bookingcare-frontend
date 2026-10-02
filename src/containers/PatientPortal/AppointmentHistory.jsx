@@ -48,7 +48,7 @@ const AppointmentHistory = () => {
   const [viewMode, setViewMode] = useState('cards'); // 'cards' | 'table'
   const [bookings, setBookings] = useState([]);
   const [familyList, setFamilyList] = useState([]);
-  const [familyFilter, setFamilyFilter] = useState('ALL');
+  const [familyFilter, setFamilyFilter] = useState('SELF'); // Mặc định xem lịch bản thân
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -229,9 +229,13 @@ const AppointmentHistory = () => {
       if (tabConfig.status) {
         params.status = tabConfig.status;
       }
-      if (familyFilter && familyFilter !== 'ALL') {
-        params.familyMemberId = familyFilter;
+      // [Phase 3] Lọc theo chủ thể người khám
+      if (familyFilter === 'SELF') {
+        params.bookingFor = 'SELF'; // Chỉ lấy lịch của bản thân
+      } else if (familyFilter && familyFilter !== 'ALL') {
+        params.familyMemberId = familyFilter; // Lấy lịch của người thân cụ thể
       }
+      // ALL: không gửi filter → trả toàn bộ
 
       const result = await getPatientBookings(params);
       if (result && result.errCode === 0) {
@@ -542,7 +546,66 @@ const AppointmentHistory = () => {
         </div>
       </div>
 
-      {/* ===== FILTER TABS & FAMILY FILTER ===== */}
+      {/* ===== FAMILY MEMBER PILL TABS — Phân tách Bản thân / Người thân ===== */}
+      <div className="ah-member-tabs-row">
+        <button
+          type="button"
+          className={`member-tab-pill ${familyFilter === 'SELF' ? 'active self' : ''}`}
+          onClick={() => { setFamilyFilter('SELF'); setCurrentPage(1); }}
+          title="Xem lịch khám của bản thân"
+        >
+          <span className="member-tab-avatar member-tab-avatar--self">
+            <i className="fas fa-user" />
+          </span>
+          <span className="member-tab-name">
+            {userInfo ? `${userInfo.lastName || ''} ${userInfo.firstName || ''}`.trim() : 'Bản thân'}
+          </span>
+          <span className="member-tab-label">Bản thân</span>
+        </button>
+
+        {familyList.map((m, idx) => {
+          const relLabel = m.relationship === 'CHILD' ? 'Con'
+            : m.relationship === 'PARENT' ? 'Bố/Mẹ'
+            : m.relationship === 'SPOUSE' ? 'Vợ/Chồng'
+            : m.relationship === 'SIBLING' ? 'Anh/Chị/Em'
+            : m.relationship === 'GRANDPARENT' ? 'Ông/Bà'
+            : 'Người thân';
+          const colorClasses = ['family-a', 'family-b', 'family-c', 'family-d', 'family-e'];
+          const colorClass = colorClasses[idx % colorClasses.length];
+          const isActive = familyFilter === String(m.id);
+          return (
+            <button
+              key={m.id}
+              type="button"
+              className={`member-tab-pill ${isActive ? `active ${colorClass}` : ''}`}
+              onClick={() => { setFamilyFilter(String(m.id)); setCurrentPage(1); }}
+              title={`Xem lịch khám của ${m.fullName} (${relLabel})`}
+            >
+              <span className={`member-tab-avatar member-tab-avatar--${colorClass}`}>
+                <i className="fas fa-user" />
+              </span>
+              <span className="member-tab-name">{m.fullName}</span>
+              <span className="member-tab-label">{relLabel}</span>
+            </button>
+          );
+        })}
+
+        {familyList.length > 0 && (
+          <button
+            type="button"
+            className={`member-tab-pill member-tab-all ${familyFilter === 'ALL' ? 'active' : ''}`}
+            onClick={() => { setFamilyFilter('ALL'); setCurrentPage(1); }}
+            title="Xem tất cả lịch khám"
+          >
+            <span className="member-tab-avatar member-tab-avatar--all">
+              <i className="fas fa-users" />
+            </span>
+            <span className="member-tab-name">Tất cả</span>
+          </button>
+        )}
+      </div>
+
+      {/* ===== STATUS FILTER TABS ===== */}
       <div className="ah-filter-row">
         <div className="ah-filter-tabs">
           {TABS.map((tab) => (
@@ -556,28 +619,6 @@ const AppointmentHistory = () => {
             </button>
           ))}
         </div>
-
-        {familyList.length > 0 && (
-          <div className="ah-family-filter">
-            <span className="filter-label"><i className="fas fa-filter" /> Đối tượng:</span>
-            <select
-              className="family-select"
-              value={familyFilter}
-              onChange={(e) => {
-                setFamilyFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-            >
-              <option value="ALL">👥 Tất cả người khám</option>
-              <option value="SELF">👤 Bản thân ({userInfo?.lastName} {userInfo?.firstName})</option>
-              {familyList.map((m) => (
-                <option key={m.id} value={m.id}>
-                  👨‍👩‍👧 {m.fullName} ({m.relationship === 'CHILD' ? 'Con' : m.relationship === 'PARENT' ? 'Bố/Mẹ' : m.relationship === 'SPOUSE' ? 'Vợ/Chồng' : 'Người thân'})
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
       </div>
 
       {/* ===== CONTENT LIST ===== */}

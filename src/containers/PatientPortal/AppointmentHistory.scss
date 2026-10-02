@@ -162,6 +162,133 @@ $border-color: #e2e8f0;
     }
   }
 
+  // ===== FAMILY MEMBER PILL TABS — Phân tách Bản thân / Người thân =====
+  .ah-member-tabs-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 0 6px 0;
+    overflow-x: auto;
+    border-bottom: 2px solid $border-color;
+    flex-wrap: nowrap;
+
+    // Scrollbar nhỏ để không chiếm diện tích
+    &::-webkit-scrollbar { height: 4px; }
+    &::-webkit-scrollbar-track { background: transparent; }
+    &::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+
+    .member-tab-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 50px;
+      padding: 5px 14px 5px 5px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      font-size: 0.82rem;
+      color: #475569;
+      font-weight: 500;
+
+      &:hover {
+        border-color: #94a3b8;
+        background: #f1f5f9;
+        color: #1e293b;
+      }
+
+      .member-tab-avatar {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.72rem;
+        flex-shrink: 0;
+
+        &--self    { background: #e0f2fe; color: #0284c7; }
+        &--all     { background: #f1f5f9; color: #64748b; }
+        &--family-a { background: #dcfce7; color: #16a34a; }
+        &--family-b { background: #fef9c3; color: #ca8a04; }
+        &--family-c { background: #fce7f3; color: #db2777; }
+        &--family-d { background: #ede9fe; color: #7c3aed; }
+        &--family-e { background: #ffedd5; color: #ea580c; }
+      }
+
+      .member-tab-name {
+        font-weight: 600;
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .member-tab-label {
+        font-size: 0.72rem;
+        color: #94a3b8;
+        font-weight: 400;
+        border-left: 1px solid #e2e8f0;
+        padding-left: 8px;
+        margin-left: 2px;
+      }
+
+      // Active states per member type
+      &.active {
+        border-width: 2px;
+        font-weight: 600;
+
+        &.self {
+          background: #eff6ff;
+          border-color: #3b82f6;
+          color: #1d4ed8;
+          .member-tab-label { color: #3b82f6; border-color: #93c5fd; }
+        }
+
+        &.family-a {
+          background: #f0fdf4;
+          border-color: #22c55e;
+          color: #15803d;
+          .member-tab-label { color: #22c55e; border-color: #86efac; }
+        }
+
+        &.family-b {
+          background: #fefce8;
+          border-color: #eab308;
+          color: #854d0e;
+          .member-tab-label { color: #ca8a04; border-color: #fde047; }
+        }
+
+        &.family-c {
+          background: #fdf2f8;
+          border-color: #ec4899;
+          color: #9d174d;
+          .member-tab-label { color: #ec4899; border-color: #f9a8d4; }
+        }
+
+        &.family-d {
+          background: #f5f3ff;
+          border-color: #8b5cf6;
+          color: #5b21b6;
+          .member-tab-label { color: #8b5cf6; border-color: #c4b5fd; }
+        }
+
+        &.family-e {
+          background: #fff7ed;
+          border-color: #f97316;
+          color: #9a3412;
+          .member-tab-label { color: #f97316; border-color: #fdba74; }
+        }
+      }
+
+      &.member-tab-all.active {
+        background: #f8fafc;
+        border-color: #64748b;
+        color: #0f172a;
+      }
+    }
+  }
+
   // ===== PATIENT TARGET BADGES =====
   .patient-target-badge {
     display: inline-flex;
