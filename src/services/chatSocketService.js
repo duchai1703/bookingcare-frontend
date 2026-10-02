@@ -73,7 +73,10 @@ class ChatSocketService {
     }
 
     this.activeToken = token;
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || window.location.origin;
+    const backendUrl =
+      (window.location.port === '80' || !window.location.port)
+        ? window.location.origin
+        : (import.meta.env.VITE_BACKEND_URL || window.location.origin);
     this.connectionState = 'connecting';
     this.notifyListeners('connection_change', this.connectionState);
 
@@ -130,6 +133,10 @@ class ChatSocketService {
       'call:signal:ice-candidate',
       'call:signal:media-state',
       'call:error',
+      // Global Notification events
+      'notification:new',
+      'notification:updated',
+      'notification:read-all',
     ];
 
     events.forEach((evt) => {

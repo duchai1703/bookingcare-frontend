@@ -13,6 +13,7 @@ import {
 import { changeLanguage } from '../../redux/slices/appSlice';
 import { LANGUAGES } from '../../utils/constants';
 import Navigator from '../../components/Navigator/Navigator';
+import NotificationBell from '../../components/Notification/NotificationBell';
 import './SystemLayout.scss';
 
 const SystemLayout = () => {
@@ -142,6 +143,9 @@ const SystemLayout = () => {
                 EN
               </button>
             </div>
+
+            {/* Admin Realtime Global Notification Bell */}
+            <NotificationBell role="admin" className="admin-notification-bell" />
 
             <span className="admin-badge">
               <FormattedMessage

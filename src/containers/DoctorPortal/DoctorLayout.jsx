@@ -29,6 +29,7 @@ import {
 
 } from 'lucide-react';
 import { getMyPractices } from '../../services/doctorService';
+import NotificationBell from '../../components/Notification/NotificationBell';
 import './DoctorLayout.scss';
 
 const DOCTOR_NAV_GROUPS = [
@@ -337,11 +338,8 @@ const DoctorLayout = () => {
               </button>
             </div>
 
-            {/* Notification Bell */}
-            <button type="button" className="dp-icon-action-btn" title="Thông báo phòng khám">
-              <Bell size={18} />
-              <span className="action-badge-dot" />
-            </button>
+            {/* Realtime Global Notification Bell */}
+            <NotificationBell role="doctor" className="dp-notification-bell" />
 
             {/* Topbar User Snippet */}
             <div

@@ -299,6 +299,23 @@ $sidebar-width-collapsed: 76px;
           }
         }
 
+        .admin-notification-bell {
+          .notification-bell-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            color: #475569;
+
+            &:hover {
+              background: #f8fafc;
+              color: $admin-indigo;
+              border-color: #cbd5e1;
+            }
+          }
+        }
+
         .admin-badge {
           background: #eef2ff;
           color: $admin-indigo-dark;

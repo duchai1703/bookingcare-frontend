@@ -581,6 +581,23 @@ $dp-page-bg: #f8fafc;
         }
 
         // Notification button
+        .dp-notification-bell {
+          .notification-bell-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            color: #475569;
+
+            &:hover {
+              background: #f8fafc;
+              color: #0284c7;
+              border-color: #cbd5e1;
+            }
+          }
+        }
+
         .dp-icon-action-btn {
           width: 36px;
           height: 36px;

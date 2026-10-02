@@ -10,6 +10,7 @@ import { changeLanguage } from '../../redux/slices/appSlice';
 import { processLogout } from '../../redux/slices/userSlice';
 import { LANGUAGES, USER_ROLE, path } from '../../utils/constants';
 import { adminMenu, doctorMenu } from './MenuData';
+import NotificationBell from '../Notification/NotificationBell';
 
 import './Header.scss';
 
@@ -165,6 +166,12 @@ const Header = () => {
           {/* Auth buttons */}
           {isLoggedIn ? (
             <div className="auth-actions">
+              {/* Realtime Global Notification Bell */}
+              <NotificationBell
+                role={userInfo?.roleId === USER_ROLE.DOCTOR ? 'doctor' : 'patient'}
+                className="patient-portal-bell"
+              />
+
               {/* ═══════════════════════════════════
                   [Phase 9.4] Patient (R3): Avatar + Dropdown
                   Admin/Doctor: Welcome text + dashboard btn

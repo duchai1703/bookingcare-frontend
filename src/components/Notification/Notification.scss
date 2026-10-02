@@ -1,0 +1,501 @@
+/* ==========================================================================
+   BookingCare Global Notification System Styles
+   ========================================================================== */
+
+.notification-bell-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+
+  .notification-bell-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: transparent;
+    border: 1px solid transparent;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+
+    &:hover {
+      background: rgba(148, 163, 184, 0.15);
+      color: #0284c7;
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+
+    &.has-active-dropdown {
+      background: rgba(2, 132, 199, 0.12);
+      color: #0284c7;
+      border-color: rgba(2, 132, 199, 0.25);
+    }
+
+    .notification-badge {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 4px;
+      border-radius: 9px;
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 18px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(220, 38, 38, 0.35);
+      border: 2px solid #ffffff;
+      animation: notification-pulse 2s infinite ease-in-out;
+    }
+  }
+
+  /* Dropdown Floating Container */
+  .notification-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: -10px;
+    width: 380px;
+    max-width: calc(100vw - 32px);
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    box-shadow: 0 20px 30px -10px rgba(15, 23, 42, 0.15), 0 10px 15px -3px rgba(15, 23, 42, 0.08);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: notification-fade-slide 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+
+    @media (max-width: 576px) {
+      right: -60px;
+      width: calc(100vw - 24px);
+    }
+
+    /* Header */
+    .dropdown-header {
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #f1f5f9;
+      background: #f8fafc;
+
+      .header-title-box {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .header-title {
+          font-size: 15px;
+          font-weight: 700;
+          color: #0f172a;
+          margin: 0;
+        }
+
+        .header-unread-chip {
+          padding: 2px 8px;
+          border-radius: 12px;
+          background: #e0f2fe;
+          color: #0369a1;
+          font-size: 11px;
+          font-weight: 600;
+        }
+      }
+
+      .mark-all-read-btn {
+        background: transparent;
+        border: none;
+        color: #0284c7;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 4px 6px;
+        border-radius: 6px;
+        transition: all 0.15s ease;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        &:hover {
+          background: #e0f2fe;
+          color: #0369a1;
+        }
+
+        &:disabled {
+          color: #94a3b8;
+          cursor: not-allowed;
+          background: transparent;
+        }
+      }
+    }
+
+    /* Filter Tabs */
+    .dropdown-tabs {
+      display: flex;
+      padding: 8px 16px;
+      gap: 8px;
+      background: #ffffff;
+      border-bottom: 1px solid #f1f5f9;
+
+      .tab-btn {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        border: 1px solid transparent;
+        background: #f1f5f9;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.15s ease;
+
+        &:hover {
+          background: #e2e8f0;
+          color: #334155;
+        }
+
+        &.active {
+          background: #0284c7;
+          color: #ffffff;
+          box-shadow: 0 2px 4px rgba(2, 132, 199, 0.2);
+        }
+      }
+    }
+
+    /* Notification List Area */
+    .dropdown-body {
+      max-height: 420px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: #f8fafc;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+
+        &:hover {
+          background: #94a3b8;
+        }
+      }
+
+      .notification-list {
+        display: flex;
+        flex-direction: column;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      /* Empty State */
+      .empty-notifications {
+        padding: 48px 24px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        color: #94a3b8;
+
+        .empty-icon {
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          background: #f1f5f9;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 12px;
+          color: #64748b;
+        }
+
+        p {
+          font-size: 13px;
+          margin: 0;
+          font-weight: 500;
+        }
+      }
+
+      /* Loading Skeleton */
+      .loading-notifications {
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        .skeleton-item {
+          display: flex;
+          gap: 12px;
+          align-items: flex-start;
+
+          .skeleton-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            animation: skeleton-shimmer 1.5s infinite linear;
+          }
+
+          .skeleton-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+
+            .skeleton-line {
+              height: 12px;
+              border-radius: 6px;
+              background: #e2e8f0;
+              animation: skeleton-shimmer 1.5s infinite linear;
+
+              &.line-title {
+                width: 70%;
+              }
+
+              &.line-msg {
+                width: 95%;
+              }
+
+              &.line-time {
+                width: 35%;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    /* Footer: Load more */
+    .dropdown-footer {
+      padding: 10px 16px;
+      text-align: center;
+      border-top: 1px solid #f1f5f9;
+      background: #f8fafc;
+
+      .load-more-btn {
+        background: transparent;
+        border: none;
+        color: #0284c7;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 6px;
+        transition: all 0.15s ease;
+
+        &:hover {
+          background: #e0f2fe;
+          color: #0369a1;
+        }
+
+        &:disabled {
+          color: #94a3b8;
+          cursor: not-allowed;
+        }
+      }
+    }
+  }
+}
+
+/* Individual Notification Item */
+.notification-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background: #ffffff;
+  text-decoration: none;
+  color: inherit;
+
+  &:hover {
+    background: #f8fafc;
+  }
+
+  &.unread {
+    background: #f0fdf4;
+
+    &:hover {
+      background: #dcfce7;
+    }
+
+    .item-unread-dot {
+      display: block;
+    }
+  }
+
+  /* Left Icon Avatar */
+  .item-icon-wrapper {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.15s ease;
+
+    &.icon-booking-created {
+      background: #e0e7ff;
+      color: #4338ca;
+    }
+
+    &.icon-booking-confirmed {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    &.icon-booking-cancelled {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    &.icon-booking-rescheduled {
+      background: #fef3c7;
+      color: #b45309;
+    }
+
+    &.icon-consultation-completed {
+      background: #ccfbf1;
+      color: #0f766e;
+    }
+
+    &.icon-payment-success {
+      background: #e0f2fe;
+      color: #0369a1;
+    }
+
+    &.icon-withdrawal-processed {
+      background: #f3e8ff;
+      color: #7e22ce;
+    }
+
+    &.icon-refund-completed {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    &.icon-missed-call {
+      background: #ffedd5;
+      color: #c2410c;
+    }
+
+    &.icon-conversation-reopened {
+      background: #ede9fe;
+      color: #6d28d9;
+    }
+
+    &.icon-default {
+      background: #f1f5f9;
+      color: #475569;
+    }
+  }
+
+  /* Body Content */
+  .item-content {
+    flex: 1;
+    min-width: 0;
+
+    .item-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 3px;
+
+      .item-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: #0f172a;
+        line-height: 1.3;
+        margin: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .item-time {
+        font-size: 11px;
+        color: #94a3b8;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+    }
+
+    .item-message {
+      font-size: 12px;
+      color: #475569;
+      line-height: 1.4;
+      margin: 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      word-break: break-word;
+    }
+  }
+
+  /* Unread Dot */
+  .item-unread-dot {
+    display: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #0284c7;
+    flex-shrink: 0;
+    align-self: center;
+    box-shadow: 0 0 0 2px #ffffff;
+  }
+}
+
+/* Animations */
+@keyframes notification-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes notification-fade-slide {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
