@@ -398,7 +398,11 @@ const PolicyMaster = () => {
                         </span>
                       </div>
                       <div className="type-subtext">
-                        {isRevenue ? 'Phân bổ Doanh thu' : 'Quy định Hoàn tiền'}
+                        {p.policyType === 'REVENUE_SHARE'
+                          ? 'Phân bổ Doanh thu'
+                          : p.policyType === 'WITHDRAWAL_SLA'
+                          ? 'Thời hạn Rút tiền (SLA)'
+                          : 'Quy định Hoàn tiền'}
                       </div>
                     </td>
 
@@ -435,7 +439,7 @@ const PolicyMaster = () => {
 
                     {/* Rules Summary */}
                     <td>
-                      {isRevenue ? (
+                      {p.policyType === 'REVENUE_SHARE' ? (
                         <div className="rules-summary-rev">
                           <span className="rate-chip chip-teal" title="Phí Sàn BookingCare">
                             Sàn: <strong>{rules.platformFeePercent || 0}%</strong>
@@ -447,6 +451,20 @@ const PolicyMaster = () => {
                             <span className="rate-chip chip-blue" title="Cơ sở y tế">
                               Viện: <strong>{rules.clinicSharePercent}%</strong>
                             </span>
+                          )}
+                        </div>
+                      ) : p.policyType === 'WITHDRAWAL_SLA' ? (
+                        <div className="rules-summary-sla">
+                          <span className="rate-chip chip-blue" title="SLA Mặc định">
+                            Chuẩn: <strong>{rules.defaultSlaDays || 1} ngày</strong>
+                          </span>
+                          {Array.isArray(rules.tiers) && rules.tiers.slice(0, 2).map((t, i) => (
+                            <span key={i} className="rate-chip chip-teal" title={`Mốc ${i + 1}`}>
+                              &le;{((t.maxAmount || 0) / 1000000).toLocaleString('vi-VN')}Tr: <strong>{t.slaDays} ngày</strong>
+                            </span>
+                          ))}
+                          {Array.isArray(rules.tiers) && rules.tiers.length > 2 && (
+                            <span className="more-chip">+{rules.tiers.length - 2} mốc</span>
                           )}
                         </div>
                       ) : (

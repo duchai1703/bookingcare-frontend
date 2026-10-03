@@ -418,11 +418,25 @@ const LiquidityDashboard = () => {
             </div>
           </div>
           <div className="kpi-value">{formatMoney(summary.totalCashInflow)}</div>
-          <div className="kpi-meta">
-            <span>Tổng cộng <strong>{summary.totalDepositCount || 0}</strong> lượt nạp qua VNPay</span>
-            <span className="kpi-subtext">
-              Đã chi/rút: <strong style={{ color: '#E11D48' }}>{formatMoney(summary.totalCashOutflow || 0)}</strong> • Két tồn: <strong style={{ color: '#059669' }}>{formatMoney(summary.realNetCashInTreasury !== undefined ? summary.realNetCashInTreasury : summary.totalCashInflow)}</strong>
-            </span>
+          <div className="kpi-breakdown">
+            <div className="breakdown-item">
+              <span>Thu VNPay khám:</span>
+              <strong>{formatMoney(summary.bookingRevenueInflow || 0)}</strong>
+            </div>
+            <div className="breakdown-item">
+              <span>Nạp ví trực tiếp:</span>
+              <strong>{formatMoney(summary.walletDepositInflow || 0)}</strong>
+            </div>
+            <div className="breakdown-item">
+              <span>Vốn bảo chứng Sàn:</span>
+              <strong>{formatMoney(summary.platformReserveFund || 0)}</strong>
+            </div>
+            <div className="breakdown-item">
+              <span>Két tồn sau chi trả:</span>
+              <strong style={{ color: '#059669' }}>
+                {formatMoney(summary.realNetCashInTreasury !== undefined ? summary.realNetCashInTreasury : summary.totalCashInflow)}
+              </strong>
+            </div>
           </div>
         </div>
 
