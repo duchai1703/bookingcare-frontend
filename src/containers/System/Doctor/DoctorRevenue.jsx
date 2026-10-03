@@ -1,9 +1,17 @@
 // src/containers/System/Doctor/DoctorRevenue.jsx
 // [Doctor Income Workspace] Mini Financial Workspace — Bóc tách tài chính Master - Detail
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useSearchParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { getDoctorIncomeWorkspace } from '../../../services/doctorService';
+import {
+  getDoctorWallet,
+  getDoctorWalletTransactions,
+  requestDoctorWithdrawal,
+  getDoctorWithdrawalRequests,
+  cancelDoctorWithdrawalRequest,
+} from '../../../services/walletService';
 import './DoctorRevenue.scss';
 
 // Helper format VND
@@ -59,9 +67,43 @@ const DoctorRevenue = () => {
   const intl = useIntl();
   const outletCtx = useOutletContext();
   const outletClinicId = outletCtx?.selectedClinicId;
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  // State Tabs: 'overview' | 'payouts'
-  const [activeMainTab, setActiveMainTab] = useState('overview');
+  // State Tabs: 'overview' | 'payouts' | 'wallet'
+  const [activeMainTab, setActiveMainTab] = useState(() => {
+    return searchParams.get('tab') || 'overview';
+  });
+
+  // [Doctor Wallet & Ledger] State
+  const [doctorWallet, setDoctorWallet] = useState(null);
+  const [walletLoading, setWalletLoading] = useState(false);
+  const [walletSubTab, setWalletSubTab] = useState('ledger'); // 'ledger' | 'withdrawals'
+
+  // Sổ cái sao kê
+  const [doctorTransactions, setDoctorTransactions] = useState([]);
+  const [walletTxTotal, setWalletTxTotal] = useState(0);
+  const [walletTxPage, setWalletTxPage] = useState(1);
+  const [walletTxLimit] = useState(10);
+  const [walletTxType, setWalletTxType] = useState('ALL');
+  const [isWalletTxLoading, setIsWalletTxLoading] = useState(false);
+
+  // Yêu cầu rút tiền
+  const [doctorWithdrawals, setDoctorWithdrawals] = useState([]);
+  const [withdrawalsTotal, setWithdrawalsTotal] = useState(0);
+  const [withdrawalsPage, setWithdrawalsPage] = useState(1);
+  const [withdrawalsLimit] = useState(10);
+  const [withdrawalsStatusFilter, setWithdrawalsStatusFilter] = useState('ALL');
+  const [isWithdrawalsLoading, setIsWithdrawalsLoading] = useState(false);
+
+  // Modal Rút tiền
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState(500000);
+  const [withdrawAmountStr, setWithdrawAmountStr] = useState('500,000');
+  const [bankName, setBankName] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [accountHolderName, setAccountHolderName] = useState('');
+  const [userNote, setUserNote] = useState('');
+  const [isSubmittingWithdraw, setIsSubmittingWithdraw] = useState(false);
 
   // Filter state
   const [rangePreset, setRangePreset] = useState('this_year');
@@ -171,6 +213,185 @@ const DoctorRevenue = () => {
 
     return list;
   }, [workspaceData.transactions, searchQuery, sortOrder]);
+
+  // ── [Doctor Wallet & Ledger] API Handlers ──
+  const fetchDoctorWallet = useCallback(async () => {
+    try {
+      setWalletLoading(true);
+      const res = await getDoctorWallet();
+      if (res && res.errCode === 0 && res.data) {
+        setDoctorWallet(res.data);
+      }
+    } catch (err) {
+      console.error('Error fetching doctor wallet:', err);
+    } finally {
+      setWalletLoading(false);
+    }
+  }, []);
+
+  const fetchWalletTransactions = useCallback(async () => {
+    try {
+      setIsWalletTxLoading(true);
+      const params = {
+        page: walletTxPage,
+        limit: walletTxLimit,
+        type: walletTxType !== 'ALL' ? walletTxType : undefined,
+      };
+      const res = await getDoctorWalletTransactions(params);
+      if (res && res.errCode === 0 && res.data) {
+        setDoctorTransactions(res.data.transactions || []);
+        setWalletTxTotal(res.data.total || 0);
+      }
+    } catch (err) {
+      console.error('Error fetching doctor wallet transactions:', err);
+    } finally {
+      setIsWalletTxLoading(false);
+    }
+  }, [walletTxPage, walletTxLimit, walletTxType]);
+
+  const fetchWithdrawals = useCallback(async () => {
+    try {
+      setIsWithdrawalsLoading(true);
+      const params = {
+        page: withdrawalsPage,
+        limit: withdrawalsLimit,
+        status: withdrawalsStatusFilter !== 'ALL' ? withdrawalsStatusFilter : undefined,
+      };
+      const res = await getDoctorWithdrawalRequests(params);
+      if (res && res.errCode === 0 && res.data) {
+        setDoctorWithdrawals(res.data.requests || []);
+        setWithdrawalsTotal(res.data.total || 0);
+      }
+    } catch (err) {
+      console.error('Error fetching doctor withdrawals:', err);
+    } finally {
+      setIsWithdrawalsLoading(false);
+    }
+  }, [withdrawalsPage, withdrawalsLimit, withdrawalsStatusFilter]);
+
+  // Đồng bộ searchParams khi thay đổi URL
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'wallet') {
+      setActiveMainTab('wallet');
+    } else if (tabParam === 'payouts') {
+      setActiveMainTab('payouts');
+    } else if (tabParam === 'overview') {
+      setActiveMainTab('overview');
+    }
+
+    if (searchParams.get('action') === 'withdraw') {
+      setShowWithdrawModal(true);
+    }
+  }, [searchParams]);
+
+  // Tải dữ liệu khi mở tab Ví Bác sĩ
+  useEffect(() => {
+    if (activeMainTab === 'wallet') {
+      fetchDoctorWallet();
+      if (walletSubTab === 'ledger') {
+        fetchWalletTransactions();
+      } else {
+        fetchWithdrawals();
+      }
+    }
+  }, [activeMainTab, walletSubTab, fetchDoctorWallet, fetchWalletTransactions, fetchWithdrawals]);
+
+  // Tải thông tin ví ngay lúc đầu để hiển thị badge số dư trên tab
+  useEffect(() => {
+    fetchDoctorWallet();
+  }, [fetchDoctorWallet]);
+
+  // Tự động điền tài khoản ngân hàng từ hồ sơ bác sĩ
+  useEffect(() => {
+    if (showWithdrawModal && workspaceData?.doctorProfile) {
+      const p = workspaceData.doctorProfile;
+      if (!bankName && p.bankName) setBankName(p.bankName);
+      if (!accountNumber && p.bankAccountNumber) setAccountNumber(p.bankAccountNumber);
+      if (!accountHolderName) setAccountHolderName(p.bankAccountName || p.name || '');
+    }
+  }, [showWithdrawModal, workspaceData?.doctorProfile, bankName, accountNumber, accountHolderName]);
+
+  const handleCancelWithdrawal = async (reqId) => {
+    if (!window.confirm('Bạn có chắc chắn muốn hủy yêu cầu rút tiền này? Số tiền tạm giữ sẽ được hoàn lại vào số dư khả dụng.')) {
+      return;
+    }
+    try {
+      const res = await cancelDoctorWithdrawalRequest(reqId);
+      if (res && res.errCode === 0) {
+        toast.success('Hủy yêu cầu rút tiền thành công!');
+        fetchDoctorWallet();
+        fetchWithdrawals();
+      } else {
+        toast.error(res?.errMessage || 'Không thể hủy yêu cầu rút tiền');
+      }
+    } catch (err) {
+      toast.error('Lỗi khi hủy yêu cầu rút tiền');
+    }
+  };
+
+  const handleAmountChange = (e) => {
+    const rawVal = e.target.value.replace(/[^0-9]/g, '');
+    const numVal = parseInt(rawVal, 10) || 0;
+    setWithdrawAmount(numVal);
+    setWithdrawAmountStr(numVal > 0 ? numVal.toLocaleString('vi-VN') : '');
+  };
+
+  const handleSelectPreset = (presetVal) => {
+    const avail = Number(doctorWallet?.availableBalance || 0);
+    let finalVal = presetVal;
+    if (presetVal === 'ALL') {
+      finalVal = avail;
+    } else if (presetVal === '50%') {
+      finalVal = Math.round(avail * 0.5);
+    }
+    setWithdrawAmount(finalVal);
+    setWithdrawAmountStr(finalVal > 0 ? finalVal.toLocaleString('vi-VN') : '');
+  };
+
+  const handleWithdrawSubmit = async (e) => {
+    e.preventDefault();
+    const avail = Number(doctorWallet?.availableBalance || 0);
+    if (withdrawAmount < 50000) {
+      toast.warning('Hạn mức rút tiền tối thiểu là 50.000 VNĐ');
+      return;
+    }
+    if (withdrawAmount > avail) {
+      toast.warning(`Số tiền rút vượt quá số dư khả dụng (${formatVND(avail)})`);
+      return;
+    }
+    if (!bankName.trim() || !accountNumber.trim() || !accountHolderName.trim()) {
+      toast.warning('Vui lòng điền đầy đủ thông tin tài khoản ngân hàng thụ hưởng');
+      return;
+    }
+
+    setIsSubmittingWithdraw(true);
+    try {
+      const res = await requestDoctorWithdrawal({
+        amount: withdrawAmount,
+        bankInfo: {
+          bankName: bankName.trim(),
+          accountNumber: accountNumber.trim(),
+          accountHolderName: accountHolderName.trim().toUpperCase(),
+        },
+        userNote: userNote.trim() || undefined,
+      });
+
+      if (res && res.errCode === 0) {
+        toast.success('Gửi yêu cầu rút tiền thành công! Admin sẽ duyệt chi và giải ngân theo SLA.');
+        setShowWithdrawModal(false);
+        fetchDoctorWallet();
+        fetchWithdrawals();
+        setWalletSubTab('withdrawals');
+      } else {
+        toast.error(res?.errMessage || 'Không thể tạo yêu cầu rút tiền');
+      }
+    } catch (err) {
+      toast.error('Lỗi kết nối khi gửi yêu cầu rút tiền');
+    } finally {
+      setIsSubmittingWithdraw(false);
+    }
+  };
 
   // Export to CSV Function
   const handleExportCSV = () => {
@@ -289,7 +510,7 @@ const DoctorRevenue = () => {
         </div>
       </div>
 
-      {/* ── 2. Navigation Tabs (Overview vs Payouts) ── */}
+      {/* ── 2. Navigation Tabs (Overview vs Payouts vs Wallet) ── */}
       <div className="workspace-tabs-nav">
         <button
           type="button"
@@ -308,100 +529,114 @@ const DoctorRevenue = () => {
             <span className="tab-badge">{workspaceData.settlements.length}</span>
           )}
         </button>
+        <button
+          type="button"
+          className={`tab-item tab-item--wallet ${activeMainTab === 'wallet' ? 'tab-item--active' : ''}`}
+          onClick={() => setActiveMainTab('wallet')}
+        >
+          <i className="fas fa-wallet"></i> Ví Bác sĩ & Rút tiền
+          {doctorWallet && (
+            <span className="tab-badge tab-badge--wallet">
+              {formatVND(doctorWallet.balance)}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* ── 3. Filters Toolbar (Presets & Custom Dates & Dimensions) ── */}
-      <div className="filters-card">
-        <div className="filter-presets">
-          <span className="preset-label">Khoảng thời gian:</span>
-          {[
-            { key: 'today', label: 'Hôm nay' },
-            { key: '7days', label: '7 ngày' },
-            { key: 'this_month', label: 'Tháng này' },
-            { key: 'this_quarter', label: 'Quý này' },
-            { key: 'this_year', label: 'Năm nay' },
-            { key: 'custom', label: 'Tùy chọn' },
-          ].map((preset) => (
+      {activeMainTab !== 'wallet' && (
+        <div className="filters-card">
+          <div className="filter-presets">
+            <span className="preset-label">Khoảng thời gian:</span>
+            {[
+              { key: 'today', label: 'Hôm nay' },
+              { key: '7days', label: '7 ngày' },
+              { key: 'this_month', label: 'Tháng này' },
+              { key: 'this_quarter', label: 'Quý này' },
+              { key: 'this_year', label: 'Năm nay' },
+              { key: 'custom', label: 'Tùy chọn' },
+            ].map((preset) => (
+              <button
+                key={preset.key}
+                type="button"
+                className={`btn-preset ${rangePreset === preset.key ? 'btn-preset--active' : ''}`}
+                onClick={() => setRangePreset(preset.key)}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="filter-inputs-row">
+            <div className="date-picker-group">
+              <span className="input-label">Từ ngày:</span>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  setRangePreset('custom');
+                }}
+                className="form-control-date"
+              />
+            </div>
+
+            <div className="date-picker-group">
+              <span className="input-label">Đến ngày:</span>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => {
+                  setEndDate(e.target.value);
+                  setRangePreset('custom');
+                }}
+                className="form-control-date"
+              />
+            </div>
+
+            <div className="select-group">
+              <span className="input-label">Cơ sở:</span>
+              <select
+                value={selectedFacility}
+                onChange={(e) => setSelectedFacility(e.target.value)}
+                className="form-control-select"
+              >
+                <option value="all">Tất cả cơ sở</option>
+                {(workspaceData.facilities || []).map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="select-group">
+              <span className="input-label">Chuyên khoa:</span>
+              <select
+                value={selectedSpecialty}
+                onChange={(e) => setSelectedSpecialty(e.target.value)}
+                className="form-control-select"
+              >
+                <option value="all">Tất cả chuyên khoa</option>
+                {(workspaceData.specialties || []).map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <button
-              key={preset.key}
               type="button"
-              className={`btn-preset ${rangePreset === preset.key ? 'btn-preset--active' : ''}`}
-              onClick={() => setRangePreset(preset.key)}
+              className="btn-refresh-filter"
+              onClick={fetchData}
+              title="Tải lại dữ liệu"
             >
-              {preset.label}
+              <i className={`fas fa-sync-alt ${loading ? 'fa-spin' : ''}`}></i> Làm mới
             </button>
-          ))}
+          </div>
         </div>
-
-        <div className="filter-inputs-row">
-          <div className="date-picker-group">
-            <span className="input-label">Từ ngày:</span>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => {
-                setStartDate(e.target.value);
-                setRangePreset('custom');
-              }}
-              className="form-control-date"
-            />
-          </div>
-
-          <div className="date-picker-group">
-            <span className="input-label">Đến ngày:</span>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => {
-                setEndDate(e.target.value);
-                setRangePreset('custom');
-              }}
-              className="form-control-date"
-            />
-          </div>
-
-          <div className="select-group">
-            <span className="input-label">Cơ sở:</span>
-            <select
-              value={selectedFacility}
-              onChange={(e) => setSelectedFacility(e.target.value)}
-              className="form-control-select"
-            >
-              <option value="all">Tất cả cơ sở</option>
-              {(workspaceData.facilities || []).map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="select-group">
-            <span className="input-label">Chuyên khoa:</span>
-            <select
-              value={selectedSpecialty}
-              onChange={(e) => setSelectedSpecialty(e.target.value)}
-              className="form-control-select"
-            >
-              <option value="all">Tất cả chuyên khoa</option>
-              {(workspaceData.specialties || []).map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <button
-            type="button"
-            className="btn-refresh-filter"
-            onClick={fetchData}
-            title="Tải lại dữ liệu"
-          >
-            <i className={`fas fa-sync-alt ${loading ? 'fa-spin' : ''}`}></i> Làm mới
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* ── TAB 1: TỔNG QUAN & GIAO DỊCH ── */}
       {activeMainTab === 'overview' && (
@@ -845,6 +1080,418 @@ const DoctorRevenue = () => {
         </div>
       )}
 
+      {/* ── TAB 3: VÍ BÁC SĨ & RÚT TIỀN (DOCTOR WALLET & LEDGER) ── */}
+      {activeMainTab === 'wallet' && (
+        <div className="doctor-wallet-container">
+          {/* Executive Wallet Summary Card */}
+          <div className="dw-executive-card">
+            <div className="dw-card-left">
+              <div className="dw-badge-group">
+                <span className="dw-type-badge">
+                  <i className="fas fa-wallet"></i> VÍ CHUYÊN GIA / BÁC SĨ
+                </span>
+                <span className="dw-status-pill dw-status-pill--active">
+                  <i className="fas fa-check-circle"></i>{' '}
+                  {doctorWallet?.status === 'ACTIVE' ? 'Hoạt động bình thường' : (doctorWallet?.status || 'Đang kết nối')}
+                </span>
+              </div>
+
+              <div className="dw-balance-display">
+                <span className="dw-balance-label">SỐ DƯ KHẢ DỤNG (CÓ THỂ RÚT)</span>
+                <div className="dw-balance-amount">
+                  {walletLoading ? (
+                    <span className="dw-skeleton">Đang tải...</span>
+                  ) : (
+                    formatVND(doctorWallet?.balance || 0)
+                  )}
+                </div>
+                <div className="dw-balance-sub">
+                  <span>
+                    <i className="fas fa-info-circle"></i> Đã trừ số tiền đang giữ chờ xử lý rút
+                  </span>
+                </div>
+              </div>
+
+              <div className="dw-stat-triplet">
+                <div className="dw-triplet-item">
+                  <span className="dw-triplet-label">Đang giữ chờ rút (Hold)</span>
+                  <span className="dw-triplet-value dw-triplet-value--hold">
+                    {formatVND(doctorWallet?.holdBalance || 0)}
+                  </span>
+                </div>
+                <div className="dw-triplet-item">
+                  <span className="dw-triplet-label">Tổng số dư thực tế</span>
+                  <span className="dw-triplet-value">
+                    {formatVND((doctorWallet?.balance || 0) + (doctorWallet?.holdBalance || 0))}
+                  </span>
+                </div>
+                <div className="dw-triplet-item">
+                  <span className="dw-triplet-label">Cam kết thanh khoản SLA</span>
+                  <span className="dw-triplet-value dw-triplet-value--sla">
+                    <i className="fas fa-shield-alt"></i> 1 ngày làm việc
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="dw-card-right">
+              <div className="dw-bank-preview-box">
+                <div className="dw-bank-preview-header">
+                  <i className="fas fa-university"></i>
+                  <span>Tài khoản ngân hàng thụ hưởng</span>
+                </div>
+                <div className="dw-bank-preview-body">
+                  <div className="dw-bank-acc-row">
+                    <span className="dw-bank-field-label">Ngân hàng:</span>
+                    <span className="dw-bank-field-val">
+                      {workspaceData.doctorProfile?.bankName || 'Chưa liên kết'}
+                    </span>
+                  </div>
+                  <div className="dw-bank-acc-row">
+                    <span className="dw-bank-field-label">Số TK:</span>
+                    <span className="dw-bank-field-val dw-bank-field-acc">
+                      {workspaceData.doctorProfile?.bankAccountNumber || '---'}
+                    </span>
+                  </div>
+                  <div className="dw-bank-acc-row">
+                    <span className="dw-bank-field-label">Chủ TK:</span>
+                    <span className="dw-bank-field-val">
+                      {workspaceData.doctorProfile?.bankAccountName || '---'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="dw-action-stack">
+                <button
+                  type="button"
+                  className="dw-btn-withdraw-primary"
+                  onClick={() => setShowWithdrawModal(true)}
+                  disabled={(doctorWallet?.balance || 0) < 50000}
+                >
+                  <i className="fas fa-arrow-down"></i> Rút tiền về tài khoản ngân hàng
+                </button>
+                <button
+                  type="button"
+                  className="dw-btn-refresh-sub"
+                  onClick={() => {
+                    fetchDoctorWallet();
+                    if (walletSubTab === 'ledger') fetchWalletTransactions();
+                    else fetchWithdrawals();
+                  }}
+                  title="Cập nhật số dư và lịch sử mới nhất"
+                >
+                  <i className={`fas fa-sync-alt ${(walletLoading || isWalletTxLoading || isWithdrawalsLoading) ? 'fa-spin' : ''}`}></i>{' '}
+                  Cập nhật số dư & sổ cái
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Subtabs: Ledger vs Withdrawals */}
+          <div className="dw-subtabs-nav">
+            <button
+              type="button"
+              className={`dw-subtab-btn ${walletSubTab === 'ledger' ? 'dw-subtab-btn--active' : ''}`}
+              onClick={() => setWalletSubTab('ledger')}
+            >
+              <i className="fas fa-list-alt"></i> Sổ cái biến động số dư (Ledger Audit)
+              {walletTxTotal > 0 && <span className="dw-tab-count">{walletTxTotal}</span>}
+            </button>
+            <button
+              type="button"
+              className={`dw-subtab-btn ${walletSubTab === 'withdrawals' ? 'dw-subtab-btn--active' : ''}`}
+              onClick={() => setWalletSubTab('withdrawals')}
+            >
+              <i className="fas fa-history"></i> Theo dõi yêu cầu rút tiền (Withdrawals Tracker)
+              {withdrawalsTotal > 0 && <span className="dw-tab-count">{withdrawalsTotal}</span>}
+            </button>
+          </div>
+
+          {/* Subtab 1: Ledger Table */}
+          {walletSubTab === 'ledger' && (
+            <div className="dw-table-card">
+              <div className="dw-table-toolbar">
+                <div className="dw-filter-group">
+                  <label>Loại giao dịch:</label>
+                  <select
+                    value={walletTxType}
+                    onChange={(e) => {
+                      setWalletTxType(e.target.value);
+                      setWalletTxPage(1);
+                    }}
+                    className="dw-select-filter"
+                  >
+                    <option value="ALL">Tất cả giao dịch</option>
+                    <option value="DOCTOR_PAYOUT">Quyết toán thu nhập (Payout)</option>
+                    <option value="WITHDRAWAL">Rút tiền (Withdrawal)</option>
+                    <option value="REFUND">Hoàn tiền (Refund)</option>
+                    <option value="ADJUSTMENT">Điều chỉnh (Adjustment)</option>
+                  </select>
+                </div>
+                <div className="dw-toolbar-info">
+                  Hiển thị <strong>{doctorTransactions.length}</strong> / <strong>{walletTxTotal}</strong> bản ghi
+                </div>
+              </div>
+
+              <div className="dw-table-responsive">
+                {isWalletTxLoading ? (
+                  <div className="dw-loading-state">
+                    <i className="fas fa-spinner fa-spin"></i> Đang tải sổ cái giao dịch...
+                  </div>
+                ) : doctorTransactions.length === 0 ? (
+                  <div className="dw-empty-state">
+                    <i className="fas fa-book-open"></i>
+                    <h4>Chưa có giao dịch nào trong sổ cái</h4>
+                    <p>Mọi biến động nạp, rút tiền hoặc quyết toán thu nhập sẽ được ghi vết bất biến tại đây</p>
+                  </div>
+                ) : (
+                  <table className="dw-data-table">
+                    <thead>
+                      <tr>
+                        <th>Thời gian</th>
+                        <th>Mã giao dịch</th>
+                        <th>Phân loại</th>
+                        <th>Mô tả / Tham chiếu</th>
+                        <th className="text-right">Biến động</th>
+                        <th className="text-right">Số dư sau GD</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {doctorTransactions.map((tx) => {
+                        const isCredit = tx.direction === 'CREDIT' || tx.type === 'DOCTOR_PAYOUT' || tx.type === 'TOP_UP';
+                        return (
+                          <tr key={tx.id}>
+                            <td className="dw-cell-date">
+                              <span className="dw-date-main">
+                                {new Date(tx.createdAt).toLocaleDateString('vi-VN')}
+                              </span>
+                              <span className="dw-time-sub">
+                                {new Date(tx.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </td>
+                            <td className="dw-cell-code">
+                              <code>{tx.transactionCode || tx.id}</code>
+                            </td>
+                            <td>
+                              <span className={`dw-type-tag dw-type-tag--${(tx.type || '').toLowerCase()}`}>
+                                {tx.type === 'DOCTOR_PAYOUT' ? 'Quyết toán' :
+                                 tx.type === 'WITHDRAWAL' ? 'Rút tiền' :
+                                 tx.type === 'REFUND' ? 'Hoàn phí' :
+                                 tx.type === 'ADJUSTMENT' ? 'Điều chỉnh' : tx.type}
+                              </span>
+                            </td>
+                            <td className="dw-cell-desc">
+                              <div className="dw-desc-text">{tx.description || 'Giao dịch ví'}</div>
+                              {tx.referenceId && (
+                                <div className="dw-ref-sub">Tham chiếu: #{tx.referenceId}</div>
+                              )}
+                            </td>
+                            <td className="text-right">
+                              <span className={`dw-amount-flow ${isCredit ? 'dw-amount-flow--in' : 'dw-amount-flow--out'}`}>
+                                {isCredit ? '+' : '-'}{formatVND(tx.amount)}
+                              </span>
+                            </td>
+                            <td className="text-right dw-cell-balance-after">
+                              {formatVND(tx.balanceAfter)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+
+              {walletTxTotal > walletTxLimit && (
+                <div className="dw-pagination">
+                  <button
+                    type="button"
+                    className="dw-page-btn"
+                    disabled={walletTxPage <= 1}
+                    onClick={() => setWalletTxPage((p) => Math.max(p - 1, 1))}
+                  >
+                    <i className="fas fa-chevron-left"></i> Trang trước
+                  </button>
+                  <span className="dw-page-indicator">
+                    Trang {walletTxPage} / {Math.ceil(walletTxTotal / walletTxLimit)}
+                  </span>
+                  <button
+                    type="button"
+                    className="dw-page-btn"
+                    disabled={walletTxPage >= Math.ceil(walletTxTotal / walletTxLimit)}
+                    onClick={() => setWalletTxPage((p) => p + 1)}
+                  >
+                    Trang sau <i className="fas fa-chevron-right"></i>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Subtab 2: Withdrawals Tracker */}
+          {walletSubTab === 'withdrawals' && (
+            <div className="dw-table-card">
+              <div className="dw-table-toolbar">
+                <div className="dw-filter-group">
+                  <label>Trạng thái yêu cầu:</label>
+                  <select
+                    value={withdrawalsStatusFilter}
+                    onChange={(e) => {
+                      setWithdrawalsStatusFilter(e.target.value);
+                      setWithdrawalsPage(1);
+                    }}
+                    className="dw-select-filter"
+                  >
+                    <option value="ALL">Tất cả trạng thái</option>
+                    <option value="PENDING">Chờ xử lý (Pending)</option>
+                    <option value="APPROVED">Đã chuyển tiền (Transferred)</option>
+                    <option value="REJECTED">Từ chối (Rejected)</option>
+                    <option value="CANCELLED">Đã hủy (Cancelled)</option>
+                  </select>
+                </div>
+                <button
+                  type="button"
+                  className="dw-btn-mini-withdraw"
+                  onClick={() => setShowWithdrawModal(true)}
+                  disabled={(doctorWallet?.balance || 0) < 50000}
+                >
+                  <i className="fas fa-plus"></i> Tạo yêu cầu rút tiền
+                </button>
+              </div>
+
+              <div className="dw-table-responsive">
+                {isWithdrawalsLoading ? (
+                  <div className="dw-loading-state">
+                    <i className="fas fa-spinner fa-spin"></i> Đang tải danh sách rút tiền...
+                  </div>
+                ) : doctorWithdrawals.length === 0 ? (
+                  <div className="dw-empty-state">
+                    <i className="fas fa-hand-holding-usd"></i>
+                    <h4>Chưa có yêu cầu rút tiền nào</h4>
+                    <p>Bác sĩ có thể rút tiền về tài khoản ngân hàng bất kỳ lúc nào khi số dư khả dụng từ 50.000 ₫</p>
+                  </div>
+                ) : (
+                  <table className="dw-data-table">
+                    <thead>
+                      <tr>
+                        <th>Mã yêu cầu</th>
+                        <th>Ngày tạo</th>
+                        <th className="text-right">Số tiền rút</th>
+                        <th>Tài khoản nhận</th>
+                        <th>Cam kết SLA</th>
+                        <th>Trạng thái</th>
+                        <th>Mã GD / Chứng từ</th>
+                        <th className="text-center">Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {doctorWithdrawals.map((req) => {
+                        const statusClass = (req.status || '').toLowerCase();
+                        return (
+                          <tr key={req.id}>
+                            <td className="dw-cell-code">
+                              <code>{req.requestCode || `#WDR-${req.id}`}</code>
+                            </td>
+                            <td className="dw-cell-date">
+                              <span className="dw-date-main">
+                                {new Date(req.createdAt).toLocaleDateString('vi-VN')}
+                              </span>
+                              <span className="dw-time-sub">
+                                {new Date(req.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </td>
+                            <td className="text-right">
+                              <span className="dw-amount-flow dw-amount-flow--out font-bold">
+                                {formatVND(req.amount)}
+                              </span>
+                            </td>
+                            <td>
+                              <div className="dw-bank-line-main font-semibold">
+                                {req.bankName} - {req.accountNumber}
+                              </div>
+                              <div className="dw-bank-line-sub">{req.accountHolderName}</div>
+                            </td>
+                            <td>
+                              <span className="dw-sla-chip">
+                                <i className="fas fa-clock"></i>{' '}
+                                {req.promisedTransferDate
+                                  ? new Date(req.promisedTransferDate).toLocaleDateString('vi-VN')
+                                  : '1 ngày LV'}
+                              </span>
+                            </td>
+                            <td>
+                              <span className={`dw-status-badge dw-status-badge--${statusClass}`}>
+                                {req.status === 'PENDING' ? 'Chờ duyệt & chuyển' :
+                                 req.status === 'APPROVED' ? 'Đã chuyển thành công' :
+                                 req.status === 'REJECTED' ? 'Bị từ chối' :
+                                 req.status === 'CANCELLED' ? 'Đã hủy' : req.status}
+                              </span>
+                              {req.rejectReason && (
+                                <div className="dw-reject-reason" title={req.rejectReason}>
+                                  Lý do: {req.rejectReason}
+                                </div>
+                              )}
+                            </td>
+                            <td>
+                              {req.bankTransactionCode ? (
+                                <div className="dw-bank-ref">
+                                  <code>{req.bankTransactionCode}</code>
+                                </div>
+                              ) : (
+                                <span className="dw-ref-sub">Đang xử lý</span>
+                              )}
+                            </td>
+                            <td className="text-center">
+                              {req.status === 'PENDING' ? (
+                                <button
+                                  type="button"
+                                  className="dw-btn-cancel-req"
+                                  onClick={() => handleCancelWithdrawal(req.id)}
+                                  title="Hủy yêu cầu và hoàn lại tiền khả dụng"
+                                >
+                                  <i className="fas fa-times"></i> Hủy
+                                </button>
+                              ) : (
+                                <span className="dw-no-action">---</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+
+              {withdrawalsTotal > withdrawalsLimit && (
+                <div className="dw-pagination">
+                  <button
+                    type="button"
+                    className="dw-page-btn"
+                    disabled={withdrawalsPage <= 1}
+                    onClick={() => setWithdrawalsPage((p) => Math.max(p - 1, 1))}
+                  >
+                    <i className="fas fa-chevron-left"></i> Trang trước
+                  </button>
+                  <span className="dw-page-indicator">
+                    Trang {withdrawalsPage} / {Math.ceil(withdrawalsTotal / withdrawalsLimit)}
+                  </span>
+                  <button
+                    type="button"
+                    className="dw-page-btn"
+                    disabled={withdrawalsPage >= Math.ceil(withdrawalsTotal / withdrawalsLimit)}
+                    onClick={() => setWithdrawalsPage((p) => p + 1)}
+                  >
+                    Trang sau <i className="fas fa-chevron-right"></i>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ── 7. SLIDE-OVER DETAIL DRAWER (Bóc tách chi tiết dòng tiền & Snapshot) ── */}
       {selectedTransaction && (
         <div className="drawer-overlay" onClick={() => setSelectedTransaction(null)}>
@@ -1245,6 +1892,174 @@ const DoctorRevenue = () => {
                 Đóng
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 9. MODAL RÚT TIỀN TỪ VÍ BÁC SĨ (WITHDRAW MODAL) ── */}
+      {showWithdrawModal && (
+        <div className="dw-modal-backdrop" onClick={() => setShowWithdrawModal(false)}>
+          <div className="dw-modal-container" onClick={(e) => e.stopPropagation()}>
+            <div className="dw-modal-header">
+              <div className="dw-modal-header-title">
+                <i className="fas fa-university"></i>
+                <h3>Yêu cầu rút tiền từ Ví Bác sĩ</h3>
+              </div>
+              <button
+                type="button"
+                className="dw-btn-modal-close"
+                onClick={() => setShowWithdrawModal(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleWithdrawSubmit} className="dw-modal-form">
+              <div className="dw-modal-body">
+                {/* Available Balance Callout */}
+                <div className="dw-available-banner">
+                  <div className="dw-available-info">
+                    <span className="dw-avail-label">Số dư khả dụng hiện tại:</span>
+                    <strong className="dw-avail-amount">{formatVND(doctorWallet?.balance || 0)}</strong>
+                  </div>
+                  <span className="dw-min-notice">Tối thiểu: 50.000 ₫ · Miễn phí rút</span>
+                </div>
+
+                {/* Amount input */}
+                <div className="dw-form-group">
+                  <label className="dw-form-label">
+                    Số tiền cần rút (VNĐ) <span className="text-danger">*</span>
+                  </label>
+                  <div className="dw-input-money-wrap">
+                    <input
+                      type="text"
+                      className="dw-money-input"
+                      value={withdrawAmountStr}
+                      onChange={handleAmountChange}
+                      placeholder="Nhập số tiền..."
+                      required
+                    />
+                    <span className="dw-money-suffix">₫</span>
+                  </div>
+
+                  {/* Presets */}
+                  <div className="dw-preset-pills">
+                    {[100000, 500000, 2000000, 5000000].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        className="dw-preset-btn"
+                        onClick={() => handleSelectPreset(preset)}
+                      >
+                        {formatVND(preset)}
+                      </button>
+                    ))}
+                    <button
+                      key="all"
+                      type="button"
+                      className="dw-preset-btn dw-preset-btn--highlight"
+                      onClick={() => handleSelectPreset('ALL')}
+                    >
+                      Tất cả ({formatVND(doctorWallet?.balance || 0)})
+                    </button>
+                  </div>
+                </div>
+
+                {/* Bank Information */}
+                <div className="dw-form-section-title">
+                  <i className="fas fa-credit-card"></i> Thông tin tài khoản thụ hưởng
+                </div>
+
+                <div className="dw-form-grid">
+                  <div className="dw-form-group">
+                    <label className="dw-form-label">
+                      Ngân hàng <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="dw-form-input"
+                      value={bankName}
+                      onChange={(e) => setBankName(e.target.value)}
+                      placeholder="VD: Vietcombank, Techcombank, MB Bank..."
+                      required
+                    />
+                  </div>
+                  <div className="dw-form-group">
+                    <label className="dw-form-label">
+                      Số tài khoản <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="dw-form-input font-mono"
+                      value={accountNumber}
+                      onChange={(e) => setAccountNumber(e.target.value)}
+                      placeholder="Số tài khoản ngân hàng"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="dw-form-group">
+                  <label className="dw-form-label">
+                    Tên chủ tài khoản (In hoa không dấu) <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="dw-form-input font-bold"
+                    value={accountHolderName}
+                    onChange={(e) => setAccountHolderName(e.target.value.toUpperCase())}
+                    placeholder="VD: NGUYEN VAN A"
+                    required
+                  />
+                </div>
+
+                <div className="dw-form-group">
+                  <label className="dw-form-label">Ghi chú (Tùy chọn)</label>
+                  <input
+                    type="text"
+                    className="dw-form-input"
+                    value={userNote}
+                    onChange={(e) => setUserNote(e.target.value)}
+                    placeholder="Ghi chú thêm nếu cần..."
+                  />
+                </div>
+
+                {/* SLA Guarantee Note */}
+                <div className="dw-sla-callout">
+                  <i className="fas fa-shield-alt"></i>
+                  <div>
+                    <strong>Cam kết SLA:</strong> Tiền sẽ được đối soát và chuyển vào tài khoản trong vòng{' '}
+                    <strong>1 ngày làm việc</strong> theo chính sách thanh khoản của hệ thống.
+                  </div>
+                </div>
+              </div>
+
+              <div className="dw-modal-footer">
+                <button
+                  type="button"
+                  className="dw-btn-secondary"
+                  onClick={() => setShowWithdrawModal(false)}
+                  disabled={isSubmittingWithdraw}
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="submit"
+                  className="dw-btn-primary"
+                  disabled={isSubmittingWithdraw || withdrawAmount < 50000 || withdrawAmount > (doctorWallet?.balance || 0)}
+                >
+                  {isSubmittingWithdraw ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin"></i> Đang gửi yêu cầu...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-paper-plane"></i> Xác nhận rút {formatVND(withdrawAmount)}
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

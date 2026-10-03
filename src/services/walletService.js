@@ -113,6 +113,14 @@ export const getDoctorWallet = () => {
 };
 
 /**
+ * Bác sĩ xem sao kê biến động số dư Sổ cái có phân trang & lọc
+ * @param {Object} params { page?: number, limit?: number, type?: string }
+ */
+export const getDoctorWalletTransactions = (params) => {
+  return axiosInstance.get('/api/v1/doctor/wallet/transactions', { params });
+};
+
+/**
  * Bác sĩ gửi yêu cầu rút tiền từ Ví Bác sĩ
  * @param {Object} data { amount: number, bankInfo?: Object, userNote?: string }
  */
@@ -126,6 +134,14 @@ export const requestDoctorWithdrawal = (data) => {
  */
 export const getDoctorWithdrawalRequests = (params) => {
   return axiosInstance.get('/api/v1/doctor/wallet/withdrawals', { params });
+};
+
+/**
+ * Bác sĩ hủy yêu cầu rút tiền khi còn PENDING
+ * @param {string} id Mã yêu cầu rút tiền
+ */
+export const cancelDoctorWithdrawalRequest = (id) => {
+  return axiosInstance.post(`/api/v1/doctor/wallet/withdrawals/${id}/cancel`);
 };
 
 /**

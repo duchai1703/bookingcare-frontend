@@ -548,6 +548,73 @@ $dp-page-bg: #f8fafc;
           }
         }
 
+        // Doctor Wallet Widget (Số dư ví & Rút tiền)
+        .dp-wallet-widget {
+          display: flex;
+          align-items: center;
+          gap: 9px;
+          background: linear-gradient(135deg, rgba(6, 182, 212, 0.08) 0%, rgba(14, 165, 233, 0.14) 100%);
+          border: 1.5px solid rgba(6, 182, 212, 0.35);
+          border-radius: 10px;
+          padding: 5px 12px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          box-shadow: 0 1px 3px rgba(6, 182, 212, 0.1);
+
+          &:hover {
+            border-color: #06b6d4;
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.18) 0%, rgba(14, 165, 233, 0.24) 100%);
+            box-shadow: 0 2px 8px rgba(6, 182, 212, 0.2);
+            transform: translateY(-1px);
+          }
+
+          .wallet-widget-icon {
+            color: #06b6d4;
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+          }
+
+          .wallet-widget-info {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+
+            .wallet-widget-label {
+              font-size: 0.64rem;
+              text-transform: uppercase;
+              font-weight: 700;
+              letter-spacing: 0.04em;
+              color: #0891b2;
+            }
+
+            .wallet-widget-amount {
+              font-size: 0.85rem;
+              font-weight: 800;
+              color: #0284c7;
+              letter-spacing: -0.01em;
+            }
+          }
+
+          .btn-quick-withdraw {
+            border: none;
+            background: #0891b2;
+            color: #ffffff;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            margin-left: 2px;
+
+            &:hover {
+              background: #0e7490;
+              transform: scale(1.04);
+            }
+          }
+        }
+
         // Language Switcher
         .dp-lang-switcher {
           display: flex;

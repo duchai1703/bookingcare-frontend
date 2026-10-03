@@ -1,7 +1,7 @@
 // src/containers/DoctorPortal/DoctorLayout.jsx
 // [Doctor Portal Redesign] Clinical Workspace Layout — Giao diện chuyên biệt cho Bác sĩ (Doctor Portal)
 // Phân biệt hoàn toàn với Admin Panel: Clinical Teal/Slate Palette, Medical Identity, Doctor Profile Card, Smooth Collapse
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { processLogout } from '../../redux/slices/userSlice';
@@ -26,9 +26,10 @@ import {
   ShieldCheck,
   Building2,
   MessageSquare,
-
+  TrendingUp,
 } from 'lucide-react';
 import { getMyPractices } from '../../services/doctorService';
+import { getDoctorWallet } from '../../services/walletService';
 import NotificationBell from '../../components/Notification/NotificationBell';
 import './DoctorLayout.scss';
 
@@ -58,9 +59,14 @@ const DOCTOR_NAV_GROUPS = [
     groupTitle: 'TÀI CHÍNH & BÁO CÁO',
     items: [
       {
-        icon: Wallet,
+        icon: TrendingUp,
         label: 'Thu nhập & Thống kê',
         to: '/doctor-dashboard/doctor-revenue',
+      },
+      {
+        icon: Wallet,
+        label: 'Ví Bác sĩ & Rút tiền',
+        to: '/doctor-dashboard/doctor-revenue?tab=wallet',
       },
     ],
   },
@@ -89,6 +95,26 @@ const DoctorLayout = () => {
   const [selectedClinicId, setSelectedClinicId] = useState(() => {
     return localStorage.getItem('doctor_selected_clinic_id') || 'all';
   });
+
+  // [Doctor Wallet] State số dư ví bác sĩ
+  const [doctorWallet, setDoctorWallet] = useState(null);
+
+  const fetchDoctorWallet = useCallback(async () => {
+    try {
+      const res = await getDoctorWallet();
+      if (res && res.errCode === 0 && res.data) {
+        setDoctorWallet(res.data);
+      }
+    } catch (err) {
+      console.error('Error fetching doctor wallet:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (userInfo?.id) {
+      fetchDoctorWallet();
+    }
+  }, [fetchDoctorWallet, userInfo?.id, location.pathname, location.search]);
 
   useEffect(() => {
     const fetchPractices = async () => {
@@ -213,10 +239,12 @@ const DoctorLayout = () => {
               <ul className="dp-nav-list">
                 {group.items.map((item) => {
                   const Icon = item.icon;
-                  const isActive =
-                    location.pathname === item.to ||
-                    (item.to === '/doctor-dashboard/manage-patient' &&
-                      location.pathname.startsWith('/doctor-dashboard/encounter'));
+                  const currentFullPath = location.pathname + location.search;
+                  const isActive = item.to.includes('?')
+                    ? currentFullPath === item.to
+                    : (location.pathname === item.to && !location.search.includes('tab=wallet')) ||
+                      (item.to === '/doctor-dashboard/manage-patient' &&
+                        location.pathname.startsWith('/doctor-dashboard/encounter'));
 
                   return (
                     <li key={item.to} className="dp-nav-item">
@@ -316,6 +344,36 @@ const DoctorLayout = () => {
               {practices.length > 0 && (
                 <span className="practice-count-badge">{practices.length} nơi</span>
               )}
+            </div>
+
+            {/* [Doctor Wallet] Topbar Balance Widget */}
+            <div
+              className="dp-wallet-widget"
+              onClick={() => navigate('/doctor-dashboard/doctor-revenue?tab=wallet')}
+              title="Ví Bác sĩ BookingCare — Nhấp để xem chi tiết & Rút tiền"
+            >
+              <div className="wallet-widget-icon">
+                <Wallet size={16} />
+              </div>
+              <div className="wallet-widget-info">
+                <span className="wallet-widget-label">Ví Bác sĩ</span>
+                <span className="wallet-widget-amount">
+                  {doctorWallet
+                    ? Number(doctorWallet.balance ?? doctorWallet.availableBalance ?? 0).toLocaleString('vi-VN') + ' ₫'
+                    : 'Đang tải...'}
+                </span>
+              </div>
+              <button
+                type="button"
+                className="btn-quick-withdraw"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate('/doctor-dashboard/doctor-revenue?tab=wallet&action=withdraw');
+                }}
+                title="Yêu cầu rút tiền về tài khoản ngân hàng"
+              >
+                Rút tiền
+              </button>
             </div>
 
             {/* Language Switcher */}
