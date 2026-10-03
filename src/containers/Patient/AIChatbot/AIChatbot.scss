@@ -4031,3 +4031,39 @@ $chat-transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// [Phase 07 — RAG / Knowledge Citations Bar]
+// ═══════════════════════════════════════════════════════════════════════
+.knowledge-citations-bar {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: rgba(240, 249, 255, 0.7);
+  border: 1px solid rgba(186, 230, 253, 0.8);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.75rem;
+
+  .citations-label {
+    font-weight: 600;
+    color: #0369a1;
+  }
+
+  .citations-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+
+    .citation-tag {
+      background: #ffffff;
+      color: #0284c7;
+      border: 1px solid #bae6fd;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: 500;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+  }
+}

@@ -682,5 +682,6 @@
   "chatbot.cancel-keep-btn": "Keep Booking",
   "chatbot.cancel-processing": "Processing cancellation...",
   "chatbot.cancel-success-title": "Appointment Cancelled Successfully!",
-  "chatbot.cancel-error-title": "Unable to Cancel Appointment"
+  "chatbot.cancel-error-title": "Unable to Cancel Appointment",
+  "chatbot.sources-label": "Official Reference Sources:"
 }

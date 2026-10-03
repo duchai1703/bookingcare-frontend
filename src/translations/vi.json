@@ -682,5 +682,6 @@
   "chatbot.cancel-keep-btn": "Giữ lại lịch",
   "chatbot.cancel-processing": "Đang xử lý hủy lịch...",
   "chatbot.cancel-success-title": "Hủy lịch khám thành công!",
-  "chatbot.cancel-error-title": "Chưa thể hủy lịch khám"
+  "chatbot.cancel-error-title": "Chưa thể hủy lịch khám",
+  "chatbot.sources-label": "Nguồn tham khảo chính thức:"
 }

@@ -384,6 +384,22 @@ const MessageItem = memo(({
           </div>
         )}
 
+        {/* Knowledge Citations / Provenance (Phase 07) */}
+        {Array.isArray(msg.citations) && msg.citations.length > 0 && (
+          <div className="knowledge-citations-bar">
+            <span className="citations-label">
+              📚 <FormattedMessage id="chatbot.sources-label" defaultMessage="Nguồn tham khảo chính thức:" />
+            </span>
+            <div className="citations-list">
+              {msg.citations.map((c, idx) => (
+                <span key={idx} className="citation-tag" title={c.source}>
+                  {c.title}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Copy Button — Hiện khi có text */}
         {msg.text && (
           <button

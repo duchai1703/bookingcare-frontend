@@ -626,6 +626,23 @@ const AIChatbot = memo(() => {
                     });
                   }
                 }
+
+                // ═══ [Knowledge Citations Structured Event (Phase 07)] ═══
+                if (parsed.citations || parsed.type === 'KNOWLEDGE_CITATIONS' || parsed.event === 'knowledge:citations') {
+                  const citationData = parsed.citations || parsed.data?.citations || parsed.data;
+                  if (Array.isArray(citationData) && citationData.length > 0 && isMountedRef.current) {
+                    setMessages((prev) => {
+                      const nextState = prev.map((m) =>
+                        m.id === aiMsgId
+                          ? { ...m, citations: citationData }
+                          : m
+                      );
+                      latestMessagesRef.current = nextState;
+                      return nextState;
+                    });
+                  }
+                }
+
                 if (parsed.text) {
                   // PURE APPEND
                   if (isMountedRef.current) {
