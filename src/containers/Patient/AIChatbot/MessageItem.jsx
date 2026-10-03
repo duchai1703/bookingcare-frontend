@@ -16,6 +16,13 @@ import SlotPicker from './SlotPicker';
 import BookingDraftCard from './BookingDraftCard';
 import BookingSuccessCard from './BookingSuccessCard';
 import BookingErrorCard from './BookingErrorCard';
+import CancellationDraftCard from './CancellationDraftCard';
+import CancellationSuccessCard from './CancellationSuccessCard';
+import CancellationErrorCard from './CancellationErrorCard';
+import RescheduleDraftCard from './RescheduleDraftCard';
+import RescheduleSuccessCard from './RescheduleSuccessCard';
+import RescheduleErrorCard from './RescheduleErrorCard';
+import PaymentActionCard from './PaymentActionCard';
 
 // ═══ [DOMPurify: Cấm style/class/script] ═══
 const purifyConfig = {
@@ -46,6 +53,13 @@ const MessageItem = memo(({
   onRetrySlot,
   onFindDoctor,
   isBookingProcessing,
+  onConfirmCancelBooking,
+  onKeepBooking,
+  onRetryCancellation,
+  isCancelProcessing,
+  onConfirmRescheduleBooking,
+  onRetryReschedule,
+  isRescheduleProcessing,
 }) => {
   const [copied, setCopied] = useState(false);
 
@@ -218,6 +232,77 @@ const MessageItem = memo(({
               bookingError={msg.bookingError}
               onRetrySlot={onRetrySlot}
               onFindDoctor={onFindDoctor}
+            />
+          </div>
+        )}
+
+        {/* Structured Cancellation Draft Card (Phase 06B) */}
+        {msg.cancellationDraft && (
+          <div className="ai-cancellation-draft-block">
+            <CancellationDraftCard
+              draft={msg.cancellationDraft}
+              onConfirmCancel={onConfirmCancelBooking}
+              onKeepBooking={() => onKeepBooking && onKeepBooking(msg.id)}
+              isProcessing={isCancelProcessing}
+            />
+          </div>
+        )}
+
+        {/* Structured Cancellation Success Card (Phase 06B) */}
+        {msg.cancellationResult && (
+          <div className="ai-cancellation-success-block">
+            <CancellationSuccessCard
+              result={msg.cancellationResult}
+            />
+          </div>
+        )}
+
+        {/* Structured Cancellation Error Card (Phase 06B) */}
+        {msg.cancellationError && (
+          <div className="ai-cancellation-error-block">
+            <CancellationErrorCard
+              error={msg.cancellationError}
+              onViewBookings={onRetryCancellation}
+            />
+          </div>
+        )}
+
+        {/* Structured Reschedule Draft Card (Phase 06C) */}
+        {msg.rescheduleDraft && (
+          <div className="ai-reschedule-draft-block">
+            <RescheduleDraftCard
+              draft={msg.rescheduleDraft}
+              onConfirmReschedule={onConfirmRescheduleBooking}
+              onKeepBooking={() => onKeepBooking && onKeepBooking(msg.id)}
+              isProcessing={isRescheduleProcessing}
+            />
+          </div>
+        )}
+
+        {/* Structured Reschedule Success Card (Phase 06C) */}
+        {msg.rescheduleResult && (
+          <div className="ai-reschedule-success-block">
+            <RescheduleSuccessCard
+              result={msg.rescheduleResult}
+            />
+          </div>
+        )}
+
+        {/* Structured Reschedule Error Card (Phase 06C) */}
+        {msg.rescheduleError && (
+          <div className="ai-reschedule-error-block">
+            <RescheduleErrorCard
+              error={msg.rescheduleError}
+              onRetry={onRetryReschedule}
+            />
+          </div>
+        )}
+
+        {/* Structured Payment Action Card (Phase 06D) */}
+        {msg.paymentData && (
+          <div className="ai-payment-action-block">
+            <PaymentActionCard
+              paymentData={msg.paymentData}
             />
           </div>
         )}

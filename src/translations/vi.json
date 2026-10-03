@@ -676,5 +676,11 @@
   "chatbot.booking-success-title": "Đặt lịch khám thành công!",
   "chatbot.booking-error-title": "Chưa thể hoàn tất đặt lịch",
   "chatbot.booking-retry-slot": "Chọn khung giờ khác",
-  "chatbot.booking-find-doctor": "Tìm bác sĩ khác"
+  "chatbot.booking-find-doctor": "Tìm bác sĩ khác",
+  "chatbot.cancel-draft-title": "Phiếu xác nhận hủy lịch khám",
+  "chatbot.cancel-confirm-btn": "Xác nhận hủy lịch",
+  "chatbot.cancel-keep-btn": "Giữ lại lịch",
+  "chatbot.cancel-processing": "Đang xử lý hủy lịch...",
+  "chatbot.cancel-success-title": "Hủy lịch khám thành công!",
+  "chatbot.cancel-error-title": "Chưa thể hủy lịch khám"
 }
