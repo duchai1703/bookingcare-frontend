@@ -56,17 +56,12 @@ const DOCTOR_NAV_GROUPS = [
     ],
   },
   {
-    groupTitle: 'TÀI CHÍNH & BÁO CÁO',
+    groupTitle: 'TÀI CHÍNH',
     items: [
       {
-        icon: TrendingUp,
-        label: 'Thu nhập & Thống kê',
-        to: '/doctor-dashboard/doctor-revenue',
-      },
-      {
         icon: Wallet,
-        label: 'Ví Bác sĩ & Rút tiền',
-        to: '/doctor-dashboard/doctor-revenue?tab=wallet',
+        label: 'Thu nhập & Thanh toán',
+        to: '/doctor-dashboard/doctor-revenue',
       },
     ],
   },

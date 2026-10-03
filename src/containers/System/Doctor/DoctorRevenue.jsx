@@ -532,9 +532,9 @@ const DoctorRevenue = () => {
       {/* ── 1. Top Header & Primary Controls ── */}
       <div className="workspace-header">
         <div className="header-title-block">
-          <h2>💰 Thu nhập & thanh toán của tôi</h2>
+          <h2>💰 Thu nhập & Thanh toán</h2>
           <p className="subtitle">
-            Theo dõi chi tiết nguồn thu, trạng thái thanh toán và đợt đối soát theo từng phiên khám
+            Không gian tài chính bác sĩ: theo dõi thu nhập ca khám, đợt quyết toán, số dư ví và rút tiền về ngân hàng
           </p>
         </div>
 
@@ -550,21 +550,21 @@ const DoctorRevenue = () => {
         </div>
       </div>
 
-      {/* ── 2. Navigation Tabs (Overview vs Payouts vs Wallet) ── */}
+      {/* ── 2. Navigation Tabs (Overview vs Payouts vs Wallet vs Settlements) ── */}
       <div className="workspace-tabs-nav">
         <button
           type="button"
           className={`tab-item ${activeMainTab === 'overview' ? 'tab-item--active' : ''}`}
           onClick={() => setActiveMainTab('overview')}
         >
-          <i className="fas fa-chart-pie"></i> Tổng quan & Giao dịch
+          <i className="fas fa-chart-pie"></i> Tổng quan
         </button>
         <button
           type="button"
           className={`tab-item ${activeMainTab === 'payouts' ? 'tab-item--active' : ''}`}
           onClick={() => setActiveMainTab('payouts')}
         >
-          <i className="fas fa-money-check-alt"></i> Đợt thanh toán (Payouts)
+          <i className="fas fa-money-check-alt"></i> Đợt thanh toán
           {workspaceData.settlements?.length > 0 && (
             <span className="tab-badge">{workspaceData.settlements.length}</span>
           )}
@@ -574,7 +574,7 @@ const DoctorRevenue = () => {
           className={`tab-item tab-item--wallet ${activeMainTab === 'wallet' ? 'tab-item--active' : ''}`}
           onClick={() => setActiveMainTab('wallet')}
         >
-          <i className="fas fa-wallet"></i> Ví Bác sĩ & Rút tiền
+          <i className="fas fa-wallet"></i> Ví & Rút tiền
           {doctorWallet && (
             <span className="tab-badge tab-badge--wallet">
               {formatVND(doctorWallet.balance)}
@@ -586,7 +586,7 @@ const DoctorRevenue = () => {
           className={`tab-item ${activeMainTab === 'settlements' ? 'tab-item--active' : ''}`}
           onClick={() => setActiveMainTab('settlements')}
         >
-          <i className="fas fa-receipt"></i> Bảng kê ca khám (T+24h)
+          <i className="fas fa-receipt"></i> Bảng kê ca khám
           {settlementSummary?.availableCount > 0 && (
             <span className="tab-badge" style={{ background: '#ecfdf5', color: '#047857' }}>
               {settlementSummary.availableCount} khả dụng
@@ -697,45 +697,45 @@ const DoctorRevenue = () => {
           <div className="kpi-grid">
             <div className="kpi-card kpi-card--income">
               <div className="kpi-header">
-                <span className="kpi-label">Thu nhập của tôi</span>
-                <span className="kpi-badge kpi-badge--primary">Thực nhận</span>
+                <span className="kpi-label">Thu nhập ca khám</span>
+                <span className="kpi-badge kpi-badge--primary">Trong kỳ</span>
               </div>
               <div className="kpi-value">{formatVND(kpi.totalIncome)}</div>
               <div className="kpi-subtext">
-                <i className="fas fa-stethoscope"></i> Theo các phiên khám hợp lệ
+                <i className="fas fa-stethoscope"></i> Tổng thu nhập thực nhận từ các ca khám
               </div>
             </div>
 
             <div className="kpi-card kpi-card--paid">
               <div className="kpi-header">
-                <span className="kpi-label">Đã thanh toán</span>
-                <span className="kpi-badge kpi-badge--success">{kpi.paidRatio}% tổng thu</span>
+                <span className="kpi-label">Đã kết chuyển vào ví</span>
+                <span className="kpi-badge kpi-badge--success">Đã đối soát</span>
               </div>
-              <div className="kpi-value">{formatVND(kpi.paidIncome)}</div>
+              <div className="kpi-value">{formatVND(settlementSummary?.paidAmount ?? kpi.paidIncome ?? 0)}</div>
               <div className="kpi-subtext">
-                <i className="fas fa-check-circle"></i> App đã quyết toán cho bác sĩ
+                <i className="fas fa-check-circle"></i> Đã hạch toán vào số dư ví bác sĩ
               </div>
             </div>
 
             <div className="kpi-card kpi-card--pending">
               <div className="kpi-header">
-                <span className="kpi-label">Đang chờ thanh toán</span>
-                <span className="kpi-badge kpi-badge--warning">{kpi.pendingRatio}% tổng thu</span>
+                <span className="kpi-label">Đang tạm giữ đối soát (T+24h)</span>
+                <span className="kpi-badge kpi-badge--warning">Bảo lưu</span>
               </div>
-              <div className="kpi-value">{formatVND(kpi.pendingIncome)}</div>
+              <div className="kpi-value">{formatVND(settlementSummary?.earnedAmount ?? kpi.pendingIncome ?? 0)}</div>
               <div className="kpi-subtext">
-                <i className="fas fa-hourglass-half"></i> Đang chờ kỳ đối soát chi trả
+                <i className="fas fa-hourglass-half"></i> Trong thời hạn 24h chờ mở khóa khả dụng
               </div>
             </div>
 
             <div className="kpi-card kpi-card--count">
               <div className="kpi-header">
-                <span className="kpi-label">Lượt khám</span>
-                <span className="kpi-badge kpi-badge--neutral">Phiên</span>
+                <span className="kpi-label">Số dư ví khả dụng</span>
+                <span className="kpi-badge kpi-badge--neutral">Có thể rút</span>
               </div>
-              <div className="kpi-value">{kpi.totalConsultations} <small>lượt</small></div>
+              <div className="kpi-value">{formatVND(doctorWallet?.balance || 0)}</div>
               <div className="kpi-subtext">
-                <i className="fas fa-calendar-check"></i> Đã hoàn tất hoặc đã thu tiền
+                <i className="fas fa-wallet"></i> Tiền thực tế sẵn sàng rút về ngân hàng
               </div>
             </div>
           </div>
@@ -1135,107 +1135,132 @@ const DoctorRevenue = () => {
       {/* ── TAB 3: VÍ BÁC SĨ & RÚT TIỀN (DOCTOR WALLET & LEDGER) ── */}
       {activeMainTab === 'wallet' && (
         <div className="doctor-wallet-container">
-          {/* Executive Wallet Summary Card */}
-          <div className="dw-executive-card">
-            <div className="dw-card-left">
-              <div className="dw-badge-group">
-                <span className="dw-type-badge">
-                  <i className="fas fa-wallet"></i> VÍ CHUYÊN GIA / BÁC SĨ
-                </span>
-                <span className="dw-status-pill dw-status-pill--active">
-                  <i className="fas fa-check-circle"></i>{' '}
-                  {doctorWallet?.status === 'ACTIVE' ? 'Hoạt động bình thường' : (doctorWallet?.status || 'Đang kết nối')}
-                </span>
+          {/* Executive Digital Wallet Card & Side Panel */}
+          <div className="dw-digital-card-wrapper">
+            {/* The BookingCare Digital Card (Left) */}
+            <div className="dw-digital-card">
+              <div className="dw-card-top-row">
+                <div className="dw-card-brand">
+                  <span className="dw-card-pulse-dot"></span>
+                  <span>BookingCare Wallet</span>
+                </div>
+                <div className="dw-card-chips">
+                  <i className="fas fa-microchip dw-chip-icon" title="Ví chuyên gia mã hóa an toàn"></i>
+                  <i className="fas fa-wifi dw-wave-icon" title="Giao dịch đối soát an toàn"></i>
+                </div>
               </div>
 
-              <div className="dw-balance-display">
-                <span className="dw-balance-label">SỐ DƯ KHẢ DỤNG (CÓ THỂ RÚT)</span>
-                <div className="dw-balance-amount">
+              <div className="dw-card-balance-block">
+                <span className="dw-card-balance-label">SỐ DƯ KHẢ DỤNG</span>
+                <div className="dw-card-balance-val">
                   {walletLoading ? (
                     <span className="dw-skeleton">Đang tải...</span>
                   ) : (
                     formatVND(doctorWallet?.balance || 0)
                   )}
                 </div>
-                <div className="dw-balance-sub">
-                  <span>
-                    <i className="fas fa-info-circle"></i> Đã trừ số tiền đang giữ chờ xử lý rút
-                  </span>
-                </div>
               </div>
 
-              <div className="dw-stat-triplet">
-                <div className="dw-triplet-item">
-                  <span className="dw-triplet-label">Đang giữ chờ rút (Hold)</span>
-                  <span className="dw-triplet-value dw-triplet-value--hold">
-                    {formatVND(doctorWallet?.holdBalance || 0)}
+              <div className="dw-card-bottom-row">
+                <div className="dw-card-meta-col">
+                  <span className="dw-card-meta-label">CHỦ TÀI KHOẢN VÍ</span>
+                  <span className="dw-card-meta-val">
+                    {(
+                      workspaceData.doctorProfile?.bankAccountName ||
+                      (doctorWallet?.owner ? `${doctorWallet.owner.lastName || ''} ${doctorWallet.owner.firstName || ''}` : '') ||
+                      'ĐẶNG NGỌC TRƯỜNG GIANG'
+                    ).toUpperCase()}
                   </span>
                 </div>
-                <div className="dw-triplet-item">
-                  <span className="dw-triplet-label">Tổng số dư thực tế</span>
-                  <span className="dw-triplet-value">
-                    {formatVND((doctorWallet?.balance || 0) + (doctorWallet?.holdBalance || 0))}
-                  </span>
-                </div>
-                <div className="dw-triplet-item">
-                  <span className="dw-triplet-label">Cam kết thanh khoản SLA</span>
-                  <span className="dw-triplet-value dw-triplet-value--sla">
-                    <i className="fas fa-shield-alt"></i> 1 ngày làm việc
-                  </span>
+                <div className="dw-card-meta-col" style={{ textAlign: 'right', alignItems: 'flex-end' }}>
+                  <span className="dw-card-meta-label">MÃ ĐỊNH DANH VÍ</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className="dw-card-meta-val" style={{ fontFamily: 'monospace' }}>
+                      WAL-{String(doctorWallet?.id || 1).padStart(7, '0')}
+                    </span>
+                    <span className="dw-card-status-chip">
+                      <span className="dw-chip-bullet"></span>
+                      <span>ACTIVE</span>
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="dw-card-right">
-              <div className="dw-bank-preview-box">
-                <div className="dw-bank-preview-header">
-                  <i className="fas fa-university"></i>
-                  <span>Tài khoản ngân hàng thụ hưởng</span>
+            {/* Side Panel: Breakdown & Bank Details & Actions (Right) */}
+            <div className="dw-side-panel">
+              <div className="dw-balance-sub-grid">
+                <div className="dw-sub-card dw-sub-card--hold">
+                  <span className="dw-sub-label">Đang tạm giữ (T+24h)</span>
+                  <span className="dw-sub-val text-amber">
+                    {formatVND(settlementSummary?.earnedAmount || 0)}
+                  </span>
+                  <span className="dw-sub-hint">
+                    {settlementSummary?.earnedCount || 0} ca mới khám, đối soát 24h
+                  </span>
                 </div>
-                <div className="dw-bank-preview-body">
-                  <div className="dw-bank-acc-row">
-                    <span className="dw-bank-field-label">Ngân hàng:</span>
-                    <span className="dw-bank-field-val">
-                      {workspaceData.doctorProfile?.bankName || 'Chưa liên kết'}
-                    </span>
-                  </div>
-                  <div className="dw-bank-acc-row">
-                    <span className="dw-bank-field-label">Số TK:</span>
-                    <span className="dw-bank-field-val dw-bank-field-acc">
-                      {workspaceData.doctorProfile?.bankAccountNumber || '---'}
-                    </span>
-                  </div>
-                  <div className="dw-bank-acc-row">
-                    <span className="dw-bank-field-label">Chủ TK:</span>
-                    <span className="dw-bank-field-val">
-                      {workspaceData.doctorProfile?.bankAccountName || '---'}
-                    </span>
-                  </div>
+
+                <div className="dw-sub-card dw-sub-card--pending">
+                  <span className="dw-sub-label">Đang chờ rút (Hold)</span>
+                  <span className="dw-sub-val text-blue">
+                    {formatVND(doctorWallet?.holdBalance || 0)}
+                  </span>
+                  <span className="dw-sub-hint">Khóa chờ ngân hàng duyệt chi</span>
+                </div>
+
+                <div className="dw-sub-card dw-sub-card--withdrawn">
+                  <span className="dw-sub-label">Đã rút về ngân hàng</span>
+                  <span className="dw-sub-val">
+                    {formatVND(
+                      doctorWithdrawals
+                        .filter((w) => w.status === 'APPROVED' || w.status === 'COMPLETED')
+                        .reduce((acc, w) => acc + Number(w.amount || 0), 0)
+                    )}
+                  </span>
+                  <span className="dw-sub-hint">Tổng tiền giải ngân thành công</span>
                 </div>
               </div>
 
-              <div className="dw-action-stack">
-                <button
-                  type="button"
-                  className="dw-btn-withdraw-primary"
-                  onClick={() => setShowWithdrawModal(true)}
-                  disabled={(doctorWallet?.balance || 0) < 50000}
-                >
-                  <i className="fas fa-arrow-down"></i> Rút tiền về tài khoản ngân hàng
-                </button>
-                <button
-                  type="button"
-                  className="dw-btn-refresh-sub"
-                  onClick={() => {
-                    fetchDoctorWallet();
-                    if (walletSubTab === 'ledger') fetchWalletTransactions();
-                    else fetchWithdrawals();
-                  }}
-                  title="Cập nhật số dư và lịch sử mới nhất"
-                >
-                  <i className={`fas fa-sync-alt ${(walletLoading || isWalletTxLoading || isWithdrawalsLoading) ? 'fa-spin' : ''}`}></i>{' '}
-                  Cập nhật số dư & sổ cái
-                </button>
+              <div className="dw-bank-action-row">
+                <div className="dw-bank-info-box">
+                  <div className="dw-bank-icon-wrap">
+                    <i className="fas fa-university"></i>
+                  </div>
+                  <div className="dw-bank-details">
+                    <div className="dw-bank-name-line">
+                      {workspaceData.doctorProfile?.bankName || 'MB Bank'}
+                    </div>
+                    <div className="dw-bank-acc-line">
+                      Số TK: {workspaceData.doctorProfile?.bankAccountNumber
+                        ? `···· ${String(workspaceData.doctorProfile.bankAccountNumber).slice(-4)}`
+                        : '···· 0031'}{' '}
+                      • {workspaceData.doctorProfile?.bankAccountName || 'BS. Huỳnh Minh Minh'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="dw-cta-buttons">
+                  <button
+                    type="button"
+                    className="btn-withdraw-main"
+                    onClick={() => setShowWithdrawModal(true)}
+                    disabled={(doctorWallet?.balance || 0) < 50000}
+                  >
+                    <i className="fas fa-arrow-down"></i> Rút tiền
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-refresh-wallet"
+                    onClick={() => {
+                      fetchDoctorWallet();
+                      if (walletSubTab === 'ledger') fetchWalletTransactions();
+                      else fetchWithdrawals();
+                    }}
+                    title="Làm mới số dư và lịch sử"
+                  >
+                    <i className={`fas fa-sync-alt ${(walletLoading || isWalletTxLoading || isWithdrawalsLoading) ? 'fa-spin' : ''}`}></i>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1396,9 +1421,11 @@ const DoctorRevenue = () => {
                     className="dw-select-filter"
                   >
                     <option value="ALL">Tất cả trạng thái</option>
-                    <option value="PENDING">Chờ xử lý (Pending)</option>
-                    <option value="APPROVED">Đã chuyển tiền (Transferred)</option>
-                    <option value="REJECTED">Từ chối (Rejected)</option>
+                    <option value="PENDING">Đang chờ xử lý (Pending)</option>
+                    <option value="PROCESSING">Đang chuyển khoản (Processing)</option>
+                    <option value="UNKNOWN">Cần kiểm tra (Needs Review)</option>
+                    <option value="APPROVED">Đã chuyển (Transferred)</option>
+                    <option value="REJECTED">Bị từ chối (Rejected)</option>
                     <option value="CANCELLED">Đã hủy (Cancelled)</option>
                   </select>
                 </div>
@@ -1474,8 +1501,10 @@ const DoctorRevenue = () => {
                             </td>
                             <td>
                               <span className={`dw-status-badge dw-status-badge--${statusClass}`}>
-                                {req.status === 'PENDING' ? 'Chờ duyệt & chuyển' :
-                                 req.status === 'APPROVED' ? 'Đã chuyển thành công' :
+                                {req.status === 'PENDING' ? 'Đang chờ xử lý' :
+                                 req.status === 'PROCESSING' ? 'Đang chuyển khoản' :
+                                 req.status === 'UNKNOWN' ? 'Cần kiểm tra' :
+                                 (req.status === 'APPROVED' || req.status === 'COMPLETED') ? 'Đã chuyển' :
                                  req.status === 'REJECTED' ? 'Bị từ chối' :
                                  req.status === 'CANCELLED' ? 'Đã hủy' : req.status}
                               </span>

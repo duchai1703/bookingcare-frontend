@@ -1581,249 +1581,333 @@
     gap: 24px;
     margin-bottom: 32px;
 
-    // Executive Card
-    .dw-executive-card {
-      background: #ffffff;
-      border-radius: 16px;
-      border: 1px solid #e2e8f0;
-      box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
-      padding: 28px;
+    // Digital Wallet Card Wrapper (Masterpiece Financial Card)
+    .dw-digital-card-wrapper {
       display: grid;
-      grid-template-columns: 1.4fr 1fr;
-      gap: 28px;
+      grid-template-columns: 440px 1fr;
+      gap: 24px;
+      margin-bottom: 24px;
 
-      @media (max-width: 900px) {
+      @media (max-width: 1040px) {
         grid-template-columns: 1fr;
       }
 
-      .dw-card-left {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
+    .dw-digital-card {
+      background: linear-gradient(135deg, #071e22 0%, #0d3834 45%, #0a4d46 75%, #052e2b 100%);
+      border-radius: 22px;
+      padding: 24px 26px;
+      color: #ffffff;
+      box-shadow: 0 16px 36px -6px rgba(5, 78, 70, 0.4), 0 6px 14px rgba(0, 0, 0, 0.25);
+      border: 1.5px solid rgba(45, 212, 191, 0.28);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 235px;
 
-        .dw-badge-group {
+      &::before {
+        content: '';
+        position: absolute;
+        top: -60px;
+        right: -60px;
+        width: 180px;
+        height: 180px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(45, 212, 191, 0.18) 0%, rgba(45, 212, 191, 0) 70%);
+        pointer-events: none;
+      }
+
+      .dw-card-top-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .dw-card-brand {
           display: flex;
           align-items: center;
-          gap: 10px;
-          margin-bottom: 16px;
+          gap: 9px;
+          font-weight: 800;
+          font-size: 15px;
+          letter-spacing: -0.02em;
+          color: #ffffff;
 
-          .dw-type-badge {
-            background: #f0fdf4;
-            color: #166534;
-            border: 1px solid #bbf7d0;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-          }
-
-          .dw-status-pill {
-            font-size: 0.75rem;
-            padding: 4px 10px;
-            border-radius: 6px;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-
-            &--active {
-              background: #eff6ff;
-              color: #1e40af;
-              border: 1px solid #bfdbfe;
-            }
+          .dw-card-pulse-dot {
+            width: 10px;
+            height: 10px;
+            background: #2dd4bf;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #2dd4bf;
           }
         }
 
-        .dw-balance-display {
-          margin-bottom: 24px;
-
-          .dw-balance-label {
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: #64748b;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            display: block;
-            margin-bottom: 6px;
-          }
-
-          .dw-balance-amount {
-            font-size: 2.4rem;
-            font-weight: 800;
-            color: #0f172a;
-            line-height: 1.1;
-            letter-spacing: -0.5px;
-          }
-
-          .dw-balance-sub {
-            font-size: 0.82rem;
-            color: #64748b;
-            margin-top: 6px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-          }
-        }
-
-        .dw-stat-triplet {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
+        .dw-card-chips {
+          display: flex;
+          align-items: center;
           gap: 12px;
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
-          border-radius: 12px;
-          padding: 14px 16px;
+          color: #facc15;
 
-          @media (max-width: 600px) {
-            grid-template-columns: 1fr;
+          .dw-chip-icon {
+            font-size: 22px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
           }
 
-          .dw-triplet-item {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-
-            .dw-triplet-label {
-              font-size: 0.75rem;
-              color: #64748b;
-              font-weight: 600;
-            }
-
-            .dw-triplet-value {
-              font-size: 1.05rem;
-              font-weight: 700;
-              color: #1e293b;
-
-              &--hold {
-                color: #d97706;
-              }
-
-              &--sla {
-                color: #0284c7;
-                display: flex;
-                align-items: center;
-                gap: 5px;
-                font-size: 0.95rem;
-              }
-            }
+          .dw-wave-icon {
+            color: #99f6e4;
+            font-size: 17px;
           }
         }
       }
 
-      .dw-card-right {
+      .dw-card-balance-block {
+        margin: 18px 0 14px;
+
+        .dw-card-balance-label {
+          font-size: 11px;
+          font-weight: 700;
+          color: #99f6e4;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          display: block;
+          margin-bottom: 4px;
+        }
+
+        .dw-card-balance-val {
+          font-size: 36px;
+          font-weight: 900;
+          letter-spacing: -0.03em;
+          color: #ffffff;
+          line-height: 1.15;
+          text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+      }
+
+      .dw-card-bottom-row {
         display: flex;
-        flex-direction: column;
         justify-content: space-between;
-        gap: 18px;
+        align-items: flex-end;
+        padding-top: 14px;
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
 
-        .dw-bank-preview-box {
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
-          border-radius: 12px;
-          padding: 16px;
+        .dw-card-meta-col {
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
 
-          .dw-bank-preview-header {
-            font-size: 0.8rem;
+          .dw-card-meta-label {
+            font-size: 9.5px;
             font-weight: 700;
-            color: #475569;
+            color: #94a3b8;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 1px dashed #cbd5e1;
+            letter-spacing: 0.06em;
           }
 
-          .dw-bank-preview-body {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-
-            .dw-bank-acc-row {
-              display: flex;
-              justify-content: space-between;
-              font-size: 0.85rem;
-
-              .dw-bank-field-label {
-                color: #64748b;
-              }
-
-              .dw-bank-field-val {
-                font-weight: 600;
-                color: #0f172a;
-              }
-
-              .dw-bank-field-acc {
-                font-family: monospace;
-                letter-spacing: 0.5px;
-                color: #0369a1;
-              }
-            }
+          .dw-card-meta-val {
+            font-size: 13.5px;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: 0.02em;
           }
         }
 
-        .dw-action-stack {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
+        .dw-card-status-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          background: rgba(16, 185, 129, 0.2);
+          color: #34d399;
+          border: 1px solid rgba(16, 185, 129, 0.4);
+          padding: 3px 10px;
+          border-radius: 999px;
+          font-size: 10.5px;
+          font-weight: 800;
+          letter-spacing: 0.05em;
 
-          .dw-btn-withdraw-primary {
-            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-            color: #ffffff;
-            border: none;
-            border-radius: 10px;
-            padding: 13px 20px;
-            font-size: 0.95rem;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3);
-            transition: all 0.2s ease;
-
-            &:hover:not(:disabled) {
-              background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
-              transform: translateY(-1px);
-              box-shadow: 0 6px 18px rgba(2, 132, 199, 0.4);
-            }
-
-            &:disabled {
-              opacity: 0.5;
-              cursor: not-allowed;
-            }
-          }
-
-          .dw-btn-refresh-sub {
-            background: #ffffff;
-            border: 1px solid #cbd5e1;
-            color: #475569;
-            border-radius: 10px;
-            padding: 10px 16px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.15s ease;
-
-            &:hover {
-              background: #f1f5f9;
-              color: #1e293b;
-              border-color: #94a3b8;
-            }
+          .dw-chip-bullet {
+            width: 6px;
+            height: 6px;
+            background: #34d399;
+            border-radius: 50%;
+            box-shadow: 0 0 6px #34d399;
           }
         }
       }
     }
+
+    // Side stats and Bank details
+    .dw-side-panel {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 16px;
+
+    .dw-balance-sub-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+
+      @media (max-width: 640px) {
+        grid-template-columns: 1fr;
+      }
+
+      .dw-sub-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 14px 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+
+        &--hold {
+          border-color: #fde68a;
+          background: #fffbeb;
+        }
+
+        &--pending {
+          border-color: #bfdbfe;
+          background: #eff6ff;
+        }
+
+        &--withdrawn {
+          border-color: #cbd5e1;
+        }
+
+        .dw-sub-label {
+          font-size: 11px;
+          font-weight: 700;
+          color: #64748b;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          margin-bottom: 4px;
+          display: block;
+        }
+
+        .dw-sub-val {
+          font-size: 18px;
+          font-weight: 800;
+          color: #0f172a;
+          display: block;
+
+          &.text-amber {
+            color: #d97706;
+          }
+
+          &.text-blue {
+            color: #2563eb;
+          }
+        }
+
+        .dw-sub-hint {
+          font-size: 11px;
+          color: #94a3b8;
+          margin-top: 3px;
+          display: block;
+        }
+      }
+    }
+
+    .dw-bank-action-row {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 14px;
+      align-items: center;
+
+      @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+      }
+
+      .dw-bank-info-box {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 14px 18px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+
+        .dw-bank-icon-wrap {
+          width: 42px;
+          height: 42px;
+          border-radius: 10px;
+          background: #f1f5f9;
+          color: #0284c7;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 18px;
+          flex-shrink: 0;
+        }
+
+        .dw-bank-details {
+          flex: 1;
+
+          .dw-bank-name-line {
+            font-size: 13px;
+            font-weight: 800;
+            color: #0f172a;
+          }
+
+          .dw-bank-acc-line {
+            font-size: 12px;
+            color: #64748b;
+            font-family: monospace;
+            font-weight: 600;
+            margin-top: 1px;
+          }
+        }
+      }
+
+      .dw-cta-buttons {
+        display: flex;
+        gap: 10px;
+
+        .btn-withdraw-main {
+          flex: 1;
+          background: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+          color: #ffffff;
+          border: none;
+          padding: 12px 18px;
+          border-radius: 12px;
+          font-size: 13px;
+          font-weight: 700;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+          transition: all 0.2s;
+
+          &:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45);
+          }
+
+          &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+          }
+        }
+
+        .btn-refresh-wallet {
+          background: #ffffff;
+          border: 1px solid #cbd5e1;
+          color: #475569;
+          padding: 12px 16px;
+          border-radius: 12px;
+          cursor: pointer;
+          font-size: 13px;
+          font-weight: 600;
+          transition: all 0.2s;
+
+          &:hover {
+            background: #f8fafc;
+            color: #0f172a;
+          }
+        }
+      }
+    }
+  }
+}
 
     // Subtabs Nav
     .dw-subtabs-nav {
@@ -2107,7 +2191,20 @@
             border: 1px solid #fde68a;
           }
 
-          &--approved {
+          &--processing {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+          }
+
+          &--unknown {
+            background: #fdf4ff;
+            color: #a21caf;
+            border: 1px solid #f5d0fe;
+          }
+
+          &--approved,
+          &--completed {
             background: #ecfdf5;
             color: #047857;
             border: 1px solid #a7f3d0;
