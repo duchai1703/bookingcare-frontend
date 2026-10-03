@@ -46,6 +46,13 @@ export const getAdminLiquidityMetrics = (params) => {
 };
 
 /**
+ * Hiệu chuẩn số dư đầu kỳ Sổ cái kép (Ledger Baseline Re-calibration)
+ */
+export const recalibrateLedgerBaseline = () => {
+  return axiosInstance.post('/api/v1/admin/financial/recalibrate-ledger');
+};
+
+/**
  * Tra cứu Sổ cái Giao dịch Toàn sàn (Audit Trail & Ledger Explorer)
  * @param {Object} params { page?: number, limit?: number, type?: string, direction?: string, search?: string, startDate?: string, endDate?: string }
  */

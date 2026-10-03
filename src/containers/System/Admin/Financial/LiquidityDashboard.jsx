@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import {
   getAdminLiquidityMetrics,
+  recalibrateLedgerBaseline,
   getAdminWalletTransactions,
   getAdminWalletsList,
   toggleWalletStatus,
@@ -84,10 +85,31 @@ const LiquidityDashboard = () => {
   const [bankTxnRef, setBankTxnRef] = useState('');
   const [receiptImg, setReceiptImg] = useState('');
   const [isProcessingAction, setIsProcessingAction] = useState(false);
+  const [recalibrating, setRecalibrating] = useState(false);
 
   // Format currency
   const formatMoney = (amount) => {
     return (Number(amount) || 0).toLocaleString('vi-VN') + ' ₫';
+  };
+
+  const handleRecalibrateLedger = async () => {
+    if (!window.confirm('Bạn có chắc chắn muốn chạy công cụ Hiệu chuẩn Sổ cái để tạo bút toán đối ứng cho các số dư ví ban đầu chưa có vết kế toán không?')) {
+      return;
+    }
+    setRecalibrating(true);
+    try {
+      const res = await recalibrateLedgerBaseline();
+      if (res && res.errCode === 0) {
+        toast.success(res.message || 'Hiệu chuẩn Sổ cái thành công!');
+        loadMetrics();
+      } else {
+        toast.error(res?.errMessage || 'Không thể hiệu chuẩn sổ cái');
+      }
+    } catch (err) {
+      toast.error('Lỗi khi gọi API hiệu chuẩn: ' + err.message);
+    } finally {
+      setRecalibrating(false);
+    }
   };
 
   // Load Liquidity Metrics
@@ -369,15 +391,19 @@ const LiquidityDashboard = () => {
           <div className="kpi-value">{formatMoney(summary.totalLiabilities)}</div>
           <div className="kpi-breakdown">
             <div className="breakdown-item">
-              <span>Ví bệnh nhân khả dụng:</span>
+              <span>Ví bệnh nhân:</span>
               <strong>{formatMoney(summary.patientAvailableLiability)}</strong>
+            </div>
+            <div className="breakdown-item">
+              <span>Ví Bác sĩ:</span>
+              <strong>{formatMoney(summary.doctorWalletLiability || 0)}</strong>
             </div>
             <div className="breakdown-item">
               <span>Ký quỹ giữ chỗ (Hold):</span>
               <strong>{formatMoney(summary.escrowActiveHolds)}</strong>
             </div>
             <div className="breakdown-item">
-              <span>Thù lao chờ trả Bác sĩ:</span>
+              <span>Thù lao chờ duyệt chi:</span>
               <strong>{formatMoney(summary.doctorPayables)}</strong>
             </div>
           </div>
@@ -394,7 +420,9 @@ const LiquidityDashboard = () => {
           <div className="kpi-value">{formatMoney(summary.totalCashInflow)}</div>
           <div className="kpi-meta">
             <span>Tổng cộng <strong>{summary.totalDepositCount || 0}</strong> lượt nạp qua VNPay</span>
-            <span className="kpi-subtext">Đã capture doanh thu: {formatMoney(summary.totalCapturedRevenue)}</span>
+            <span className="kpi-subtext">
+              Đã chi/rút: <strong style={{ color: '#E11D48' }}>{formatMoney(summary.totalCashOutflow || 0)}</strong> • Két tồn: <strong style={{ color: '#059669' }}>{formatMoney(summary.realNetCashInTreasury !== undefined ? summary.realNetCashInTreasury : summary.totalCashInflow)}</strong>
+            </span>
           </div>
         </div>
 
@@ -542,6 +570,25 @@ const LiquidityDashboard = () => {
 
                   <div className="breakdown-row">
                     <div className="row-left">
+                      <div className="bullet tw-bg-indigo-500" />
+                      <div>
+                        <div className="row-title">Số dư lưu ký trong Ví Bác sĩ (Doctor Wallets)</div>
+                        <div className="row-hint">Thù lao của {summary.totalDoctorWallets || 0} bác sĩ đã đối soát vào ví nội bộ chờ rút</div>
+                      </div>
+                    </div>
+                    <div className="row-right">
+                      <div className="row-val">{formatMoney(summary.doctorWalletLiability || 0)}</div>
+                      <div className="row-percent">
+                        {summary.totalLiabilities > 0
+                          ? (((summary.doctorWalletLiability || 0) / summary.totalLiabilities) * 100).toFixed(1)
+                          : 0}
+                        %
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="breakdown-row">
+                    <div className="row-left">
                       <div className="bullet tw-bg-amber-500" />
                       <div>
                         <div className="row-title">Tiền ký quỹ giữ chỗ ca khám (Escrow Holds)</div>
@@ -609,9 +656,34 @@ const LiquidityDashboard = () => {
                         <span>Sổ Cái Cân Bằng Hoàn Hảo (Zero Discrepancy)</span>
                       </div>
                     ) : (
-                      <div className="status-badge-rec status-badge-rec--error">
-                        <AlertOctagon size={16} />
-                        <span>Phát hiện Lệch Sổ Cái: {formatMoney(rec.discrepancy)}</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        <div className="status-badge-rec status-badge-rec--error">
+                          <AlertOctagon size={16} />
+                          <span>Phát hiện Lệch Sổ Cái: {formatMoney(rec.discrepancy)}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleRecalibrateLedger}
+                          disabled={recalibrating}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 6,
+                            padding: '8px 14px',
+                            background: '#087F8C',
+                            color: '#FFFFFF',
+                            borderRadius: 6,
+                            border: 'none',
+                            fontWeight: 600,
+                            fontSize: '0.8rem',
+                            cursor: 'pointer',
+                            boxShadow: '0 2px 4px rgba(8, 127, 140, 0.2)'
+                          }}
+                        >
+                          <RotateCw size={14} className={recalibrating ? 'tw-animate-spin' : ''} />
+                          <span>{recalibrating ? 'Đang hiệu chuẩn Sổ cái...' : 'Hiệu chuẩn Số dư ban đầu (Ledger Baseline Calibration)'}</span>
+                        </button>
                       </div>
                     )}
                   </div>
