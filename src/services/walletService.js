@@ -280,10 +280,11 @@ export const payoutDoctorSettlements = (data) => {
 };
 
 /**
- * Quét và mở khóa EARNED -> AVAILABLE sau T+24h (Admin)
+ * Quét và mở khóa EARNED -> AVAILABLE sau T+24h hoặc T+0 (Admin)
+ * @param {Object} data { forceAll: boolean }
  */
-export const releaseEligibleDoctorSettlements = () => {
-  return axiosInstance.post('/api/v1/admin/financial/doctor-settlements/release-eligible');
+export const releaseEligibleDoctorSettlements = (data = {}) => {
+  return axiosInstance.post('/api/v1/admin/financial/doctor-settlements/release-eligible', data);
 };
 
 /**
@@ -301,5 +302,21 @@ export const unlockSingleDoctorSettlement = (itemId) => {
 export const getDoctorSettlementStatement = (params) => {
   return axiosInstance.get('/api/v1/doctor/settlement-statement', { params });
 };
+
+/**
+ * Lấy Hàng đợi Ngoại lệ Tài chính Trung tâm (Financial Exception Queue)
+ */
+export const getAdminExceptionQueue = () => {
+  return axiosInstance.get('/api/v1/admin/financial/exceptions');
+};
+
+/**
+ * Kích hoạt Chu trình Tự động hóa Tài chính (Financial Automation Run-Cycle)
+ * @param {Object} data { dryRun: boolean }
+ */
+export const runFinancialAutomationCycle = (data = {}) => {
+  return axiosInstance.post('/api/v1/admin/financial/automation/run-cycle', data);
+};
+
 
 

@@ -32,7 +32,8 @@ import {
   Sparkles,
   Info,
   ChevronRight,
-  ArrowLeft
+  ArrowLeft,
+  ArrowRight
 } from 'lucide-react';
 import {
   getAdminLiquidityMetrics,
@@ -44,15 +45,19 @@ import {
   processAdminWithdrawal,
   getFinancialConfigs,
   updateFinancialConfigs,
-  getFinancialCashFlows
+  getFinancialCashFlows,
+  getAdminExceptionQueue,
+  runFinancialAutomationCycle
 } from '../../../../services/walletService';
 import WithdrawalPolicyAuditTab from './WithdrawalPolicyAuditTab';
 import RefundCasesTab from './RefundCasesTab';
 import DoctorSettlementsTab from './DoctorSettlementsTab';
+import FinancialExceptionHub from './FinancialExceptionHub';
 import './LiquidityDashboard.scss';
 
 const TAB_ROUTES = {
   solvency: '/system/financial/overview',
+  exceptions: '/system/financial/exceptions',
   inflows: '/system/financial/inflows',
   withdrawals: '/system/financial/withdrawals',
   'refund-cases': '/system/financial/refund-cases',
@@ -64,6 +69,13 @@ const TAB_ROUTES = {
 };
 
 const SUBPAGE_METADATA = {
+  exceptions: {
+    title: 'Trung Tâm Xử Lý Ngoại Lệ Tài Chính (Financial Exception Hub)',
+    tag: 'Hàng Đợi Xử Lý Tập Trung',
+    description: 'Tập trung toàn bộ các giao dịch cần can thiệp: Rút tiền quá hạn mức, khiếu nại hoàn tiền, thù lao tạm giữ và cảnh báo vi phạm SLA.',
+    icon: AlertOctagon,
+    color: '#f43f5e'
+  },
   inflows: {
     title: 'Dòng Tiền Thu Vào (Cash Inflows)',
     tag: 'Dòng Tiền Thực Nạp',
@@ -172,6 +184,7 @@ const LiquidityDashboard = ({ defaultTab }) => {
   const [inputReserveRatio, setInputReserveRatio] = useState(40);
   const [inputMinWithdraw, setInputMinWithdraw] = useState(50000);
   const [inputSlaHours, setInputSlaHours] = useState(24);
+  const [inputSettlementHoldHours, setInputSettlementHoldHours] = useState(24);
   const [isSavingConfigs, setIsSavingConfigs] = useState(false);
   const [loadingConfigs, setLoadingConfigs] = useState(false);
 
@@ -216,6 +229,45 @@ const LiquidityDashboard = ({ defaultTab }) => {
   // Format currency
   const formatMoney = (amount) => {
     return (Number(amount) || 0).toLocaleString('vi-VN') + ' ₫';
+  };
+
+  // Exception Queue State (for badges and overview quick alert)
+  const [exceptionSummary, setExceptionSummary] = useState({
+    totalCount: 0,
+    criticalCount: 0,
+    highCount: 0,
+    circuitBreakerActive: false,
+    lcrCurrent: 100,
+  });
+  const [runningAutomation, setRunningAutomation] = useState(false);
+
+  const loadExceptionSummary = useCallback(async () => {
+    try {
+      const res = await getAdminExceptionQueue();
+      if (res && res.errCode === 0 && res.data?.summary) {
+        setExceptionSummary(res.data.summary);
+      }
+    } catch (err) {
+      console.error('Error fetching exception summary:', err);
+    }
+  }, []);
+
+  const handleRunQuickCycle = async () => {
+    setRunningAutomation(true);
+    try {
+      const res = await runFinancialAutomationCycle();
+      if (res && res.errCode === 0) {
+        toast.success(res.message || 'Chu trình tự động hoàn tất!');
+        loadExceptionSummary();
+        loadMetrics();
+      } else {
+        toast.error(res?.errMessage || 'Chu trình tự động thất bại');
+      }
+    } catch (err) {
+      toast.error('Lỗi khi kích hoạt chu trình tự động');
+    } finally {
+      setRunningAutomation(false);
+    }
   };
 
   const formatTxType = (type) => {
@@ -267,6 +319,7 @@ const LiquidityDashboard = ({ defaultTab }) => {
         setInputReserveRatio(res.data.reserveRatioTarget || 40);
         setInputMinWithdraw(res.data.minWithdrawalAmount || 50000);
         setInputSlaHours(res.data.withdrawalSlaHours || 24);
+        setInputSettlementHoldHours(res.data.settlementHoldHours !== undefined ? res.data.settlementHoldHours : 24);
         setReserveRatio(res.data.reserveRatioTarget || 40);
       }
     } catch (err) {
@@ -286,6 +339,7 @@ const LiquidityDashboard = ({ defaultTab }) => {
         reserveRatioTarget: inputReserveRatio,
         minWithdrawalAmount: inputMinWithdraw,
         withdrawalSlaHours: inputSlaHours,
+        settlementHoldHours: inputSettlementHoldHours,
       });
       if (res && res.errCode === 0) {
         toast.success('Cập nhật cấu hình quỹ & hạn mức tài chính sàn thành công!');
@@ -407,7 +461,8 @@ const LiquidityDashboard = ({ defaultTab }) => {
     loadMetrics();
     loadWithdrawals(); // tải sớm để lấy badge pending count
     loadConfigs();     // tải cấu hình quỹ bảo chứng và hạn mức
-  }, [loadMetrics, loadWithdrawals, loadConfigs]);
+    loadExceptionSummary(); // tải số lượng ngoại lệ cho badge và quick alert
+  }, [loadMetrics, loadWithdrawals, loadConfigs, loadExceptionSummary]);
 
   useEffect(() => {
     if (activeTab === 'inflows') {
@@ -611,6 +666,106 @@ const LiquidityDashboard = ({ defaultTab }) => {
               </div>
             </div>
           )}
+
+          {/* ===== EXECUTIVE EXCEPTION & AUTOMATION QUICK HUB ===== */}
+          <div
+            className="tw-rounded-3xl tw-p-5 tw-shadow-xl tw-mb-5 tw-flex tw-flex-col md:tw-flex-row md:tw-items-center md:tw-justify-between tw-gap-4"
+            style={{
+              background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
+              border: '1.5px solid #334155',
+              color: '#ffffff',
+            }}
+          >
+            <div className="tw-flex tw-items-center tw-gap-3.5">
+              <div
+                className="tw-p-2.5 tw-rounded-2xl tw-flex tw-items-center tw-justify-center"
+                style={{
+                  background: 'rgba(244, 63, 94, 0.18)',
+                  color: '#fb7185',
+                  border: '1px solid rgba(244, 63, 94, 0.35)',
+                }}
+              >
+                <AlertOctagon size={24} />
+              </div>
+              <div>
+                <div className="tw-flex tw-items-center tw-gap-2.5">
+                  <span style={{ color: '#ffffff', fontWeight: 800, fontSize: '14.5px', letterSpacing: '-0.01em' }}>
+                    Hàng Đợi Ngoại Lệ Tài Chính (Exception Queue)
+                  </span>
+                  <span
+                    style={{
+                      background: 'rgba(244, 63, 94, 0.22)',
+                      color: '#fda4af',
+                      border: '1px solid rgba(244, 63, 94, 0.4)',
+                      padding: '3px 10px',
+                      borderRadius: '999px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                    }}
+                  >
+                    {exceptionSummary.totalCount || 0} ca cần chú ý
+                  </span>
+                </div>
+                <div style={{ color: '#94a3b8', fontSize: '12.5px', marginTop: '4px', lineHeight: 1.45 }}>
+                  <span style={{ color: '#fca5a5', fontWeight: 700 }}>
+                    🔴 {exceptionSummary.criticalCount || 0} khẩn cấp
+                  </span>{' '}
+                  (SLA/Tranh chấp) •{' '}
+                  <span style={{ color: '#fde047', fontWeight: 700 }}>
+                    🟡 {exceptionSummary.highCount || 0} giá trị lớn/tồn đọng
+                  </span>{' '}
+                  • Hệ thống tự động xử lý các ca sạch, Admin chỉ can thiệp ngoại lệ.
+                </div>
+              </div>
+            </div>
+
+            <div className="tw-flex tw-items-center tw-gap-2.5">
+              <button
+                type="button"
+                className="tw-flex tw-items-center tw-gap-1.5"
+                style={{
+                  background: '#1e293b',
+                  color: '#f1f5f9',
+                  border: '1px solid #475569',
+                  padding: '9px 18px',
+                  borderRadius: '12px',
+                  fontSize: '12.5px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = '#334155')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = '#1e293b')}
+                onClick={() => handleSwitchTab('exceptions')}
+              >
+                <span>Mở Hàng Đợi</span>
+                <ArrowRight size={13} />
+              </button>
+              <button
+                type="button"
+                disabled={runningAutomation}
+                className="tw-flex tw-items-center tw-gap-1.5"
+                style={{
+                  background: 'linear-gradient(135deg, #059669 0%, #0d9488 100%)',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '9px 18px',
+                  borderRadius: '12px',
+                  fontSize: '12.5px',
+                  fontWeight: 700,
+                  cursor: runningAutomation ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
+                  opacity: runningAutomation ? 0.6 : 1,
+                  transition: 'all 0.2s ease',
+                }}
+                onClick={handleRunQuickCycle}
+              >
+                <Sparkles size={13} className={runningAutomation ? 'tw-animate-spin' : ''} />
+                <span>{runningAutomation ? 'Đang chạy...' : 'Chạy Chu Trình Tự Động'}</span>
+              </button>
+            </div>
+          </div>
 
           {/* ===== 4 EXECUTIVE KPI CARDS ===== */}
           <div className="ld-kpi-grid">
@@ -822,6 +977,20 @@ const LiquidityDashboard = ({ defaultTab }) => {
           {/* Nhóm 1: ĐIỀU HÀNH */}
           <div className="tab-nav-group">
             <span className="tab-group-label">ĐIỀU HÀNH</span>
+            <button
+              type="button"
+              className={`tab-btn ${activeTab === 'exceptions' ? 'active' : ''}`}
+              onClick={() => handleSwitchTab('exceptions')}
+            >
+              <AlertOctagon size={15} />
+              <span>Hàng đợi ngoại lệ</span>
+              {exceptionSummary?.totalCount > 0 && (
+                <span className="tab-badge" style={{ background: '#fef2f2', color: '#b91c1c', fontWeight: 800 }}>
+                  {exceptionSummary.totalCount}
+                </span>
+              )}
+            </button>
+
             <button
               type="button"
               className={`tab-btn ${activeTab === 'solvency' ? 'active' : ''}`}
@@ -2281,6 +2450,54 @@ const LiquidityDashboard = ({ defaultTab }) => {
                       </div>
                     </div>
 
+                    {/* Cấu hình 5: Thời gian giữ thù lao Bác sĩ (T+0 / T+24h) */}
+                    <div className="form-field-group tw-mt-5">
+                      <div className="tw-flex tw-justify-between tw-items-center">
+                        <label className="field-label">
+                          5. Thời Gian Tạm Giữ Thù Lao Bác Sĩ (T+0h / T+24h) *
+                        </label>
+                        <span className={`tw-px-2.5 tw-py-0.5 tw-rounded-full tw-text-xs tw-font-bold ${
+                          inputSettlementHoldHours === 0
+                            ? 'tw-bg-purple-100 tw-text-purple-800'
+                            : 'tw-bg-amber-100 tw-text-amber-800'
+                        }`}>
+                          {inputSettlementHoldHours === 0 ? 'T+0 (Khả dụng ngay tức thì)' : `T+${inputSettlementHoldHours} Giờ`}
+                        </span>
+                      </div>
+                      <p className="field-hint">
+                        Thời hạn tạm giữ thù lao sau khi ca khám hoàn tất để phòng ngừa khiếu nại chất lượng dịch vụ. Thiết lập <strong>0 giờ (T+0)</strong> để mở khóa khả dụng tức thì phục vụ Demo / Thanh toán nhanh.
+                      </p>
+                      <div className="preset-btn-group tw-mt-2">
+                        {[
+                          { label: '⚡ T+0 (Demo Tức Thì)', value: 0 },
+                          { label: 'T+1 Giờ', value: 1 },
+                          { label: 'T+12 Giờ', value: 12 },
+                          { label: 'T+24 Giờ (Chuẩn)', value: 24 },
+                          { label: 'T+48 Giờ', value: 48 },
+                        ].map((preset) => (
+                          <button
+                            key={preset.value}
+                            type="button"
+                            className={`preset-btn ${Number(inputSettlementHoldHours) === preset.value ? 'active' : ''}`}
+                            onClick={() => setInputSettlementHoldHours(preset.value)}
+                          >
+                            {preset.label}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="tw-mt-2.5">
+                        <input
+                          type="number"
+                          min="0"
+                          max="720"
+                          className="custom-number-input"
+                          value={inputSettlementHoldHours}
+                          onChange={(e) => setInputSettlementHoldHours(Math.max(0, Number(e.target.value) || 0))}
+                          required
+                        />
+                      </div>
+                    </div>
+
                     {/* Nút lưu */}
                     <div className="tw-flex tw-justify-end tw-items-center tw-gap-3 tw-mt-6 tw-pt-4 tw-border-t tw-border-slate-100">
                       <button
@@ -2395,6 +2612,11 @@ const LiquidityDashboard = ({ defaultTab }) => {
           {/* ══════════════ TAB 5: QUYẾT TOÁN THÙ LAO BÁC SĨ ══════════════ */}
           {activeTab === 'doctor-settlements' && (
             <DoctorSettlementsTab />
+          )}
+
+          {/* ══════════════ TAB 0: TRUNG TÂM XỬ LÝ NGOẠI LỆ TÀI CHÍNH ══════════════ */}
+          {activeTab === 'exceptions' && (
+            <FinancialExceptionHub onNavigateTab={handleSwitchTab} />
           )}
         </div>
       </div>

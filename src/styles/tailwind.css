@@ -1,6 +1,11 @@
 /* src/styles/tailwind.css */
 /* [Phase 10] — Tailwind CSS directives */
-/* KHÔNG import @tailwind base; vì đã tắt preflight */
+:root {
+  --tw-gradient-from-position: 0%;
+  --tw-gradient-via-position: 50%;
+  --tw-gradient-to-position: 100%;
+}
 
 @tailwind components;
 @tailwind utilities;
+

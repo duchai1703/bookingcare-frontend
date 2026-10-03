@@ -313,6 +313,7 @@ const App = () => {
             <Route path="policies" element={<PolicyMaster />} />
             {/* [Phase 4 & 5] Financial Management, Cash Flows & Executive Ledger Console */}
             <Route path="financial-liquidity" element={<LiquidityDashboard />} />
+            <Route path="financial/exceptions" element={<LiquidityDashboard defaultTab="exceptions" />} />
             <Route path="financial/overview" element={<LiquidityDashboard defaultTab="solvency" />} />
             <Route path="financial/inflows" element={<LiquidityDashboard defaultTab="inflows" />} />
             <Route path="financial/withdrawals" element={<LiquidityDashboard defaultTab="withdrawals" />} />

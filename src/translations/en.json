@@ -92,6 +92,7 @@
   "menu.admin.financial-policies": "Financial Policies & Rules",
   "menu.admin.financial-liquidity": "Treasury & Ledgers",
   "menu.admin.financial-management": "Treasury & Ledgers",
+  "menu.admin.financial-exceptions": "Exceptions & Automation Hub",
   "menu.admin.financial-overview": "Overview & Reserve Fund",
   "menu.admin.financial-inflows": "Cash Inflows Stream",
   "menu.admin.financial-withdrawals": "Withdrawals & Payouts",

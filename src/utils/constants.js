@@ -74,6 +74,7 @@ export const path = {
   SYSTEM_SETTINGS: '/system/system-settings',
   FINANCIAL_POLICIES: '/system/policies',
   FINANCIAL_LIQUIDITY: '/system/financial-liquidity',
+  FINANCIAL_EXCEPTIONS: '/system/financial/exceptions',
   FINANCIAL_OVERVIEW: '/system/financial/overview',
   FINANCIAL_INFLOWS: '/system/financial/inflows',
   FINANCIAL_WITHDRAWALS: '/system/financial/withdrawals',

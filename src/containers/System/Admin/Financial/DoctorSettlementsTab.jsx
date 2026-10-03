@@ -21,7 +21,8 @@ import {
   Square,
   Eye,
   Unlock,
-  X
+  X,
+  Zap
 } from 'lucide-react';
 import {
   getAdminDoctorSettlements,
@@ -134,6 +135,27 @@ export default function DoctorSettlementsTab() {
       }
     } catch (err) {
       toast.error('Lỗi kết nối khi quét mở khóa thù lao');
+    } finally {
+      setReleasing(false);
+    }
+  };
+
+  // Mở khóa khẩn cấp toàn bộ (T+0 Demo Mode)
+  const handleReleaseAllInstant = async () => {
+    if (!window.confirm('Kích hoạt chế độ T+0 Demo: Mở khóa NGAY LẬP TỨC toàn bộ các ca khám đang giữ sang trạng thái Khả Dụng (AVAILABLE) để thực hiện chi trả?')) {
+      return;
+    }
+    setReleasing(true);
+    try {
+      const res = await releaseEligibleDoctorSettlements({ forceAll: true });
+      if (res && res.errCode === 0) {
+        toast.success(res.message || 'Đã mở khóa toàn bộ ca khám sang trạng thái Khả Dụng (T+0)!');
+        loadSettlements();
+      } else {
+        toast.error(res?.errMessage || 'Không thể mở khóa toàn bộ');
+      }
+    } catch (err) {
+      toast.error('Lỗi kết nối khi mở khóa toàn bộ');
     } finally {
       setReleasing(false);
     }
@@ -338,6 +360,18 @@ export default function DoctorSettlementsTab() {
           >
             <Sparkles size={14} className={releasing ? 'tw-animate-spin' : ''} />
             <span>{releasing ? 'Đang mở khóa...' : 'Quét Mở Khóa T+24h'}</span>
+          </button>
+
+          {/* Nút Mở khóa tất cả T+0 (Demo Mode) */}
+          <button
+            type="button"
+            className="tw-px-3.5 tw-py-2 tw-text-sm tw-font-bold tw-text-purple-800 hover:tw-text-purple-900 tw-bg-purple-50 hover:tw-bg-purple-100 tw-rounded-xl tw-border tw-border-purple-200 tw-flex tw-items-center tw-gap-1.5 tw-transition"
+            onClick={handleReleaseAllInstant}
+            disabled={releasing}
+            title="Mở khóa tức thời toàn bộ các ca khám đang giữ sang Khả dụng (Chế độ T+0 Demo)"
+          >
+            <Zap size={14} className={releasing ? 'tw-animate-bounce' : 'tw-text-purple-600'} />
+            <span>Mở Khóa T+0 (Demo)</span>
           </button>
 
           {/* Nút chi trả hàng loạt */}

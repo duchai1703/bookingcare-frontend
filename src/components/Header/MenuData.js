@@ -41,6 +41,7 @@ export const adminMenu = [
     link: path.FINANCIAL_LIQUIDITY,
     subMenus: [
       // 1. Nhóm Điều hành & Dòng tiền
+      { name: 'menu.admin.financial-exceptions',         link: path.FINANCIAL_EXCEPTIONS },
       { name: 'menu.admin.financial-overview',           link: path.FINANCIAL_OVERVIEW },
       { name: 'menu.admin.financial-inflows',            link: path.FINANCIAL_INFLOWS },
       // 2. Nhóm Nghiệp vụ thanh toán & Chi trả
