@@ -666,5 +666,15 @@
   "notification.type.withdrawal-processed": "Withdrawal Processed",
   "notification.type.refund-completed": "Wallet Refund Processed",
   "notification.type.missed-call": "Missed Call",
-  "notification.type.conversation-reopened": "Conversation Reopened"
+  "notification.type.conversation-reopened": "Conversation Reopened",
+  "chatbot.btn-copy": "Copy",
+  "chatbot.btn-copied": "Copied",
+  "chatbot.booking-draft-title": "Appointment Confirmation Draft",
+  "chatbot.booking-confirm-btn": "Confirm Booking",
+  "chatbot.booking-cancel-btn": "Back",
+  "chatbot.booking-processing": "Processing booking...",
+  "chatbot.booking-success-title": "Appointment Booked Successfully!",
+  "chatbot.booking-error-title": "Unable to Complete Booking",
+  "chatbot.booking-retry-slot": "Choose Another Slot",
+  "chatbot.booking-find-doctor": "Find Another Doctor"
 }

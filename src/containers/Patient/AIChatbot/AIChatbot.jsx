@@ -67,6 +67,9 @@ const AIChatbot = memo(() => {
   const [isOpen, setIsOpen] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
+  const [selectedDoctorId, setSelectedDoctorId] = useState(null);
+  const [selectedScheduleId, setSelectedScheduleId] = useState(null);
+  const [isBookingProcessing, setIsBookingProcessing] = useState(false);
   const submitLockRef = useRef(false);   // [Double Submit Mutex]
   const abortControllerRef = useRef(null); // [AbortController Inside Submit]
   const streamTextRef = useRef('');      // [Stream Text Buffer]
@@ -207,14 +210,35 @@ const AIChatbot = memo(() => {
   }, []);
 
   // ═══════════════════════════════════════════════════════════════════
-  // SUBMIT HANDLER — TRÁI TIM FRONTEND
+  // ═══════════════════════════════════════════════════════════════════
+  // SUBMIT HANDLER — TRÁI TIM FRONTEND (Hỗ trợ Text + Image Vision)
   // ═══════════════════════════════════════════════════════════════════
   const handleSubmit = useCallback(
-    async (text, force = false) => {
-      console.log('🔵 [FE_STREAM] 1. Bắt đầu gửi câu hỏi. Đã gọi e.preventDefault() chưa?');
+    async (payload, force = false) => {
+      console.log('🔵 [FE_STREAM] 1. Bắt đầu gửi câu hỏi hoặc hình ảnh.');
       // [Double Submit Mutex]
       if (submitLockRef.current && !force) return;
       submitLockRef.current = true;
+
+      // Chuẩn hóa input (string từ suggestion chips hoặc object từ ChatInput)
+      let userText = '';
+      let imageFile = null;
+      let previewUrl = null;
+
+      if (typeof payload === 'string') {
+        userText = payload.trim();
+      } else if (payload && typeof payload === 'object') {
+        userText = (payload.text || '').trim();
+        imageFile = payload.imageFile || null;
+        previewUrl = payload.previewUrl || null;
+      }
+
+      // Nếu chỉ có ảnh không có text, đặt prompt mặc định cho AI phân tích
+      const displayText = userText || (imageFile ? 'Phân tích hình ảnh này' : '');
+      if (!displayText && !imageFile) {
+        submitLockRef.current = false;
+        return;
+      }
 
       const requestId = crypto.randomUUID?.() || Date.now().toString();
       activeRequestIdRef.current = requestId;
@@ -235,14 +259,22 @@ const AIChatbot = memo(() => {
         return;
       }
 
-      // Thêm tin nhắn user
-      addMessage({ role: 'user', text, isLocal: false });
+      // Thêm tin nhắn user (kèm ảnh preview nếu có)
+      const userMsgId = crypto.randomUUID?.() || Date.now().toString();
+      addMessage({
+        id: userMsgId,
+        role: 'user',
+        text: displayText,
+        hasImage: Boolean(imageFile),
+        previewUrl: previewUrl || undefined,
+        isLocal: false,
+      });
 
       // [State isThinking]
       if (isMountedRef.current) setIsThinking(true);
 
       // Placeholder AI message for streaming
-      const aiMsgId = crypto.randomUUID?.() || Date.now().toString();
+      const aiMsgId = crypto.randomUUID?.() || (Date.now() + 1).toString();
       addMessage({ id: aiMsgId, role: 'model', text: '', isLocal: false });
 
       // [TextDecoder — Ngoài lặp]
@@ -250,31 +282,48 @@ const AIChatbot = memo(() => {
       let buffer = ''; // [Buffer Safe Slice]
       let reader; // [HOISTED] — Khai báo ngoài try để finally truy cập được
 
-      // ═══════════════════════════════════════════════════════════════
-      // [Phase 12.6 — CHUNK APPEND THUẦN KHIẾT]
-      // Backend gửi DELTA text (phần mới), KHÔNG gửi cumulative text.
-      // => TUYỆT ĐỐI KHÔNG dùng Overlap Merge. Chỉ APPEND.
-      //
-      // Overlap Merge cũ (mergeStreamText) gây nuốt ký tự ở biên:
-      //   chunk_1 = "16:0", chunk_2 = "0"
-      //   Overlap tìm current.slice(-1)==="0" === incoming.slice(0,1)==="0"
-      //   → Nuốt số 0 → Output "16:0" thay vì "16:00"
-      //
-      // Giải pháp: Pure Append — miễn nhiễm hoàn toàn với:
-      //   ✅ Number boundary (16:0 + 0 → 16:00)
-      //   ✅ Unicode boundary (Bác s + ĩ → Bác sĩ)
-      //   ✅ Markdown boundary ([Nhấn vào  + đây](/link))
-      // ═══════════════════════════════════════════════════════════════
-
       try {
-        // ═══ [fetch BaseURL + Bypass SW + credentials] ═══
         const baseUrl = import.meta.env.VITE_BACKEND_URL;
+        let uploadedImageId = null;
+
+        // ═══ Bước 1: Upload ảnh nếu có ═══
+        if (imageFile) {
+          const uploadFormData = new FormData();
+          uploadFormData.append('image', imageFile);
+
+          const uploadRes = await fetch(`${baseUrl}/api/v1/ai/upload-image`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${tokenRef.current}`,
+            },
+            credentials: 'include',
+            signal,
+            body: uploadFormData,
+          });
+
+          if (!uploadRes.ok) {
+            let uploadErrDetail = 'Tải ảnh lên thất bại.';
+            try {
+              const errJson = await uploadRes.json();
+              if (errJson?.message) uploadErrDetail = errJson.message;
+            } catch (_) {}
+            const uploadErr = new Error(uploadErrDetail);
+            uploadErr.status = uploadRes.status;
+            throw uploadErr;
+          }
+
+          const uploadData = await uploadRes.json();
+          uploadedImageId = uploadData.imageId;
+        }
+
+        // ═══ Bước 2: Chuẩn bị History & SSE Chat Request ═══
         const historySource = latestMessagesRef.current.length
           ? latestMessagesRef.current
           : messages;
         const historyPayload = historySource
           .filter((m) => !m.isLocal && typeof m.text === 'string' && m.text.trim() !== '')
-          .map((m) => ({ role: m.role || m.sender, text: m.text }));
+          .map((m) => ({ role: m.role || m.sender, text: m.text, hasImage: m.hasImage }));
+
         const response = await fetch(`${baseUrl}/api/v1/ai/chat`, {
           method: 'POST',
           headers: {
@@ -284,15 +333,23 @@ const AIChatbot = memo(() => {
           credentials: 'include', // [Fetch Credentials]
           signal,
           body: JSON.stringify({
-            message: text,
+            message: displayText,
             history: historyPayload,
+            imageId: uploadedImageId || undefined,
             language,
           }),
         });
 
         // ═══ [Check !response.ok] ═══
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
+          let errDetail = `HTTP ${response.status}`;
+          try {
+            const errJson = await response.json();
+            if (errJson?.message) errDetail = errJson.message;
+          } catch (_) {}
+          const httpErr = new Error(errDetail);
+          httpErr.status = response.status;
+          throw httpErr;
         }
 
         // ═══ Dùng fetch + ReadableStream ═══
@@ -303,10 +360,6 @@ const AIChatbot = memo(() => {
           const { done, value } = await reader.read();
           if (done) break;
 
-          // [TextDecoder + stream: true]
-          // stream: true giữ lại byte dở dang ở cuối chunk,
-          // đợi chunk tiếp theo ghép đủ ký tự UTF-8 mới giải mã.
-          // => Chống mất ký tự tiếng Việt có dấu ở biên chunk.
           buffer += decoder.decode(value, { stream: true });
 
           // [Buffer Safe Slice — Max Buffer 100KB]
@@ -348,27 +401,131 @@ const AIChatbot = memo(() => {
                   break;
                 }
 
+                // ═══ [Vision Analysis Structured Event (Phase 02)] ═══
+                if (parsed.visionAnalysis || parsed.type === 'VISION_ANALYSIS' || parsed.event === 'vision:analysis') {
+                  const visionResult = parsed.visionAnalysis || parsed.data;
+                  if (visionResult && isMountedRef.current) {
+                    setMessages((prev) => {
+                      const nextState = prev.map((m) =>
+                        m.id === aiMsgId
+                          ? { ...m, visionAnalysis: visionResult }
+                          : m
+                      );
+                      latestMessagesRef.current = nextState;
+                      return nextState;
+                    });
+                  }
+                }
+
+                // ═══ [Health Assessment Structured Event (Phase 03)] ═══
+                if (parsed.healthAssessment || parsed.type === 'HEALTH_ASSESSMENT' || parsed.event === 'health:assessment') {
+                  const assessmentResult = parsed.healthAssessment || (parsed.type === 'HEALTH_ASSESSMENT' ? parsed.data : null) || parsed.data;
+                  if (assessmentResult && isMountedRef.current) {
+                    setMessages((prev) => {
+                      const nextState = prev.map((m) =>
+                        m.id === aiMsgId
+                          ? { ...m, healthAssessment: assessmentResult }
+                          : m
+                      );
+                      latestMessagesRef.current = nextState;
+                      return nextState;
+                    });
+                  }
+                }
+
+                // ═══ [Doctor Discovery Structured Event (Phase 04)] ═══
+                if (parsed.doctorSearchResults || parsed.type === 'DOCTOR_SEARCH_RESULTS' || parsed.event === 'doctor:search') {
+                  const docResults = parsed.doctorSearchResults || (parsed.type === 'DOCTOR_SEARCH_RESULTS' ? parsed : null) || parsed.data;
+                  if (docResults && isMountedRef.current) {
+                    setMessages((prev) => {
+                      const nextState = prev.map((m) =>
+                        m.id === aiMsgId
+                          ? { ...m, doctorSearchResults: docResults }
+                          : m
+                      );
+                      latestMessagesRef.current = nextState;
+                      return nextState;
+                    });
+                  }
+                }
+
+                // ═══ [Slot Discovery Structured Event (Phase 04)] ═══
+                if (parsed.slotSearchResults || parsed.type === 'SLOT_SEARCH_RESULTS' || parsed.event === 'slot:search') {
+                  const slotResults = parsed.slotSearchResults || (parsed.type === 'SLOT_SEARCH_RESULTS' ? parsed : null) || parsed.data;
+                  if (slotResults && isMountedRef.current) {
+                    setMessages((prev) => {
+                      const nextState = prev.map((m) =>
+                        m.id === aiMsgId
+                          ? { ...m, slotSearchResults: slotResults }
+                          : m
+                      );
+                      latestMessagesRef.current = nextState;
+                      return nextState;
+                    });
+                  }
+                }
+
+                // ═══ [Booking Draft Structured Event (Phase 05)] ═══
+                if (parsed.bookingDraft || parsed.type === 'BOOKING_DRAFT' || parsed.event === 'booking:draft') {
+                  const draftData = parsed.bookingDraft || (parsed.type === 'BOOKING_DRAFT' ? parsed.data : null) || parsed.data;
+                  if (draftData && isMountedRef.current) {
+                    setMessages((prev) => {
+                      const nextState = prev.map((m) =>
+                        m.id === aiMsgId
+                          ? { ...m, bookingDraft: draftData }
+                          : m
+                      );
+                      latestMessagesRef.current = nextState;
+                      return nextState;
+                    });
+                  }
+                }
+
+                // ═══ [Booking Success Structured Event (Phase 05)] ═══
+                if (parsed.bookingResult || parsed.type === 'BOOKING_SUCCESS' || parsed.event === 'booking:success') {
+                  const successData = parsed.bookingResult || (parsed.type === 'BOOKING_SUCCESS' ? parsed.data : null) || parsed.data;
+                  if (successData && isMountedRef.current) {
+                    setMessages((prev) => {
+                      const nextState = prev.map((m) =>
+                        m.id === aiMsgId
+                          ? { ...m, bookingResult: successData, bookingDraft: null }
+                          : m
+                      );
+                      latestMessagesRef.current = nextState;
+                      return nextState;
+                    });
+                  }
+                }
+
+                // ═══ [Booking Error Structured Event (Phase 05)] ═══
+                if (parsed.bookingError || parsed.type === 'BOOKING_ERROR' || parsed.event === 'booking:error') {
+                  const errData = parsed.bookingError || (parsed.type === 'BOOKING_ERROR' ? parsed.data : null) || parsed.data;
+                  if (errData && isMountedRef.current) {
+                    setMessages((prev) => {
+                      const nextState = prev.map((m) =>
+                        m.id === aiMsgId
+                          ? { ...m, bookingError: errData }
+                          : m
+                      );
+                      latestMessagesRef.current = nextState;
+                      return nextState;
+                    });
+                  }
+                }
+
                 if (parsed.text) {
-                  // ═══════════════════════════════════════════════
-                  // [BẢO ĐẢM 2: REACT CONCURRENT TEARING FIX]
-                  // BẮT BUỘC dùng Functional State Update
-                  // TUYỆT ĐỐI CẤM đọc state hiện tại trực tiếp
-                  //
-                  // PURE APPEND — Không overlap, không cắt, không nuốt
-                  // ═══════════════════════════════════════════════
+                  // PURE APPEND
                   if (isMountedRef.current) {
                     streamTextRef.current += parsed.text;
                     setMessages((prevMessages) => {
-                      const newMessages = [...prevMessages];
-                      const lastIndex = newMessages.length - 1;
-
-                      if (lastIndex >= 0) {
-                        newMessages[lastIndex] = {
-                          ...newMessages[lastIndex],
-                          text: streamTextRef.current,
-                        };
-                      }
-
+                      const newMessages = prevMessages.map((m) =>
+                        m.id === aiMsgId
+                          ? {
+                            ...m,
+                            text: streamTextRef.current,
+                          }
+                          : m
+                      );
                       latestMessagesRef.current = newMessages; // Đồng bộ Ref thời gian thực
                       return newMessages;
                     });
@@ -387,15 +544,26 @@ const AIChatbot = memo(() => {
           return;
         } else {
           console.error('🔴 [FE_STREAM_ERROR] Luồng Stream bị văng lỗi/ngắt tại FE:', err.name, err.message);
+          let friendlyMsg = 'Không thể kết nối AI. Vui lòng thử lại.';
+          if (err.status === 429) {
+            friendlyMsg = err.message || 'Bạn đã sử dụng AI quá nhanh. Vui lòng thử lại sau.';
+          } else if (err.status === 403) {
+            friendlyMsg = err.message || 'Tính năng AI Chatbot chỉ dành cho Bệnh nhân.';
+          } else if (err.status === 413) {
+            friendlyMsg = 'Ảnh vượt quá dung lượng tối đa 5MB.';
+          } else if (err.status === 415) {
+            friendlyMsg = 'Định dạng ảnh không được hỗ trợ. Chỉ chấp nhận JPEG, PNG, WebP.';
+          } else if (err.message && !err.message.startsWith('HTTP ')) {
+            friendlyMsg = err.message;
+          }
+
           if (isMountedRef.current) {
             setMessages((prev) =>
               prev.map((m) =>
                 m.id === aiMsgId
                   ? {
                     ...m,
-                    text:
-                      m.text ||
-                      'Không thể kết nối AI. Vui lòng thử lại.',
+                    text: m.text || friendlyMsg,
                   }
                   : m
               )
@@ -421,6 +589,202 @@ const AIChatbot = memo(() => {
     },
     [messages, language, addMessage, setMessages, saveMessages]
   );
+
+  // ──── [Phase 04: Doctor Discovery Selection Callback] ────
+  const handleSelectDoctor = useCallback((doctor) => {
+    if (!doctor) return;
+    setSelectedDoctorId(doctor.doctorId);
+    const doctorName = doctor.name || 'bác sĩ';
+    handleSubmit(`Xem lịch khám của bác sĩ ${doctorName}`);
+  }, [handleSubmit]);
+
+  // ──── [Phase 04: Slot Discovery Selection -> Phase 05 Booking Draft] ────
+  const handleSelectSlot = useCallback(async (slot, doctor) => {
+    if (!slot) return;
+    setSelectedScheduleId(slot.scheduleId);
+    console.log(`[FE_SLOT_SELECTED] Doctor: ${doctor?.doctorId || 'unknown'}, Schedule: ${slot.scheduleId}, Time: ${slot.displayTime}`);
+
+    const baseUrl = import.meta.env.VITE_BACKEND_URL;
+    if (!tokenRef.current) return;
+
+    // Hiển thị thông điệp người dùng chọn slot
+    const userMsgId = crypto.randomUUID?.() || Date.now().toString();
+    addMessage({
+      id: userMsgId,
+      role: 'user',
+      text: `Đặt lịch khám với ${doctor?.name || 'bác sĩ'} vào ${slot.displayTime}`,
+      isLocal: false,
+    });
+
+    const aiMsgId = crypto.randomUUID?.() || (Date.now() + 1).toString();
+    addMessage({
+      id: aiMsgId,
+      role: 'model',
+      text: 'Đang chuẩn bị phiếu thông tin đặt lịch khám cho bạn...',
+      isLocal: false,
+    });
+
+    try {
+      const res = await fetch(`${baseUrl}/api/v1/ai/booking/draft`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${tokenRef.current}`,
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          doctorId: doctor?.doctorId,
+          scheduleId: slot.scheduleId,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.status === 'success' && data.draft) {
+        setMessages((prev) => {
+          const next = prev.map((m) =>
+            m.id === aiMsgId
+              ? {
+                ...m,
+                text: 'Mình đã chuẩn bị xong phiếu thông tin đặt lịch khám. Bạn vui lòng kiểm tra các thông tin bên dưới và bấm "Xác nhận đặt lịch" để hoàn tất nhé:',
+                bookingDraft: data.draft,
+              }
+              : m
+          );
+          latestMessagesRef.current = next;
+          if (typeof saveMessages === 'function') saveMessages(next);
+          return next;
+        });
+      } else {
+        setMessages((prev) => {
+          const next = prev.map((m) =>
+            m.id === aiMsgId
+              ? {
+                ...m,
+                text: 'Chưa thể tạo bản nháp đặt lịch cho khung giờ này.',
+                bookingError: {
+                  error: data.error || 'draft_failed',
+                  message: data.message || 'Không thể tạo bản nháp đặt lịch.',
+                },
+              }
+              : m
+          );
+          latestMessagesRef.current = next;
+          if (typeof saveMessages === 'function') saveMessages(next);
+          return next;
+        });
+      }
+    } catch (err) {
+      console.error('[FE_DRAFT_ERR]', err);
+      setMessages((prev) => {
+        const next = prev.map((m) =>
+          m.id === aiMsgId
+            ? {
+              ...m,
+              text: 'Không thể kết nối đến máy chủ để tạo bản nháp đặt lịch.',
+              bookingError: {
+                error: 'network_error',
+                message: 'Lỗi mạng khi kết nối máy chủ.',
+              },
+            }
+            : m
+        );
+        latestMessagesRef.current = next;
+        return next;
+      });
+    }
+  }, [addMessage, saveMessages]);
+
+  // ──── [Phase 05: Explicit Confirmation Handler] ────
+  const handleConfirmBooking = useCallback(async (draft) => {
+    if (!draft || !draft.draftId || isBookingProcessing) return;
+    setIsBookingProcessing(true);
+
+    const baseUrl = import.meta.env.VITE_BACKEND_URL;
+    if (!tokenRef.current) {
+      setIsBookingProcessing(false);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${baseUrl}/api/v1/ai/booking/confirm`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${tokenRef.current}`,
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          draftId: draft.draftId,
+          confirmationToken: draft.confirmationToken,
+        }),
+      });
+
+      const resData = await res.json();
+      if (res.ok && resData.status === 'success' && resData.data) {
+        setMessages((prev) => {
+          const next = prev.map((m) => {
+            if (m.bookingDraft && m.bookingDraft.draftId === draft.draftId) {
+              return {
+                ...m,
+                bookingDraft: null,
+                bookingResult: resData.data,
+                text: '🎉 Đặt lịch khám thành công! Hệ thống đã ghi nhận lịch hẹn của bạn. Vui lòng kiểm tra email để xác nhận lịch khám.',
+              };
+            }
+            return m;
+          });
+          latestMessagesRef.current = next;
+          if (typeof saveMessages === 'function') saveMessages(next);
+          return next;
+        });
+      } else {
+        setMessages((prev) => {
+          const next = prev.map((m) => {
+            if (m.bookingDraft && m.bookingDraft.draftId === draft.draftId) {
+              return {
+                ...m,
+                bookingError: {
+                  error: resData.error || 'confirm_failed',
+                  message: resData.message || 'Xác nhận đặt lịch không thành công.',
+                },
+              };
+            }
+            return m;
+          });
+          latestMessagesRef.current = next;
+          if (typeof saveMessages === 'function') saveMessages(next);
+          return next;
+        });
+      }
+    } catch (err) {
+      console.error('[FE_CONFIRM_ERR]', err);
+    } finally {
+      setIsBookingProcessing(false);
+    }
+  }, [isBookingProcessing, saveMessages]);
+
+  const handleCancelDraft = useCallback((msgId) => {
+    setMessages((prev) => {
+      const next = prev.map((m) => (m.id === msgId ? { ...m, bookingDraft: null } : m));
+      latestMessagesRef.current = next;
+      if (typeof saveMessages === 'function') saveMessages(next);
+      return next;
+    });
+  }, [saveMessages]);
+
+  const handleRetrySlot = useCallback(() => {
+    handleSubmit('Xem lại các khung giờ khám còn trống');
+  }, [handleSubmit]);
+
+  const handleFindDoctor = useCallback(() => {
+    handleSubmit('Tìm bác sĩ khám bệnh');
+  }, [handleSubmit]);
+
+  // ──── [Phase 04: Specialty Click Callback from Health Assessment] ────
+  const handleSpecialtyClick = useCallback((specialtyName) => {
+    if (!specialtyName) return;
+    handleSubmit(`Tìm bác sĩ chuyên khoa ${specialtyName}`);
+  }, [handleSubmit]);
 
   // Lắng nghe event click "Tư vấn AI" từ doctor card
   useEffect(() => {
@@ -536,7 +900,21 @@ const AIChatbot = memo(() => {
                   onScroll={handleChatScroll}
                 >
                   {messages.map((msg) => (
-                    <MessageItem key={msg.id} msg={msg} />
+                    <MessageItem
+                      key={msg.id}
+                      msg={msg}
+                      onQuestionClick={handleSubmit}
+                      onSpecialtyClick={handleSpecialtyClick}
+                      onSelectDoctor={handleSelectDoctor}
+                      onSelectSlot={handleSelectSlot}
+                      selectedDoctorId={selectedDoctorId}
+                      selectedScheduleId={selectedScheduleId}
+                      onConfirmBooking={handleConfirmBooking}
+                      onCancelDraft={() => handleCancelDraft(msg.id)}
+                      onRetrySlot={handleRetrySlot}
+                      onFindDoctor={handleFindDoctor}
+                      isBookingProcessing={isBookingProcessing}
+                    />
                   ))}
 
                   {/* Typing Indicator — Bouncing Dots */}

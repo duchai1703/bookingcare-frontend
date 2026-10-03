@@ -1,20 +1,18 @@
 // ═══════════════════════════════════════════════════════════════════════
-// [Phase 12.3] useChatStorage — Custom Hook quản lý Chat History
-// Driver: IndexedDB (localForage) — CẤM TUYỆT ĐỐI Browser_Storage
-// Fallback: In-Memory Store (Safari Private Mode)
+// [Phase 01 Stabilization] useChatStorage — Custom Hook quản lý Chat History
+// Driver: IndexedDB (localForage)
+// Fallback: In-Memory Store
+// Normalization: Corrupted history recovery & message sanitization
 // ═══════════════════════════════════════════════════════════════════════
 
 import localforage from 'localforage';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-// ═══ [Private Mode Storage] — In-Memory Fallback ═══
-// Khi Safari Private Mode hoặc browser khóa IndexedDB Quota,
-// tự động lùi về object in-memory — KHÔNG BAO GIỜ rơi xuống Browser_Storage.
+// ═══ In-Memory Fallback ═══
 let inMemoryStore = {};
 
 // ═══ Khởi tạo localForage Instance ═══
-// [LỆNH THÉP] CHỈ IndexedDB — CẤM Browser_Storage
 const chatStore = localforage.createInstance({
   name: 'bookingcare-ai',
   storeName: 'chat_history',
@@ -22,7 +20,6 @@ const chatStore = localforage.createInstance({
 });
 
 // ═══ Request Persistent Storage ═══
-// Yêu cầu browser không tự xóa IndexedDB data
 async function requestPersist() {
   try {
     if (navigator.storage?.persist) {
@@ -34,8 +31,6 @@ async function requestPersist() {
 }
 
 // ═══ Safe get/set với fallback ═══
-// Bọc chatStore trong try/catch — nếu IndexedDB bị khóa,
-// tự động lùi về inMemoryStore
 async function safeGet(key) {
   try {
     return await chatStore.getItem(key);
@@ -52,12 +47,70 @@ async function safeSet(key, value) {
   }
 }
 
+// ═══ Normalizer chống Corrupted Data trong IndexedDB ═══
+function normalizeStoredMessages(rawList) {
+  if (!Array.isArray(rawList)) return [];
+
+  const seenIds = new Set();
+  const validMessages = [];
+
+  for (const item of rawList) {
+    if (!item || typeof item !== 'object') continue;
+
+    const text = typeof item.text === 'string'
+      ? item.text
+      : (typeof item.content === 'string' ? item.content : '');
+
+    const hasImage = Boolean(item.hasImage || item.imageId || item.imagePreview);
+
+    // Bỏ qua các tin nhắn rỗng không có text, không có ảnh và không có thẻ structured card
+    if (
+      !text.trim() &&
+      !hasImage &&
+      !item.visionAnalysis &&
+      !item.healthAssessment &&
+      !item.doctorSearchResults &&
+      !item.slotSearchResults &&
+      !item.bookingDraft &&
+      !item.bookingResult &&
+      !item.bookingError
+    ) continue;
+
+    const id = item.id || uuidv4();
+    if (seenIds.has(id)) continue;
+    seenIds.add(id);
+
+    const roleHint = item.role || item.sender;
+    const role = roleHint === 'user' ? 'user' : 'model';
+
+    validMessages.push({
+      id,
+      role,
+      text: text.trim(),
+      hasImage,
+      imageId: item.imageId || undefined,
+      visionAnalysis: item.visionAnalysis || undefined,
+      healthAssessment: item.healthAssessment || undefined,
+      doctorSearchResults: item.doctorSearchResults || undefined,
+      slotSearchResults: item.slotSearchResults || undefined,
+      bookingDraft: item.bookingDraft || undefined,
+      bookingResult: item.bookingResult || undefined,
+      bookingError: item.bookingError || undefined,
+      isLocal: Boolean(item.isLocal),
+      createdAt: item.createdAt || Date.now(),
+    });
+  }
+
+  // Giữ tối đa 50 tin nhắn gần nhất
+  return validMessages.slice(-50);
+}
+
 // ═══════════════════════════════════════════════════════════════════════
 // Hook: useChatStorage(userId)
 // ═══════════════════════════════════════════════════════════════════════
 export function useChatStorage(userId) {
   const [messages, setMessages] = useState([]);
-  const persistedMsgIds = useRef(new Set()); // [Khóa lưu trùng]
+  const persistedMsgIds = useRef(new Set());
   const isMounted = useRef(true);
 
   // ──── Load on mount ────
@@ -66,39 +119,39 @@ export function useChatStorage(userId) {
     requestPersist();
 
     const storageKey = `chat_${userId}`;
-    safeGet(storageKey).then((saved) => {
-      if (isMounted.current && Array.isArray(saved)) {
-        // [Redux History slice(-50)] — Giới hạn 50 tin nhắn
-        const sliced = saved.slice(-50);
-        setMessages(sliced);
-        sliced.forEach((m) => {
+    safeGet(storageKey)
+      .then((saved) => {
+        if (!isMounted.current) return;
+        const normalized = normalizeStoredMessages(saved);
+        setMessages(normalized);
+        normalized.forEach((m) => {
           if (m.id) persistedMsgIds.current.add(m.id);
         });
-      }
-    });
+      })
+      .catch(() => {
+        if (isMounted.current) setMessages([]);
+      });
 
     return () => {
       isMounted.current = false;
     };
   }, [userId]);
 
-  // ──── Save — [Disk Thrashing Guard: Lưu 1 lần] ────
+  // ──── Save ────
   const saveMessages = useCallback(
     async (msgs) => {
       const storageKey = `chat_${userId}`;
-      const toSave = msgs.slice(-50); // [Redux slice(-50)]
+      const toSave = normalizeStoredMessages(msgs);
       await safeSet(storageKey, toSave);
     },
     [userId]
   );
 
-  // ──── Add Message — [Optimistic UI Guard] ────
+  // ──── Add Message ────
   const addMessage = useCallback(
     (msg) => {
       const newMsg = { ...msg, id: msg.id || uuidv4() };
       setMessages((prev) => {
-        // [Optimistic UI Rollback] — Kiểm tra trùng ID
-        // Ngăn React Strict Mode render trùng lặp
         if (prev.some((m) => m.id === newMsg.id)) return prev;
         const updated = [...prev, newMsg].slice(-50);
         saveMessages(updated);

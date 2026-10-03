@@ -666,5 +666,15 @@
   "notification.type.withdrawal-processed": "Rút tiền từ ví",
   "notification.type.refund-completed": "Hoàn tiền ví BookingCare",
   "notification.type.missed-call": "Cuộc gọi nhỡ",
-  "notification.type.conversation-reopened": "Mở lại cuộc trò chuyện"
+  "notification.type.conversation-reopened": "Mở lại cuộc trò chuyện",
+  "chatbot.btn-copy": "Sao chép",
+  "chatbot.btn-copied": "Đã sao chép",
+  "chatbot.booking-draft-title": "Phiếu xác nhận đặt lịch khám",
+  "chatbot.booking-confirm-btn": "Xác nhận đặt lịch",
+  "chatbot.booking-cancel-btn": "Quay lại",
+  "chatbot.booking-processing": "Đang xử lý đặt lịch...",
+  "chatbot.booking-success-title": "Đặt lịch khám thành công!",
+  "chatbot.booking-error-title": "Chưa thể hoàn tất đặt lịch",
+  "chatbot.booking-retry-slot": "Chọn khung giờ khác",
+  "chatbot.booking-find-doctor": "Tìm bác sĩ khác"
 }
