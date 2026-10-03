@@ -74,6 +74,14 @@ export const path = {
   SYSTEM_SETTINGS: '/system/system-settings',
   FINANCIAL_POLICIES: '/system/policies',
   FINANCIAL_LIQUIDITY: '/system/financial-liquidity',
+  FINANCIAL_OVERVIEW: '/system/financial/overview',
+  FINANCIAL_INFLOWS: '/system/financial/inflows',
+  FINANCIAL_WITHDRAWALS: '/system/financial/withdrawals',
+  FINANCIAL_REFUND_CASES: '/system/financial/refund-cases',
+  FINANCIAL_DOCTOR_SETTLEMENTS: '/system/financial/doctor-settlements',
+  FINANCIAL_LEDGER: '/system/financial/ledger',
+  FINANCIAL_WALLETS: '/system/financial/wallets',
+  FINANCIAL_SETTINGS: '/system/financial/settings',
   CANCELLATION_CENTER: '/system/cancellation-center',
 
   // [Phase E] Admin Detail Analytics pages

@@ -30,6 +30,12 @@ import {
   BarChart3,
   Scale,
   ShieldAlert,
+  Landmark,
+  ArrowDownLeft,
+  ArrowUpRight,
+  BookOpen,
+  SlidersHorizontal,
+  Coins,
 } from 'lucide-react';
 import './Navigator.scss';
 
@@ -57,6 +63,15 @@ const MENU_ICONS = {
   // Admin System & Financial
   'menu.admin.financial-policies': CircleDollarSign,
   'menu.admin.financial-liquidity': Scale,
+  'menu.admin.financial-management': Landmark,
+  'menu.admin.financial-overview': Scale,
+  'menu.admin.financial-inflows': ArrowDownLeft,
+  'menu.admin.financial-withdrawals': ArrowUpRight,
+  'menu.admin.financial-refund-cases': ShieldAlert,
+  'menu.admin.financial-doctor-settlements': Coins,
+  'menu.admin.financial-ledger': BookOpen,
+  'menu.admin.financial-wallets': Wallet,
+  'menu.admin.financial-settings': SlidersHorizontal,
   'menu.admin.manage-user': Users,
   'menu.admin.system-settings': Settings,
 

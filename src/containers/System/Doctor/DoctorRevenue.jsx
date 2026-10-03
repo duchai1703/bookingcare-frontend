@@ -11,6 +11,7 @@ import {
   requestDoctorWithdrawal,
   getDoctorWithdrawalRequests,
   cancelDoctorWithdrawalRequest,
+  getDoctorSettlementStatement,
 } from '../../../services/walletService';
 import './DoctorRevenue.scss';
 
@@ -105,6 +106,15 @@ const DoctorRevenue = () => {
   const [userNote, setUserNote] = useState('');
   const [isSubmittingWithdraw, setIsSubmittingWithdraw] = useState(false);
 
+  // [Doctor Settlement Statement] Bảng kê ca khám T+24h
+  const [settlementItems, setSettlementItems] = useState([]);
+  const [settlementSummary, setSettlementSummary] = useState(null);
+  const [settlementTotal, setSettlementTotal] = useState(0);
+  const [settlementPage, setSettlementPage] = useState(1);
+  const [settlementLimit] = useState(10);
+  const [settlementStatus, setSettlementStatus] = useState('ALL');
+  const [isSettlementsLoading, setIsSettlementsLoading] = useState(false);
+
   // Filter state
   const [rangePreset, setRangePreset] = useState('this_year');
   const [startDate, setStartDate] = useState('');
@@ -118,6 +128,36 @@ const DoctorRevenue = () => {
       setSelectedFacility(outletClinicId);
     }
   }, [outletClinicId]);
+
+  // Fetch thù lao chi tiết theo ca khám
+  const fetchSettlementStatement = useCallback(async () => {
+    setIsSettlementsLoading(true);
+    try {
+      const res = await getDoctorSettlementStatement({
+        page: settlementPage,
+        limit: settlementLimit,
+        status: settlementStatus,
+        startDate,
+        endDate,
+      });
+      if (res && res.errCode === 0) {
+        const rows = Array.isArray(res.data) ? res.data : (res.data?.items || []);
+        setSettlementItems(rows);
+        setSettlementSummary(res.summary || res.data?.summary || null);
+        setSettlementTotal(res.pagination?.total || res.data?.pagination?.total || rows.length);
+      }
+    } catch (e) {
+      console.error('Error fetching settlement statement:', e);
+    } finally {
+      setIsSettlementsLoading(false);
+    }
+  }, [settlementPage, settlementLimit, settlementStatus, startDate, endDate]);
+
+  useEffect(() => {
+    if (activeMainTab === 'settlements') {
+      fetchSettlementStatement();
+    }
+  }, [activeMainTab, fetchSettlementStatement]);
   const [statusTab, setStatusTab] = useState('all'); // 'all' | 'paid' | 'pending' | 'refunded'
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState('newest'); // 'newest' | 'oldest' | 'income_desc' | 'income_asc'
@@ -538,6 +578,18 @@ const DoctorRevenue = () => {
           {doctorWallet && (
             <span className="tab-badge tab-badge--wallet">
               {formatVND(doctorWallet.balance)}
+            </span>
+          )}
+        </button>
+        <button
+          type="button"
+          className={`tab-item ${activeMainTab === 'settlements' ? 'tab-item--active' : ''}`}
+          onClick={() => setActiveMainTab('settlements')}
+        >
+          <i className="fas fa-receipt"></i> Bảng kê ca khám (T+24h)
+          {settlementSummary?.availableCount > 0 && (
+            <span className="tab-badge" style={{ background: '#ecfdf5', color: '#047857' }}>
+              {settlementSummary.availableCount} khả dụng
             </span>
           )}
         </button>
@@ -1489,6 +1541,253 @@ const DoctorRevenue = () => {
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── TAB 4: BẢNG KÊ THÙ LAO TỪNG CA KHÁM (Doctor Itemized Statement) ── */}
+      {activeMainTab === 'settlements' && (
+        <div className="settlements-tab-content tw-space-y-6 tw-mt-6">
+          {/* KPI 3 Trạng thái Tiền Bác sĩ */}
+          <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-4 tw-gap-4">
+            <div className="tw-bg-white tw-p-5 tw-rounded-2xl tw-border tw-border-amber-200 tw-shadow-sm">
+              <span className="tw-text-xs tw-font-bold tw-text-amber-700 tw-uppercase">
+                1. Tạm tính (Giữ T+24h)
+              </span>
+              <div className="tw-text-2xl tw-font-black tw-text-amber-700 tw-mt-1">
+                {formatVND(settlementSummary?.earnedAmount)}
+              </div>
+              <div className="tw-text-xs tw-text-amber-600 tw-mt-1">
+                {settlementSummary?.earnedCount || 0} ca vừa khám xong, giữ 24h đối soát
+              </div>
+            </div>
+
+            <div className="tw-bg-white tw-p-5 tw-rounded-2xl tw-border tw-border-emerald-200 tw-shadow-sm">
+              <span className="tw-text-xs tw-font-bold tw-text-emerald-700 tw-uppercase">
+                2. Khả dụng (Chờ chuyển ví)
+              </span>
+              <div className="tw-text-2xl tw-font-black tw-text-emerald-700 tw-mt-1">
+                {formatVND(settlementSummary?.availableAmount)}
+              </div>
+              <div className="tw-text-xs tw-text-emerald-600 tw-mt-1">
+                {settlementSummary?.availableCount || 0} ca đã qua 24h, đủ điều kiện trả ví
+              </div>
+            </div>
+
+            <div className="tw-bg-white tw-p-5 tw-rounded-2xl tw-border tw-border-indigo-200 tw-shadow-sm">
+              <span className="tw-text-xs tw-font-bold tw-text-indigo-700 tw-uppercase">
+                3. Đã chi trả vào Ví
+              </span>
+              <div className="tw-text-2xl tw-font-black tw-text-indigo-700 tw-mt-1">
+                {formatVND(settlementSummary?.paidAmount)}
+              </div>
+              <div className="tw-text-xs tw-text-indigo-600 tw-mt-1">
+                {settlementSummary?.paidCount || 0} ca đã kết chuyển vào ví bác sĩ
+              </div>
+            </div>
+
+            <div className="tw-bg-white tw-p-5 tw-rounded-2xl tw-border tw-border-slate-200 tw-shadow-sm">
+              <span className="tw-text-xs tw-font-bold tw-text-slate-500 tw-uppercase">
+                Chiết khấu sàn
+              </span>
+              <div className="tw-text-2xl tw-font-black tw-text-slate-800 tw-mt-1">
+                {formatVND(settlementSummary?.totalPlatformFee)}
+              </div>
+              <div className="tw-text-xs tw-text-slate-500 tw-mt-1">
+                Phí sàn thu theo chính sách đóng băng lúc đặt
+              </div>
+            </div>
+          </div>
+
+          {/* Bảng chi tiết */}
+          <div className="tw-bg-white tw-rounded-2xl tw-border tw-border-slate-200 tw-shadow-sm tw-overflow-hidden">
+            <div className="tw-p-4 tw-border-b tw-border-slate-200 tw-flex tw-justify-between tw-items-center">
+              <div className="tw-flex tw-items-center tw-gap-3">
+                <span className="tw-font-bold tw-text-sm tw-text-slate-800">
+                  Danh sách ca khám & thù lao chi tiết:
+                </span>
+                <select
+                  value={settlementStatus}
+                  onChange={(e) => {
+                    setSettlementStatus(e.target.value);
+                    setSettlementPage(1);
+                  }}
+                  className="tw-px-3 tw-py-1.5 tw-text-xs tw-border tw-border-slate-200 tw-rounded-lg tw-bg-white"
+                >
+                  <option value="ALL">Tất cả trạng thái</option>
+                  <option value="AVAILABLE">Khả dụng (Chờ chi)</option>
+                  <option value="EARNED">Tạm tính (Giữ T+24h)</option>
+                  <option value="PAID">Đã chi trả</option>
+                  <option value="HELD">Tạm giữ</option>
+                </select>
+              </div>
+
+              <button
+                type="button"
+                className="tw-px-3 tw-py-1.5 tw-text-xs tw-font-semibold tw-text-indigo-600 hover:tw-bg-indigo-50 tw-rounded-lg tw-border tw-border-indigo-200 tw-bg-transparent tw-cursor-pointer"
+                onClick={fetchSettlementStatement}
+                disabled={isSettlementsLoading}
+              >
+                <i className={`fas fa-sync-alt ${isSettlementsLoading ? 'fa-spin' : ''}`}></i> Làm mới
+              </button>
+            </div>
+
+            <div className="tw-overflow-x-auto">
+              <table className="tw-w-full tw-text-left tw-border-collapse">
+                <thead>
+                  <tr className="tw-bg-slate-50 tw-border-b tw-border-slate-200 tw-text-slate-600 tw-text-xs tw-uppercase tw-font-bold">
+                    <th className="tw-p-3.5">Mã Ca Khám</th>
+                    <th className="tw-p-3.5">Ngày Khám & Hoàn Tất</th>
+                    <th className="tw-p-3.5 tw-text-right">Doanh Thu Gốc</th>
+                    <th className="tw-p-3.5 tw-text-center">Chiết Khấu Sàn</th>
+                    <th className="tw-p-3.5 tw-text-right">Thù Lao Thực Nhận</th>
+                    <th className="tw-p-3.5 tw-text-center">Trạng Thái Tiền</th>
+                    <th className="tw-p-3.5 tw-text-right">Thời Gian Mở Khóa / Chi Trả</th>
+                  </tr>
+                </thead>
+                <tbody className="tw-divide-y tw-divide-slate-100 tw-text-sm">
+                  {isSettlementsLoading ? (
+                    <tr>
+                      <td colSpan="7" className="tw-p-6 tw-text-center tw-text-slate-400">
+                        <i className="fas fa-spinner fa-spin tw-mr-2"></i> Đang tải bảng kê...
+                      </td>
+                    </tr>
+                  ) : settlementItems.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="tw-p-6 tw-text-center tw-text-slate-400">
+                        Chưa có dữ liệu quyết toán ca khám nào.
+                      </td>
+                    </tr>
+                  ) : (
+                    settlementItems.map((item) => {
+                      const isEarned = item.status === 'EARNED';
+                      const isAvail = item.status === 'AVAILABLE';
+                      const isPaid = item.status === 'PAID';
+
+                      let countdown = null;
+                      if (isEarned && item.availableAt) {
+                        const diff = new Date(item.availableAt).getTime() - Date.now();
+                        if (diff > 0) {
+                          const h = Math.ceil(diff / (1000 * 3600));
+                          countdown = `Mở sau ~${h}h`;
+                        } else {
+                          countdown = 'Đủ điều kiện mở';
+                        }
+                      }
+
+                      return (
+                        <tr key={item.id} className="hover:tw-bg-slate-50/70 tw-transition">
+                          <td className="tw-p-3.5">
+                            <span className="tw-font-mono tw-font-bold tw-text-indigo-600">
+                              #{item.bookingId}
+                            </span>
+                            <div className="tw-text-2xs tw-text-slate-400">
+                              ID: #SETTLE-{item.id}
+                            </div>
+                          </td>
+
+                          <td className="tw-p-3.5">
+                            <div className="tw-text-xs tw-font-semibold tw-text-slate-800">
+                              {item.appointmentDate ? new Date(item.appointmentDate).toLocaleDateString('vi-VN') : '—'}
+                            </div>
+                            <div className="tw-text-2xs tw-text-slate-400">
+                              Xong: {item.earnedAt ? new Date(item.earnedAt).toLocaleDateString('vi-VN') : '—'}
+                            </div>
+                          </td>
+
+                          <td className="tw-p-3.5 tw-text-right tw-font-medium tw-text-slate-700">
+                            {formatVND(item.grossAmount)}
+                          </td>
+
+                          <td className="tw-p-3.5 tw-text-center">
+                            <span className="tw-font-bold tw-text-xs tw-text-slate-700">
+                              {item.platformFeeRate}%
+                            </span>
+                            <div className="tw-text-2xs tw-text-slate-400">
+                              -{formatVND(item.platformFee)}
+                            </div>
+                          </td>
+
+                          <td className="tw-p-3.5 tw-text-right">
+                            <div className="tw-font-black tw-text-emerald-700 tw-text-base">
+                              {formatVND(item.netAmount)}
+                            </div>
+                          </td>
+
+                          <td className="tw-p-3.5 tw-text-center">
+                            {isEarned && (
+                              <span className="tw-inline-block tw-px-2.5 tw-py-1 tw-rounded-full tw-text-xs tw-font-bold tw-bg-amber-50 tw-text-amber-700 tw-border tw-border-amber-200">
+                                🟡 Giữ T+24h
+                              </span>
+                            )}
+                            {isAvail && (
+                              <span className="tw-inline-block tw-px-2.5 tw-py-1 tw-rounded-full tw-text-xs tw-font-bold tw-bg-emerald-50 tw-text-emerald-700 tw-border tw-border-emerald-200">
+                                🟢 Khả dụng
+                              </span>
+                            )}
+                            {isPaid && (
+                              <span className="tw-inline-block tw-px-2.5 tw-py-1 tw-rounded-full tw-text-xs tw-font-bold tw-bg-blue-50 tw-text-blue-700 tw-border tw-border-blue-200">
+                                🔵 Đã trả vào ví
+                              </span>
+                            )}
+                            {!isEarned && !isAvail && !isPaid && (
+                              <span className="tw-inline-block tw-px-2.5 tw-py-1 tw-rounded-full tw-text-xs tw-font-bold tw-bg-slate-100 tw-text-slate-600">
+                                {item.status}
+                              </span>
+                            )}
+                          </td>
+
+                          <td className="tw-p-3.5 tw-text-right">
+                            {isEarned && countdown && (
+                              <span className="tw-text-xs tw-font-semibold tw-text-amber-600">
+                                {countdown}
+                              </span>
+                            )}
+                            {isAvail && (
+                              <span className="tw-text-xs tw-font-semibold tw-text-emerald-600">
+                                Sẵn sàng thanh toán
+                              </span>
+                            )}
+                            {isPaid && item.paidAt && (
+                              <span className="tw-text-xs tw-text-slate-500">
+                                {new Date(item.paidAt).toLocaleDateString('vi-VN')}
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {Math.ceil(settlementTotal / settlementLimit) > 1 && (
+              <div className="tw-p-4 tw-border-t tw-border-slate-200 tw-flex tw-justify-between tw-items-center">
+                <span className="tw-text-xs tw-text-slate-500">
+                  Hiển thị {settlementItems.length} / {settlementTotal} ca khám
+                </span>
+                <div className="tw-flex tw-gap-1">
+                  <button
+                    type="button"
+                    className="tw-px-3 tw-py-1.5 tw-text-xs tw-font-semibold tw-border tw-border-slate-200 tw-rounded-lg tw-bg-white hover:tw-bg-slate-50 disabled:tw-opacity-50"
+                    disabled={settlementPage <= 1}
+                    onClick={() => setSettlementPage((p) => p - 1)}
+                  >
+                    Trước
+                  </button>
+                  <button
+                    type="button"
+                    className="tw-px-3 tw-py-1.5 tw-text-xs tw-font-semibold tw-border tw-border-slate-200 tw-rounded-lg tw-bg-white hover:tw-bg-slate-50 disabled:tw-opacity-50"
+                    disabled={settlementPage >= Math.ceil(settlementTotal / settlementLimit)}
+                    onClick={() => setSettlementPage((p) => p + 1)}
+                  >
+                    Sau
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

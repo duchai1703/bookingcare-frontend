@@ -199,4 +199,107 @@ export const getAdminPolicyAuditLogs = (params) => {
   return axiosInstance.get('/api/v1/admin/policies-audit-logs', { params });
 };
 
+// ═══════════════════════════════════════════════════════════════════════
+// [Phase 5] DYNAMIC FINANCIAL CONFIGS & CASH FLOWS
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * Lấy tham số cấu hình tài chính & vốn bảo chứng sàn
+ */
+export const getFinancialConfigs = () => {
+  return axiosInstance.get('/api/v1/admin/financial/configs');
+};
+
+/**
+ * Cập nhật cấu hình tham số tài chính & vốn bảo chứng sàn
+ * @param {Object} data { platformReserveFund?: number, reserveRatioTarget?: number, minWithdrawalAmount?: number, withdrawalSlaHours?: number }
+ */
+export const updateFinancialConfigs = (data) => {
+  return axiosInstance.put('/api/v1/admin/financial/configs', data);
+};
+
+/**
+ * Báo cáo chi tiết luồng tiền thu - chi hệ thống
+ * @param {Object} params { page?: number, limit?: number, streamType?: 'ALL' | 'INFLOW' | 'OUTFLOW', startDate?: string, endDate?: string }
+ */
+export const getFinancialCashFlows = (params) => {
+  return axiosInstance.get('/api/v1/admin/financial/cash-flows', { params });
+};
+
+// ═══════════════════════════════════════════════════════════════════════
+// [Phase A] REFUND GOVERNANCE & DOCTOR SETTLEMENTS
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * Danh sách hồ sơ hoàn tiền (Admin)
+ * @param {Object} params { page, limit, status, reason, search }
+ */
+export const getAdminRefundCases = (params) => {
+  return axiosInstance.get('/api/v1/admin/financial/refund-cases', { params });
+};
+
+/**
+ * Chi tiết hồ sơ hoàn tiền kèm calculationSnapshot (Admin)
+ * @param {string|number} id
+ */
+export const getRefundCaseDetail = (id) => {
+  return axiosInstance.get(`/api/v1/admin/financial/refund-cases/${id}`);
+};
+
+/**
+ * Thẩm định phê duyệt / từ chối hoàn tiền (Admin)
+ * @param {string|number} id
+ * @param {Object} data { decision: 'APPROVED' | 'REJECTED', adjustedRefundAmount?: number, reviewNote?: string }
+ */
+export const processAdminReviewRefund = (id, data) => {
+  return axiosInstance.post(`/api/v1/admin/financial/refund-cases/${id}/review`, data);
+};
+
+/**
+ * Bệnh nhân tra cứu chi tiết công thức và lý do hoàn tiền cho ca khám của mình
+ * @param {string|number} bookingId
+ */
+export const getPatientRefundCase = (bookingId) => {
+  return axiosInstance.get(`/api/v1/patient/refund-cases/${bookingId}`);
+};
+
+/**
+ * Bảng kê quyết toán thù lao bác sĩ theo từng ca khám (Admin)
+ * @param {Object} params { page, limit, status, doctorId, search, startDate, endDate }
+ */
+export const getAdminDoctorSettlements = (params) => {
+  return axiosInstance.get('/api/v1/admin/financial/doctor-settlements', { params });
+};
+
+/**
+ * Thực hiện chi trả thù lao vào ví bác sĩ (Admin)
+ * @param {Object} data { doctorId, itemIds, payoutMethod, note }
+ */
+export const payoutDoctorSettlements = (data) => {
+  return axiosInstance.post('/api/v1/admin/financial/doctor-settlements/payout', data);
+};
+
+/**
+ * Quét và mở khóa EARNED -> AVAILABLE sau T+24h (Admin)
+ */
+export const releaseEligibleDoctorSettlements = () => {
+  return axiosInstance.post('/api/v1/admin/financial/doctor-settlements/release-eligible');
+};
+
+/**
+ * Admin mở khóa sớm thù lao ca khám đơn lẻ (Bypass T+24h)
+ * @param {number|string} itemId
+ */
+export const unlockSingleDoctorSettlement = (itemId) => {
+  return axiosInstance.post('/api/v1/admin/financial/doctor-settlements/unlock', { itemId });
+};
+
+/**
+ * Bảng kê chi tiết thù lao ca khám dành riêng cho Bác sĩ (Doctor Portal)
+ * @param {Object} params { page, limit, status, startDate, endDate }
+ */
+export const getDoctorSettlementStatement = (params) => {
+  return axiosInstance.get('/api/v1/doctor/settlement-statement', { params });
+};
+
 

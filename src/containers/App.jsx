@@ -311,8 +311,16 @@ const App = () => {
 
             {/* [Financial Policy Engine] Immutable Policies & Rules */}
             <Route path="policies" element={<PolicyMaster />} />
-            {/* [Phase 4] Financial Liquidity & Executive Ledger Console */}
+            {/* [Phase 4 & 5] Financial Management, Cash Flows & Executive Ledger Console */}
             <Route path="financial-liquidity" element={<LiquidityDashboard />} />
+            <Route path="financial/overview" element={<LiquidityDashboard defaultTab="solvency" />} />
+            <Route path="financial/inflows" element={<LiquidityDashboard defaultTab="inflows" />} />
+            <Route path="financial/withdrawals" element={<LiquidityDashboard defaultTab="withdrawals" />} />
+            <Route path="financial/refund-cases" element={<LiquidityDashboard defaultTab="refund-cases" />} />
+            <Route path="financial/doctor-settlements" element={<LiquidityDashboard defaultTab="doctor-settlements" />} />
+            <Route path="financial/ledger" element={<LiquidityDashboard defaultTab="ledger" />} />
+            <Route path="financial/wallets" element={<LiquidityDashboard defaultTab="wallets" />} />
+            <Route path="financial/settings" element={<LiquidityDashboard defaultTab="settings" />} />
             {/* [Doctor Schedule Cancellation & Compensation Center] */}
             <Route path="cancellation-center" element={<CancellationCenter />} />
 

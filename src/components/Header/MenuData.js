@@ -33,10 +33,26 @@ export const adminMenu = [
   { name: 'menu.admin.medical-catalog',  link: path.MEDICAL_CATALOG_MANAGE },
   { name: 'menu.admin.medicine',         link: path.MEDICINE_MANAGE },
 
-  // ── Nhóm 4: Tài chính & Chính sách ──
-  { type: 'group', label: 'Tài chính & Quy định' },
+  // ── Nhóm 4: Tài chính & Ngân quỹ (Master - Detail) ──
+  { type: 'group', label: 'Tài chính & Ngân quỹ' },
   { name: 'menu.admin.financial-policies', link: path.FINANCIAL_POLICIES },
-  { name: 'menu.admin.financial-liquidity', link: path.FINANCIAL_LIQUIDITY },
+  {
+    name: 'menu.admin.financial-management',
+    link: path.FINANCIAL_LIQUIDITY,
+    subMenus: [
+      // 1. Nhóm Điều hành & Dòng tiền
+      { name: 'menu.admin.financial-overview',           link: path.FINANCIAL_OVERVIEW },
+      { name: 'menu.admin.financial-inflows',            link: path.FINANCIAL_INFLOWS },
+      // 2. Nhóm Nghiệp vụ thanh toán & Chi trả
+      { name: 'menu.admin.financial-wallets',            link: path.FINANCIAL_WALLETS },
+      { name: 'menu.admin.financial-withdrawals',        link: path.FINANCIAL_WITHDRAWALS },
+      { name: 'menu.admin.financial-refund-cases',       link: path.FINANCIAL_REFUND_CASES },
+      { name: 'menu.admin.financial-doctor-settlements', link: path.FINANCIAL_DOCTOR_SETTLEMENTS },
+      // 3. Nhóm Kiểm soát, Sổ cái & Cấu hình
+      { name: 'menu.admin.financial-ledger',             link: path.FINANCIAL_LEDGER },
+      { name: 'menu.admin.financial-settings',           link: path.FINANCIAL_SETTINGS },
+    ],
+  },
 
   // ── Nhóm 5: Cài đặt & Phân quyền ──
   { type: 'group', label: 'Hệ thống' },
