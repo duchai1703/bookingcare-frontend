@@ -37,3 +37,7 @@ export const getBookingCallHistory = (bookingId) => {
 export const getActiveCall = () => {
   return axiosInstance.get('/api/v1/chat/active-call');
 };
+
+export const getConversationWorkspace = (conversationId) => {
+  return axiosInstance.get(`/api/v1/chat/conversations/${conversationId}/workspace`);
+};

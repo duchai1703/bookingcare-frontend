@@ -13,11 +13,17 @@ import {
   AlertCircle,
   ExternalLink,
   Filter,
+  Stethoscope,
+  ChevronRight,
+  PanelRightClose,
+  PanelRightOpen,
+  Calendar,
 } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { getUserConversations } from '../../../services/chatApiService';
+import { getUserConversations, getConversationWorkspace } from '../../../services/chatApiService';
 import chatSocketService from '../../../services/chatSocketService';
 import ChatWindow from '../../Chat/ChatWindow';
+import EncounterContextPanel from './EncounterContextPanel';
 import CommonUtils from '../../../utils/CommonUtils';
 import './DoctorMessagesWorkspace.scss';
 
@@ -28,6 +34,9 @@ const DoctorMessagesWorkspace = () => {
 
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
+  const [workspaceData, setWorkspaceData] = useState(null);
+  const [isLoadingWorkspace, setIsLoadingWorkspace] = useState(false);
+  const [isPanelOpen, setIsPanelOpen] = useState(window.innerWidth >= 1200);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTab, setFilterTab] = useState('ALL'); // 'ALL' | 'UNREAD' | 'OPEN' | 'CLOSED'
@@ -45,7 +54,6 @@ const DoctorMessagesWorkspace = () => {
           const match = res.data.find((c) => c.id === parseInt(routeConvId, 10));
           if (match) setSelectedConversation(match);
         } else if (!selectedConversation && res.data.length > 0) {
-          // Default select first conversation on desktop
           if (window.innerWidth > 768) {
             setSelectedConversation(res.data[0]);
           }
@@ -63,7 +71,36 @@ const DoctorMessagesWorkspace = () => {
     fetchConversations();
   }, []);
 
-  // 2. Real-time updates for conversation list
+  // 2. Fetch Clinical Encounter Workspace whenever selected conversation changes
+  useEffect(() => {
+    if (!selectedConversation?.id) {
+      setWorkspaceData(null);
+      return;
+    }
+
+    let isMounted = true;
+    const fetchWorkspace = async () => {
+      try {
+        setIsLoadingWorkspace(true);
+        const res = await getConversationWorkspace(selectedConversation.id);
+        if (isMounted && res && res.errCode === 0 && res.data) {
+          setWorkspaceData(res.data);
+        }
+      } catch (err) {
+        console.error('Error fetching conversation workspace:', err);
+      } finally {
+        if (isMounted) setIsLoadingWorkspace(false);
+      }
+    };
+
+    fetchWorkspace();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedConversation?.id]);
+
+  // 3. Real-time updates for conversation list
   useEffect(() => {
     chatSocketService.connect();
 
@@ -84,7 +121,6 @@ const DoctorMessagesWorkspace = () => {
           const filtered = prev.filter((c) => c.id !== data.conversationId);
           return [updated, ...filtered];
         } else {
-          // New conversation not yet in list: refetch
           fetchConversations();
           return prev;
         }
@@ -134,7 +170,6 @@ const DoctorMessagesWorkspace = () => {
   // Select conversation handler
   const handleSelectConversation = (conv) => {
     setSelectedConversation(conv);
-    // Clear unread badge locally
     setConversations((prev) =>
       prev.map((c) => (c.id === conv.id ? { ...c, unreadCount: 0 } : c))
     );
@@ -154,8 +189,11 @@ const DoctorMessagesWorkspace = () => {
 
   // Filter conversations
   const filteredConversations = conversations.filter((c) => {
-    const patientName = `${c.patientUser?.lastName || ''} ${c.patientUser?.firstName || ''}`.toLowerCase();
-    const queryMatch = !searchQuery || patientName.includes(searchQuery.toLowerCase());
+    const patientIdentity = c.patientIdentity;
+    const actualName = (patientIdentity?.actualPatientName || '').toLowerCase();
+    const ownerName = (patientIdentity?.accountOwnerName || '').toLowerCase();
+    const query = searchQuery.toLowerCase();
+    const queryMatch = !searchQuery || actualName.includes(query) || ownerName.includes(query);
 
     if (!queryMatch) return false;
 
@@ -166,15 +204,18 @@ const DoctorMessagesWorkspace = () => {
   });
 
   return (
-    <div className="doctor-messages-workspace">
+    <div className={`doctor-messages-workspace ${isPanelOpen ? 'has-context-panel' : ''}`}>
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* LEFT PANE: CONVERSATION LIST (MASTER)                         */}
+      {/* CỘT 1: DANH SÁCH CUỘC HỘI THOẠI (MASTER PANE)                 */}
       {/* ───────────────────────────────────────────────────────────── */}
       <div className="messages-master-pane">
         <div className="master-header">
           <div className="master-title-row">
             <div className="title-with-badge">
-              <h3>Tin nhắn sau khám</h3>
+              <div className="title-text-wrap">
+                <h3>Chăm sóc sau khám</h3>
+                <span className="title-subtitle">Theo dõi & hỗ trợ sau ca khám</span>
+              </div>
               <span className="total-badge">{conversations.length}</span>
             </div>
           </div>
@@ -184,7 +225,7 @@ const DoctorMessagesWorkspace = () => {
             <Search size={16} className="search-icon" />
             <input
               type="text"
-              placeholder="Tìm bệnh nhân theo tên..."
+              placeholder="Tìm bệnh nhân hoặc người thân..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -231,24 +272,24 @@ const DoctorMessagesWorkspace = () => {
           {isLoading && (
             <div className="conv-loading-state">
               <div className="spinner-border spinner-border-sm text-teal" />
-              <span>Đang tải danh sách tin nhắn...</span>
+              <span>Đang tải danh sách theo dõi...</span>
             </div>
           )}
 
           {!isLoading && filteredConversations.length === 0 && (
             <div className="conv-empty-state">
               <MessageSquare size={28} />
-              <p>Không có cuộc trò chuyện nào phù hợp.</p>
+              <p>Không có cuộc trao đổi nào phù hợp.</p>
             </div>
           )}
 
           {!isLoading &&
             filteredConversations.map((c) => {
               const isSelected = selectedConversation?.id === c.id;
-              const patient = c.patientUser;
-              const patientName = patient
-                ? `${patient.lastName || ''} ${patient.firstName || ''}`.trim() || patient.email
-                : 'Bệnh nhân';
+              const identity = c.patientIdentity;
+              const actualPatientName = identity?.actualPatientName || 'Bệnh nhân';
+              const accountOwnerName = identity?.accountOwnerName || '';
+              const isFamily = identity?.isFamilyMember;
 
               const bookingDate = c.bookingData?.date
                 ? moment(parseInt(c.bookingData.date, 10)).format('DD/MM/YYYY')
@@ -267,41 +308,48 @@ const DoctorMessagesWorkspace = () => {
                   onClick={() => handleSelectConversation(c)}
                 >
                   <div className="item-avatar">
-                    {patient?.image ? (
-                      <img src={CommonUtils.decodeBase64Image(patient.image)} alt={patientName} />
+                    {c.patientUser?.image ? (
+                      <img src={CommonUtils.decodeBase64Image(c.patientUser.image)} alt={actualPatientName} />
                     ) : (
-                      <div className="avatar-fallback">
+                      <div className={`avatar-fallback ${isFamily ? 'family' : ''}`}>
                         <User size={18} />
                       </div>
                     )}
                   </div>
 
                   <div className="item-body">
+                    {/* Tầng 1: Tên bệnh nhân thực tế */}
                     <div className="item-top-row">
-                      <h4 className="item-patient-name">{patientName}</h4>
+                      <div className="name-and-tag">
+                        <h4 className="item-patient-name">{actualPatientName}</h4>
+                        {isFamily && (
+                          <span className="badge-member-tag">Người thân</span>
+                        )}
+                      </div>
                       <span className="item-time">{lastTime}</span>
                     </div>
 
+                    {/* Tầng 2: Nếu là Người thân -> Hiện tên người giám hộ / Chủ TK */}
+                    {isFamily && accountOwnerName && (
+                      <div className="item-guardian-row">
+                        <span>Chủ TK: <strong>{accountOwnerName}</strong></span>
+                      </div>
+                    )}
+
+                    {/* Tầng 3: Ngữ cảnh ca khám & Trạng thái */}
                     <div className="item-sub-row">
-                      <span className="item-booking-tag">Khám: {bookingDate}</span>
+                      <span className="item-booking-tag">
+                        <Calendar size={11} className="tag-icon" /> Khám: {bookingDate}
+                      </span>
                       <span className={`item-status-tag tag-${c.status.toLowerCase()}`}>
                         {c.status === 'OPEN' ? 'Đang mở' : 'Đã đóng'}
                       </span>
                       {c.isFollowUpActive === false && (
-                        <span
-                          className="item-status-tag tag-expired"
-                          style={{
-                            background: '#fef2f2',
-                            color: '#dc2626',
-                            borderColor: '#fecaca',
-                            fontSize: '11px',
-                          }}
-                        >
-                          Hết hạn
-                        </span>
+                        <span className="item-status-tag tag-expired">Hết hạn</span>
                       )}
                     </div>
 
+                    {/* Tầng 4: Đoạn trích tin nhắn cuối & Số chưa đọc */}
                     <div className="item-bottom-row">
                       <p className="item-snippet">{snippet}</p>
                       {c.unreadCount > 0 && (
@@ -316,14 +364,30 @@ const DoctorMessagesWorkspace = () => {
       </div>
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* RIGHT PANE: ACTIVE CHAT WINDOW (DETAIL)                       */}
+      {/* CỘT 2: KHUNG CHAT & HỘI THOẠI TRỰC TIẾP (DETAIL PANE)        */}
       {/* ───────────────────────────────────────────────────────────── */}
       <div className="messages-detail-pane">
         {selectedConversation ? (
           <div className="active-chat-wrapper">
+            {/* Top Toolbar for toggling Clinical Context Panel */}
+            <div className="workspace-action-bar">
+              <button
+                type="button"
+                className={`btn-toggle-context-panel ${isPanelOpen ? 'is-active' : ''}`}
+                onClick={() => setIsPanelOpen(!isPanelOpen)}
+                title={isPanelOpen ? 'Thu gọn hồ sơ ca khám' : 'Mở rộng hồ sơ ca khám'}
+                id="btn-toggle-encounter-panel"
+              >
+                <Stethoscope size={15} />
+                <span>{isPanelOpen ? 'Ẩn hồ sơ ca khám' : 'Xem hồ sơ ca khám'}</span>
+                {isPanelOpen ? <PanelRightClose size={15} /> : <PanelRightOpen size={15} />}
+              </button>
+            </div>
+
             <ChatWindow
               key={selectedConversation.id}
               conversation={selectedConversation}
+              workspaceData={workspaceData}
               onStatusChange={handleStatusChange}
               isDrawer={false}
             />
@@ -331,16 +395,29 @@ const DoctorMessagesWorkspace = () => {
         ) : (
           <div className="no-chat-selected-placeholder">
             <div className="placeholder-icon-wrap">
-              <MessageSquare size={48} />
+              <Stethoscope size={48} />
             </div>
-            <h3>Hộp thư tư vấn sau khám</h3>
+            <h3>Không gian Chăm sóc Sau khám</h3>
             <p>
-              Chọn một cuộc hội thoại từ danh sách bên trái để xem lại lịch sử trao đổi hoặc phản
-              hồi bệnh nhân theo thời gian thực.
+              Chọn một cuộc hội thoại từ danh sách bên trái để tiếp tục theo dõi tình trạng bệnh
+              nhân, xem lại kết quả chẩn đoán, đơn thuốc đã kê và giải đáp thắc mắc.
             </p>
           </div>
         )}
       </div>
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* CỘT 3: HỒ SƠ CA KHÁM LÂM SÀNG & PATIENT CONTEXT (CONTEXT PANE) */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {selectedConversation && isPanelOpen && (
+        <div className="messages-context-pane">
+          <EncounterContextPanel
+            workspaceData={workspaceData}
+            isLoading={isLoadingWorkspace}
+            onClose={() => setIsPanelOpen(false)}
+          />
+        </div>
+      )}
     </div>
   );
 };

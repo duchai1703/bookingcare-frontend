@@ -31,6 +31,7 @@ import './ChatWindow.scss';
 
 const ChatWindow = ({
   conversation,
+  workspaceData = null,
   onClose,
   onStatusChange,
   isDrawer = false,
@@ -537,23 +538,46 @@ const ChatWindow = ({
     }
   };
 
+  const actualPatient = workspaceData?.patientIdentity?.actualPatient;
+  const accountOwner = workspaceData?.patientIdentity?.accountOwner;
+  const isFamilyMember = workspaceData?.patientIdentity?.isFamilyMember;
+
+  const displayTitle = isDoctor && actualPatient?.name
+    ? actualPatient.name
+    : partnerName;
+
+  const displaySub = isDoctor ? (
+    isFamilyMember ? (
+      <span className="partner-guardian-note">
+        Người đại diện: <strong>{accountOwner?.name}</strong> ({actualPatient?.relationshipLabel || 'Người thân'}) • Khám: {bookingDate}
+      </span>
+    ) : (
+      <span>Bệnh nhân chính chủ • Khám ngày {bookingDate}</span>
+    )
+  ) : (
+    <span>{specialtyName || 'Bác sĩ điều trị'} • Lịch khám {bookingDate}</span>
+  );
+
   return (
-    <div className={`chat-window-container ${isDrawer ? 'as-drawer' : 'as-embedded'}`}>
+    <div className={`chat-window-container ${isDrawer ? 'is-drawer-view' : 'is-full-view'}`}>
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* 1. CHAT HEADER                                               */}
+      {/* 1. CHAT HEADER                                                */}
       {/* ───────────────────────────────────────────────────────────── */}
       <div className="chat-window-header">
-        <div className="header-partner-info">
+        <div className="partner-profile-summary">
           <Avatar
             src={partner?.image}
-            name={partnerName}
+            name={displayTitle}
             size={42}
             status={connectionStatus === 'connected' ? 'online' : 'offline'}
           />
 
           <div className="partner-meta">
             <div className="name-status-row">
-              <h4 className="partner-title">{partnerName}</h4>
+              <h4 className="partner-title">{displayTitle}</h4>
+              {isDoctor && isFamilyMember && (
+                <span className="badge-patient-family">Người thân được khám</span>
+              )}
               <span className={`status-pill status-${currentStatus.toLowerCase()}`}>
                 {currentStatus === 'OPEN' ? (
                   <>
@@ -568,11 +592,7 @@ const ChatWindow = ({
             </div>
 
             <div className="partner-sub">
-              {isDoctor ? (
-                <span>Bệnh nhân • Khám ngày {bookingDate}</span>
-              ) : (
-                <span>{specialtyName || 'Bác sĩ điều trị'} • Lịch khám {bookingDate}</span>
-              )}
+              {displaySub}
             </div>
           </div>
         </div>
@@ -664,41 +684,31 @@ const ChatWindow = ({
       </div>
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* 2. ACCESS WINDOW BANNER (Active / Expired)                    */}
+      {/* 2. COMPACT FOLLOW-UP STRIP & MEDICAL ADVISORY NOTICE          */}
       {/* ───────────────────────────────────────────────────────────── */}
-      {isFollowUpActive ? (
-        <div className="followup-window-banner active">
-          <Clock size={15} className="banner-icon" />
-          <div className="banner-content">
-            <strong>Thời hạn tư vấn sau khám 7 ngày:</strong> Có hiệu lực đến{' '}
-            {followUpExpiresAt ? moment(followUpExpiresAt).format('HH:mm DD/MM/YYYY') : 'hết 168 giờ'}.
-            Bạn có thể trao đổi tin nhắn và gọi thoại/video trực tiếp.
-          </div>
+      <div className={`followup-compact-chip ${isFollowUpActive ? 'active' : 'expired'}`}>
+        <div className="chip-main">
+          <Clock size={13} className="chip-icon" />
+          <span className="chip-text">
+            {isFollowUpActive ? (
+              <>
+                <strong>Theo dõi sau khám 7 ngày:</strong> Có hiệu lực đến{' '}
+                {followUpExpiresAt ? moment(followUpExpiresAt).format('HH:mm DD/MM/YYYY') : 'hết 168 giờ'}.
+              </>
+            ) : (
+              <>
+                <strong>Hết hạn 7 ngày sau khám:</strong> Cuộc trò chuyện đang ở chế độ chỉ đọc.
+              </>
+            )}
+          </span>
         </div>
-      ) : (
-        <div className="followup-window-banner expired">
-          <AlertTriangle size={15} className="banner-icon" />
-          <div className="banner-content">
-            <strong>Thời hạn hỗ trợ sau khám 7 ngày đã kết thúc.</strong>{' '}
-            Toàn bộ lịch sử trao đổi được bảo lưu ở chế độ chỉ đọc. Không thể gửi tin nhắn hoặc bắt đầu cuộc gọi mới.
-          </div>
-        </div>
-      )}
-
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* 3. MEDICAL ADVISORY DISCLAIMER BANNER                         */}
-      {/* ───────────────────────────────────────────────────────────── */}
-      <div className="medical-chat-disclaimer">
-        <AlertTriangle size={15} className="disclaimer-icon" />
-        <div className="disclaimer-content">
-          <strong>Lưu ý theo dõi sau khám:</strong> Kênh chat dùng để hỏi đáp và làm rõ hướng dẫn
-          chăm sóc sau buổi khám đã hoàn tất. Bác sĩ có thể không phản hồi tức thời. Trong trường
-          hợp cấp cứu, vui lòng đến ngay cơ sở y tế gần nhất.
-        </div>
+        <span className="chip-emergency-hint">
+          (Khẩn cấp vui lòng gọi 115 hoặc đến CSYT gần nhất)
+        </span>
       </div>
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* 4. CHAT TIMELINE STREAM (Messages + Call History)             */}
+      {/* 3. CHAT TIMELINE STREAM (Messages + Call History)             */}
       {/* ───────────────────────────────────────────────────────────── */}
       <div className="chat-messages-stream" ref={messagesContainerRef} onScroll={handleScroll}>
         {/* Load more button */}
@@ -757,9 +767,19 @@ const ChatWindow = ({
             // Render Message Bubble
             const isMe = item.senderId === userInfo?.id;
             const msgTime = moment(item.createdAt).format('HH:mm');
-            const senderName = item.sender
+
+            // Sender display label: If doctor viewing patient message for a family member
+            let displaySenderName = item.sender
               ? `${item.sender.lastName || ''} ${item.sender.firstName || ''}`.trim()
               : partnerName;
+
+            if (isDoctor && !isMe) {
+              if (isFamilyMember) {
+                displaySenderName = `${accountOwner?.name || displaySenderName} (${actualPatient?.relationshipLabel || 'Người giám hộ'})`;
+              } else if (actualPatient?.name) {
+                displaySenderName = actualPatient.name;
+              }
+            }
 
             return (
               <div
@@ -770,7 +790,7 @@ const ChatWindow = ({
                   <div className="bubble-avatar-wrap">
                     <Avatar
                       src={item.sender?.image}
-                      name={senderName}
+                      name={displaySenderName}
                       size={32}
                     />
                   </div>
@@ -778,7 +798,7 @@ const ChatWindow = ({
 
                 <div className="bubble-payload">
                   {!isMe && (
-                    <span className="bubble-sender-name">{senderName}</span>
+                    <span className="bubble-sender-name">{displaySenderName}</span>
                   )}
 
                   <div className="bubble-card">
