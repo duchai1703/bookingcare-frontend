@@ -1352,10 +1352,10 @@ const AppointmentHistory = () => {
                             {detailBooking.followUpDate}
                           </span>
                           <Link
-                            to={`/detail-doctor/${detailBooking.doctorId}`}
+                            to={`/doctor/${detailBooking.doctorId}?rebookDate=${encodeURIComponent(detailBooking.followUpDate || '')}&sourceBookingId=${detailBooking.id}`}
                             className="btn-followup-rebook"
                             onClick={() => setDetailBooking(null)}
-                            title="Đặt hẹn tái khám với cùng bác sĩ theo lịch hẹn"
+                            title="Đặt hẹn tái khám với cùng bác sĩ theo ngày hẹn chỉ định"
                           >
                             <i className="fas fa-calendar-plus me-1" />
                             Đặt hẹn tái khám ngay
@@ -1363,6 +1363,12 @@ const AppointmentHistory = () => {
                         </div>
                       ) : (
                         <span className="text-muted-italic">Bác sĩ không yêu cầu tái khám</span>
+                      )}
+                      {detailBooking.followUpDate && (
+                        <small className="followup-rebook-hint text-muted d-block mt-1">
+                          <i className="fas fa-info-circle me-1 text-teal" />
+                          Hệ thống sẽ chuyển đến lịch làm việc của Bác sĩ theo ngày chỉ định. Nếu bác sĩ chưa mở ca trực vào ngày đó, bạn có thể chọn ngày gần nhất hoặc nhắn tin cho bác sĩ.
+                        </small>
                       )}
                     </div>
                   </div>

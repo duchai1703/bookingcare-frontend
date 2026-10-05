@@ -27,6 +27,8 @@ import {
   Building2,
   MessageSquare,
   TrendingUp,
+  Pill,
+  BookOpen,
 } from 'lucide-react';
 import { getMyPractices } from '../../services/doctorService';
 import { getDoctorWallet } from '../../services/walletService';
@@ -52,6 +54,21 @@ const DOCTOR_NAV_GROUPS = [
         icon: MessageSquare,
         label: 'Tin nhắn sau khám',
         to: '/doctor-dashboard/messages',
+      },
+    ],
+  },
+  {
+    groupTitle: 'DANH MỤC Y KHOA',
+    items: [
+      {
+        icon: Pill,
+        label: 'Danh mục Thuốc & Dược',
+        to: '/doctor-dashboard/medicines',
+      },
+      {
+        icon: BookOpen,
+        label: 'Danh mục Bệnh lý & CLS',
+        to: '/doctor-dashboard/medical-catalogs',
       },
     ],
   },

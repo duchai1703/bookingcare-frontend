@@ -346,6 +346,8 @@ const App = () => {
             <Route path="encounter/:bookingId" element={<EncounterWorkspace />} />
             <Route path="messages" element={<DoctorMessagesWorkspace />} />
             <Route path="messages/:conversationId" element={<DoctorMessagesWorkspace />} />
+            <Route path="medicines" element={<MedicineManage />} />
+            <Route path="medical-catalogs" element={<MedicalCatalogManage />} />
           </Route>
         </Route>
 

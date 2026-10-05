@@ -7,7 +7,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FormattedMessage, useIntl } from 'react-intl';
 import moment from 'moment';
 import { toast } from 'react-toastify';
@@ -33,7 +33,11 @@ const DoctorSchedule = ({ doctorId, selectedPractice }) => {
   // [Phase 9.5] Lấy trạng thái đăng nhập từ Redux
   const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const intl = useIntl();
+
+  const rebookDateParam = searchParams.get('rebookDate');
+  const sourceBookingId = searchParams.get('sourceBookingId');
 
   // STATE
   const [availableDays, setAvailableDays] = useState([]);
@@ -45,9 +49,28 @@ const DoctorSchedule = ({ doctorId, selectedPractice }) => {
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
 
-  // ✅ [CTO-FIX-2] Hàm tạo mảng 7 ngày, value dùng moment.utc để đồng bộ Backend
+  // ✅ [CTO-FIX-2] Hàm tạo mảng ngày, bao gồm ngày tái khám nếu có
   const getArrDays = (lang) => {
     const days = [];
+    const timestampsSet = new Set();
+
+    // 1. Thêm ngày tái khám nếu hợp lệ và không quá khứ
+    let rebookUtc = null;
+    if (rebookDateParam) {
+      const rMom = moment(rebookDateParam, ['YYYY-MM-DD', 'DD/MM/YYYY'], true);
+      if (rMom.isValid()) {
+        rebookUtc = moment.utc(rMom.format('YYYY-MM-DD')).startOf('day').valueOf().toString();
+        const rDayOfWeek =
+          lang === LANGUAGES.VI
+            ? ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'][rMom.day()]
+            : ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][rMom.day()];
+        const rLabel = `🔄 Ngày tái khám: ${rDayOfWeek} - ${rMom.format('DD/MM/YYYY')}`;
+        days.push({ label: rLabel, value: rebookUtc, isRebook: true });
+        timestampsSet.add(rebookUtc);
+      }
+    }
+
+    // 2. Tạo 7 ngày chuẩn tiếp theo
     for (let i = 0; i < 7; i++) {
       const dateMoment = moment().add(i, 'days');
 
@@ -75,21 +98,25 @@ const DoctorSchedule = ({ doctorId, selectedPractice }) => {
       const utcTimestamp = moment
         .utc(dateMoment.format('YYYY-MM-DD'))
         .startOf('day')
-        .valueOf();
+        .valueOf()
+        .toString();
 
-      days.push({ label, value: utcTimestamp.toString() });
+      if (!timestampsSet.has(utcTimestamp)) {
+        days.push({ label, value: utcTimestamp });
+        timestampsSet.add(utcTimestamp);
+      }
     }
-    return days;
+    return { days, defaultSelected: rebookUtc || (days[0] ? days[0].value : '') };
   };
 
-  // Cập nhật danh sách ngày khi language thay đổi
+  // Cập nhật danh sách ngày khi language hoặc rebookDateParam thay đổi
   useEffect(() => {
-    const days = getArrDays(language);
+    const { days, defaultSelected } = getArrDays(language);
     setAvailableDays(days);
-    if (days.length > 0) {
-      setSelectedDate(days[0].value);
+    if (defaultSelected) {
+      setSelectedDate(defaultSelected);
     }
-  }, [language]);
+  }, [language, rebookDateParam]);
 
   // Gọi API khi selectedDate, doctorId hoặc selectedPractice thay đổi
   useEffect(() => {
@@ -167,9 +194,30 @@ const DoctorSchedule = ({ doctorId, selectedPractice }) => {
   };
 
   const displaySlots = getDisplaySlots();
+  const isCurrentSelectedRebook = Boolean(
+    rebookDateParam &&
+    availableDays.find((d) => d.value === selectedDate && d.isRebook)
+  );
 
   return (
     <div className="doctor-schedule" id="doctor-schedule">
+      {/* Rebook context banner */}
+      {rebookDateParam && (
+        <div className="doctor-schedule__rebook-banner">
+          <div className="rebook-banner-icon">
+            <i className="fas fa-calendar-check" />
+          </div>
+          <div className="rebook-banner-info">
+            <span className="rebook-banner-title">
+              Đặt hẹn tái khám theo chỉ định của bác sĩ
+            </span>
+            <span className="rebook-banner-meta">
+              Ngày đề xuất: <strong>{rebookDateParam}</strong> {sourceBookingId ? `(Từ ca khám #${sourceBookingId})` : ''}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* ===== HEADER: Tiêu đề + Cơ sở đang chọn + Dropdown chọn ngày ===== */}
       <div className="doctor-schedule__header">
         <div className="doctor-schedule__header-left">
@@ -231,13 +279,45 @@ const DoctorSchedule = ({ doctorId, selectedPractice }) => {
           </>
         )}
 
-        {/* Không có lịch khám — Fix i18n */}
+        {/* Không có lịch khám — Xử lý thân thiện cho ngày tái khám */}
         {!isLoadingSchedule && displaySlots.length === 0 && (
-          <div className="doctor-schedule__empty">
-            <span className="doctor-schedule__empty-icon">📋</span>
+          <div className={`doctor-schedule__empty ${isCurrentSelectedRebook ? 'doctor-schedule__empty--rebook' : ''}`}>
+            <span className="doctor-schedule__empty-icon">
+              {isCurrentSelectedRebook ? '📅' : '📋'}
+            </span>
             <p className="doctor-schedule__empty-text">
-              <FormattedMessage id="schedule.empty" />
+              {isCurrentSelectedRebook ? (
+                <>Bác sĩ chưa mở ca trực vào ngày hẹn tái khám này (<strong>{rebookDateParam}</strong>).</>
+              ) : (
+                <FormattedMessage id="schedule.empty" />
+              )}
             </p>
+            {isCurrentSelectedRebook && (
+              <div className="doctor-schedule__rebook-empty-help">
+                <p className="rebook-help-text">
+                  Bác sĩ thường cập nhật lịch khám định kỳ hàng tuần. Bạn có thể:
+                </p>
+                <div className="rebook-help-actions">
+                  <button
+                    type="button"
+                    className="btn-select-nearest-day"
+                    onClick={() => {
+                      const firstNormalDay = availableDays.find((d) => !d.isRebook);
+                      if (firstNormalDay) setSelectedDate(firstNormalDay.value);
+                    }}
+                  >
+                    <i className="fas fa-calendar-day me-1" /> Xem các ngày mở lịch gần nhất
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-msg-doctor"
+                    onClick={() => navigate('/patient/dashboard?tab=consultation')}
+                  >
+                    <i className="fas fa-comment-medical me-1" /> Nhắn tin cho bác sĩ để xếp lịch
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

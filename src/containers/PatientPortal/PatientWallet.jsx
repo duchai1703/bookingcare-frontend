@@ -74,6 +74,7 @@ const PatientWallet = () => {
   const [withdrawStatusFilter, setWithdrawStatusFilter] = useState('ALL');
   const [isWithdrawLoading, setIsWithdrawLoading] = useState(false);
   const [cancellingId, setCancellingId] = useState(null);
+  const [showExplainerModal, setShowExplainerModal] = useState(false);
 
   // Format tiền tệ VND
   const formatCurrency = (amount) => {
@@ -207,15 +208,22 @@ const PatientWallet = () => {
       // Xác thực chữ ký và kích hoạt cộng tiền tức thì
       verifyVNPayDepositReturn(allParams)
         .then((res) => {
-          const resData = res?.data;
-          const isSuccess = resData?.errCode === 0 && resData?.data?.isSuccess;
+          // axiosConfig interceptor returns response.data directly
+          // We support both direct payload and wrapped { data: ... }
+          const actualErrCode = res?.errCode !== undefined ? res.errCode : res?.data?.errCode;
+          const innerData = res?.data?.data !== undefined ? res.data.data : (res?.data || res);
+          const isSuccess =
+            actualErrCode === 0 &&
+            (innerData?.isSuccess === true ||
+              innerData?.paymentStatus === 'SUCCESS' ||
+              res?.errMessage === 'Xác thực thanh toán VNPay thành công.');
 
           setReturnNotice({
             isSuccess,
             txnRef,
             message: isSuccess
               ? 'Nạp tiền vào ví BookingCare thành công! Số dư khả dụng của bạn đã được cập nhật ngay lập tức.'
-              : (resData?.data?.message || resData?.errMessage || 'Giao dịch nạp tiền qua VNPay không thành công hoặc đã bị hủy.'),
+              : (innerData?.message || res?.errMessage || res?.data?.errMessage || 'Giao dịch nạp tiền qua VNPay không thành công hoặc đã bị hủy.'),
           });
 
           // Làm mới ví và sổ cái
@@ -420,6 +428,14 @@ const PatientWallet = () => {
         <div className="wallet-header-actions">
           <button
             type="button"
+            className="btn-explainer-outline"
+            onClick={() => setShowExplainerModal(true)}
+            title="Bấm để xem giải thích chi tiết về Tổng tài sản, Số dư khả dụng và Tiền giữ chỗ (Hold)"
+          >
+            <i className="fas fa-question-circle" /> Giải thích cơ chế ví
+          </button>
+          <button
+            type="button"
             className="btn-withdraw-secondary"
             onClick={handleOpenWithdrawModal}
           >
@@ -475,7 +491,17 @@ const PatientWallet = () => {
             </div>
 
             <div className="card-balance-block">
-              <span className="balance-label">SỐ DƯ KHẢ DỤNG</span>
+              <div className="balance-label-row">
+                <span className="balance-label">SỐ DƯ KHẢ DỤNG</span>
+                <button
+                  type="button"
+                  className="balance-info-btn"
+                  onClick={() => setShowExplainerModal(true)}
+                  title="Số dư sẵn sàng dùng để đặt khám mới hoặc rút về ngân hàng"
+                >
+                  <i className="fas fa-question-circle" />
+                </button>
+              </div>
               <h2 className="balance-amount">
                 {isLoading ? 'Đang tải...' : formatCurrency(wallet?.availableBalance)}
               </h2>
@@ -508,9 +534,21 @@ const PatientWallet = () => {
               <i className="fas fa-coins" />
             </div>
             <div className="stat-info">
-              <span className="stat-label">Tổng tài sản trong ví</span>
+              <div className="stat-label-row">
+                <span className="stat-label">Tổng tài sản trong ví</span>
+                <button
+                  type="button"
+                  className="stat-info-trigger"
+                  onClick={() => setShowExplainerModal(true)}
+                  title="Tổng giá trị tài sản bạn sở hữu = Khả dụng + Tiền đang giữ chỗ"
+                >
+                  <i className="fas fa-info-circle" />
+                </button>
+              </div>
               <h3 className="stat-value">{formatCurrency(wallet?.totalBalance)}</h3>
-              <span className="stat-hint">Số dư khả dụng + Tiền đang giữ chỗ</span>
+              <span className="stat-hint">
+                = Số dư khả dụng ({formatCurrency(wallet?.availableBalance)}) + Đang giữ chỗ ({formatCurrency(wallet?.reservedBalance)})
+              </span>
             </div>
           </div>
 
@@ -519,12 +557,22 @@ const PatientWallet = () => {
               <i className="fas fa-lock" />
             </div>
             <div className="stat-info">
-              <span className="stat-label">Tiền đang giữ chỗ khám / Rút (Hold)</span>
+              <div className="stat-label-row">
+                <span className="stat-label">Tiền đang giữ chỗ khám / Rút (Hold)</span>
+                <button
+                  type="button"
+                  className="stat-info-trigger"
+                  onClick={() => setShowExplainerModal(true)}
+                  title="Tiền bảo chứng cho ca khám sắp tới hoặc lệnh rút đang duyệt. Vẫn thuộc sở hữu của bạn!"
+                >
+                  <i className="fas fa-info-circle" />
+                </button>
+              </div>
               <h3 className="stat-value">{formatCurrency(wallet?.reservedBalance)}</h3>
               <span className="stat-hint">
                 {wallet?.reservedBalance > 0
-                  ? 'Đang tạm giữ cho các lịch hẹn chờ khám hoặc yêu cầu rút tiền đang chờ xử lý'
-                  : 'Không có khoản tiền nào đang bị tạm giữ'}
+                  ? 'Đang tạm giữ bảo chứng cho lịch khám chờ thực hiện hoặc yêu cầu rút tiền đang duyệt. Nếu hủy hợp lệ, tiền hoàn về số dư khả dụng.'
+                  : 'Không có khoản tiền nào đang bị tạm khóa (Bảo chứng 0đ).'}
               </span>
             </div>
           </div>
@@ -534,9 +582,9 @@ const PatientWallet = () => {
               <i className="fas fa-shield-alt" />
             </div>
             <div className="stat-info">
-              <span className="stat-label">Bảo chứng & An toàn tài chính</span>
+              <span className="stat-label">Bảo chứng & Ký quỹ minh bạch</span>
               <p className="guarantee-text">
-                Hệ thống tuân thủ mô hình Closed-loop Wallet. Bệnh nhân có quyền gửi yêu cầu rút tiền về đúng tài khoản ngân hàng chính chủ bất kỳ lúc nào.
+                Tiền tạm giữ (Hold) là ký quỹ an toàn, <strong>vẫn thuộc quyền sở hữu của bạn</strong>. Bạn có quyền hủy yêu cầu rút tiền hoặc hủy khám theo quy định để tiền hoàn trả tức thì vào số dư khả dụng.
               </p>
             </div>
           </div>
@@ -1257,6 +1305,153 @@ const PatientWallet = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 8. MODAL GIẢI THÍCH CHI TIẾT CƠ CHẾ VÍ & KÝ QUỸ (ESCROW) */}
+      {showExplainerModal && (
+        <div className="wallet-modal-overlay" onClick={() => setShowExplainerModal(false)}>
+          <div className="wallet-modal-content wallet-explainer-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title-wrap">
+                <div className="modal-icon-badge" style={{ background: '#ecfdf5', color: '#0d9488' }}>
+                  <i className="fas fa-shield-alt" />
+                </div>
+                <div>
+                  <h3 className="modal-title">Cơ Chế Quản Lý Số Dư & Ký Quỹ An Toàn</h3>
+                  <p className="modal-subtitle">Giải thích chi tiết về Tổng tài sản, Số dư khả dụng và Tiền đang giữ chỗ (Hold)</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn-modal-close"
+                onClick={() => setShowExplainerModal(false)}
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="explainer-modal-body">
+              {/* Formula Card */}
+              <div className="explainer-formula-card">
+                <div className="formula-header">
+                  <i className="fas fa-calculator me-2" />
+                  <span>Công thức cân bằng tài chính minh bạch:</span>
+                </div>
+                <div className="formula-equation">
+                  <div className="equation-item total">
+                    <span className="eq-label">Tổng tài sản trong ví</span>
+                    <span className="eq-value">{formatCurrency(wallet?.totalBalance)}</span>
+                  </div>
+                  <span className="eq-operator">=</span>
+                  <div className="equation-item avail">
+                    <span className="eq-label">Số dư khả dụng</span>
+                    <span className="eq-value">{formatCurrency(wallet?.availableBalance)}</span>
+                  </div>
+                  <span className="eq-operator">+</span>
+                  <div className="equation-item hold">
+                    <span className="eq-label">Tiền đang giữ chỗ (Hold)</span>
+                    <span className="eq-value">{formatCurrency(wallet?.reservedBalance)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Detail Blocks */}
+              <div className="explainer-blocks">
+                <div className="explainer-block block-available">
+                  <div className="block-head">
+                    <div className="block-icon">
+                      <i className="fas fa-wallet" />
+                    </div>
+                    <div>
+                      <h4 className="block-title">1. Số dư khả dụng (Available Balance)</h4>
+                      <span className="block-tag">Sẵn sàng sử dụng 100%</span>
+                    </div>
+                  </div>
+                  <p className="block-desc">
+                    Là số tiền tự do trong tài khoản ví của bạn. Bạn có thể sử dụng ngay để <strong>thanh toán các lịch hẹn khám bệnh mới</strong> hoặc <strong>yêu cầu rút tiền về tài khoản ngân hàng chính chủ</strong> của bạn bất kỳ lúc nào.
+                  </p>
+                </div>
+
+                <div className="explainer-block block-hold">
+                  <div className="block-head">
+                    <div className="block-icon">
+                      <i className="fas fa-lock" />
+                    </div>
+                    <div>
+                      <h4 className="block-title">2. Tiền đang giữ chỗ khám / Rút (Reserved / Hold)</h4>
+                      <span className="block-tag tag-hold">Ký quỹ bảo chứng an toàn</span>
+                    </div>
+                  </div>
+                  <p className="block-desc">
+                    <strong>Đây KHÔNG PHẢI là chi phí bị trừ mất</strong>. Toàn bộ số tiền này <strong>vẫn thuộc quyền sở hữu của bạn</strong>, chỉ tạm thời được khóa bảo chứng (Escrow) trong 2 trường hợp:
+                  </p>
+                  <ul className="block-list">
+                    <li>
+                      <strong>Giữ chỗ lịch khám:</strong> Khi bạn đặt một lịch khám bệnh mới, tiền khám được khóa bảo đảm chỗ cho bạn với bác sĩ. Khi bác sĩ khám xong, tiền mới thanh toán. Nếu bạn hủy hẹn hợp lệ theo chính sách, <strong>toàn bộ tiền giữ chỗ sẽ được hoàn trả ngay lập tức vào Số dư khả dụng</strong>.
+                    </li>
+                    <li>
+                      <strong>Lệnh rút tiền đang duyệt:</strong> Khi bạn tạo yêu cầu rút tiền về ngân hàng, số tiền rút sẽ tạm khóa để tránh bị chi tiêu trùng lặp trong thời gian bộ phận tài chính thực hiện lệnh chuyển khoản ngân hàng. Nếu bạn bấm <em>"Hủy yêu cầu"</em>, tiền sẽ quay về số dư khả dụng ngay tức thì.
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="explainer-block block-total">
+                  <div className="block-head">
+                    <div className="block-icon">
+                      <i className="fas fa-coins" />
+                    </div>
+                    <div>
+                      <h4 className="block-title">3. Tổng tài sản trong ví (Total Balance)</h4>
+                      <span className="block-tag tag-total">Tổng giá trị bạn sở hữu</span>
+                    </div>
+                  </div>
+                  <p className="block-desc">
+                    Phản ánh tổng giá trị tiền tệ thực tế bạn đang có trên BookingCare (bao gồm cả tiền tự do dùng được ngay và tiền đang ký quỹ bảo lãnh cho các ca khám / lệnh rút sắp tới).
+                  </p>
+                </div>
+              </div>
+
+              {/* Example box */}
+              <div className="explainer-example-box">
+                <div className="example-title">
+                  <i className="fas fa-lightbulb text-warning me-2" />
+                  <strong>Ví dụ thực tế dễ hiểu:</strong>
+                </div>
+                <p className="example-text">
+                  Ví bạn có <strong>500.000đ</strong> khả dụng. Bạn đặt 1 lịch khám giá <strong>300.000đ</strong>:
+                </p>
+                <div className="example-steps">
+                  <div className="step-item">
+                    <span className="step-dot" />
+                    <span>Số dư khả dụng còn: <strong>200.000đ</strong> (bạn có thể rút hoặc đặt thêm ca khác).</span>
+                  </div>
+                  <div className="step-item">
+                    <span className="step-dot" />
+                    <span>Tiền giữ chỗ (Hold) tăng: <strong>300.000đ</strong> (tạm bảo chứng ca khám).</span>
+                  </div>
+                  <div className="step-item">
+                    <span className="step-dot" />
+                    <span>Tổng tài sản ví: vẫn là <strong>500.000đ</strong> (tài sản của bạn không hề bị hao hụt).</span>
+                  </div>
+                  <div className="step-item">
+                    <span className="step-dot" />
+                    <span>Nếu bạn hủy lịch hẹn đúng hạn: <strong>300.000đ</strong> lập tức được mở khóa quay lại Số dư khả dụng = <strong>500.000đ</strong>!</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-actions" style={{ justifyContent: 'flex-end', marginTop: '16px' }}>
+              <button
+                type="button"
+                className="btn-deposit-primary"
+                onClick={() => setShowExplainerModal(false)}
+              >
+                <i className="fas fa-check me-1" /> Tôi đã hiểu
+              </button>
+            </div>
           </div>
         </div>
       )}

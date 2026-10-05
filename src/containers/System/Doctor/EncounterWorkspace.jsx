@@ -43,7 +43,7 @@ import {
   uploadEncounterAttachments,
   deleteEncounterAttachment,
 } from '../../../services/doctorService';
-import { getAllMedicines } from '../../../services/catalogService';
+import { getAllMedicines, createMedicine } from '../../../services/catalogService';
 import './EncounterWorkspace.scss';
 
 const DOCUMENT_CATEGORIES = [
@@ -113,6 +113,17 @@ const EncounterWorkspace = () => {
   const [uploadNote, setUploadNote] = useState('');
   const [uploadSource, setUploadSource] = useState('DOCTOR');
   const [isUploading, setIsUploading] = useState(false);
+
+  // Quick Add Medicine Modal State
+  const [showQuickAddMedicineModal, setShowQuickAddMedicineModal] = useState(false);
+  const [quickMedForm, setQuickMedForm] = useState({
+    name: '',
+    activeIngredient: '',
+    concentration: '',
+    unit: 'Viên',
+    dosageForm: 'Viên nén',
+  });
+  const [isCreatingQuickMed, setIsCreatingQuickMed] = useState(false);
 
   const fileInputRef = useRef(null);
   const autoSaveTimerRef = useRef(null);
@@ -295,6 +306,64 @@ const EncounterWorkspace = () => {
     setIsDirty(true);
   };
 
+  const handleSaveQuickMedicine = async (e) => {
+    if (e) e.preventDefault();
+    if (!quickMedForm.name.trim()) {
+      toast.warning('Vui lòng nhập tên thuốc!');
+      return;
+    }
+    try {
+      setIsCreatingQuickMed(true);
+      const res = await createMedicine({
+        name: quickMedForm.name.trim(),
+        activeIngredient: quickMedForm.activeIngredient.trim(),
+        concentration: quickMedForm.concentration.trim(),
+        unit: quickMedForm.unit || 'Viên',
+        dosageForm: quickMedForm.dosageForm || 'Viên nén',
+        isActive: true,
+      });
+
+      if (res && (res.errCode === 0 || res.status === 201) && (res.data || res.medicine)) {
+        const newMed = res.data || res.medicine;
+        toast.success(`🎉 Đã thêm thuốc "${newMed.name}" vào danh mục thành công!`);
+
+        // Cập nhật danh mục thuốc của phiên khám
+        setMedicineCatalog((prev) => [newMed, ...prev]);
+
+        // Tự động thêm ngay 1 dòng đơn thuốc mới dùng thuốc vừa tạo
+        setMedicines((prev) => [
+          ...prev,
+          {
+            medicineId: newMed.id,
+            name: newMed.name,
+            quantity: 1,
+            unit: newMed.unit || 'Viên',
+            dosage: '1 viên x 2 lần/ngày',
+            usageInstructions: 'Uống sau bữa ăn sáng và tối',
+          },
+        ]);
+        setIsDirty(true);
+
+        // Đóng modal & reset form
+        setShowQuickAddMedicineModal(false);
+        setQuickMedForm({
+          name: '',
+          activeIngredient: '',
+          concentration: '',
+          unit: 'Viên',
+          dosageForm: 'Viên nén',
+        });
+      } else {
+        toast.error(res?.message || 'Không thể tạo thuốc mới.');
+      }
+    } catch (err) {
+      console.error('Error creating medicine quickly:', err);
+      toast.error('Lỗi kết nối khi thêm thuốc mới vào danh mục.');
+    } finally {
+      setIsCreatingQuickMed(false);
+    }
+  };
+
   // 4. File attachments upload
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files || []);
@@ -404,8 +473,20 @@ const EncounterWorkspace = () => {
     );
   }
 
-  const patientName = encounter.patientName || `${encounter.patientData?.lastName || ''} ${encounter.patientData?.firstName || ''}`.trim() || 'Bệnh nhân';
-  const patientGender = encounter.patientGender === 'M' || encounter.patientData?.gender === 'M' ? 'Nam' : 'Nữ';
+  const patientName = encounter.effectivePatientName || encounter.patientName || `${encounter.patientData?.lastName || ''} ${encounter.patientData?.firstName || ''}`.trim() || 'Bệnh nhân';
+
+  // Chuẩn hóa giới tính: hỗ trợ G1/G2, M/F, MALE/FEMALE, và ưu tiên người thân
+  const rawGender = encounter.bookingFor === 'FAMILY' && encounter.familyMemberData?.gender
+    ? encounter.familyMemberData.gender
+    : (encounter.patientGenderVi || encounter.patientGender || encounter.patientData?.gender || '');
+
+  const patientGender = (rawGender === 'G1' || rawGender === 'M' || rawGender === 'MALE' || rawGender === 'Nam')
+    ? 'Nam'
+    : (rawGender === 'G2' || rawGender === 'F' || rawGender === 'FEMALE' || rawGender === 'Nữ')
+    ? 'Nữ'
+    : (encounter.patientGenderVi || 'Chưa cập nhật');
+
+  const patientAgeDisplay = encounter.patientAge ? `${encounter.patientAge} tuổi` : 'Chưa cập nhật tuổi';
   const isCompleted = encounter.statusId === 'S3' || form.encounterStatus === 'completed';
 
   return (
@@ -433,7 +514,7 @@ const EncounterWorkspace = () => {
               </span>
             </div>
             <h1 className="ew-header__patient-summary">
-              {patientName} <span className="meta">· {encounter.patientAge || 35} tuổi · {patientGender} {encounter.bookingFor === 'FAMILY' ? `· 👨‍👩‍👧 ${encounter.relationship === 'CHILD' ? 'Con cái' : encounter.relationship === 'PARENT' ? 'Bố/Mẹ' : encounter.relationship === 'SPOUSE' ? 'Vợ/Chồng' : 'Người thân'}` : ''} · {encounter.patientCode || `#PT-${encounter.patientId}`}</span>
+              {patientName} <span className="meta">· {patientAgeDisplay} · {patientGender} {encounter.bookingFor === 'FAMILY' ? `· 👨‍👩‍👧 ${encounter.relationship === 'CHILD' ? 'Con cái' : encounter.relationship === 'PARENT' ? 'Bố/Mẹ' : encounter.relationship === 'SPOUSE' ? 'Vợ/Chồng' : 'Người thân'}` : ''} · {encounter.patientCode || `#PT-${encounter.patientId}`}</span>
             </h1>
           </div>
         </div>
@@ -514,7 +595,7 @@ const EncounterWorkspace = () => {
               )}
               <div className="meta-row">
                 <span className="meta-label">Tuổi & Giới tính:</span>
-                <span className="meta-value">{encounter.patientAge} tuổi · {patientGender}</span>
+                <span className="meta-value">{patientAgeDisplay} · {patientGender}</span>
               </div>
               <div className="meta-row">
                 <span className="meta-label">Số điện thoại:</span>
@@ -940,14 +1021,39 @@ const EncounterWorkspace = () => {
                 <span className="num-pill">7</span>
                 <h3>Đơn thuốc điện tử ({medicines.length} loại)</h3>
               </div>
-              <button
-                type="button"
-                className="btn-add-med"
-                onClick={handleAddMedicine}
-              >
-                <Plus size={15} />
-                <span>+ Thêm thuốc</span>
-              </button>
+              <div className="title-actions" style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  type="button"
+                  className="btn-quick-new-med"
+                  style={{
+                    background: '#ecfdf5',
+                    color: '#059669',
+                    border: '1px solid #a7f3d0',
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                  onClick={() => setShowQuickAddMedicineModal(true)}
+                  title="Thêm thuốc mới vào danh mục dược y tế"
+                >
+                  <Plus size={15} />
+                  <span>+ Thêm thuốc mới vào danh mục</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn-add-med"
+                  onClick={handleAddMedicine}
+                >
+                  <Plus size={15} />
+                  <span>+ Thêm dòng thuốc</span>
+                </button>
+              </div>
             </div>
 
             <div className="section-body">
@@ -1502,6 +1608,169 @@ const EncounterWorkspace = () => {
                 Đóng
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ──────────────────────────────────────────────────────── */}
+      {/* MODAL 6: QUICK ADD MEDICINE TO CATALOG                   */}
+      {/* ──────────────────────────────────────────────────────── */}
+      {showQuickAddMedicineModal && (
+        <div className="ew-modal-backdrop" onClick={() => !isCreatingQuickMed && setShowQuickAddMedicineModal(false)}>
+          <div className="ew-modal ew-modal--quick-med" style={{ maxWidth: '580px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="ew-modal__header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Pill size={20} className="text-primary" />
+                <h3 style={{ margin: 0 }}>Thêm thuốc mới vào danh mục y tế</h3>
+              </div>
+              <button
+                type="button"
+                className="btn-modal-close"
+                onClick={() => !isCreatingQuickMed && setShowQuickAddMedicineModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveQuickMedicine}>
+              <div className="ew-modal__body" style={{ display: 'flex', flexDirection: 'column', gap: '14px', padding: '16px 20px' }}>
+                <p style={{ margin: 0, fontSize: '0.84rem', color: '#64748b' }}>
+                  Thuốc mới sẽ được lưu vào danh mục dược dùng chung của hệ thống, đồng bộ tức thì cho Bác sĩ và Quản trị viên (Admin).
+                </p>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>
+                    Tên thuốc / Biệt dược <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="ew-input"
+                    placeholder="VD: Paracetamol, Augmentin, Panadol Extra..."
+                    value={quickMedForm.name}
+                    onChange={(e) => setQuickMedForm({ ...quickMedForm, name: e.target.value })}
+                    required
+                    autoFocus
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>
+                      Hoạt chất chính
+                    </label>
+                    <input
+                      type="text"
+                      className="ew-input"
+                      placeholder="VD: Acetaminophen, Amoxicillin..."
+                      value={quickMedForm.activeIngredient}
+                      onChange={(e) => setQuickMedForm({ ...quickMedForm, activeIngredient: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>
+                      Hàm lượng / Nồng độ
+                    </label>
+                    <input
+                      type="text"
+                      className="ew-input"
+                      placeholder="VD: 500mg, 625mg, 10ml..."
+                      value={quickMedForm.concentration}
+                      onChange={(e) => setQuickMedForm({ ...quickMedForm, concentration: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>
+                      Đơn vị tính
+                    </label>
+                    <select
+                      className="ew-select"
+                      value={quickMedForm.unit}
+                      onChange={(e) => setQuickMedForm({ ...quickMedForm, unit: e.target.value })}
+                    >
+                      <option value="Viên">Viên</option>
+                      <option value="Gói">Gói</option>
+                      <option value="Chai">Chai</option>
+                      <option value="Lọ">Lọ</option>
+                      <option value="Ống">Ống</option>
+                      <option value="Hộp">Hộp</option>
+                      <option value="Vỉ">Vỉ</option>
+                      <option value="Tuýp">Tuýp</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>
+                      Dạng bào chế
+                    </label>
+                    <select
+                      className="ew-select"
+                      value={quickMedForm.dosageForm}
+                      onChange={(e) => setQuickMedForm({ ...quickMedForm, dosageForm: e.target.value })}
+                    >
+                      <option value="Viên nén">Viên nén</option>
+                      <option value="Viên nang">Viên nang</option>
+                      <option value="Siro / Hỗn dịch">Siro / Hỗn dịch</option>
+                      <option value="Dung dịch tiêm">Dung dịch tiêm</option>
+                      <option value="Bột pha hỗn dịch">Bột pha hỗn dịch</option>
+                      <option value="Kem / Mỡ bôi">Kem / Mỡ bôi</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="ew-modal__footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button
+                  type="button"
+                  className="btn-modal-cancel"
+                  style={{
+                    background: '#f1f5f9',
+                    border: '1px solid #cbd5e1',
+                    color: '#475569',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => setShowQuickAddMedicineModal(false)}
+                  disabled={isCreatingQuickMed}
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="submit"
+                  className="btn-modal-primary"
+                  style={{
+                    background: '#0d9488',
+                    border: 'none',
+                    color: '#fff',
+                    padding: '8px 20px',
+                    borderRadius: '8px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                  disabled={isCreatingQuickMed || !quickMedForm.name.trim()}
+                >
+                  {isCreatingQuickMed ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm" />
+                      <span>Đang lưu...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus size={16} />
+                      <span>Lưu & Kê vào đơn</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
