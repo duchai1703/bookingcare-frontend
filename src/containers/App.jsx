@@ -102,6 +102,9 @@ import AIChatbot from './Patient/AIChatbot/AIChatbot';
 // [WebRTC 1-1 Audio/Video Call Manager]
 import { CallProvider } from './Call/CallContext';
 
+// [Enterprise Feature Flags]
+import '../config/features';
+
 import './App.scss';
 
 // Tự động cuộn trang lên đỉnh (0, 0) khi chuyển route SPA
