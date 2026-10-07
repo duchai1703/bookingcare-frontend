@@ -378,35 +378,150 @@ const PatientWallet = () => {
     }
   };
 
-  // Format nhãn loại giao dịch
+  // [Fintech UX] Chuẩn hóa diễn giải giao dịch rõ ràng, lược bỏ các chuỗi kỹ thuật backend
+  const formatTransactionDescription = (tx) => {
+    if (!tx) return { title: 'Giao dịch ví', sub: '' };
+    const desc = tx.description || '';
+
+    // 1. Hoàn tiền
+    if (tx.transactionType === 'REFUND') {
+      const matchBooking = desc.match(/#(\d+)/);
+      const bookingCode = matchBooking ? `#${matchBooking[1]}` : '';
+      let sub = 'Hoàn tiền vào số dư khả dụng';
+      if (desc.includes('bác sĩ bận') || desc.includes('Bác Sĩ bận') || desc.includes('phẫu thuật') || desc.includes('cấp cứu')) {
+        sub = 'Bác sĩ bận ca phẫu thuật / cấp cứu đột xuất';
+      } else if (desc.includes('hủy') || desc.includes('Hủy')) {
+        sub = 'Hủy lịch hẹn theo chính sách hoàn tiền';
+      }
+      return {
+        title: `Hoàn tiền ca khám ${bookingCode}`.trim(),
+        sub,
+      };
+    }
+
+    // 2. Thanh toán ca khám
+    if (tx.transactionType === 'BOOKING_PAYMENT') {
+      const matchBooking = desc.match(/#(\d+)/);
+      const bookingCode = matchBooking ? `#${matchBooking[1]}` : '';
+      return {
+        title: `Thanh toán ca khám ${bookingCode}`.trim(),
+        sub: 'Thanh toán giữ chỗ lịch hẹn trực tuyến',
+      };
+    }
+
+    // 3. Nạp tiền ví
+    if (tx.transactionType === 'DEPOSIT') {
+      let sub = 'Cổng thanh toán điện tử VNPay';
+      const matchBank = desc.match(/Ngân hàng:\s*([A-Za-z0-9]+)/i);
+      const matchTx = desc.match(/Mã GD:\s*([0-9]+)/i);
+      if (matchBank || matchTx) {
+        sub = `${matchBank ? `Ngân hàng ${matchBank[1]}` : 'VNPay'}${matchTx ? ` • GD: ${matchTx[1]}` : ''}`;
+      }
+      return {
+        title: 'Nạp tiền vào ví',
+        sub,
+      };
+    }
+
+    // 4. Rút tiền về ngân hàng
+    if (tx.transactionType === 'WITHDRAWAL') {
+      let sub = 'Chuyển khoản về tài khoản ngân hàng';
+      const matchBank = desc.match(/ngân hàng\s+([A-Za-z0-9]+)/i);
+      const matchStk = desc.match(/STK\s+([0-9]+)/i);
+      if (matchBank || matchStk) {
+        sub = `${matchBank ? matchBank[1].toUpperCase() : 'Ngân hàng'}${matchStk ? ` • STK: ${matchStk[1]}` : ''}`;
+      }
+      return {
+        title: 'Rút tiền về tài khoản ngân hàng',
+        sub,
+      };
+    }
+
+    return {
+      title: desc.split('.')[0] || 'Biến động số dư',
+      sub: '',
+    };
+  };
+
+  // Format nhãn loại giao dịch theo phong cách Fintech hiện đại
   const renderTxTypeBadge = (type) => {
     switch (type) {
       case 'DEPOSIT':
-        return <span className="tx-badge tx-badge--deposit"><i className="fas fa-arrow-down" /> Nạp tiền VNPay</span>;
+        return (
+          <span className="fintech-type-pill type-deposit">
+            <span className="dot" />
+            <span>Nạp tiền</span>
+          </span>
+        );
       case 'BOOKING_PAYMENT':
-        return <span className="tx-badge tx-badge--booking"><i className="fas fa-calendar-check" /> Thanh toán khám</span>;
+        return (
+          <span className="fintech-type-pill type-payment">
+            <span className="dot" />
+            <span>Thanh toán</span>
+          </span>
+        );
       case 'REFUND':
-        return <span className="tx-badge tx-badge--refund"><i className="fas fa-undo-alt" /> Hoàn tiền hủy khám</span>;
+        return (
+          <span className="fintech-type-pill type-refund">
+            <span className="dot" />
+            <span>Hoàn tiền</span>
+          </span>
+        );
       case 'WITHDRAWAL':
-        return <span className="tx-badge tx-badge--withdraw"><i className="fas fa-university" /> Rút tiền về ngân hàng</span>;
+        return (
+          <span className="fintech-type-pill type-withdraw">
+            <span className="dot" />
+            <span>Rút tiền</span>
+          </span>
+        );
       default:
-        return <span className="tx-badge tx-badge--other">{type}</span>;
+        return (
+          <span className="fintech-type-pill type-default">
+            <span className="dot" />
+            <span>{type}</span>
+          </span>
+        );
     }
   };
 
-  // Format nhãn trạng thái yêu cầu rút tiền
+  // Format nhãn trạng thái yêu cầu rút tiền tinh tế
   const renderWithdrawStatusBadge = (status) => {
     switch (status) {
       case 'PENDING':
-        return <span className="status-badge status-pending"><i className="fas fa-clock" /> Đang chờ duyệt</span>;
+        return (
+          <span className="fintech-status-pill status-pending">
+            <span className="dot" />
+            <span>Chờ duyệt</span>
+          </span>
+        );
       case 'TRANSFERRED':
-        return <span className="status-badge status-success"><i className="fas fa-check-circle" /> Đã chuyển khoản</span>;
+        return (
+          <span className="fintech-status-pill status-success">
+            <span className="dot" />
+            <span>Đã chuyển tiền</span>
+          </span>
+        );
       case 'REJECTED':
-        return <span className="status-badge status-danger"><i className="fas fa-times-circle" /> Bị từ chối</span>;
+        return (
+          <span className="fintech-status-pill status-danger">
+            <span className="dot" />
+            <span>Bị từ chối</span>
+          </span>
+        );
       case 'CANCELLED':
-        return <span className="status-badge status-muted"><i className="fas fa-ban" /> Đã hủy</span>;
+        return (
+          <span className="fintech-status-pill status-muted">
+            <span className="dot" />
+            <span>Đã hủy</span>
+          </span>
+        );
       default:
-        return <span className="status-badge">{status}</span>;
+        return (
+          <span className="fintech-status-pill">
+            <span className="dot" />
+            <span>{status}</span>
+          </span>
+        );
     }
   };
 
@@ -614,50 +729,50 @@ const PatientWallet = () => {
         </button>
       </div>
 
-      {/* ══════════════ TAB 1: SỔ CÁI BIẾN ĐỘNG SỐ DƯ (LEDGER) ══════════════ */}
+      {/* ══════════════ TAB 1: BIẾN ĐỘNG SỐ DƯ (LEDGER) ══════════════ */}
       {activeSubTab === 'ledger' && (
-        <div className="wallet-ledger-section">
-          <div className="ledger-header">
-            <div className="ledger-title-group">
-              <h3 className="ledger-title">
-                <i className="fas fa-history" /> Nhật Ký Giao Dịch Bất Biến (Immutable Ledger)
+        <div className="fintech-card-container">
+          <div className="fintech-card-header">
+            <div className="header-meta">
+              <h3 className="section-title">
+                Lịch sử biến động số dư
               </h3>
-              <span className="ledger-count-pill">{totalTx} giao dịch</span>
+              <span className="fintech-counter-badge">{totalTx} giao dịch</span>
             </div>
 
-            {/* Bộ lọc loại giao dịch */}
-            <div className="ledger-filters">
+            {/* Bộ lọc Segmented Control */}
+            <div className="fintech-segmented-group">
               <button
                 type="button"
-                className={`filter-chip ${filterType === 'ALL' ? 'active' : ''}`}
+                className={`segmented-item ${filterType === 'ALL' ? 'active' : ''}`}
                 onClick={() => setFilterType('ALL')}
               >
                 Tất cả
               </button>
               <button
                 type="button"
-                className={`filter-chip ${filterType === 'DEPOSIT' ? 'active' : ''}`}
+                className={`segmented-item ${filterType === 'DEPOSIT' ? 'active' : ''}`}
                 onClick={() => setFilterType('DEPOSIT')}
               >
                 Nạp tiền
               </button>
               <button
                 type="button"
-                className={`filter-chip ${filterType === 'BOOKING_PAYMENT' ? 'active' : ''}`}
+                className={`segmented-item ${filterType === 'BOOKING_PAYMENT' ? 'active' : ''}`}
                 onClick={() => setFilterType('BOOKING_PAYMENT')}
               >
                 Thanh toán
               </button>
               <button
                 type="button"
-                className={`filter-chip ${filterType === 'REFUND' ? 'active' : ''}`}
+                className={`segmented-item ${filterType === 'REFUND' ? 'active' : ''}`}
                 onClick={() => setFilterType('REFUND')}
               >
                 Hoàn tiền
               </button>
               <button
                 type="button"
-                className={`filter-chip ${filterType === 'WITHDRAWAL' ? 'active' : ''}`}
+                className={`segmented-item ${filterType === 'WITHDRAWAL' ? 'active' : ''}`}
                 onClick={() => setFilterType('WITHDRAWAL')}
               >
                 Rút tiền
@@ -667,63 +782,66 @@ const PatientWallet = () => {
 
           {/* Bảng sổ cái */}
           {isTxLoading ? (
-            <div className="ledger-loading-state">
-              <i className="fas fa-spinner fa-spin" />
-              <span>Đang đối soát lịch sử sổ cái...</span>
+            <div className="fintech-loading-state">
+              <i className="fas fa-circle-notch fa-spin" />
+              <span>Đang tải lịch sử giao dịch...</span>
             </div>
           ) : transactions.length === 0 ? (
-            <div className="ledger-empty-state">
-              <i className="fas fa-file-invoice-dollar" />
-              <p>Chưa có giao dịch nào được ghi nhận trong sổ cái.</p>
+            <div className="fintech-empty-state">
+              <div className="empty-icon-wrap">
+                <i className="fas fa-receipt" />
+              </div>
+              <p className="empty-title">Chưa có biến động số dư nào</p>
+              <p className="empty-sub">Các khoản nạp tiền, hoàn tiền hoặc thanh toán lịch khám sẽ được hiển thị tại đây.</p>
               <button
                 type="button"
-                className="btn-empty-deposit"
+                className="btn-empty-action"
                 onClick={() => setShowDepositModal(true)}
               >
-                Nạp tiền trải nghiệm ngay
+                <i className="fas fa-plus" /> Nạp tiền vào ví
               </button>
             </div>
           ) : (
-            <div className="ledger-table-wrapper">
-              <table className="ledger-table">
+            <div className="fintech-table-scroll">
+              <table className="fintech-modern-table">
                 <thead>
                   <tr>
-                    <th>Thời gian</th>
-                    <th>Loại giao dịch</th>
-                    <th>Diễn giải chi tiết</th>
-                    <th>Biến động số dư</th>
-                    <th>Số dư sau GD</th>
+                    <th style={{ width: '135px' }}>Thời gian</th>
+                    <th style={{ width: '135px' }}>Phân loại</th>
+                    <th>Nội dung giao dịch</th>
+                    <th style={{ width: '160px' }}>Biến động</th>
+                    <th style={{ width: '160px' }}>Số dư ví</th>
                   </tr>
                 </thead>
                 <tbody>
                   {transactions.map((tx) => {
                     const isCredit = tx.direction === 'CREDIT';
+                    const txInfo = formatTransactionDescription(tx);
                     return (
                       <tr key={tx.id}>
-                        <td className="col-time">
-                          <span className="time-date">
+                        <td className="cell-datetime">
+                          <div className="date-text">
                             {moment(tx.createdAt).format('DD/MM/YYYY')}
-                          </span>
-                          <span className="time-hour">
+                          </div>
+                          <div className="time-text">
                             {moment(tx.createdAt).format('HH:mm:ss')}
-                          </span>
+                          </div>
                         </td>
-                        <td className="col-type">{renderTxTypeBadge(tx.transactionType)}</td>
-                        <td className="col-desc">
-                          <div className="desc-main">{tx.description || 'Giao dịch ví'}</div>
-                          {tx.idempotencyKey && (
-                            <small className="desc-key" title={tx.idempotencyKey}>
-                              Khóa Idempotency: {tx.idempotencyKey.slice(0, 24)}...
-                            </small>
+                        <td className="cell-type">
+                          {renderTxTypeBadge(tx.transactionType)}
+                        </td>
+                        <td className="cell-description">
+                          <div className="desc-primary">{txInfo.title}</div>
+                          {txInfo.sub && (
+                            <div className="desc-secondary">{txInfo.sub}</div>
                           )}
                         </td>
-                        <td className={`col-amount ${isCredit ? 'credit' : 'debit'}`}>
-                          <strong>
-                            {isCredit ? '+' : '-'}
-                            {formatCurrency(tx.amount)}
-                          </strong>
+                        <td className={`cell-amount ${isCredit ? 'is-credit' : 'is-debit'}`}>
+                          <span>
+                            {isCredit ? '+' : '-'}{formatCurrency(tx.amount)}
+                          </span>
                         </td>
-                        <td className="col-balance-after">
+                        <td className="cell-balance-after">
                           <span>{formatCurrency(tx.balanceAfter)}</span>
                         </td>
                       </tr>
@@ -736,21 +854,21 @@ const PatientWallet = () => {
 
           {/* Phân trang */}
           {totalPages > 1 && (
-            <div className="ledger-pagination">
+            <div className="fintech-pagination-bar">
               <button
                 type="button"
-                className="page-btn"
+                className="btn-page-nav"
                 disabled={page <= 1 || isTxLoading}
                 onClick={() => fetchTransactions(page - 1, filterType)}
               >
                 <i className="fas fa-chevron-left" /> Trước
               </button>
-              <span className="page-indicator">
-                Trang {page} / {totalPages}
+              <span className="page-current-info">
+                Trang <strong>{page}</strong> / {totalPages}
               </span>
               <button
                 type="button"
-                className="page-btn"
+                className="btn-page-nav"
                 disabled={page >= totalPages || isTxLoading}
                 onClick={() => fetchTransactions(page + 1, filterType)}
               >
@@ -763,48 +881,48 @@ const PatientWallet = () => {
 
       {/* ══════════════ TAB 2: YÊU CẦU RÚT TIỀN (WITHDRAWALS) ══════════════ */}
       {activeSubTab === 'withdrawals' && (
-        <div className="wallet-ledger-section">
-          <div className="ledger-header">
-            <div className="ledger-title-group">
-              <h3 className="ledger-title">
-                <i className="fas fa-money-check-alt" /> Lịch Sử Yêu Cầu Rút Tiền Về Ngân Hàng
+        <div className="fintech-card-container">
+          <div className="fintech-card-header">
+            <div className="header-meta">
+              <h3 className="section-title">
+                Lịch sử yêu cầu rút tiền
               </h3>
-              <span className="ledger-count-pill">{withdrawTotal} yêu cầu</span>
+              <span className="fintech-counter-badge">{withdrawTotal} yêu cầu</span>
             </div>
 
-            {/* Bộ lọc trạng thái rút tiền */}
-            <div className="ledger-filters">
+            {/* Bộ lọc Segmented Control */}
+            <div className="fintech-segmented-group">
               <button
                 type="button"
-                className={`filter-chip ${withdrawStatusFilter === 'ALL' ? 'active' : ''}`}
+                className={`segmented-item ${withdrawStatusFilter === 'ALL' ? 'active' : ''}`}
                 onClick={() => setWithdrawStatusFilter('ALL')}
               >
                 Tất cả
               </button>
               <button
                 type="button"
-                className={`filter-chip ${withdrawStatusFilter === 'PENDING' ? 'active' : ''}`}
+                className={`segmented-item ${withdrawStatusFilter === 'PENDING' ? 'active' : ''}`}
                 onClick={() => setWithdrawStatusFilter('PENDING')}
               >
                 Chờ duyệt
               </button>
               <button
                 type="button"
-                className={`filter-chip ${withdrawStatusFilter === 'TRANSFERRED' ? 'active' : ''}`}
+                className={`segmented-item ${withdrawStatusFilter === 'TRANSFERRED' ? 'active' : ''}`}
                 onClick={() => setWithdrawStatusFilter('TRANSFERRED')}
               >
                 Đã chuyển khoản
               </button>
               <button
                 type="button"
-                className={`filter-chip ${withdrawStatusFilter === 'REJECTED' ? 'active' : ''}`}
+                className={`segmented-item ${withdrawStatusFilter === 'REJECTED' ? 'active' : ''}`}
                 onClick={() => setWithdrawStatusFilter('REJECTED')}
               >
                 Bị từ chối
               </button>
               <button
                 type="button"
-                className={`filter-chip ${withdrawStatusFilter === 'CANCELLED' ? 'active' : ''}`}
+                className={`segmented-item ${withdrawStatusFilter === 'CANCELLED' ? 'active' : ''}`}
                 onClick={() => setWithdrawStatusFilter('CANCELLED')}
               >
                 Đã hủy
@@ -814,34 +932,37 @@ const PatientWallet = () => {
 
           {/* Bảng yêu cầu rút tiền */}
           {isWithdrawLoading ? (
-            <div className="ledger-loading-state">
-              <i className="fas fa-spinner fa-spin" />
+            <div className="fintech-loading-state">
+              <i className="fas fa-circle-notch fa-spin" />
               <span>Đang tải danh sách yêu cầu rút tiền...</span>
             </div>
           ) : withdrawRequests.length === 0 ? (
-            <div className="ledger-empty-state">
-              <i className="fas fa-hand-holding-usd" />
-              <p>Bạn chưa gửi yêu cầu rút tiền nào.</p>
+            <div className="fintech-empty-state">
+              <div className="empty-icon-wrap">
+                <i className="fas fa-university" />
+              </div>
+              <p className="empty-title">Chưa có yêu cầu rút tiền nào</p>
+              <p className="empty-sub">Bạn có thể gửi yêu cầu rút số dư khả dụng về tài khoản ngân hàng bất cứ lúc nào.</p>
               <button
                 type="button"
-                className="btn-empty-deposit"
+                className="btn-empty-action"
                 onClick={handleOpenWithdrawModal}
               >
-                Gửi yêu cầu rút tiền ngay
+                <i className="fas fa-arrow-up" /> Rút tiền về ngân hàng
               </button>
             </div>
           ) : (
-            <div className="ledger-table-wrapper">
-              <table className="ledger-table">
+            <div className="fintech-table-scroll">
+              <table className="fintech-modern-table">
                 <thead>
                   <tr>
-                    <th>Mã & Ngày gửi</th>
-                    <th>Tài khoản nhận tiền</th>
-                    <th>Số tiền rút</th>
-                    <th>Hạn chót cam kết (SLA)</th>
-                    <th>Trạng thái</th>
-                    <th>Ghi chú / Mã giao dịch</th>
-                    <th>Thao tác</th>
+                    <th style={{ width: '145px' }}>Mã & Thời gian</th>
+                    <th style={{ width: '220px' }}>Tài khoản nhận</th>
+                    <th style={{ width: '135px', textAlign: 'right' }}>Số tiền</th>
+                    <th style={{ width: '165px' }}>Thời gian dự kiến</th>
+                    <th style={{ width: '135px' }}>Trạng thái</th>
+                    <th>Thông tin đối soát</th>
+                    <th style={{ width: '100px', textAlign: 'center' }}>Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -853,79 +974,96 @@ const PatientWallet = () => {
                     );
                     return (
                       <tr key={req.id}>
-                        <td className="col-time">
-                          <strong className="tw-text-slate-800">#WTH-{req.id}</strong>
-                          <span className="time-date">{moment(req.createdAt).format('DD/MM/YYYY HH:mm')}</span>
-                        </td>
-                        <td className="col-desc">
-                          <div className="desc-main" style={{ fontWeight: 600 }}>
-                            {req.bankName}
+                        <td className="cell-datetime">
+                          <div className="req-code-badge">
+                            #WTH-{String(req.id).padStart(3, '0')}
                           </div>
-                          <div style={{ fontSize: '0.85rem', color: '#475569' }}>
+                          <div className="time-text">
+                            {moment(req.createdAt).format('DD/MM/YYYY • HH:mm')}
+                          </div>
+                        </td>
+                        <td className="cell-bank-info">
+                          <div className="bank-name-badge">
+                            <i className="fas fa-university" />
+                            <span>{req.bankName}</span>
+                          </div>
+                          <div className="bank-account-num">
                             STK: <strong>{req.accountNumber}</strong>
                           </div>
-                          <div style={{ fontSize: '0.78rem', color: '#64748B' }}>
-                            Chủ TK: {req.accountHolderName}
+                          <div className="bank-holder-name">
+                            {req.accountHolderName}
                           </div>
                         </td>
-                        <td className="col-amount debit">
-                          <strong>-{formatCurrency(req.amount)}</strong>
+                        <td className="cell-amount is-debit">
+                          <span>-{formatCurrency(req.amount)}</span>
                         </td>
-                        <td className="col-desc">
-                          <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0f766e' }}>
-                            <i className="fas fa-clock tw-mr-1" />
-                            {req.appliedSlaDays ? `${req.appliedSlaDays} ngày` : 'Mặc định'}
+                        <td className="cell-sla">
+                          <div className="sla-duration">
+                            <i className="far fa-clock" />
+                            <span>{req.appliedSlaDays ? `Tối đa ${req.appliedSlaDays} ngày` : 'Trong ngày'}</span>
                           </div>
-                          <div style={{ fontSize: '0.78rem', color: isOverdue ? '#dc2626' : '#64748b' }}>
-                            Hạn: <strong>{req.promisedPayoutDate ? moment(req.promisedPayoutDate).format('DD/MM/YYYY') : 'Đang xử lý'}</strong>
+                          <div className="sla-deadline">
+                            Hạn: {req.promisedPayoutDate ? moment(req.promisedPayoutDate).format('DD/MM/YYYY') : 'Đang xử lý'}
                           </div>
                           {isOverdue && (
-                            <span className="tw-px-1.5 tw-py-0.5 tw-bg-rose-100 tw-text-rose-700 tw-rounded tw-text-2xs tw-font-bold tw-inline-block tw-mt-1">
-                              Quá hạn SLA
+                            <span className="overdue-tag">
+                              Cần hỗ trợ
                             </span>
                           )}
                         </td>
-                        <td className="col-type">{renderWithdrawStatusBadge(req.status)}</td>
-                      <td className="col-desc">
-                        {req.bankTransactionRef && (
-                          <div style={{ fontSize: '0.82rem', color: '#059669', fontWeight: 600 }}>
-                            <i className="fas fa-receipt" /> Mã GD: {req.bankTransactionRef}
-                          </div>
-                        )}
-                        {req.adminNote && (
-                          <div style={{ fontSize: '0.8rem', color: req.status === 'REJECTED' ? '#dc2626' : '#475569' }}>
-                            {req.status === 'REJECTED' ? 'Lý do từ chối: ' : 'Admin ghi chú: '}
-                            {req.adminNote}
-                          </div>
-                        )}
-                        {req.userNote && (
-                          <div style={{ fontSize: '0.76rem', color: '#94a3b8' }}>
-                            Ghi chú của bạn: {req.userNote}
-                          </div>
-                        )}
-                      </td>
-                      <td>
-                        {req.status === 'PENDING' && (
-                          <button
-                            type="button"
-                            className="btn-cancel-withdraw"
-                            disabled={cancellingId === req.id}
-                            onClick={() => handleCancelWithdrawal(req.id)}
-                            title="Hủy yêu cầu rút tiền này và hoàn trả lại số dư khả dụng"
-                          >
-                            {cancellingId === req.id ? (
-                              <i className="fas fa-spinner fa-spin" />
-                            ) : (
-                              <>
-                                <i className="fas fa-times" /> Hủy yêu cầu
-                              </>
-                            )}
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
+                        <td className="cell-type">
+                          {renderWithdrawStatusBadge(req.status)}
+                        </td>
+                        <td className="cell-reconciliation">
+                          {req.bankTransactionRef && (
+                            <div className="reconciliation-ref">
+                              <span className="ref-label">Mã GD:</span>
+                              <code>{req.bankTransactionRef}</code>
+                            </div>
+                          )}
+                          {req.adminNote && (
+                            <div className={`reconciliation-note ${req.status === 'REJECTED' ? 'is-rejected' : ''}`}>
+                              <span className="note-label">
+                                {req.status === 'REJECTED' ? 'Lý do từ chối:' : 'Ghi chú:'}
+                              </span>
+                              <span className="note-text">{req.adminNote}</span>
+                            </div>
+                          )}
+                          {req.userNote && (
+                            <div className="reconciliation-user-note">
+                              <span>Ghi chú của bạn: {req.userNote}</span>
+                            </div>
+                          )}
+                          {!req.bankTransactionRef && !req.adminNote && !req.userNote && (
+                            <span className="text-muted-dash">—</span>
+                          )}
+                        </td>
+                        <td className="cell-actions" style={{ textAlign: 'center' }}>
+                          {req.status === 'PENDING' ? (
+                            <button
+                              type="button"
+                              className="btn-cancel-req"
+                              disabled={cancellingId === req.id}
+                              onClick={() => handleCancelWithdrawal(req.id)}
+                              title="Hủy yêu cầu và hoàn lại số dư"
+                            >
+                              {cancellingId === req.id ? (
+                                <i className="fas fa-spinner fa-spin" />
+                              ) : (
+                                <span>Hủy</span>
+                              )}
+                            </button>
+                          ) : req.status === 'TRANSFERRED' ? (
+                            <span className="completed-check" title="Giao dịch thành công">
+                              <i className="fas fa-check" />
+                            </span>
+                          ) : (
+                            <span className="text-muted-dash">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -933,21 +1071,21 @@ const PatientWallet = () => {
 
           {/* Phân trang */}
           {totalWithdrawPages > 1 && (
-            <div className="ledger-pagination">
+            <div className="fintech-pagination-bar">
               <button
                 type="button"
-                className="page-btn"
+                className="btn-page-nav"
                 disabled={withdrawPage <= 1 || isWithdrawLoading}
                 onClick={() => fetchWithdrawals(withdrawPage - 1, withdrawStatusFilter)}
               >
                 <i className="fas fa-chevron-left" /> Trước
               </button>
-              <span className="page-indicator">
-                Trang {withdrawPage} / {totalWithdrawPages}
+              <span className="page-current-info">
+                Trang <strong>{withdrawPage}</strong> / {totalWithdrawPages}
               </span>
               <button
                 type="button"
-                className="page-btn"
+                className="btn-page-nav"
                 disabled={withdrawPage >= totalWithdrawPages || isWithdrawLoading}
                 onClick={() => fetchWithdrawals(withdrawPage + 1, withdrawStatusFilter)}
               >
