@@ -138,8 +138,8 @@ const LiquidityDashboard = ({ defaultTab }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Tabs: 'solvency' | 'inflows' | 'withdrawals' | 'ledger' | 'wallets' | 'settings' | 'withdrawal-policy'
-  const [activeTab, setActiveTab] = useState(defaultTab || 'solvency');
+  // Tabs: 'exceptions' (Mission Control) | 'solvency' | 'inflows' | 'withdrawals' | 'ledger' | 'wallets' | 'settings'
+  const [activeTab, setActiveTab] = useState(defaultTab || 'exceptions');
 
   // Synchronize activeTab when defaultTab prop or location changes
   useEffect(() => {

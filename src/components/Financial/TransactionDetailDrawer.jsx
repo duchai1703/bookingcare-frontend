@@ -13,7 +13,7 @@ const TransactionDetailDrawer = ({
   isAdmin = false,
   onActionSuccess,
 }) => {
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'lineage' | 'explain'
+  const [activeTab, setActiveTab] = useState('mission'); // 'mission' (5 câu hỏi) | 'lineage' | 'explain'
   const [copied, setCopied] = useState(false);
   const [submittingAction, setSubmittingAction] = useState(false);
   const [bankRef, setBankRef] = useState('');
@@ -29,7 +29,6 @@ const TransactionDetailDrawer = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Reset form inputs when data changes
   useEffect(() => {
     if (data) {
       setBankRef(data.bankTransactionRef || '');
@@ -42,7 +41,6 @@ const TransactionDetailDrawer = ({
   const isException = type === 'EXCEPTION' || Boolean(data.category);
   const isWithdrawal = type === 'WITHDRAWAL' || data.category === 'WITHDRAWAL';
   const isLedger = !isException && !isWithdrawal;
-
   const isCredit = isLedger ? data.direction === 'CREDIT' : false;
   const traceId = data.idempotencyKey || data.traceId || `TRC-${data.id || 'N/A'}`;
 
@@ -61,8 +59,10 @@ const TransactionDetailDrawer = ({
     }
   };
 
-  // Xác định mã ca khám
-  const bookingId = data.bookingId || data.bookingData?.id || (data.description?.match(/#(\d+)/) ? data.description.match(/#(\d+)/)[1] : null);
+  const bookingId =
+    data.bookingId ||
+    data.bookingData?.id ||
+    (data.description?.match(/#(\d+)/) ? data.description.match(/#(\d+)/)[1] : null);
 
   // Tính toán Risk Engine
   const getRiskDetails = () => {
@@ -71,7 +71,7 @@ const TransactionDetailDrawer = ({
         level: 'HIGH',
         label: 'Rủi ro cao (High Risk)',
         className: 'risk-high',
-        rec: 'Kiểm tra kỹ thông tin số tài khoản và lịch sử khám trước khi duyệt. Không duyệt nếu chưa có mã đối soát ngân hàng.',
+        rec: 'Giao dịch giá trị lớn hoặc gần hạn SLA. Khuyến nghị kiểm tra số tài khoản thụ hưởng trước khi giải ngân.',
       };
     }
     if (data.priority === 'HIGH' || Number(data.amount) > 5000000) {
@@ -79,20 +79,20 @@ const TransactionDetailDrawer = ({
         level: 'MEDIUM',
         label: 'Cần lưu ý (Medium Risk)',
         className: 'risk-medium',
-        rec: 'Giao dịch đạt hạn mức thông thường. Xác minh chủ tài khoản thụ hưởng trùng khớp với hồ sơ đăng ký.',
+        rec: 'Giao dịch đạt hạn mức thông thường. Đối soát tên người nhận trùng khớp với hồ sơ đăng ký.',
       };
     }
     return {
       level: 'LOW',
       label: 'An toàn (Low Risk)',
       className: 'risk-low',
-      rec: 'Tài khoản sạch, không có lịch sử hủy bất thường. Đủ điều kiện phê duyệt tức thì theo chính sách SLA.',
+      rec: 'Tài khoản sạch, không có khiếu nại. Đủ điều kiện phê duyệt tức thì theo chính sách SLA.',
     };
   };
 
   const risk = getRiskDetails();
 
-  // Admin xử lý Withdrawal trực tiếp trong Drawer
+  // Admin xử lý Withdrawal trực tiếp
   const handleAdminAction = async (action) => {
     if (action === 'REJECT' && !note.trim()) {
       toast.warning('Vui lòng nhập lý do từ chối vào ô ghi chú kiểm toán!');
@@ -180,124 +180,51 @@ const TransactionDetailDrawer = ({
         <div className="drawer-nav-tabs">
           <button
             type="button"
-            className={`nav-tab-item ${activeTab === 'overview' ? 'active' : ''}`}
-            onClick={() => setActiveTab('overview')}
+            className={`nav-tab-item ${activeTab === 'mission' ? 'active' : ''}`}
+            onClick={() => setActiveTab('mission')}
           >
-            Tổng quan & Bằng chứng
+            5 Câu Hỏi Vàng (Mission Control)
           </button>
           <button
             type="button"
             className={`nav-tab-item ${activeTab === 'lineage' ? 'active' : ''}`}
             onClick={() => setActiveTab('lineage')}
           >
-            Phả hệ giao dịch (Lineage)
+            Phả hệ luồng tiền (Lineage)
           </button>
           <button
             type="button"
             className={`nav-tab-item ${activeTab === 'explain' ? 'active' : ''}`}
             onClick={() => setActiveTab('explain')}
           >
-            Giải trình & Chính sách (Why?)
+            Giải trình số tiền (Why?)
           </button>
         </div>
 
-        {/* 3. Body */}
+        {/* 3. Body Content */}
         <div className="drawer-body">
-          {/* TAB 1: TỔNG QUAN & BẰNG CHỨNG */}
-          {activeTab === 'overview' && (
+          {/* TAB 1: 5 CÂU HỎI VÀNG CỦA ADMIN */}
+          {activeTab === 'mission' && (
             <>
-              {/* Box dành cho Admin nếu là ngoại lệ / yêu cầu chờ duyệt */}
-              {isAdmin && (isException || isWithdrawal) && (
-                <div className="admin-governance-box">
-                  <div className="governance-header">
-                    <div className="gov-title">
-                      <i className="fas fa-shield-alt text-teal-600" />
-                      <span>Đánh Giá Rủi Ro & Khuyến Nghị</span>
-                    </div>
-                    <span className={`risk-badge ${risk.className}`}>
-                      {risk.label}
-                    </span>
-                  </div>
-
-                  {data.reason && (
-                    <div className="why-flagged-card">
-                      <div className="flag-title">Lý do hệ thống cảnh báo:</div>
-                      <div className="flag-reason">{data.reason}</div>
-                    </div>
-                  )}
-
-                  <div className="system-recommendation-card">
-                    <div className="rec-label">Khuyến nghị tự động từ hệ thống:</div>
-                    <div className="rec-text">{risk.rec}</div>
-                  </div>
-
-                  {/* Form thao tác nếu chưa duyệt */}
-                  {(data.status === 'PENDING' || isException) && (
-                    <div className="action-form-section">
-                      <div className="admin-input-group">
-                        <label>Mã giao dịch ngân hàng / Ref No (khi chuyển khoản):</label>
-                        <input
-                          type="text"
-                          placeholder="VD: FT2628109923849 hoặc GD-8921"
-                          value={bankRef}
-                          onChange={(e) => setBankRef(e.target.value)}
-                        />
-                      </div>
-
-                      <div className="admin-input-group">
-                        <label>Ghi chú kiểm toán / Lý do phê duyệt hoặc từ chối:</label>
-                        <textarea
-                          rows={2}
-                          placeholder="Nhập ghi chú rõ ràng để lưu vào nhật ký Audit bất biến..."
-                          value={note}
-                          onChange={(e) => setNote(e.target.value)}
-                        />
-                      </div>
-
-                      <div className="action-buttons-row">
-                        <button
-                          type="button"
-                          className="btn-gov-approve"
-                          disabled={submittingAction}
-                          onClick={() => handleAdminAction('TRANSFER')}
-                        >
-                          <i className="fas fa-check-circle" />
-                          <span>{submittingAction ? 'Đang duyệt...' : 'Phê Duyệt & Chuyển Tiền'}</span>
-                        </button>
-                        <button
-                          type="button"
-                          className="btn-gov-reject"
-                          disabled={submittingAction}
-                          onClick={() => handleAdminAction('REJECT')}
-                        >
-                          <i className="fas fa-ban" />
-                          <span>{submittingAction ? 'Đang từ chối...' : 'Từ Chối Yêu Cầu'}</span>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className="section-block">
-                <div className="block-title">
-                  <i className="fas fa-info-circle" /> Thông tin thực thể đối tác
+              {/* CÂU HỎI 1: CÓ CHUYỆN GÌ XẢY RA? */}
+              <div className="q-card">
+                <div className="q-head">
+                  <span className="q-num">1</span>
+                  <span className="q-title">Có chuyện gì xảy ra? (Event Summary)</span>
+                  <span className="q-badge" style={{ background: '#f1f5f9', color: '#475569' }}>
+                    {moment(data.createdAt).format('HH:mm • DD/MM/YYYY')}
+                  </span>
                 </div>
                 <div className="kv-grid">
-                  <div className="kv-key">Thời gian tạo</div>
+                  <div className="kv-key">Chủ thể / Đối tác</div>
                   <div className="kv-val">
-                    {moment(data.createdAt).format('HH:mm:ss • DD/MM/YYYY')}
+                    {data.ownerName || 'Bệnh nhân'} ({data.ownerEmail || data.walletType || 'Tài khoản sàn'})
                   </div>
 
-                  <div className="kv-key">Mã Trace / Đối soát</div>
-                  <div className="kv-val mono">{traceId}</div>
-
-                  {data.ownerName && (
-                    <>
-                      <div className="kv-key">Chủ thể / Đối tác</div>
-                      <div className="kv-val">{data.ownerName} ({data.ownerEmail || 'Hệ thống'})</div>
-                    </>
-                  )}
+                  <div className="kv-key">Số tiền phát sinh</div>
+                  <div className="kv-val highlight" style={{ fontSize: '1rem', fontWeight: 800 }}>
+                    {formatCurrency(data.amount)}
+                  </div>
 
                   {bookingId && (
                     <>
@@ -306,64 +233,196 @@ const TransactionDetailDrawer = ({
                     </>
                   )}
 
-                  {isLedger && (
+                  <div className="kv-key">Mã Trace / Đối soát</div>
+                  <div className="kv-val mono">{traceId}</div>
+                </div>
+              </div>
+
+              {/* CÂU HỎI 2: TIỀN ĐANG Ở ĐÂU? (MONEY LOCATION TRACKER) */}
+              <div className="q-card">
+                <div className="q-head">
+                  <span className="q-num">2</span>
+                  <span className="q-title">Tiền hiện đang ở đâu? (Money Location)</span>
+                </div>
+                <div className="money-location-tracker">
+                  {isWithdrawal ? (
                     <>
-                      <div className="kv-key">Số dư sau biến động</div>
-                      <div className="kv-val highlight">
-                        {formatCurrency(data.balanceAfter)}
+                      <div className="loc-node">
+                        <i className="fas fa-wallet loc-icon" />
+                        <span className="loc-name">Ví Người Dùng</span>
+                        <span className="loc-desc">Đã trừ số dư</span>
+                      </div>
+                      <i className="fas fa-arrow-right loc-arrow" />
+                      <div className="loc-node is-current">
+                        <span className="loc-tag">TIỀN Ở ĐÂY</span>
+                        <i className="fas fa-lock loc-icon" />
+                        <span className="loc-name">Tạm Giữ (Hold)</span>
+                        <span className="loc-desc">Két bảo chứng sàn</span>
+                      </div>
+                      <i className="fas fa-arrow-right loc-arrow" />
+                      <div className="loc-node">
+                        <i className="fas fa-university loc-icon" />
+                        <span className="loc-name">Ngân Hàng Nhận</span>
+                        <span className="loc-desc">Chờ giải ngân</span>
                       </div>
                     </>
-                  )}
-
-                  {(isWithdrawal || data.bankName || data.accountNumber) && (
+                  ) : isCredit ? (
                     <>
-                      <div className="kv-key">Ngân hàng nhận</div>
-                      <div className="kv-val">
-                        {data.bankName || data.bankInfo} (STK: {data.accountNumber || '•••'})
+                      <div className="loc-node">
+                        <i className="fas fa-building loc-icon" />
+                        <span className="loc-name">Ký Quỹ Sàn</span>
+                        <span className="loc-desc">Nguồn hoàn tiền</span>
                       </div>
-
-                      {data.accountHolderName && (
-                        <>
-                          <div className="kv-key">Chủ tài khoản</div>
-                          <div className="kv-val">{data.accountHolderName}</div>
-                        </>
-                      )}
-
-                      <div className="kv-key">Cam kết SLA</div>
-                      <div className="kv-val">
-                        {data.promisedPayoutDate
-                          ? moment(data.promisedPayoutDate).format('DD/MM/YYYY')
-                          : 'Xử lý trong ngày'}
+                      <i className="fas fa-arrow-right loc-arrow" />
+                      <div className="loc-node is-current">
+                        <span className="loc-tag">TIỀN Ở ĐÂY</span>
+                        <i className="fas fa-wallet loc-icon" />
+                        <span className="loc-name">Ví Bệnh Nhân</span>
+                        <span className="loc-desc">Đã cộng khả dụng</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="loc-node">
+                        <i className="fas fa-wallet loc-icon" />
+                        <span className="loc-name">Ví Bệnh Nhân</span>
+                        <span className="loc-desc">Khởi tạo thanh toán</span>
+                      </div>
+                      <i className="fas fa-arrow-right loc-arrow" />
+                      <div className="loc-node is-current">
+                        <span className="loc-tag">TIỀN Ở ĐÂY</span>
+                        <i className="fas fa-shield-alt loc-icon" />
+                        <span className="loc-name">Ký Quỹ (Escrow)</span>
+                        <span className="loc-desc">Bảo chứng ca khám</span>
+                      </div>
+                      <i className="fas fa-arrow-right loc-arrow" />
+                      <div className="loc-node">
+                        <i className="fas fa-user-md loc-icon" />
+                        <span className="loc-name">Bác Sĩ (T+24h)</span>
+                        <span className="loc-desc">Sau khi khám xong</span>
                       </div>
                     </>
                   )}
                 </div>
               </div>
 
-              <div className="section-block">
-                <div className="block-title">
-                  <i className="fas fa-file-invoice" /> Diễn giải chi tiết & Sổ cái
+              {/* CÂU HỎI 3: VÌ SAO PHÁT SINH? (WHY FLAGGED & CALCULATION) */}
+              <div className="q-card">
+                <div className="q-head">
+                  <span className="q-num">3</span>
+                  <span className="q-title">Vì sao phát sinh? (Why Flagged)</span>
+                  <span className={`q-badge ${risk.className}`}>
+                    {risk.label}
+                  </span>
                 </div>
-                <div className="kv-grid">
-                  <div className="kv-key">Nội dung ghi sổ</div>
-                  <div className="kv-val">
-                    {data.description || data.reason || 'Giao dịch qua ví điện tử BookingCare'}
+                <div className="why-flagged-card" style={{ marginBottom: '10px' }}>
+                  <div className="flag-title">Lý do hệ thống chuyển tiếp:</div>
+                  <div className="flag-reason">
+                    {data.reason || data.description || 'Giao dịch đạt ngưỡng kiểm toán an toàn hệ thống.'}
                   </div>
-
-                  {data.adminNote && (
-                    <>
-                      <div className="kv-key">Ghi chú vận hành</div>
-                      <div className="kv-val highlight">{data.adminNote}</div>
-                    </>
-                  )}
-
-                  {data.bankTransactionRef && (
-                    <>
-                      <div className="kv-key">Mã giao dịch Bank</div>
-                      <div className="kv-val mono">{data.bankTransactionRef}</div>
-                    </>
-                  )}
                 </div>
+                {data.bankName && (
+                  <div className="kv-grid" style={{ padding: '10px 14px' }}>
+                    <div className="kv-key">Tài khoản đích</div>
+                    <div className="kv-val">
+                      {data.bankName} • STK: <strong>{data.accountNumber}</strong> ({data.accountHolderName})
+                    </div>
+                    <div className="kv-key">Hạn chót SLA</div>
+                    <div className="kv-val">
+                      {data.promisedPayoutDate ? moment(data.promisedPayoutDate).format('DD/MM/YYYY') : 'Trong ngày'}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* CÂU HỎI 4: HỆ THỐNG ĐÃ TỰ ĐỘNG LÀM GÌ? (AUTOMATED ACTIONS) */}
+              <div className="q-card">
+                <div className="q-head">
+                  <span className="q-num">4</span>
+                  <span className="q-title">Hệ thống đã tự động làm gì? (Actions Taken)</span>
+                </div>
+                <div className="automated-actions-list">
+                  <div className="action-item">
+                    <i className="fas fa-check-circle check-icon" />
+                    <div className="action-text">
+                      <strong>Kiểm toán số dư kép:</strong> Đối soát số dư khả dụng và tổng phát sinh trong sổ cái khớp 100%, không bị lệch tài khoản.
+                    </div>
+                  </div>
+                  <div className="action-item">
+                    <i className="fas fa-check-circle check-icon" />
+                    <div className="action-text">
+                      <strong>Cơ chế khóa an toàn:</strong> Tiền đã được đưa vào trạng thái Hold bất biến, loại trừ 100% rủi ro chi tiêu kép (Double Spending).
+                    </div>
+                  </div>
+                  <div className="action-item">
+                    <i className="fas fa-check-circle check-icon" />
+                    <div className="action-text">
+                      <strong>Chụp ảnh chính sách (Policy Snapshot):</strong> Điều khoản chiết khấu và SLA đã được đóng băng cố định, không bị sửa đổi sau này.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* CÂU HỎI 5: ĐỀ XUẤT & QUYẾT ĐỊNH CỦA ADMIN */}
+              <div className="q-card" style={{ border: '1.5px solid #0d9488' }}>
+                <div className="q-head" style={{ borderBottomColor: '#ccfbf1' }}>
+                  <span className="q-num" style={{ background: '#0f766e' }}>5</span>
+                  <span className="q-title" style={{ color: '#0f766e' }}>Đề xuất & Quyết định của Admin</span>
+                </div>
+
+                <div className="system-recommendation-card">
+                  <div className="rec-label">Khuyến nghị tự động từ hệ thống:</div>
+                  <div className="rec-text">{risk.rec}</div>
+                </div>
+
+                {isAdmin && (data.status === 'PENDING' || isException) ? (
+                  <div className="action-form-section" style={{ marginTop: '14px' }}>
+                    <div className="admin-input-group">
+                      <label>Mã giao dịch ngân hàng / Ref No (khi chuyển khoản):</label>
+                      <input
+                        type="text"
+                        placeholder="VD: FT2628109923849 hoặc GD-8921"
+                        value={bankRef}
+                        onChange={(e) => setBankRef(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="admin-input-group">
+                      <label>Ghi chú kiểm toán / Lý do duyệt hoặc từ chối:</label>
+                      <textarea
+                        rows={2}
+                        placeholder="Nhập lý do rõ ràng để lưu vết vĩnh viễn vào nhật ký Audit..."
+                        value={note}
+                        onChange={(e) => setNote(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="action-buttons-row">
+                      <button
+                        type="button"
+                        className="btn-gov-approve"
+                        disabled={submittingAction}
+                        onClick={() => handleAdminAction('TRANSFER')}
+                      >
+                        <i className="fas fa-check-circle" />
+                        <span>{submittingAction ? 'Đang duyệt...' : 'Phê Duyệt & Giải Ngân'}</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-gov-reject"
+                        disabled={submittingAction}
+                        onClick={() => handleAdminAction('REJECT')}
+                      >
+                        <i className="fas fa-ban" />
+                        <span>{submittingAction ? 'Đang từ chối...' : 'Từ Chối & Hoàn Số Dư'}</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ padding: '8px 0', color: '#059669', fontSize: '0.84rem', fontWeight: 600 }}>
+                    <i className="fas fa-check-circle me-1" /> Giao dịch này đã được hoàn tất và đóng băng trong sổ cái.
+                  </div>
+                )}
               </div>
             </>
           )}
