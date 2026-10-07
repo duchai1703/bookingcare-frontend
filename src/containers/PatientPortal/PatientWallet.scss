@@ -549,10 +549,23 @@
         padding: 13px 16px;
         border-bottom: 1px solid #e2e8f0;
         white-space: nowrap;
+        text-align: left;
+
+        &.text-center {
+          text-align: center;
+        }
       }
 
       tbody tr {
-        transition: background-color 0.15s ease;
+        transition: all 0.15s ease;
+
+        &.clickable-row {
+          cursor: pointer;
+
+          &:hover {
+            background-color: #f1f5f9;
+          }
+        }
 
         &:hover {
           background-color: #f8fafc;
@@ -566,6 +579,11 @@
       tbody td {
         padding: 14px 16px;
         vertical-align: middle;
+        text-align: left;
+
+        &.text-center {
+          text-align: center;
+        }
       }
 
       // Cột Thời gian (2 dòng rõ ràng, không dính chữ)

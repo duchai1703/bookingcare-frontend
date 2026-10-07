@@ -16,6 +16,7 @@ import {
   calculateWithdrawalSlaPreview,
 } from '../../services/walletService';
 import { getPatientBankAccounts } from '../../services/patientService';
+import TransactionDetailDrawer from '../../components/Financial/TransactionDetailDrawer';
 import './PatientWallet.scss';
 
 const PRESET_AMOUNTS = [100000, 200000, 500000, 1000000, 2000000, 5000000];
@@ -38,6 +39,8 @@ const PatientWallet = () => {
 
   // State Ví & Sổ cái
   const [wallet, setWallet] = useState(null);
+  const [selectedItemForDrawer, setSelectedItemForDrawer] = useState(null);
+  const [drawerType, setDrawerType] = useState('LEDGER');
   const [transactions, setTransactions] = useState([]);
   const [totalTx, setTotalTx] = useState(0);
   const [page, setPage] = useState(1);
@@ -818,7 +821,15 @@ const PatientWallet = () => {
                     const isCredit = tx.direction === 'CREDIT';
                     const txInfo = formatTransactionDescription(tx);
                     return (
-                      <tr key={tx.id}>
+                      <tr
+                        key={tx.id}
+                        className="clickable-row"
+                        onClick={() => {
+                          setSelectedItemForDrawer(tx);
+                          setDrawerType('LEDGER');
+                        }}
+                        title="Xem chi tiết giao dịch, phả hệ & công thức giải trình"
+                      >
                         <td className="cell-datetime">
                           <div className="date-text">
                             {moment(tx.createdAt).format('DD/MM/YYYY')}
@@ -958,11 +969,11 @@ const PatientWallet = () => {
                   <tr>
                     <th style={{ width: '145px' }}>Mã & Thời gian</th>
                     <th style={{ width: '220px' }}>Tài khoản nhận</th>
-                    <th style={{ width: '135px', textAlign: 'right' }}>Số tiền</th>
+                    <th style={{ width: '135px' }}>Số tiền</th>
                     <th style={{ width: '165px' }}>Thời gian dự kiến</th>
                     <th style={{ width: '135px' }}>Trạng thái</th>
                     <th>Thông tin đối soát</th>
-                    <th style={{ width: '100px', textAlign: 'center' }}>Thao tác</th>
+                    <th style={{ width: '100px' }} className="text-center">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -973,7 +984,15 @@ const PatientWallet = () => {
                       moment().isAfter(moment(req.promisedPayoutDate))
                     );
                     return (
-                      <tr key={req.id}>
+                      <tr
+                        key={req.id}
+                        className="clickable-row"
+                        onClick={() => {
+                          setSelectedItemForDrawer(req);
+                          setDrawerType('WITHDRAWAL');
+                        }}
+                        title="Xem chi tiết yêu cầu rút tiền & thông tin đối soát"
+                      >
                         <td className="cell-datetime">
                           <div className="req-code-badge">
                             #WTH-{String(req.id).padStart(3, '0')}
@@ -1038,13 +1057,16 @@ const PatientWallet = () => {
                             <span className="text-muted-dash">—</span>
                           )}
                         </td>
-                        <td className="cell-actions" style={{ textAlign: 'center' }}>
+                        <td className="cell-actions text-center">
                           {req.status === 'PENDING' ? (
                             <button
                               type="button"
                               className="btn-cancel-req"
                               disabled={cancellingId === req.id}
-                              onClick={() => handleCancelWithdrawal(req.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCancelWithdrawal(req.id);
+                              }}
                               title="Hủy yêu cầu và hoàn lại số dư"
                             >
                               {cancellingId === req.id ? (
@@ -1593,6 +1615,14 @@ const PatientWallet = () => {
           </div>
         </div>
       )}
+
+      {/* 5. Transaction Detail Slide-over Drawer (Phả hệ & Minh bạch công thức) */}
+      <TransactionDetailDrawer
+        isOpen={Boolean(selectedItemForDrawer)}
+        onClose={() => setSelectedItemForDrawer(null)}
+        data={selectedItemForDrawer}
+        type={drawerType}
+      />
     </div>
   );
 };

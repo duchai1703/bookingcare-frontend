@@ -25,6 +25,7 @@ import {
   getAdminExceptionQueue,
   runFinancialAutomationCycle
 } from '../../../../services/walletService';
+import TransactionDetailDrawer from '../../../../components/Financial/TransactionDetailDrawer';
 
 const PRIORITY_BADGE = {
   CRITICAL: {
@@ -97,6 +98,7 @@ export default function FinancialExceptionHub({ onNavigateTab }) {
   const [priorityFilter, setPriorityFilter] = useState('ALL');
   const [search, setSearch] = useState('');
   const [lastCycleReport, setLastCycleReport] = useState(null);
+  const [selectedDrawerItem, setSelectedDrawerItem] = useState(null);
 
   const formatMoney = (val) => (Number(val) || 0).toLocaleString('vi-VN') + ' ₫';
 
@@ -443,7 +445,12 @@ export default function FinancialExceptionHub({ onNavigateTab }) {
                   const CategoryIcon = cCfg.icon;
 
                   return (
-                    <tr key={item.id} className="hover:tw-bg-slate-50/80 tw-transition">
+                    <tr
+                      key={item.id}
+                      className="hover:tw-bg-slate-50/80 tw-transition tw-cursor-pointer"
+                      onClick={() => setSelectedDrawerItem(item)}
+                      title="Click để mở phả hệ giao dịch và bảng điều khiển quyết định"
+                    >
                       {/* Mã & Phân loại */}
                       <td className="tw-p-4">
                         <div className="tw-flex tw-items-center tw-gap-2">
@@ -547,10 +554,9 @@ export default function FinancialExceptionHub({ onNavigateTab }) {
                         <button
                           type="button"
                           className="tw-px-3.5 tw-py-1.5 tw-bg-slate-900 hover:tw-bg-slate-800 tw-text-white tw-rounded-xl tw-text-xs tw-font-bold tw-border-none tw-cursor-pointer tw-inline-flex tw-items-center tw-gap-1.5 tw-shadow-sm tw-transition"
-                          onClick={() => {
-                            if (onNavigateTab && item.targetTab) {
-                              onNavigateTab(item.targetTab);
-                            }
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedDrawerItem(item);
                           }}
                         >
                           <span>Xử lý ngay</span>
@@ -565,6 +571,16 @@ export default function FinancialExceptionHub({ onNavigateTab }) {
           </table>
         </div>
       </div>
+
+      {/* Slide-over Transaction Detail & Exception Resolution Drawer */}
+      <TransactionDetailDrawer
+        isOpen={Boolean(selectedDrawerItem)}
+        onClose={() => setSelectedDrawerItem(null)}
+        data={selectedDrawerItem}
+        type="EXCEPTION"
+        isAdmin={true}
+        onActionSuccess={loadQueue}
+      />
     </div>
   );
 }
