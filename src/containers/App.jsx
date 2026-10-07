@@ -103,7 +103,7 @@ import AIChatbot from './Patient/AIChatbot/AIChatbot';
 import { CallProvider } from './Call/CallContext';
 
 // [Enterprise Feature Flags]
-import '../config/features';
+import { FEATURES } from '../config/features';
 
 import './App.scss';
 
@@ -347,8 +347,17 @@ const App = () => {
             <Route path="doctor-profile" element={<DoctorProfile />} />
             <Route path="doctor-revenue" element={<DoctorRevenue />} />
             <Route path="encounter/:bookingId" element={<EncounterWorkspace />} />
-            <Route path="messages" element={<DoctorMessagesWorkspace />} />
-            <Route path="messages/:conversationId" element={<DoctorMessagesWorkspace />} />
+            {FEATURES.ENABLE_CHAT ? (
+              <>
+                <Route path="messages" element={<DoctorMessagesWorkspace />} />
+                <Route path="messages/:conversationId" element={<DoctorMessagesWorkspace />} />
+              </>
+            ) : (
+              <>
+                <Route path="messages" element={<Navigate to="manage-patient" replace />} />
+                <Route path="messages/:conversationId" element={<Navigate to="manage-patient" replace />} />
+              </>
+            )}
             <Route path="medicines" element={<MedicineManage />} />
             <Route path="medical-catalogs" element={<MedicalCatalogManage />} />
           </Route>

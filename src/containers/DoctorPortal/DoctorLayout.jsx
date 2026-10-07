@@ -33,6 +33,7 @@ import {
 import { getMyPractices } from '../../services/doctorService';
 import { getDoctorWallet } from '../../services/walletService';
 import NotificationBell from '../../components/Notification/NotificationBell';
+import { FEATURES } from '../../config/features';
 import './DoctorLayout.scss';
 
 const DOCTOR_NAV_GROUPS = [
@@ -54,6 +55,7 @@ const DOCTOR_NAV_GROUPS = [
         icon: MessageSquare,
         label: 'Tin nhắn sau khám',
         to: '/doctor-dashboard/messages',
+        feature: 'ENABLE_CHAT',
       },
     ],
   },
@@ -249,7 +251,9 @@ const DoctorLayout = () => {
               )}
 
               <ul className="dp-nav-list">
-                {group.items.map((item) => {
+                {group.items
+                  .filter((item) => !item.feature || FEATURES[item.feature])
+                  .map((item) => {
                   const Icon = item.icon;
                   const currentFullPath = location.pathname + location.search;
                   const isActive = item.to.includes('?')
