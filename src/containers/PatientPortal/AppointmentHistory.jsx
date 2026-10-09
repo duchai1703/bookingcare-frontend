@@ -333,7 +333,13 @@ const AppointmentHistory = () => {
     } else {
       rate = 50;
     }
-    const price = parseInt(booking.bookingPrice, 10) || 0;
+    const rawPrice =
+      booking.bookingPrice ||
+      booking.doctorBookingData?.Doctor_Info?.priceTypeData?.valueVi ||
+      booking.doctorBookingData?.Doctor_Info?.priceTypeData?.valueEn ||
+      booking.price ||
+      0;
+    const price = parseInt(rawPrice, 10) || 0;
     const amount = Math.round((price * rate) / 100);
     return { hours, rate, amount, price };
   };

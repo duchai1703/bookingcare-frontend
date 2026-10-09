@@ -23,6 +23,12 @@ class CommonUtils {
     // Pure base64 từ backend (sau khi đã fix) → thêm prefix để browser render
     return `data:image/jpeg;base64,${base64String}`;
   }
+
+  // Format tiền tệ chuẩn VND (ví dụ: 500000 -> 500.000)
+  static formatCurrency(amount) {
+    if (amount === null || amount === undefined || isNaN(Number(amount))) return '0';
+    return Number(amount).toLocaleString('vi-VN');
+  }
 }
 
 export default CommonUtils;

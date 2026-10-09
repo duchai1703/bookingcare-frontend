@@ -1,0 +1,337 @@
+// src/components/Notification/GlobalActionRequiredBanner.scss
+// Thiết kế chuẩn Healthcare Enterprise Tier 1: Sang trọng, nổi bật, tin cậy
+
+.global-action-banner {
+  width: 100%;
+  position: relative;
+  z-index: 990;
+  transition: all 0.25s ease-in-out;
+  animation: bannerSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+
+  &__inner {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    @media (max-width: 992px) {
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 12px 16px;
+    }
+  }
+
+  // ===== ICON CONTAINER & PULSE EFFECT =====
+  .banner-icon-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    .banner-icon-pulse {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      opacity: 0.7;
+      animation: bannerPulse 2s infinite ease-out;
+    }
+
+    .banner-icon-box {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      position: relative;
+      z-index: 1;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    }
+  }
+
+  // ===== BANNER CONTENT =====
+  .banner-content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    .banner-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .banner-badge {
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        padding: 2px 8px;
+        border-radius: 4px;
+        display: inline-flex;
+        align-items: center;
+      }
+    }
+
+    .banner-text-row {
+      .banner-title {
+        font-size: 13.5px;
+        font-weight: 700;
+        margin: 0 0 2px 0;
+        line-height: 1.35;
+      }
+
+      .banner-message {
+        font-size: 12.5px;
+        line-height: 1.4;
+        margin: 0;
+        opacity: 0.9;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+
+        @media (max-width: 768px) {
+          -webkit-line-clamp: 3;
+        }
+      }
+    }
+  }
+
+  // ===== ACTIONS (CTA & DISMISS) =====
+  .banner-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+
+    @media (max-width: 992px) {
+      width: 100%;
+      justify-content: flex-end;
+      padding-top: 4px;
+    }
+
+    .banner-cta-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      white-space: nowrap;
+
+      &:hover {
+        transform: translateY(-1px);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+
+      &--reschedule {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: #ffffff;
+        box-shadow: 0 3px 10px rgba(217, 119, 6, 0.25);
+
+        &:hover {
+          background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+          box-shadow: 0 5px 14px rgba(217, 119, 6, 0.35);
+          color: #ffffff;
+        }
+      }
+
+      &--link {
+        background: #2563eb;
+        color: #ffffff;
+        box-shadow: 0 3px 10px rgba(37, 99, 235, 0.25);
+
+        &:hover {
+          background: #1d4ed8;
+          box-shadow: 0 5px 14px rgba(37, 99, 235, 0.35);
+          color: #ffffff;
+        }
+      }
+    }
+
+    .banner-dismiss-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: transparent;
+      border: 1px solid transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      padding: 0;
+
+      &:hover {
+        background: rgba(0, 0, 0, 0.06);
+      }
+    }
+  }
+
+  // ========================================================
+  // THEMES THEO SEVERITY
+  // ========================================================
+
+  // 1. Theme Warning (Lịch bị hủy — Cam Hổ Phách)
+  &--warning {
+    background: linear-gradient(90deg, #fffbeb 0%, #fef3c7 50%, #fffbeb 100%);
+    border-bottom: 1.5px solid #fcd34d;
+    box-shadow: 0 3px 12px rgba(217, 119, 6, 0.08);
+
+    .banner-icon-container {
+      .banner-icon-pulse {
+        background: rgba(245, 158, 11, 0.25);
+      }
+      .banner-icon-box {
+        background: #fef3c7;
+        color: #d97706;
+        border: 1px solid #fde68a;
+      }
+    }
+
+    .banner-badge {
+      background: #f59e0b;
+      color: #ffffff;
+    }
+
+    .banner-title {
+      color: #92400e;
+    }
+
+    .banner-message {
+      color: #78350f;
+    }
+
+    .banner-dismiss-btn {
+      color: #92400e;
+
+      &:hover {
+        background: rgba(217, 119, 6, 0.12);
+        color: #78350f;
+      }
+    }
+  }
+
+  // 2. Theme Info (Lịch hôm nay — Xanh Dương Y Tế)
+  &--info {
+    background: linear-gradient(90deg, #f0fdfa 0%, #e0f2fe 50%, #f0fdfa 100%);
+    border-bottom: 1.5px solid #99f6e4;
+    box-shadow: 0 3px 12px rgba(13, 148, 136, 0.08);
+
+    .banner-icon-container {
+      .banner-icon-pulse {
+        background: rgba(13, 148, 136, 0.25);
+      }
+      .banner-icon-box {
+        background: #ccfbf1;
+        color: #0d9488;
+        border: 1px solid #99f6e4;
+      }
+    }
+
+    .banner-badge {
+      background: #0d9488;
+      color: #ffffff;
+    }
+
+    .banner-title {
+      color: #115e59;
+    }
+
+    .banner-message {
+      color: #134e4a;
+    }
+
+    .banner-dismiss-btn {
+      color: #115e59;
+
+      &:hover {
+        background: rgba(13, 148, 136, 0.12);
+        color: #134e4a;
+      }
+    }
+  }
+
+  // 3. Theme Success (Ví BookingCare — Xanh Lục)
+  &--success {
+    background: linear-gradient(90deg, #f0fdf4 0%, #dcfce7 50%, #f0fdf4 100%);
+    border-bottom: 1.5px solid #86efac;
+    box-shadow: 0 3px 12px rgba(22, 163, 74, 0.08);
+
+    .banner-icon-container {
+      .banner-icon-pulse {
+        background: rgba(34, 197, 94, 0.25);
+      }
+      .banner-icon-box {
+        background: #dcfce7;
+        color: #16a34a;
+        border: 1px solid #bbf7d0;
+      }
+    }
+
+    .banner-badge {
+      background: #16a34a;
+      color: #ffffff;
+    }
+
+    .banner-title {
+      color: #166534;
+    }
+
+    .banner-message {
+      color: #14532d;
+    }
+
+    .banner-dismiss-btn {
+      color: #166534;
+
+      &:hover {
+        background: rgba(22, 163, 74, 0.12);
+        color: #14532d;
+      }
+    }
+  }
+}
+
+// ===== KEYFRAME ANIMATIONS =====
+@keyframes bannerSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bannerPulse {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 0.2;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}

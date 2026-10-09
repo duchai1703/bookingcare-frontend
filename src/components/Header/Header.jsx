@@ -11,6 +11,7 @@ import { processLogout } from '../../redux/slices/userSlice';
 import { LANGUAGES, USER_ROLE, path } from '../../utils/constants';
 import { adminMenu, doctorMenu } from './MenuData';
 import NotificationBell from '../Notification/NotificationBell';
+import GlobalActionRequiredBanner from '../Notification/GlobalActionRequiredBanner';
 
 import './Header.scss';
 
@@ -102,7 +103,8 @@ const Header = () => {
   };
 
   return (
-    <header className="header-container">
+    <>
+      <header className="header-container">
       <div className="header-content">
         {/* ===== LEFT: Logo + Hamburger ===== */}
         <div className="header-left">
@@ -259,7 +261,9 @@ const Header = () => {
         </div>
       </div>
     </header>
-  );
+    <GlobalActionRequiredBanner />
+  </>
+);
 };
 
 export { Header };
