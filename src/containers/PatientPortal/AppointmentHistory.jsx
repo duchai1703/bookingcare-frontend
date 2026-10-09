@@ -6,7 +6,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import moment from 'moment';
 import 'moment/locale/vi';
 
@@ -59,13 +59,18 @@ const AppointmentHistory = () => {
   const [cancelModal, setCancelModal] = useState({ isOpen: false, bookingId: null, booking: null, isCancelling: false });
   const [ratingModal, setRatingModal] = useState({ isOpen: false, bookingData: null });
   const [rescheduleModal, setRescheduleModal] = useState({ isOpen: false, bookingId: null, booking: null });
+  const navigate = useNavigate();
   const [detailBooking, setDetailBooking] = useState(null);
   const [showQrModal, setShowQrModal] = useState(false);
   const [chatModal, setChatModal] = useState({ isOpen: false, booking: null });
 
   const handleOpenChat = (booking) => {
     if (!FEATURES.ENABLE_CHAT) return;
-    setChatModal({ isOpen: true, booking });
+    if (booking?.id) {
+      navigate(`/patient/chat?bookingId=${booking.id}`);
+    } else {
+      setChatModal({ isOpen: true, booking });
+    }
   };
 
   // Attachments state

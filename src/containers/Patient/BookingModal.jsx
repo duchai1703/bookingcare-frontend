@@ -496,14 +496,14 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price, select
         if (paymentMethod === 'WALLET') {
           toast.success(
             language === LANGUAGES.VI
-              ? 'Đặt lịch và thanh toán bằng Ví BookingCare thành công! Lịch hẹn đã được xác nhận trực tiếp.'
-              : 'Booking and payment via BookingCare Wallet successful! Appointment confirmed.'
+              ? `Đặt lịch và thanh toán cho ${activePatientName} thành công! Lịch hẹn đã được xác nhận trực tiếp.`
+              : `Appointment for ${activePatientName} booked & paid successfully!`
           );
         } else {
           toast.success(
             language === LANGUAGES.VI
-              ? 'Đặt lịch thành công! Vui lòng kiểm tra email để xác nhận và thanh toán.'
-              : 'Booking successful! Please check your email to confirm and pay.'
+              ? `Đặt lịch cho ${activePatientName} thành công! Vui lòng kiểm tra email để xác nhận và thanh toán.`
+              : `Booking for ${activePatientName} successful! Please check your email to confirm and pay.`
           );
         }
         handleCloseModal();
@@ -539,6 +539,19 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price, select
     return 'Khác';
   };
 
+  const getRelationshipLabel = (rel) => {
+    switch (rel) {
+      case 'CHILD': return 'Con';
+      case 'PARENT': return 'Bố/Mẹ';
+      case 'SPOUSE': return 'Vợ/Chồng';
+      default: return 'Người thân';
+    }
+  };
+
+  const activePatientName = bookingFor === 'SELF'
+    ? (patientData.fullName || 'tôi')
+    : (selectedFamilyMember?.fullName || 'người thân');
+
   return (
     <div className="bm-overlay" onClick={handleCloseModal}>
       <div className="bm" onClick={(e) => e.stopPropagation()}>
@@ -563,6 +576,53 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price, select
         <div className="bm__body">
           {/* --- CỘT TRÁI: Tóm tắt lịch hẹn & chính sách --- */}
           <div className="bm__summary">
+            {/* THẺ ĐỊNH DANH NỔI BẬT: NGƯỜI ĐƯỢC ĐẶT LỊCH KHÁM */}
+            <div className="bm__patient-identity-card">
+              <div className="bm__identity-header">
+                <span className="bm__identity-eyebrow">Người được đặt khám</span>
+                <span className={`bm__identity-tag ${bookingFor === 'SELF' ? 'self' : 'family'}`}>
+                  {bookingFor === 'SELF' ? 'Bản thân' : `Người thân · ${getRelationshipLabel(selectedFamilyMember?.relationship)}`}
+                </span>
+              </div>
+              <p className="bm__identity-name">
+                {bookingFor === 'SELF' ? (patientData.fullName || 'Chưa cập nhật') : (selectedFamilyMember?.fullName || 'Chưa chọn')}
+              </p>
+              <div className="bm__identity-meta">
+                <span>
+                  <i className="far fa-calendar-alt tw-mr-1" />
+                  {bookingFor === 'SELF'
+                    ? (patientData.birthday ? moment(patientData.birthday).format('DD/MM/YYYY') : '—')
+                    : (selectedFamilyMember?.birthday ? moment(selectedFamilyMember.birthday).format('DD/MM/YYYY') : '—')}
+                </span>
+                <span>
+                  <i className="fas fa-venus-mars tw-mr-1" />
+                  {bookingFor === 'SELF'
+                    ? getGenderLabel()
+                    : (selectedFamilyMember?.gender === 'FEMALE' ? 'Nữ' : 'Nam')}
+                </span>
+              </div>
+              <div className="bm__identity-funder">
+                <i className="fas fa-user-shield tw-mr-1" />
+                <span>
+                  Người đặt: <strong>{userInfo?.firstName ? `${userInfo.lastName || ''} ${userInfo.firstName}`.trim() : (patientData.fullName || 'Tài khoản')}</strong>
+                </span>
+              </div>
+              {bookingFor === 'FAMILY' && (
+                <button
+                  type="button"
+                  className="bm__identity-switch-btn"
+                  onClick={() => {
+                    const el = document.getElementById('section-patient-info');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                >
+                  <i className="fas fa-exchange-alt tw-mr-1" /> Đổi người khám
+                </button>
+              )}
+            </div>
+
+            <div className="bm__summary-divider" />
+
             <div className="bm__summary-section">
               <p className="bm__summary-label">Thời gian khám</p>
               <p className="bm__summary-value bm__summary-value--highlight">{timeLabel}</p>
@@ -644,7 +704,7 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price, select
             </div>
 
             {/* 2. ĐỐI TƯỢNG & THÔNG TIN NGƯỜI KHÁM */}
-            <div className="bm__section">
+            <div className="bm__section" id="section-patient-info">
               <div className="bm__section-header tw-flex tw-justify-between tw-items-center">
                 <div className="tw-flex tw-items-center tw-gap-2">
                   <span className="bm__section-badge">2</span>
@@ -961,7 +1021,7 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price, select
               className="bm__btn bm__btn--confirm tw-bg-teal-700 hover:tw-bg-teal-800 tw-text-white tw-font-bold"
               onClick={handleQuickTopUp}
               disabled={isTopUpLoading}
-              title="Nạp nhanh số tiền còn thiếu qua VNPay để hoàn tất đặt lịch"
+              title={`Nạp nhanh số tiền còn thiếu qua VNPay để hoàn tất đặt lịch cho ${activePatientName}`}
             >
               {isTopUpLoading ? (
                 <>
@@ -969,7 +1029,7 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price, select
                 </>
               ) : (
                 <>
-                  <i className="fas fa-bolt tw-mr-1.5" /> Nạp thiếu {(numericPrice - (walletInfo.availableBalance || 0)).toLocaleString('vi-VN')} ₫ & Đặt lịch
+                  <i className="fas fa-bolt tw-mr-1.5" /> Nạp thiếu {(numericPrice - (walletInfo.availableBalance || 0)).toLocaleString('vi-VN')} ₫ & Đặt lịch cho {activePatientName}
                 </>
               )}
             </button>
@@ -984,9 +1044,9 @@ const BookingModal = ({ isOpen, onClose, doctorId, timeSlot, date, price, select
                   <i className="fas fa-spinner fa-spin tw-mr-1.5" /> Đang xử lý...
                 </>
               ) : language === LANGUAGES.VI ? (
-                'Xác nhận đặt lịch & Thanh toán'
+                `Xác nhận đặt lịch cho ${activePatientName}`
               ) : (
-                'Confirm & Pay with Wallet'
+                `Confirm booking for ${activePatientName}`
               )}
             </button>
           )}

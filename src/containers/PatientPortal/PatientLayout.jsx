@@ -85,6 +85,14 @@ const PatientLayout = () => {
                 </NavLink>
 
                 <NavLink
+                  to="/patient/chat"
+                  className={({ isActive }) => `portal-nav-item ${isActive ? 'active' : ''}`}
+                >
+                  <i className="far fa-comments" />
+                  <span>Tin nhắn với Bác sĩ</span>
+                </NavLink>
+
+                <NavLink
                   to="/patient/wallet"
                   className={({ isActive }) => `portal-nav-item ${isActive ? 'active' : ''}`}
                 >

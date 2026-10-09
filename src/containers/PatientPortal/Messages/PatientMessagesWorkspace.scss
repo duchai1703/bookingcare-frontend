@@ -1,0 +1,1481 @@
+// src/containers/PatientPortal/Messages/PatientMessagesWorkspace.scss
+// [Redesign] SCSS for PatientMessagesWorkspace — Healthcare Enterprise Tier 1
+// Không lạm dụng gradient neon, sử dụng bảng màu y tế trung tính (Slate, Teal, Emerald, Amber).
+
+.patient-messages-workspace {
+  display: flex;
+  height: calc(100vh - 120px);
+  min-height: 600px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06);
+  position: relative;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    height: auto;
+    min-height: calc(100vh - 100px);
+  }
+
+  // ========================================================
+  // CỘT 1: SIDEBAR DANH SÁCH BÁC SĨ (340px)
+  // ========================================================
+  .pmw-sidebar {
+    width: 350px;
+    flex-shrink: 0;
+    border-right: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    background: #f8fafc;
+
+    @media (max-width: 768px) {
+      width: 100%;
+      border-right: none;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    &__header {
+      padding: 18px 18px 12px 18px;
+      border-bottom: 1px solid #e2e8f0;
+      background: #ffffff;
+    }
+
+    &__title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+
+      h2 {
+        font-size: 17px;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0;
+        letter-spacing: -0.01em;
+      }
+    }
+
+    &__counter {
+      font-size: 11.5px;
+      font-weight: 700;
+      background: #e0f2fe;
+      color: #0369a1;
+      padding: 1px 8px;
+      border-radius: 20px;
+    }
+
+    &__subtitle {
+      font-size: 12px;
+      color: #64748b;
+      margin: 0 0 12px 0;
+    }
+
+    // Ô tìm kiếm
+    .pmw-search-box {
+      position: relative;
+      margin-bottom: 12px;
+
+      .pmw-search-icon {
+        position: absolute;
+        left: 11px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 13px;
+        color: #94a3b8;
+      }
+
+      input {
+        width: 100%;
+        padding: 8px 30px 8px 32px;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 13px;
+        color: #1e293b;
+        outline: none;
+        transition: all 0.15s ease;
+
+        &:focus {
+          background: #ffffff;
+          border-color: #0d9488;
+          box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.15);
+        }
+
+        &::placeholder {
+          color: #94a3b8;
+        }
+      }
+
+      .pmw-search-clear {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #94a3b8;
+        font-size: 12px;
+        cursor: pointer;
+        padding: 4px;
+
+        &:hover {
+          color: #475569;
+        }
+      }
+    }
+
+    // Bộ lọc tabs
+    .pmw-filter-tabs {
+      display: flex;
+      gap: 4px;
+      background: #f1f5f9;
+      padding: 3px;
+      border-radius: 8px;
+
+      .pmw-tab-btn {
+        flex: 1;
+        padding: 5px 2px;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: #64748b;
+        background: transparent;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        text-align: center;
+
+        &:hover {
+          color: #0f172a;
+        }
+
+        &.active {
+          background: #ffffff;
+          color: #0d9488;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+        }
+      }
+    }
+
+    // Danh sách items
+    .pmw-conv-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+
+      &::-webkit-scrollbar {
+        width: 5px;
+      }
+      &::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+      }
+    }
+
+    .pmw-list-loading,
+    .pmw-list-empty {
+      padding: 36px 16px;
+      text-align: center;
+      color: #64748b;
+      font-size: 13px;
+
+      i {
+        font-size: 24px;
+        margin-bottom: 8px;
+        display: block;
+        color: #94a3b8;
+      }
+    }
+
+    // Item từng cuộc trò chuyện
+    .pmw-conv-item {
+      display: flex;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      background: #ffffff;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      position: relative;
+
+      &:hover {
+        background: #f0fdfa;
+        border-color: #ccfbf1;
+        transform: translateY(-1px);
+      }
+
+      &.selected {
+        background: #f0fdfa;
+        border-color: #5eead4;
+        box-shadow: 0 2px 8px rgba(13, 148, 136, 0.08);
+
+        &::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 10px;
+          bottom: 10px;
+          width: 3.5px;
+          border-radius: 0 4px 4px 0;
+          background: #0d9488;
+        }
+      }
+
+      // Khi hết hạn: làm mờ nhẹ nhưng vẫn đọc được thông tin
+      &.expired {
+        opacity: 0.75;
+        background: #f8fafc;
+
+        &:hover {
+          opacity: 0.95;
+          background: #ffffff;
+        }
+      }
+
+      .pmw-conv-avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        overflow: hidden;
+        background: #e2e8f0;
+        flex-shrink: 0;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .pmw-avatar-fallback {
+          font-size: 20px;
+        }
+
+        .pmw-online-dot {
+          position: absolute;
+          bottom: 1px;
+          right: 1px;
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          background: #10b981;
+          border: 2px solid #ffffff;
+        }
+      }
+
+      .pmw-conv-body {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .pmw-conv-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 2px;
+      }
+
+      .pmw-doc-name {
+        font-size: 13.5px;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .pmw-conv-time {
+        font-size: 11px;
+        color: #94a3b8;
+        flex-shrink: 0;
+      }
+
+      .pmw-doc-specialty {
+        font-size: 11.5px;
+        color: #0d9488;
+        font-weight: 600;
+        margin-bottom: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      // Danh tính người được khám
+      .pmw-patient-identity-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 5px;
+      }
+
+      .pmw-rel-badge {
+        font-size: 10px;
+        font-weight: 600;
+        padding: 1px 6px;
+        border-radius: 4px;
+
+        &.badge-self {
+          background: #e0f2fe;
+          color: #0369a1;
+        }
+
+        &.badge-family {
+          background: #fef3c7;
+          color: #b45309;
+        }
+      }
+
+      .pmw-patient-name {
+        font-size: 11.5px;
+        color: #475569;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .pmw-last-message {
+        font-size: 12px;
+        color: #64748b;
+        margin: 0 0 6px 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.35;
+      }
+
+      // Badge thời hạn còn lại
+      .pmw-entitlement-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .pmw-entitlement-badge {
+        font-size: 10.5px;
+        font-weight: 600;
+        padding: 2px 7px;
+        border-radius: 4px;
+
+        &--active {
+          background: #ecfdf5;
+          color: #059669;
+          border: 1px solid #a7f3d0;
+        }
+
+        &--expired {
+          background: #f1f5f9;
+          color: #64748b;
+          border: 1px solid #e2e8f0;
+        }
+      }
+
+      .pmw-unread-badge {
+        font-size: 10px;
+        font-weight: 700;
+        background: #ef4444;
+        color: #ffffff;
+        padding: 1px 6px;
+        border-radius: 10px;
+        min-width: 18px;
+        text-align: center;
+      }
+    }
+  }
+
+  // ========================================================
+  // CỘT 2: KHUNG CHAT CHÍNH (FLEX: 1)
+  // ========================================================
+  .pmw-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: #ffffff;
+
+    // Header khung chat
+    .pmw-chat-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: #ffffff;
+      flex-shrink: 0;
+
+      &__doctor {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+
+        .pmw-doc-avatar-lg {
+          width: 46px;
+          height: 46px;
+          border-radius: 50%;
+          overflow: hidden;
+          background: #e2e8f0;
+          flex-shrink: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 22px;
+
+          img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+          }
+        }
+
+        .pmw-doc-header-info {
+          min-width: 0;
+
+          h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0 0 2px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+
+          .pmw-doc-meta-sub {
+            font-size: 12px;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+
+            .pmw-meta-dot {
+              color: #cbd5e1;
+            }
+
+            .pmw-patient-context {
+              color: #0f766e;
+              background: #f0fdfa;
+              padding: 1px 6px;
+              border-radius: 4px;
+            }
+          }
+        }
+      }
+
+      &__actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+
+        .pmw-header-status-pill {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 11.5px;
+          font-weight: 600;
+          padding: 5px 10px;
+          border-radius: 20px;
+
+          &--active {
+            background: #ecfdf5;
+            color: #047857;
+            border: 1px solid #a7f3d0;
+
+            .status-dot {
+              width: 7px;
+              height: 7px;
+              border-radius: 50%;
+              background: #10b981;
+            }
+          }
+
+          &--readonly {
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+          }
+        }
+
+        .pmw-btn-view-records {
+          display: inline-flex;
+          align-items: center;
+          padding: 6px 12px;
+          font-size: 12px;
+          font-weight: 600;
+          color: #0d9488;
+          background: #f0fdfa;
+          border: 1px solid #99f6e4;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.15s ease;
+
+          &:hover {
+            background: #ccfbf1;
+            color: #0f766e;
+          }
+        }
+      }
+    }
+
+    // Body cuộn tin nhắn
+    .pmw-chat-body {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      background: #f8fafc;
+
+      .pmw-context-sticky-bar {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background: rgba(240, 253, 250, 0.95);
+        backdrop-filter: blur(4px);
+        border-bottom: 1px solid #ccfbf1;
+        padding: 8px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 12px;
+        color: #0f766e;
+        gap: 12px;
+
+        .csb-left {
+          display: flex;
+          align-items: center;
+        }
+
+        .csb-diag {
+          color: #334155;
+          max-width: 50%;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+
+      .pmw-messages-stream {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        flex: 1;
+      }
+    }
+
+    // Mốc phiên khám (Encounter Milestones)
+    .pmw-encounter-milestone {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 14px 0;
+
+      .milestone-line {
+        flex: 1;
+        height: 1px;
+        background: #cbd5e1;
+      }
+
+      .milestone-card {
+        background: #ffffff;
+        border: 1.5px solid #0d9488;
+        border-radius: 12px;
+        padding: 12px 18px;
+        max-width: 480px;
+        box-shadow: 0 4px 12px rgba(13, 148, 136, 0.08);
+        text-align: center;
+
+        &__header {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          margin-bottom: 6px;
+
+          .milestone-tag {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #0d9488;
+            letter-spacing: 0.05em;
+          }
+
+          .milestone-date {
+            font-size: 11.5px;
+            color: #64748b;
+          }
+        }
+
+        .milestone-diagnosis {
+          font-size: 13.5px;
+          font-weight: 700;
+          color: #0f172a;
+          margin: 0 0 4px 0;
+        }
+
+        .milestone-clinic {
+          font-size: 12px;
+          color: #475569;
+          margin: 0 0 10px 0;
+        }
+
+        .milestone-btn-open {
+          display: inline-flex;
+          align-items: center;
+          padding: 5px 14px;
+          font-size: 12px;
+          font-weight: 600;
+          color: #ffffff;
+          background: #0d9488;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: all 0.15s ease;
+
+          &:hover {
+            background: #0f766e;
+          }
+        }
+      }
+    }
+
+    // Bong bóng tin nhắn
+    .pmw-msg-bubble-wrap {
+      display: flex;
+      max-width: 70%;
+
+      &.me {
+        align-self: flex-end;
+
+        .pmw-msg-bubble {
+          background: #0d9488;
+          color: #ffffff;
+          border-radius: 14px 14px 2px 14px;
+
+          .pmw-msg-meta {
+            color: rgba(255, 255, 255, 0.8);
+          }
+        }
+      }
+
+      &.other {
+        align-self: flex-start;
+
+        .pmw-msg-bubble {
+          background: #ffffff;
+          color: #1e293b;
+          border: 1px solid #e2e8f0;
+          border-radius: 14px 14px 14px 2px;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+
+          .pmw-msg-meta {
+            color: #94a3b8;
+          }
+        }
+      }
+    }
+
+    .pmw-msg-bubble {
+      padding: 10px 14px;
+      font-size: 13.5px;
+      line-height: 1.45;
+      word-break: break-word;
+
+      .pmw-msg-text {
+        margin: 0 0 4px 0;
+      }
+
+      .pmw-msg-meta {
+        font-size: 10.5px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+      }
+    }
+
+    .pmw-typing-indicator {
+      font-size: 12px;
+      color: #0d9488;
+      font-style: italic;
+      padding: 4px 8px;
+    }
+
+    // Footer nhập tin nhắn / thông báo hết hạn
+    .pmw-chat-footer {
+      padding: 14px 20px;
+      border-top: 1px solid #e2e8f0;
+      background: #ffffff;
+      flex-shrink: 0;
+
+      .pmw-input-box {
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+        background: #f8fafc;
+        border: 1.5px solid #cbd5e1;
+        border-radius: 12px;
+        padding: 6px 10px;
+        transition: all 0.15s ease;
+
+        &:focus-within {
+          background: #ffffff;
+          border-color: #0d9488;
+          box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.15);
+        }
+
+        .pmw-textarea {
+          flex: 1;
+          border: none;
+          background: transparent;
+          font-size: 13.5px;
+          color: #0f172a;
+          resize: none;
+          outline: none;
+          padding: 6px 4px;
+          max-height: 120px;
+          line-height: 1.45;
+
+          &::placeholder {
+            color: #94a3b8;
+          }
+        }
+
+        .pmw-send-btn {
+          width: 36px;
+          height: 36px;
+          border-radius: 8px;
+          background: #0d9488;
+          color: #ffffff;
+          border: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.15s ease;
+          flex-shrink: 0;
+
+          &:hover:not(:disabled) {
+            background: #0f766e;
+          }
+
+          &:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+          }
+        }
+      }
+
+      // Banner khi đã hết hạn
+      .pmw-expired-notice {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        background: #f8fafc;
+        border: 1px dashed #cbd5e1;
+        border-radius: 10px;
+        padding: 12px 16px;
+
+        .pmw-expired-icon {
+          width: 38px;
+          height: 38px;
+          border-radius: 50%;
+          background: #e2e8f0;
+          color: #64748b;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 16px;
+          flex-shrink: 0;
+        }
+
+        .pmw-expired-text {
+          flex: 1;
+
+          h4 {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0 0 2px 0;
+          }
+
+          p {
+            font-size: 12px;
+            color: #64748b;
+            margin: 0;
+            line-height: 1.35;
+          }
+        }
+
+        .pmw-btn-rebook {
+          display: inline-flex;
+          align-items: center;
+          padding: 7px 14px;
+          font-size: 12px;
+          font-weight: 600;
+          color: #ffffff;
+          background: #0d9488;
+          border-radius: 8px;
+          text-decoration: none;
+          flex-shrink: 0;
+          transition: all 0.15s ease;
+
+          &:hover {
+            background: #0f766e;
+            color: #ffffff;
+          }
+        }
+      }
+    }
+
+    // Chưa chọn cuộc trò chuyện
+    .pmw-no-selection {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      background: #f8fafc;
+
+      &__box {
+        text-align: center;
+        max-width: 360px;
+
+        .no-selection-icon {
+          font-size: 40px;
+          display: block;
+          margin-bottom: 12px;
+        }
+
+        h3 {
+          font-size: 16px;
+          font-weight: 700;
+          color: #0f172a;
+          margin-bottom: 6px;
+        }
+
+        p {
+          font-size: 13px;
+          color: #64748b;
+          line-height: 1.45;
+          margin: 0;
+        }
+      }
+    }
+  }
+
+  // ========================================================
+  // DRAWER BÊN PHẢI: CLINICAL ENCOUNTER RECORD DRAWER (400px)
+  // ========================================================
+  .pmw-drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    z-index: 9999;
+    display: flex;
+    justify-content: flex-end;
+    animation: pmwFadeIn 0.2s ease;
+  }
+
+  .pmw-drawer {
+    width: 420px;
+    max-width: 90vw;
+    height: 100%;
+    background: #ffffff;
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
+    display: flex;
+    flex-direction: column;
+    animation: pmwSlideLeft 0.22s ease;
+
+    &__header {
+      padding: 18px 20px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      .pmw-drawer__title {
+        display: flex;
+        align-items: center;
+
+        h3 {
+          font-size: 16px;
+          font-weight: 700;
+          color: #0f172a;
+          margin: 0;
+        }
+      }
+
+      .pmw-drawer__close {
+        font-size: 24px;
+        background: none;
+        border: none;
+        color: #94a3b8;
+        cursor: pointer;
+        line-height: 1;
+
+        &:hover {
+          color: #0f172a;
+        }
+      }
+    }
+
+    &__body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+
+      .drawer-section {
+        .drawer-sec-title {
+          font-size: 13px;
+          font-weight: 700;
+          color: #1e293b;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          margin: 0 0 10px 0;
+          display: flex;
+          align-items: center;
+        }
+      }
+
+      .drawer-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 12px;
+
+        .drawer-field {
+          display: flex;
+          justify-content: space-between;
+          font-size: 12.5px;
+
+          .label {
+            color: #64748b;
+          }
+
+          .value {
+            color: #0f172a;
+            font-weight: 500;
+          }
+        }
+      }
+
+      .drawer-callout {
+        padding: 12px 14px;
+        border-radius: 8px;
+        margin-bottom: 8px;
+
+        &--primary {
+          background: #f0fdfa;
+          border: 1px solid #99f6e4;
+          .callout-label { color: #0d9488; }
+        }
+
+        &--info {
+          background: #eff6ff;
+          border: 1px solid #bfdbfe;
+          .callout-label { color: #2563eb; }
+        }
+
+        .callout-label {
+          font-size: 11px;
+          font-weight: 700;
+          text-transform: uppercase;
+          margin-bottom: 4px;
+          display: block;
+        }
+
+        .callout-text {
+          font-size: 13px;
+          color: #1e293b;
+          margin: 0;
+          line-height: 1.45;
+        }
+      }
+
+      .drawer-empty-text {
+        font-size: 12.5px;
+        color: #94a3b8;
+        font-style: italic;
+        margin: 0;
+      }
+
+      // Đơn thuốc
+      .drawer-med-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+
+        .drawer-med-item {
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          padding: 10px 12px;
+
+          .med-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 4px;
+
+            .med-name {
+              font-size: 13px;
+              font-weight: 700;
+              color: #0f172a;
+            }
+
+            .med-qty {
+              font-size: 12px;
+              font-weight: 600;
+              color: #0d9488;
+            }
+          }
+
+          .med-conc,
+          .med-usage,
+          .med-instr {
+            font-size: 11.5px;
+            color: #475569;
+            margin: 2px 0 0 0;
+          }
+        }
+      }
+
+      // Tệp đính kèm
+      .drawer-attachment-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+
+        .drawer-att-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 10px 14px;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 10px;
+          cursor: pointer;
+          transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+          user-select: none;
+
+          &:hover {
+            background: #ffffff;
+            border-color: #0d9488;
+            box-shadow: 0 4px 14px rgba(13, 148, 136, 0.12);
+            transform: translateY(-1px);
+
+            .att-actions .att-btn-action {
+              border-color: #cbd5e1;
+              color: #0f172a;
+            }
+          }
+
+          .att-thumb-wrap {
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+
+            .att-thumb-img {
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+              transition: transform 0.2s ease;
+            }
+
+            .att-thumb-placeholder {
+              font-size: 20px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+          }
+
+          .att-info {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+
+            .att-name {
+              font-size: 13px;
+              font-weight: 600;
+              color: #0f172a;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+
+            .att-meta-row {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              flex-wrap: wrap;
+
+              .att-category-badge {
+                font-size: 11px;
+                font-weight: 600;
+                padding: 1.5px 7px;
+                border-radius: 5px;
+                display: inline-flex;
+                align-items: center;
+                letter-spacing: 0.02em;
+              }
+
+              .att-size {
+                font-size: 11.5px;
+                color: #64748b;
+                font-weight: 500;
+              }
+            }
+          }
+
+          .att-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+
+            .att-btn-action {
+              width: 32px;
+              height: 32px;
+              border-radius: 7px;
+              background: #ffffff;
+              border: 1px solid #e2e8f0;
+              color: #64748b;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 13px;
+              cursor: pointer;
+              transition: all 0.15s ease;
+
+              &:hover {
+                background: #0d9488;
+                border-color: #0d9488;
+                color: #ffffff;
+                box-shadow: 0 2px 6px rgba(13, 148, 136, 0.25);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    &__footer {
+      padding: 14px 20px;
+      border-top: 1px solid #e2e8f0;
+      background: #ffffff;
+
+      .pmw-drawer-btn-close {
+        width: 100%;
+        padding: 9px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #475569;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+
+        &:hover {
+          background: #e2e8f0;
+          color: #0f172a;
+        }
+      }
+    }
+  }
+
+  // ========================================================
+  // PREVIEW LIGHTBOX DIALOG (XEM TÀI LIỆU Y TẾ & XÉT NGHIỆM)
+  // ========================================================
+  .pmw-preview-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.78);
+    backdrop-filter: blur(6px);
+    z-index: 10050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    animation: pmwFadeIn 0.2s ease;
+  }
+
+  .pmw-preview-dialog {
+    width: 94vw;
+    max-width: 1100px;
+    height: 88vh;
+    background: #0f172a;
+    border-radius: 16px;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    animation: pmwZoomIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .pmw-preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 22px;
+    background: #1e293b;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    gap: 16px;
+
+    .pmw-preview-title-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+
+      .preview-cat-icon-badge {
+        width: 38px;
+        height: 38px;
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 17px;
+        flex-shrink: 0;
+      }
+
+      .preview-title-text {
+        min-width: 0;
+
+        .preview-filename {
+          font-size: 14.5px;
+          font-weight: 600;
+          color: #f8fafc;
+          margin: 0 0 2px 0;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 480px;
+        }
+
+        .preview-meta {
+          font-size: 12px;
+          color: #94a3b8;
+          font-weight: 500;
+        }
+      }
+    }
+
+    .pmw-preview-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+
+      .preview-tool-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        color: #cbd5e1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.2);
+          color: #ffffff;
+          transform: translateY(-1px);
+        }
+
+        &.preview-close-btn {
+          margin-left: 6px;
+          background: rgba(239, 68, 68, 0.16);
+          color: #fca5a5;
+          border-color: rgba(239, 68, 68, 0.25);
+
+          &:hover {
+            background: #ef4444;
+            color: #ffffff;
+            border-color: #ef4444;
+          }
+        }
+      }
+
+      .preview-zoom-indicator {
+        font-size: 12px;
+        font-weight: 600;
+        color: #cbd5e1;
+        min-width: 46px;
+        text-align: center;
+        user-select: none;
+      }
+
+      .preview-divider {
+        width: 1px;
+        height: 20px;
+        background: rgba(255, 255, 255, 0.14);
+        margin: 0 4px;
+      }
+    }
+  }
+
+  .pmw-preview-body {
+    flex: 1;
+    background: #0b1120;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+
+    .preview-loading-spinner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      color: #cbd5e1;
+      font-size: 14px;
+
+      i {
+        font-size: 32px;
+        color: #0d9488;
+      }
+    }
+
+    .preview-viewport {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: auto;
+      padding: 24px;
+
+      .preview-image-element {
+        max-width: 95%;
+        max-height: 82vh;
+        object-fit: contain;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+        border-radius: 8px;
+        user-select: none;
+      }
+    }
+
+    .preview-pdf-viewport {
+      width: 100%;
+      height: 100%;
+
+      .preview-pdf-iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        background: #ffffff;
+      }
+    }
+
+    .preview-unsupported {
+      text-align: center;
+      color: #f8fafc;
+      padding: 40px 24px;
+      max-width: 420px;
+
+      .unsupported-icon-wrap {
+        width: 68px;
+        height: 68px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 30px;
+        color: #0d9488;
+        margin: 0 auto 16px auto;
+      }
+
+      h5 {
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+
+      p {
+        font-size: 13px;
+        color: #94a3b8;
+        line-height: 1.5;
+        margin-bottom: 20px;
+      }
+
+      .preview-btn-download-big {
+        padding: 10px 22px;
+        border-radius: 8px;
+        background: #0d9488;
+        color: #ffffff;
+        font-size: 13.5px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.15s ease;
+
+        &:hover {
+          background: #0f766e;
+          transform: translateY(-1px);
+        }
+      }
+    }
+  }
+
+  @keyframes pmwFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes pmwSlideLeft {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+  }
+
+  @keyframes pmwZoomIn {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}
+

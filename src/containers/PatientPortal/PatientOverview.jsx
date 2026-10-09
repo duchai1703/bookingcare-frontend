@@ -7,6 +7,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import moment from 'moment';
 import { getPatientBookings, cancelBooking } from '../../services/patientService';
 import { getMyWallet } from '../../services/walletService';
+import { getNotifications } from '../../services/notificationService';
+import SmartRescheduleModal from './SmartRescheduleModal';
 import { path, LANGUAGES } from '../../utils/constants';
 import CommonUtils from '../../utils/CommonUtils';
 import { toast } from 'react-toastify';
@@ -33,14 +35,43 @@ const PatientOverview = () => {
     isCancelling: false,
   });
 
+  // Smart reschedule modal state
+  const [rescheduleModal, setRescheduleModal] = useState({
+    isOpen: false,
+    bookingId: null,
+  });
+
+  // Actionable alerts for Action Required Hub
+  const [actionableAlerts, setActionableAlerts] = useState([]);
+  const [dismissedAlertIds, setDismissedAlertIds] = useState(() => {
+    try {
+      const stored = sessionStorage.getItem('dismissed_patient_alerts');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const handleDismissAlert = (alertId) => {
+    setDismissedAlertIds((prev) => {
+      const updated = [...prev, alertId];
+      try {
+        sessionStorage.setItem('dismissed_patient_alerts', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+    setActionableAlerts((prev) => prev.filter((a) => a.id !== alertId));
+  };
+
   const fetchOverviewData = async () => {
     setIsLoading(true);
     try {
-      const [upcomingRes, doneRes, cancelledRes, walletRes] = await Promise.all([
+      const [upcomingRes, doneRes, cancelledRes, walletRes, notifRes] = await Promise.all([
         getPatientBookings({ status: 'S1,S2', page: 1, limit: 5 }),
         getPatientBookings({ status: 'S3', page: 1, limit: 1 }),
-        getPatientBookings({ status: 'S4', page: 1, limit: 1 }),
+        getPatientBookings({ status: 'S4', page: 1, limit: 3 }),
         getMyWallet().catch(() => null),
+        getNotifications({ limit: 5, offset: 0, isRead: false }).catch(() => null),
       ]);
 
       const upcomingCount = upcomingRes?.pagination?.totalItems ?? (upcomingRes?.data?.length || 0);
@@ -64,6 +95,94 @@ const PatientOverview = () => {
       } else {
         setNearestBooking(null);
       }
+
+      // Xây dựng danh sách Sự kiện quan trọng (Action Required Alerts)
+      const alerts = [];
+
+      // 1. Lịch bị hủy (ưu tiên hành động Đổi lịch thông minh)
+      const cancelledList = cancelledRes?.data || [];
+      if (cancelledList.length > 0) {
+        const latestCancelled = cancelledList[0];
+        const timeStr = latestCancelled.timeTypeBooking?.valueVi || latestCancelled.timeType || '';
+        const dateStr = moment(parseInt(latestCancelled.date, 10)).format('DD/MM/YYYY');
+        alerts.push({
+          id: `cancelled-${latestCancelled.id}`,
+          severity: 'warning',
+          icon: 'fas fa-exclamation-triangle',
+          badge: 'Lịch khám bị hủy · Cần xử lý',
+          time: moment(latestCancelled.updatedAt || latestCancelled.createdAt).fromNow(),
+          title: `Lịch hẹn #${latestCancelled.id} đã bị hủy (BS. ${latestCancelled.doctorBookingData?.lastName || ''} ${latestCancelled.doctorBookingData?.firstName || ''})`,
+          message: `Lịch hẹn lúc ${timeStr} ngày ${dateStr} đã bị hủy. Bạn có thể sử dụng tính năng Đổi lịch thông minh để chọn bác sĩ tương đương hoặc khung giờ mới ngay lập tức.`,
+          actionType: 'SMART_RESCHEDULE',
+          bookingId: latestCancelled.id,
+        });
+      }
+
+      // 2. Lịch khám diễn ra ngay hôm nay
+      if (upcomingList.length > 0) {
+        const firstUpcoming = upcomingList[0];
+        const isToday = moment(parseInt(firstUpcoming.date, 10)).isSame(moment(), 'day');
+        if (isToday) {
+          const timeStr = firstUpcoming.timeTypeBooking?.valueVi || firstUpcoming.timeType || '';
+          alerts.push({
+            id: `today-${firstUpcoming.id}`,
+            severity: 'info',
+            icon: 'fas fa-clock',
+            badge: 'Lịch khám hôm nay',
+            time: `Hôm nay · ${timeStr}`,
+            title: `Lịch hẹn khám hôm nay với BS. ${firstUpcoming.doctorBookingData?.lastName || ''} ${firstUpcoming.doctorBookingData?.firstName || ''}`,
+            message: `Địa điểm: ${firstUpcoming.doctorBookingData?.doctorInfoData?.clinicData?.name || 'Phòng khám chuyên khoa'}. Vui lòng chuẩn bị và có mặt trước 15 phút.`,
+            actionType: 'LINK',
+            actionLink: '/patient/history',
+            actionText: 'Xem chi tiết lịch hẹn',
+          });
+        }
+      }
+
+      // 3. Thông báo hoàn tiền / Tin nhắn từ notification service
+      const notifList = notifRes?.data || [];
+      if (Array.isArray(notifList)) {
+        notifList.forEach((n) => {
+          if (n.type === 'REFUND_SUCCESS' && !alerts.some((a) => a.id === `notif-${n.id}`)) {
+            alerts.push({
+              id: `notif-${n.id}`,
+              severity: 'success',
+              icon: 'fas fa-hand-holding-usd',
+              badge: 'Hoàn tiền thành công',
+              time: moment(n.createdAt).fromNow(),
+              title: n.title,
+              message: n.message,
+              actionType: 'LINK',
+              actionLink: '/patient/wallet',
+              actionText: 'Kiểm tra Ví',
+            });
+          } else if (n.type === 'NEW_MESSAGE' && !alerts.some((a) => a.id === `notif-${n.id}`)) {
+            alerts.push({
+              id: `notif-${n.id}`,
+              severity: 'primary',
+              icon: 'fas fa-comment-medical',
+              badge: 'Tin nhắn Bác sĩ mới',
+              time: moment(n.createdAt).fromNow(),
+              title: n.title,
+              message: n.message,
+              actionType: 'LINK',
+              actionLink: '/patient/chat',
+              actionText: 'Mở hội thoại',
+            });
+          }
+        });
+      }
+
+      // Lọc các alerts đã bị đóng
+      const storedDismissed = (() => {
+        try {
+          const s = sessionStorage.getItem('dismissed_patient_alerts');
+          return s ? JSON.parse(s) : [];
+        } catch {
+          return [];
+        }
+      })();
+      setActionableAlerts(alerts.filter((a) => !storedDismissed.includes(a.id)));
     } catch (err) {
       console.error('Error fetching patient overview:', err);
     } finally {
@@ -147,6 +266,67 @@ const PatientOverview = () => {
           </div>
         </div>
       </div>
+
+      {/* ===== TẦNG 1: ACTION REQUIRED HUB ("CẦN BẠN CHÚ Ý") ===== */}
+      {actionableAlerts.length > 0 && (
+        <div className="po-action-hub">
+          <div className="po-action-hub__header">
+            <div className="po-action-hub__title">
+              <span className="po-action-hub__pulse" />
+              <h3>Cần bạn chú ý</h3>
+              <span className="po-action-hub__counter">{actionableAlerts.length}</span>
+            </div>
+            <span className="po-action-hub__desc">
+              Sự kiện và yêu cầu hành động cần bạn xử lý sớm
+            </span>
+          </div>
+
+          <div className="po-action-hub__list">
+            {actionableAlerts.map((alert) => (
+              <div key={alert.id} className={`po-action-card po-action-card--${alert.severity}`}>
+                <div className="po-action-card__icon-box">
+                  <i className={alert.icon} />
+                </div>
+                <div className="po-action-card__body">
+                  <div className="po-action-card__meta">
+                    <span className="po-action-card__badge">{alert.badge}</span>
+                    <span className="po-action-card__time">
+                      <i className="far fa-clock tw-mr-1" />
+                      {alert.time}
+                    </span>
+                  </div>
+                  <h4 className="po-action-card__heading">{alert.title}</h4>
+                  <p className="po-action-card__message">{alert.message}</p>
+                </div>
+                <div className="po-action-card__ctas">
+                  {alert.actionType === 'SMART_RESCHEDULE' ? (
+                    <button
+                      type="button"
+                      className="po-cta-btn po-cta-btn--warning"
+                      onClick={() => setRescheduleModal({ isOpen: true, bookingId: alert.bookingId })}
+                    >
+                      <i className="fas fa-calendar-alt tw-mr-1.5" /> Đổi lịch thông minh ngay
+                    </button>
+                  ) : alert.actionType === 'LINK' ? (
+                    <Link to={alert.actionLink} className="po-cta-btn po-cta-btn--primary">
+                      {alert.actionText} <i className="fas fa-arrow-right tw-ml-1" />
+                    </Link>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="po-cta-dismiss"
+                    onClick={() => handleDismissAlert(alert.id)}
+                    title="Ẩn thông báo này"
+                    aria-label="Ẩn"
+                  >
+                    <i className="fas fa-times" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ===== STATS COUNTER ROW ===== */}
       <div className="po-stats-grid">
@@ -356,6 +536,19 @@ const PatientOverview = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ===== MODAL ĐỔI LỊCH THÔNG MINH ===== */}
+      {rescheduleModal.isOpen && (
+        <SmartRescheduleModal
+          isOpen={rescheduleModal.isOpen}
+          bookingId={rescheduleModal.bookingId}
+          onClose={() => setRescheduleModal({ isOpen: false, bookingId: null })}
+          onSuccess={() => {
+            fetchOverviewData();
+            setRescheduleModal({ isOpen: false, bookingId: null });
+          }}
+        />
       )}
     </div>
   );
