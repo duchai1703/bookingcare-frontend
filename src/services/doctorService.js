@@ -175,4 +175,63 @@ export const getDoctorPractices = (doctorId) => {
   return axiosInstance.get(`/api/v1/doctors/${doctorId}/practices`);
 };
 
+// ═══════════════════════════════════════════════════════
+// [Smart Clinical Assistant Engine]
+// ═══════════════════════════════════════════════════════
+export const searchIcd10Api = (params = {}) => {
+  return axiosInstance.get('/api/v1/doctor/clinical-search/icd10', { params });
+};
+
+export const searchSymptomsApi = (params = {}) => {
+  return axiosInstance.get('/api/v1/doctor/clinical-search/symptoms', { params });
+};
+
+export const recordDoctorClinicalPreferenceApi = (data) => {
+  return axiosInstance.post('/api/v1/doctor/clinical-preferences', data);
+};
+
+export const getClinicalSnippetsApi = (params = {}) => {
+  return axiosInstance.get('/api/v1/doctor/clinical-snippets', { params });
+};
+
+export const createDoctorSnippetApi = (data) => {
+  return axiosInstance.post('/api/v1/doctor/clinical-snippets', data);
+};
+
+export const deleteDoctorSnippetApi = (snippetId) => {
+  return axiosInstance.delete(`/api/v1/doctor/clinical-snippets/${snippetId}`);
+};
+
+export const getEncounterContextSuggestionsApi = (bookingId) => {
+  return axiosInstance.get(`/api/v1/doctor/encounters/${bookingId}/context-suggestions`);
+};
+
+// ═══════════════════════════════════════════════════════
+// [Universal Shorthand Engine] Auto-complete & Shorthand Lexicon
+// ═══════════════════════════════════════════════════════
+export const searchDoctorShorthandsApi = (params = {}) => {
+  return axiosInstance.get('/api/v1/doctor/shorthands/search', { params });
+};
+
+export const getDoctorShorthandsApi = (params = {}) => {
+  return axiosInstance.get('/api/v1/doctor/shorthands', { params });
+};
+
+export const createDoctorShorthandApi = (data) => {
+  return axiosInstance.post('/api/v1/doctor/shorthands', data);
+};
+
+export const updateDoctorShorthandApi = (id, data) => {
+  return axiosInstance.put(`/api/v1/doctor/shorthands/${id}`, data);
+};
+
+export const deleteDoctorShorthandApi = (id) => {
+  return axiosInstance.delete(`/api/v1/doctor/shorthands/${id}`);
+};
+
+export const recordDoctorShorthandUsageApi = (id) => {
+  return axiosInstance.post(`/api/v1/doctor/shorthands/${id}/use`);
+};
+
+
 

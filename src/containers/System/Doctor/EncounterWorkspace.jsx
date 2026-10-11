@@ -36,14 +36,23 @@ import {
   ShieldCheck,
   X,
   Printer,
+  Zap,
+  Copy,
+  RotateCcw,
 } from 'lucide-react';
 import {
   getDoctorEncounter,
   saveDoctorEncounter,
   uploadEncounterAttachments,
   deleteEncounterAttachment,
+  searchSymptomsApi,
+  getEncounterContextSuggestionsApi,
 } from '../../../services/doctorService';
 import { getAllMedicines, createMedicine } from '../../../services/catalogService';
+import SmartMedicalSearch from './SmartMedicalSearch';
+import ClinicalSnippetToolbar from './ClinicalSnippetToolbar';
+import SmartShorthandInput from './SmartShorthandInput';
+import SmartShorthandTextarea from './SmartShorthandTextarea';
 import './EncounterWorkspace.scss';
 
 const DOCUMENT_CATEGORIES = [
@@ -52,15 +61,6 @@ const DOCUMENT_CATEGORIES = [
   { key: 'mri', label: '🧲 MRI / CT Scanner', icon: '🧲' },
   { key: 'record', label: '📄 Hồ sơ bệnh án / Tuyến trước', icon: '📄' },
   { key: 'prescription', label: '💊 Đơn thuốc ngoài / Giấy tờ khác', icon: '💊' },
-];
-
-const SUGGESTED_ICD10 = [
-  { code: 'M17', name: 'Thoái hóa khớp gối (Gonarthrosis)' },
-  { code: 'M25.5', name: 'Đau khớp không đặc hiệu' },
-  { code: 'M54.5', name: 'Đau thắt lưng (Low back pain)' },
-  { code: 'M50', name: 'Bệnh lý đĩa đệm cột sống cổ' },
-  { code: 'M19', name: 'Viêm xương khớp khác' },
-  { code: 'M75', name: 'Tổn thương vai (Viêm quanh khớp vai)' },
 ];
 
 const EncounterWorkspace = () => {
@@ -127,6 +127,131 @@ const EncounterWorkspace = () => {
 
   const fileInputRef = useRef(null);
   const autoSaveTimerRef = useRef(null);
+
+  // [Smart Clinical Assistant States & Refs]
+  const icdSearchInputRef = useRef(null);
+  const clinicalNotesTextareaRef = useRef(null);
+  const treatmentPlanTextareaRef = useRef(null);
+  const [symptomCatalog, setSymptomCatalog] = useState([]);
+  const [activeIcdRecommendations, setActiveIcdRecommendations] = useState([]);
+
+  // Tải danh mục triệu chứng lâm sàng
+  useEffect(() => {
+    const loadSymptoms = async () => {
+      try {
+        const res = await searchSymptomsApi({ limit: 12 });
+        if (res && res.errCode === 0) {
+          setSymptomCatalog(res.data || []);
+        }
+      } catch (err) {
+        console.error('Lỗi tải danh mục triệu chứng:', err);
+      }
+    };
+    loadSymptoms();
+  }, []);
+
+  // [Productivity Hotkeys] Ctrl+K (Tìm ICD) và Ctrl+S (Lưu nháp)
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        icdSearchInputRef.current?.focus();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        handlePerformSave('draft', true);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [form, medicines, encounter]);
+
+  // Chèn text tại con trỏ (Caret position) của textarea
+  const insertTextAtField = (field, textToInsert, targetRef) => {
+    const currentVal = form[field] || '';
+    const el = targetRef?.current;
+    if (el && typeof el.selectionStart === 'number') {
+      const start = el.selectionStart;
+      const end = el.selectionEnd;
+      const before = currentVal.substring(0, start);
+      const after = currentVal.substring(end);
+      const separator = before && !before.endsWith('\n') && !before.endsWith(' ') ? '\n' : '';
+      const newVal = `${before}${separator}${textToInsert}${after}`;
+      updateFormField(field, newVal);
+      setTimeout(() => {
+        el.focus();
+        const nextPos = start + separator.length + textToInsert.length;
+        el.setSelectionRange(nextPos, nextPos);
+      }, 50);
+    } else {
+      const newVal = currentVal ? `${currentVal}\n${textToInsert}` : textToInsert;
+      updateFormField(field, newVal);
+    }
+  };
+
+  // Thêm chip triệu chứng nhanh và kích hoạt gợi ý ICD-10 liên quan
+  const handleAddSymptomChip = (symp) => {
+    const curSymptoms = (form.symptoms || '').trim();
+    if (curSymptoms.toLowerCase().includes(symp.nameVi.toLowerCase())) {
+      toast.info(`Triệu chứng "${symp.nameVi}" đã có trong diễn biến bệnh.`);
+      return;
+    }
+    const nextSymptoms = curSymptoms ? `${curSymptoms}, ${symp.nameVi}` : symp.nameVi;
+    updateFormField('symptoms', nextSymptoms);
+
+    // Kích hoạt gợi ý ICD-10 tương ứng
+    if (symp.suggestedIcdCodes) {
+      const codes = symp.suggestedIcdCodes.split(',').map((c) => c.trim()).filter(Boolean);
+      setActiveIcdRecommendations((prev) => Array.from(new Set([...prev, ...codes])));
+    }
+  };
+
+  // Nút Hẹn tái khám nhanh (+1 tuần, +2 tuần, +1 tháng)
+  const handleSetQuickFollowUp = (days) => {
+    const targetDate = new Date();
+    targetDate.setDate(targetDate.getDate() + days);
+    const yyyy = targetDate.getFullYear();
+    const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(targetDate.getDate()).padStart(2, '0');
+    const dateStr = `${yyyy}-${mm}-${dd}`;
+    updateFormField('followUpDate', dateStr);
+    updateFormField('noFollowUpNeeded', false);
+    toast.success(`✓ Đã đặt hẹn tái khám vào ${dd}/${mm}/${yyyy}`, { autoClose: 1800 });
+  };
+
+  // Kế thừa chẩn đoán từ ca khám cũ trong lịch sử
+  const handleInheritDiagnosis = (pastDiagnosis) => {
+    if (!pastDiagnosis) return;
+    if (form.diagnosis) {
+      if (window.confirm('Bạn muốn GHI ĐÈ chẩn đoán cũ vào ca hiện tại?\n- Bấm OK để GHI ĐÈ\n- Bấm Cancel để NỐI TIẾP')) {
+        updateFormField('diagnosis', pastDiagnosis);
+      } else {
+        updateFormField('diagnosis', `${form.diagnosis}; ${pastDiagnosis}`);
+      }
+    } else {
+      updateFormField('diagnosis', pastDiagnosis);
+    }
+    toast.success('📋 Đã kế thừa chẩn đoán từ ca khám trước!');
+  };
+
+  // Kế thừa danh mục thuốc từ ca khám cũ
+  const handleInheritMedicines = (pastMedicines) => {
+    if (!pastMedicines || !Array.isArray(pastMedicines) || pastMedicines.length === 0) {
+      toast.info('Ca khám này không có thông tin đơn thuốc.');
+      return;
+    }
+    const cloned = pastMedicines.map((m) => ({
+      medicineId: m.medicineId,
+      name: m.medicineData?.name || m.name || 'Thuốc',
+      quantity: m.quantity || 1,
+      unit: m.medicineData?.unit || m.unit || 'Viên',
+      dosage: m.dosage || '1 viên x 2 lần/ngày',
+      usageInstructions: m.usageInstructions || 'Uống sau ăn',
+    }));
+    setMedicines(cloned);
+    setIsDirty(true);
+    toast.success(`💊 Đã sao chép ${cloned.length} loại thuốc từ ca trước!`);
+  };
 
   // 1. Fetch initial data
   const loadEncounterData = async () => {
@@ -719,6 +844,30 @@ const EncounterWorkspace = () => {
                       </div>
                       <p className="node-dx">{hist.diagnosis}</p>
                       <small className="node-doc">BS. {hist.doctorName}</small>
+
+                      {/* Quick Inherit Bar */}
+                      <div className="node-inherit-actions" onClick={(e) => e.stopPropagation()}>
+                        {hist.diagnosis && (
+                          <button
+                            type="button"
+                            className="btn-inherit-dx"
+                            onClick={() => handleInheritDiagnosis(hist.diagnosis)}
+                            title="Kế thừa chẩn đoán này vào ca hiện tại"
+                          >
+                            <Copy size={11} /> Kế thừa CĐ
+                          </button>
+                        )}
+                        {(hist.bookingMedicines?.length > 0 || hist.medicines?.length > 0) && (
+                          <button
+                            type="button"
+                            className="btn-inherit-rx"
+                            onClick={() => handleInheritMedicines(hist.bookingMedicines || hist.medicines)}
+                            title="Sao chép đơn thuốc từ ca khám này"
+                          >
+                            <Pill size={11} /> Đơn thuốc
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))
@@ -742,9 +891,10 @@ const EncounterWorkspace = () => {
               <h3>Lý do đến khám (Chief Complaint)</h3>
             </div>
             <div className="section-body">
-              <input
-                type="text"
-                className="ew-input ew-input--lg"
+              <SmartShorthandInput
+                className="ew-input--lg"
+                targetField="chiefComplaint"
+                doctorId={encounter?.doctorId}
                 placeholder="VD: Bệnh nhân đau nhiều khớp gối phải khi leo cầu thang, có tiếng kêu lục cục..."
                 value={form.chiefComplaint}
                 onChange={(e) => updateFormField('chiefComplaint', e.target.value)}
@@ -759,10 +909,31 @@ const EncounterWorkspace = () => {
               <h3>Triệu chứng cơ năng bệnh nhân cung cấp</h3>
             </div>
             <div className="section-body">
-              <textarea
+              {/* Gợi ý triệu chứng nhanh */}
+              {symptomCatalog.length > 0 && (
+                <div className="symptom-quick-chips">
+                  <span className="chip-label">Gợi ý triệu chứng nhanh:</span>
+                  <div className="chips-wrap">
+                    {symptomCatalog.map((symp) => (
+                      <button
+                        key={symp.id}
+                        type="button"
+                        className="btn-symp-chip"
+                        onClick={() => handleAddSymptomChip(symp)}
+                        title={`Thêm triệu chứng "${symp.nameVi}"`}
+                      >
+                        + {symp.nameVi}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <SmartShorthandTextarea
                 rows={3}
-                className="ew-textarea"
-                placeholder="Mô tả diễn biến triệu chứng bệnh nhân phản ánh, cơn đau âm ỉ hay nhói buốt..."
+                targetField="symptoms"
+                doctorId={encounter?.doctorId}
+                placeholder="Mô tả diễn biến triệu chứng bệnh nhân phản ánh, cơn đau âm ỉ hay nhói buốt... (Gõ vài ký tự để bung từ viết tắt)"
                 value={form.symptoms}
                 onChange={(e) => updateFormField('symptoms', e.target.value)}
               />
@@ -811,15 +982,25 @@ const EncounterWorkspace = () => {
 
           {/* Section 3: Clinical Examination */}
           <div className="clinical-section">
-            <div className="section-title">
-              <span className="num-pill">3</span>
-              <h3>Khám lâm sàng & Dấu hiệu thực thể</h3>
+            <div className="section-title section-title--between">
+              <div className="title-left">
+                <span className="num-pill">3</span>
+                <h3>Khám lâm sàng & Dấu hiệu thực thể</h3>
+              </div>
+              <ClinicalSnippetToolbar
+                doctorId={encounter?.doctorId}
+                section="clinicalNotes"
+                targetFieldLabel="khám thực thể"
+                onInsertText={(text) => insertTextAtField('clinicalNotes', text, clinicalNotesTextareaRef)}
+              />
             </div>
             <div className="section-body">
-              <textarea
+              <SmartShorthandTextarea
+                textareaRef={clinicalNotesTextareaRef}
                 rows={3}
-                className="ew-textarea"
-                placeholder="Kết quả quan sát, sờ nắn, gõ, nghe, tầm vận động khớp, các nghiệm pháp đặc hiệu..."
+                targetField="clinicalNotes"
+                doctorId={encounter?.doctorId}
+                placeholder="Kết quả quan sát, sờ nắn, gõ, nghe, tầm vận động khớp, các nghiệm pháp đặc hiệu... (Gõ các từ viết tắt như ktp, kkg, kcs để bung nội dung)"
                 value={form.clinicalNotes}
                 onChange={(e) => updateFormField('clinicalNotes', e.target.value)}
               />
@@ -833,46 +1014,79 @@ const EncounterWorkspace = () => {
               <h3>Chẩn đoán xác định & Phân loại ICD-10</h3>
             </div>
             <div className="section-body">
-              <input
-                type="text"
-                className="ew-input ew-input--bold"
-                placeholder="Nhập chẩn đoán kết luận..."
+              {/* Bộ tìm kiếm y khoa thông minh ICD-10 */}
+              <SmartMedicalSearch
                 value={form.diagnosis}
-                onChange={(e) => updateFormField('diagnosis', e.target.value)}
+                onChange={(newVal) => updateFormField('diagnosis', newVal)}
+                doctorId={encounter?.doctorId}
+                specialtyId={encounter?.doctorBookingData?.doctorInfoData?.specialtyId}
+                inputRef={icdSearchInputRef}
               />
 
-              <div className="icd-quick-chips">
-                <span className="chip-label">Gợi ý nhanh ICD-10:</span>
-                {SUGGESTED_ICD10.map((icd) => (
-                  <button
-                    key={icd.code}
-                    type="button"
-                    className="btn-icd-chip"
-                    onClick={() => {
-                      const newDx = form.diagnosis
-                        ? `${form.diagnosis}, [${icd.code}] ${icd.name}`
-                        : `[${icd.code}] ${icd.name}`;
-                      updateFormField('diagnosis', newDx);
-                    }}
-                  >
-                    <strong>[{icd.code}]</strong> {icd.name}
-                  </button>
-                ))}
+              {/* Các gợi ý ICD-10 liên kết từ triệu chứng được chọn */}
+              {activeIcdRecommendations.length > 0 && (
+                <div className="linked-icd-suggestions">
+                  <span className="linked-label">Mã ICD-10 gợi ý từ triệu chứng:</span>
+                  <div className="linked-chips">
+                    {activeIcdRecommendations.map((code) => {
+                      const isAdded = (form.diagnosis || '').includes(`[${code}]`);
+                      return (
+                        <button
+                          key={code}
+                          type="button"
+                          className={`btn-linked-icd ${isAdded ? 'btn-linked-icd--added' : ''}`}
+                          onClick={() => {
+                            if (!isAdded) {
+                              const nextVal = form.diagnosis ? `${form.diagnosis}; [${code}]` : `[${code}]`;
+                              updateFormField('diagnosis', nextVal);
+                            }
+                          }}
+                        >
+                          <strong>[{code}]</strong> {isAdded ? '✓ Đã thêm' : '+ Chèn'}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div style={{ marginTop: '8px' }}>
+                <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', marginBottom: '4px', fontWeight: 600 }}>
+                  Chuỗi chẩn đoán kết luận hoàn chỉnh (có thể gõ bổ sung văn bản tự do):
+                </label>
+                <SmartShorthandInput
+                  className="ew-input--bold"
+                  targetField="diagnosis"
+                  doctorId={encounter?.doctorId}
+                  placeholder="Nhập chẩn đoán kết luận... (Gõ tha, vkdt, thkg...)"
+                  value={form.diagnosis}
+                  onChange={(e) => updateFormField('diagnosis', e.target.value)}
+                />
               </div>
             </div>
           </div>
 
           {/* Section 5: Treatment Plan & Follow-up */}
           <div className="clinical-section">
-            <div className="section-title">
-              <span className="num-pill">5</span>
-              <h3>Kế hoạch điều trị & Dặn dò chăm sóc</h3>
+            <div className="section-title section-title--between">
+              <div className="title-left">
+                <span className="num-pill">5</span>
+                <h3>Kế hoạch điều trị & Dặn dò chăm sóc</h3>
+              </div>
+              <ClinicalSnippetToolbar
+                doctorId={encounter?.doctorId}
+                section="treatmentPlan"
+                targetFieldLabel="kế hoạch điều trị"
+                onInsertText={(text) => insertTextAtField('treatmentPlan', text, treatmentPlanTextareaRef)}
+              />
             </div>
             <div className="section-body">
-              <textarea
+              <SmartShorthandTextarea
+                textareaRef={treatmentPlanTextareaRef}
                 rows={3}
-                className="ew-textarea"
-                placeholder="Hướng xử trí điều trị, phương pháp can thiệp, bài tập vật lý trị liệu..."
+                targetField="treatmentPlan"
+                doctorId={encounter?.doctorId}
+                placeholder="Hướng xử trí điều trị, phương pháp can thiệp, bài tập vật lý trị liệu... (Gõ vltt để bung mẫu)"
                 value={form.treatmentPlan}
                 onChange={(e) => updateFormField('treatmentPlan', e.target.value)}
               />
@@ -887,6 +1101,37 @@ const EncounterWorkspace = () => {
                     value={form.followUpDate}
                     onChange={(e) => updateFormField('followUpDate', e.target.value)}
                   />
+
+                  {/* Bộ nút Ngày tái khám nhanh */}
+                  <div className="quick-followup-buttons">
+                    <button
+                      type="button"
+                      className="btn-quick-followup"
+                      disabled={form.noFollowUpNeeded}
+                      onClick={() => handleSetQuickFollowUp(7)}
+                      title="Hẹn tái khám sau 1 tuần"
+                    >
+                      +1 tuần
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-quick-followup"
+                      disabled={form.noFollowUpNeeded}
+                      onClick={() => handleSetQuickFollowUp(14)}
+                      title="Hẹn tái khám sau 2 tuần"
+                    >
+                      +2 tuần
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-quick-followup"
+                      disabled={form.noFollowUpNeeded}
+                      onClick={() => handleSetQuickFollowUp(30)}
+                      title="Hẹn tái khám sau 1 tháng"
+                    >
+                      +1 tháng
+                    </button>
+                  </div>
                 </div>
 
                 <div className="followup-right">
@@ -907,10 +1152,10 @@ const EncounterWorkspace = () => {
 
               <div className="care-instruction-box">
                 <label>Dặn dò chế độ dinh dưỡng & sinh hoạt tại nhà:</label>
-                <input
-                  type="text"
-                  className="ew-input"
-                  placeholder="VD: Nghỉ ngơi hạn chế leo cầu thang, chườm lạnh 15 phút mỗi tối..."
+                <SmartShorthandInput
+                  targetField="careInstructions"
+                  doctorId={encounter?.doctorId}
+                  placeholder="VD: Nghỉ ngơi hạn chế leo cầu thang (Gõ kcl, ankn, tk1w, tk2w...)"
                   value={form.careInstructions}
                   onChange={(e) => updateFormField('careInstructions', e.target.value)}
                 />
@@ -1099,19 +1344,19 @@ const EncounterWorkspace = () => {
                             </div>
                           </td>
                           <td>
-                            <input
-                              type="text"
-                              className="ew-input"
+                            <SmartShorthandInput
+                              targetField="medicineUsage"
+                              doctorId={encounter?.doctorId}
                               placeholder="VD: 1 viên x 2 lần/ngày"
                               value={med.dosage}
                               onChange={(e) => handleUpdateMedicineField(idx, 'dosage', e.target.value)}
                             />
                           </td>
                           <td>
-                            <input
-                              type="text"
-                              className="ew-input"
-                              placeholder="VD: Uống sau ăn sáng - chiều"
+                            <SmartShorthandInput
+                              targetField="medicineUsage"
+                              doctorId={encounter?.doctorId}
+                              placeholder="VD: Uống sau ăn (Gõ u2v, u1v...)"
                               value={med.usageInstructions}
                               onChange={(e) => handleUpdateMedicineField(idx, 'usageInstructions', e.target.value)}
                             />

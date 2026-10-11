@@ -1,0 +1,410 @@
+// src/containers/System/Doctor/SmartMedicalSearch.scss
+// Thiết kế giao diện Chuyên nghiệp Healthcare Enterprise cho bộ tìm kiếm y khoa
+
+.smart-medical-search {
+  position: relative;
+  width: 100%;
+  margin-bottom: 12px;
+
+  // Danh sách chip đã chọn
+  .selected-icd-chips-container {
+    margin-bottom: 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px 12px;
+
+    .chips-title {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .chips-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .icd-chip-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      transition: all 0.15s ease-in-out;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+
+      &--primary {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        color: #1e40af;
+
+        .chip-type-tag {
+          background: #2563eb;
+          color: #ffffff;
+        }
+
+        .chip-code {
+          color: #1d4ed8;
+          font-weight: 700;
+        }
+      }
+
+      &--secondary {
+        background: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        color: #334155;
+
+        .chip-type-tag {
+          background: #64748b;
+          color: #ffffff;
+        }
+
+        .chip-code {
+          color: #475569;
+          font-weight: 700;
+        }
+      }
+
+      .chip-type-tag {
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 1px 5px;
+        border-radius: 4px;
+        letter-spacing: 0.3px;
+      }
+
+      .chip-content {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        .chip-name {
+          max-width: 280px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+
+      .chip-actions {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        margin-left: 4px;
+
+        button {
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 2px;
+          border-radius: 4px;
+          color: #94a3b8;
+          transition: all 0.15s;
+
+          &:hover {
+            background: rgba(0, 0, 0, 0.06);
+            color: #ef4444;
+          }
+
+          &.btn-action-primary:hover {
+            color: #f59e0b;
+          }
+        }
+      }
+    }
+  }
+
+  // Wrapper input
+  .sms-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 0 12px;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+
+    &:focus-within {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+    .sms-search-icon {
+      color: #94a3b8;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+
+    .sms-input {
+      flex: 1;
+      height: 40px;
+      border: none;
+      outline: none;
+      font-size: 0.88rem;
+      color: #0f172a;
+      background: transparent;
+
+      &::placeholder {
+        color: #94a3b8;
+        font-size: 0.83rem;
+      }
+    }
+
+    .sms-btn-clear {
+      background: #f1f5f9;
+      border: none;
+      color: #64748b;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      margin-left: 6px;
+      transition: all 0.15s;
+
+      &:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+      }
+    }
+
+    .sms-shortcut-hint {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #64748b;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      user-select: none;
+    }
+
+    .sms-spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #e2e8f0;
+      border-top-color: #2563eb;
+      border-radius: 50%;
+      animation: sms-spin 0.6s linear infinite;
+    }
+  }
+
+  // Dropdown list
+  .sms-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+    z-index: 1000;
+    overflow: hidden;
+    animation: sms-fade-in 0.15s ease-out;
+
+    .sms-dropdown-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: #f8fafc;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #475569;
+
+      .dropdown-keys-hint {
+        color: #94a3b8;
+        font-weight: 500;
+      }
+    }
+
+    .sms-dropdown-list {
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    .sms-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 12px;
+      border-bottom: 1px solid #f8fafc;
+      cursor: pointer;
+      transition: background-color 0.1s ease;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      &:hover,
+      &--selected {
+        background-color: #f0f7ff;
+      }
+
+      &--added {
+        background-color: #f8fafc;
+        opacity: 0.85;
+      }
+
+      .sms-item-main {
+        flex: 1;
+        min-width: 0;
+        padding-right: 12px;
+
+        .sms-item-top {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 2px;
+          flex-wrap: wrap;
+
+          .sms-code-badge {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #1e40af;
+            background: #dbeafe;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+          }
+
+          .sms-name-vi {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #1e293b;
+          }
+
+          .sms-used-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 0.7rem;
+            color: #b45309;
+            background: #fef3c7;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+
+            .fill-gold {
+              fill: #f59e0b;
+              color: #f59e0b;
+            }
+          }
+
+          .sms-specialty-tag {
+            font-size: 0.7rem;
+            color: #065f46;
+            background: #d1fae5;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+          }
+        }
+
+        .sms-name-en {
+          font-size: 0.77rem;
+          color: #64748b;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+
+      .sms-item-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+
+        .added-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: #16a34a;
+          background: #dcfce7;
+          padding: 3px 8px;
+          border-radius: 4px;
+        }
+
+        button {
+          font-size: 0.75rem;
+          font-weight: 600;
+          padding: 4px 8px;
+          border-radius: 4px;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 3px;
+          transition: all 0.15s;
+
+          &.btn-select-secondary {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: #334155;
+
+            &:hover {
+              background: #2563eb;
+              border-color: #2563eb;
+              color: #ffffff;
+            }
+          }
+
+          &.btn-select-primary {
+            background: #eff6ff;
+            border: 1px solid #93c5fd;
+            color: #1d4ed8;
+
+            &:hover {
+              background: #1d4ed8;
+              color: #ffffff;
+            }
+          }
+        }
+      }
+    }
+
+    .sms-empty {
+      padding: 24px 16px;
+      text-align: center;
+      font-size: 0.83rem;
+      color: #64748b;
+      line-height: 1.5;
+    }
+  }
+}
+
+@keyframes sms-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes sms-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

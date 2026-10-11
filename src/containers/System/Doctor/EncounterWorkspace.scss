@@ -521,6 +521,46 @@
               font-size: 0.7rem;
               margin-top: 2px;
             }
+
+            .node-inherit-actions {
+              display: flex;
+              gap: 6px;
+              margin-top: 6px;
+
+              button {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                font-size: 0.68rem;
+                font-weight: 600;
+                padding: 2px 6px;
+                border-radius: 4px;
+                cursor: pointer;
+                transition: all 0.15s;
+
+                &.btn-inherit-dx {
+                  background: #eff6ff;
+                  border: 1px solid #bfdbfe;
+                  color: #1e40af;
+
+                  &:hover {
+                    background: #2563eb;
+                    color: #ffffff;
+                  }
+                }
+
+                &.btn-inherit-rx {
+                  background: #ecfdf5;
+                  border: 1px solid #a7f3d0;
+                  color: #065f46;
+
+                  &:hover {
+                    background: #059669;
+                    color: #ffffff;
+                  }
+                }
+              }
+            }
           }
         }
 
@@ -742,6 +782,122 @@
 
         strong {
           color: #0284c7;
+        }
+      }
+    }
+
+    // Gợi ý triệu chứng nhanh
+    .symptom-quick-chips {
+      margin-bottom: 8px;
+
+      .chip-label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #64748b;
+        margin-bottom: 5px;
+      }
+
+      .chips-wrap {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+
+        .btn-symp-chip {
+          background: #f1f5f9;
+          border: 1px solid #e2e8f0;
+          color: #334155;
+          font-size: 0.78rem;
+          padding: 3px 8px;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: all 0.15s;
+
+          &:hover {
+            background: #e0f2fe;
+            border-color: #7dd3fc;
+            color: #0369a1;
+          }
+        }
+      }
+    }
+
+    // Mã ICD gợi ý từ triệu chứng
+    .linked-icd-suggestions {
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 8px;
+
+      .linked-label {
+        display: block;
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: #166534;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+
+      .linked-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+
+        .btn-linked-icd {
+          background: #ffffff;
+          border: 1px solid #86efac;
+          color: #15803d;
+          font-size: 0.78rem;
+          padding: 3px 8px;
+          border-radius: 6px;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          transition: all 0.15s;
+
+          &:hover {
+            background: #16a34a;
+            color: #ffffff;
+          }
+
+          &--added {
+            background: #dcfce7;
+            color: #15803d;
+            border-color: #4ade80;
+            font-weight: 600;
+          }
+        }
+      }
+    }
+
+    // Nút Hẹn tái khám nhanh
+    .quick-followup-buttons {
+      display: inline-flex;
+      gap: 6px;
+      margin-left: 8px;
+
+      .btn-quick-followup {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        color: #334155;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 4px 8px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s;
+
+        &:hover:not(:disabled) {
+          background: #2563eb;
+          border-color: #2563eb;
+          color: #ffffff;
+        }
+
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
         }
       }
     }

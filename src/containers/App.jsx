@@ -43,6 +43,7 @@ import DoctorRevenue from './System/Doctor/DoctorRevenue';
 import DoctorScheduleWorkspace from './System/Doctor/DoctorScheduleWorkspace';
 import EncounterWorkspace from './System/Doctor/EncounterWorkspace';
 import DoctorMessagesWorkspace from './DoctorPortal/Messages/DoctorMessagesWorkspace';
+import DoctorShorthandManage from './System/Doctor/DoctorShorthandManage';
 
 // [Phase C] Admin new pages
 import MedicalCatalogManage from './System/Admin/MedicalCatalogManage';
@@ -361,6 +362,7 @@ const App = () => {
             )}
             <Route path="medicines" element={<MedicineManage />} />
             <Route path="medical-catalogs" element={<MedicalCatalogManage />} />
+            <Route path="shorthands" element={<DoctorShorthandManage />} />
           </Route>
         </Route>
 
