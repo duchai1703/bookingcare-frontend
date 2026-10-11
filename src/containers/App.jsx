@@ -44,6 +44,7 @@ import DoctorScheduleWorkspace from './System/Doctor/DoctorScheduleWorkspace';
 import EncounterWorkspace from './System/Doctor/EncounterWorkspace';
 import DoctorMessagesWorkspace from './DoctorPortal/Messages/DoctorMessagesWorkspace';
 import DoctorShorthandManage from './System/Doctor/DoctorShorthandManage';
+import DoctorPatientManage from './DoctorPortal/DoctorPatientManage';
 
 // [Phase C] Admin new pages
 import MedicalCatalogManage from './System/Admin/MedicalCatalogManage';
@@ -344,6 +345,7 @@ const App = () => {
           <Route path={path.DOCTOR_DASHBOARD} element={<DoctorLayout />}>
             <Route index element={<Navigate to="manage-patient" replace />} />
             <Route path="manage-patient" element={<ManagePatient />} />
+            <Route path="patients" element={<DoctorPatientManage />} />
             <Route path="manage-schedule" element={<DoctorScheduleWorkspace />} />
             {/* [Phase C] Doctor new pages */}
             <Route path="doctor-profile" element={<DoctorProfile />} />

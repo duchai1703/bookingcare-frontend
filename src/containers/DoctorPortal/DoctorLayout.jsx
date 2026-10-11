@@ -30,6 +30,7 @@ import {
   Pill,
   BookOpen,
   Zap,
+  Users,
 } from 'lucide-react';
 import { getMyPractices } from '../../services/doctorService';
 import { getDoctorWallet } from '../../services/walletService';
@@ -43,9 +44,15 @@ const DOCTOR_NAV_GROUPS = [
     items: [
       {
         icon: CalendarDays,
-        label: 'Lịch khám & Bệnh nhân',
+        label: 'Lịch khám',
         to: '/doctor-dashboard/manage-patient',
         badge: 'Hôm nay',
+      },
+      {
+        icon: Users,
+        label: 'Quản lý bệnh nhân',
+        to: '/doctor-dashboard/patients',
+        badge: 'Mới',
       },
       {
         icon: CalendarCheck,

@@ -233,5 +233,16 @@ export const recordDoctorShorthandUsageApi = (id) => {
   return axiosInstance.post(`/api/v1/doctor/shorthands/${id}/use`);
 };
 
+// ═══════════════════════════════════════════════════════
+// [Doctor Patient Relationship & Clinical Dossier Hub]
+// ═══════════════════════════════════════════════════════
+export const getDoctorPatientsApi = (params = {}) => {
+  return axiosInstance.get('/api/v1/doctor/patients', { params });
+};
+
+export const getDoctorPatientSummaryApi = (patientKey) => {
+  return axiosInstance.get(`/api/v1/doctor/patients/${patientKey}/summary`);
+};
+
 
 

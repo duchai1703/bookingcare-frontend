@@ -63,6 +63,7 @@ export const path = {
   // Doctor (R2)
   DOCTOR_DASHBOARD: '/doctor-dashboard',
   MANAGE_PATIENT: '/doctor-dashboard/manage-patient',
+  DOCTOR_PATIENTS: '/doctor-dashboard/patients',
   // [Phase C] Doctor self-service pages
   DOCTOR_PROFILE: '/doctor-dashboard/doctor-profile',
   DOCTOR_REVENUE: '/doctor-dashboard/doctor-revenue',
