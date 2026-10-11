@@ -228,14 +228,18 @@
     }
   }
 
-  // ── 3-Zone Workspace Layout ──
+  // ── 2-Zone Workspace Layout (70% Clinical Left : 30% Side Panel Right) ──
   .ew-layout {
     display: grid;
-    grid-template-columns: 290px 1fr 330px;
-    gap: 20px;
+    grid-template-columns: minmax(0, 7fr) minmax(340px, 3fr);
+    gap: 22px;
     padding: 20px 24px 60px;
     flex: 1;
     align-items: flex-start;
+
+    @media (max-width: 1200px) {
+      grid-template-columns: 1fr;
+    }
   }
 
   // ── Generic Card ──
@@ -573,11 +577,13 @@
     }
   }
 
-  // ── Zone 2 (Center): Clinical Workspace ──
+  // ── Main Zone (70% Left): Clinical Workspace ──
+  .ew-zone--main,
   .ew-zone--center {
     display: flex;
     flex-direction: column;
     gap: 16px;
+    min-width: 0;
 
     .clinical-section {
       background: #ffffff;
@@ -1203,10 +1209,79 @@
     }
   }
 
-  // ── Zone 3 (Right): Patient Records & Resources ──
+  // ── Side Zone (30% Right): Patient Records, History & Quick Tabs ──
+  .ew-zone--side,
   .ew-zone--right {
     display: flex;
     flex-direction: column;
+    gap: 14px;
+    position: sticky;
+    top: 14px;
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+    padding-right: 2px;
+
+    &::-webkit-scrollbar {
+      width: 5px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+
+    // Side Navigation Tabs (30% Panel)
+    .ew-side-nav-tabs {
+      display: flex;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      padding: 3px;
+      border-radius: 8px;
+      gap: 3px;
+      margin-bottom: 2px;
+
+      .side-nav-tab {
+        flex: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        padding: 7px 4px;
+        border: none;
+        background: transparent;
+        border-radius: 6px;
+        font-size: 0.74rem;
+        font-weight: 600;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        white-space: nowrap;
+
+        .tab-badge {
+          font-size: 0.68rem;
+          background: #e2e8f0;
+          color: #334155;
+          padding: 1px 5px;
+          border-radius: 10px;
+          font-weight: 700;
+        }
+
+        &:hover {
+          color: #0f172a;
+          background: rgba(255, 255, 255, 0.6);
+        }
+
+        &.active {
+          background: #ffffff;
+          color: #2563eb;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+
+          .tab-badge {
+            background: #dbeafe;
+            color: #1e40af;
+          }
+        }
+      }
+    }
 
     .ew-card--records {
       .record-total {

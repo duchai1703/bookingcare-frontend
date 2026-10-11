@@ -99,6 +99,9 @@ const EncounterWorkspace = () => {
   const [attachments, setAttachments] = useState([]);
   const [selectedRecordCategory, setSelectedRecordCategory] = useState('all');
 
+  // Side reference panel tab state (30% panel on the right)
+  const [sideActiveTab, setSideActiveTab] = useState('history'); // 'history' | 'records' | 'meds' | 'all'
+
   // Modals state
   const [showFinishModal, setShowFinishModal] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
@@ -686,204 +689,13 @@ const EncounterWorkspace = () => {
       </header>
 
       {/* ──────────────────────────────────────────────────────── */}
-      {/* 3-ZONE CLINICAL LAYOUT                                   */}
+      {/* 2-ZONE CLINICAL LAYOUT (70% Nhập liệu bên Trái : 30% Tham khảo bên Phải) */}
       {/* ──────────────────────────────────────────────────────── */}
       <div className="ew-layout">
         {/* ══════════════════════════════════════════════════════ */}
-        {/* ZONE 1: LEFT — PATIENT CONTEXT & VISIT HISTORY        */}
+        {/* KHỐI 70% (BÊN TRÁI): KHU VỰC NHẬP LIỆU LÂM SÀNG TRUNG TÂM */}
         {/* ══════════════════════════════════════════════════════ */}
-        <aside className="ew-zone ew-zone--left">
-          {/* Card: Patient Identity */}
-          <div className="ew-card ew-card--patient">
-            <div className="patient-avatar-wrap">
-              <div className="patient-avatar-circle">
-                {encounter.patientData?.image ? (
-                  <img src={encounter.patientData.image} alt={patientName} />
-                ) : (
-                  <span>{patientName.slice(0, 2).toUpperCase()}</span>
-                )}
-              </div>
-              <div className="patient-main-info">
-                <h3>{patientName}</h3>
-                <span className="patient-code-tag">{encounter.patientCode}</span>
-              </div>
-            </div>
-
-            <div className="patient-meta-list">
-              {encounter.bookingFor === 'FAMILY' && (
-                <div className="meta-row" style={{ background: '#f0fdfa', padding: '6px 8px', borderRadius: '6px', border: '1px solid #ccfbf1' }}>
-                  <span className="meta-label" style={{ color: '#0f766e', fontWeight: 700 }}>Đối tượng khám:</span>
-                  <span className="meta-value" style={{ color: '#0d9488', fontWeight: 700 }}>
-                    👨‍👩‍👧 {encounter.relationship === 'CHILD' ? 'Con cái' : encounter.relationship === 'PARENT' ? 'Bố/Mẹ' : encounter.relationship === 'SPOUSE' ? 'Vợ/Chồng' : 'Người thân'}
-                  </span>
-                </div>
-              )}
-              <div className="meta-row">
-                <span className="meta-label">Tuổi & Giới tính:</span>
-                <span className="meta-value">{patientAgeDisplay} · {patientGender}</span>
-              </div>
-              <div className="meta-row">
-                <span className="meta-label">Số điện thoại:</span>
-                <a href={`tel:${encounter.patientPhoneNumber || encounter.patientData?.phoneNumber}`} className="meta-value link-phone">
-                  <Phone size={13} />
-                  <span>{encounter.patientPhoneNumber || encounter.patientData?.phoneNumber || 'Chưa có SĐT'}</span>
-                </a>
-              </div>
-              <div className="meta-row">
-                <span className="meta-label">Địa chỉ:</span>
-                <span className="meta-value text-truncate" title={encounter.patientAddress || encounter.patientData?.address}>
-                  {encounter.patientAddress || encounter.patientData?.address || 'TP. Hồ Chí Minh'}
-                </span>
-              </div>
-
-              {encounter.bookingFor === 'FAMILY' && encounter.patientData && (
-                <div className="meta-row" style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed #e2e8f0' }}>
-                  <span className="meta-label" style={{ color: '#64748b' }}>Người giám hộ:</span>
-                  <span className="meta-value" style={{ fontWeight: 600, color: '#334155' }}>
-                    {encounter.patientData.lastName} {encounter.patientData.firstName} {encounter.patientData.phoneNumber ? `(${encounter.patientData.phoneNumber})` : ''}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Cảnh báo tiền sử dị ứng / bệnh lý của người thân */}
-            {encounter.familyMemberData?.medicalHistory && (
-              <div style={{ marginTop: '12px', background: '#fff1f2', border: '1px solid #ffe4e6', borderRadius: '8px', padding: '8px 10px', fontSize: '0.8rem', color: '#be123c' }}>
-                <div style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px', color: '#e11d48' }}>
-                  <AlertCircle size={14} /> Tiền sử bệnh & Dị ứng:
-                </div>
-                <div>{encounter.familyMemberData.medicalHistory}</div>
-              </div>
-            )}
-          </div>
-
-          {/* Card: Current Encounter Info */}
-          <div className="ew-card ew-card--encounter-meta">
-            <div className="ew-card__header">
-              <h4>Thông tin phiên khám</h4>
-              <span className="badge-today">Hôm nay</span>
-            </div>
-
-            <div className="encounter-specs">
-              <div className="spec-item">
-                <Clock size={14} className="spec-icon" />
-                <div>
-                  <label>Khung giờ khám:</label>
-                  <strong>{encounter.timeTypeBooking?.valueVi || '10:00 - 11:00'}</strong>
-                </div>
-              </div>
-
-              <div className="spec-item">
-                <Calendar size={14} className="spec-icon" />
-                <div>
-                  <label>Ngày khám:</label>
-                  <strong>{encounter.date}</strong>
-                </div>
-              </div>
-
-              <div className="spec-item">
-                <Stethoscope size={14} className="spec-icon" />
-                <div>
-                  <label>Chuyên khoa & Bác sĩ:</label>
-                  <span>{encounter.doctorBookingData?.doctorInfoData?.specialtyData?.name || 'Cơ xương khớp'}</span>
-                </div>
-              </div>
-
-              <div className="spec-item">
-                <MapPin size={14} className="spec-icon" />
-                <div>
-                  <label>Cơ sở tiếp nhận:</label>
-                  <span>{encounter.doctorBookingData?.doctorInfoData?.clinicData?.name || 'Cơ sở BookingCare'}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="payment-status-box">
-              <span className={`pill-pay ${encounter.paymentStatus === 'paid' ? 'paid' : 'unpaid'}`}>
-                {encounter.paymentStatus === 'paid' ? '✓ Đã thanh toán trực tuyến' : '⏳ Thanh toán tại phòng khám'}
-              </span>
-            </div>
-          </div>
-
-          {/* Card: Patient Medical History Timeline */}
-          <div className="ew-card ew-card--history">
-            <div className="ew-card__header">
-              <h4>Lịch sử khám bệnh</h4>
-              <span className="history-count">{encounter.patientHistory?.length || 0} lần</span>
-            </div>
-
-            <div className="history-timeline">
-              {/* Current visit marker */}
-              <div className="history-node history-node--current">
-                <div className="node-dot" />
-                <div className="node-content">
-                  <div className="node-date">
-                    <strong>{encounter.date}</strong>
-                    <span className="badge-active-now">Đang khám</span>
-                  </div>
-                  <p className="node-dx">{form.diagnosis || 'Phiên khám hiện tại'}</p>
-                </div>
-              </div>
-
-              {/* Past visits */}
-              {encounter.patientHistory && encounter.patientHistory.length > 0 ? (
-                encounter.patientHistory.map((hist) => (
-                  <div
-                    key={hist.id}
-                    className="history-node"
-                    onClick={() => setViewHistoryItem(hist)}
-                    title="Bấm để xem chi tiết ca khám cũ này"
-                  >
-                    <div className="node-dot" />
-                    <div className="node-content">
-                      <div className="node-date">
-                        <span>{hist.date}</span>
-                        {hist.attachmentsCount > 0 && (
-                          <span className="node-att-badge">{hist.attachmentsCount} tài liệu</span>
-                        )}
-                      </div>
-                      <p className="node-dx">{hist.diagnosis}</p>
-                      <small className="node-doc">BS. {hist.doctorName}</small>
-
-                      {/* Quick Inherit Bar */}
-                      <div className="node-inherit-actions" onClick={(e) => e.stopPropagation()}>
-                        {hist.diagnosis && (
-                          <button
-                            type="button"
-                            className="btn-inherit-dx"
-                            onClick={() => handleInheritDiagnosis(hist.diagnosis)}
-                            title="Kế thừa chẩn đoán này vào ca hiện tại"
-                          >
-                            <Copy size={11} /> Kế thừa CĐ
-                          </button>
-                        )}
-                        {(hist.bookingMedicines?.length > 0 || hist.medicines?.length > 0) && (
-                          <button
-                            type="button"
-                            className="btn-inherit-rx"
-                            onClick={() => handleInheritMedicines(hist.bookingMedicines || hist.medicines)}
-                            title="Sao chép đơn thuốc từ ca khám này"
-                          >
-                            <Pill size={11} /> Đơn thuốc
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="no-history-hint">
-                  <em>Chưa có tiền sử khám hoàn thành nào trước đây tại hệ thống.</em>
-                </div>
-              )}
-            </div>
-          </div>
-        </aside>
-
-        {/* ══════════════════════════════════════════════════════ */}
-        {/* ZONE 2: CENTER — CLINICAL WORKSPACE                  */}
-        {/* ══════════════════════════════════════════════════════ */}
-        <main className="ew-zone ew-zone--center">
+        <main className="ew-zone ew-zone--main ew-zone--center">
           {/* Section 1: Chief Complaint */}
           <div className="clinical-section">
             <div className="section-title">
@@ -1387,135 +1199,397 @@ const EncounterWorkspace = () => {
         </main>
 
         {/* ══════════════════════════════════════════════════════ */}
-        {/* ZONE 3: RIGHT — PATIENT RECORDS & RESOURCES          */}
+        {/* KHỐI 30% (BÊN PHẢI): TOÀN BỘ CÁC PHẦN THAM KHẢO & HỒ SƠ */}
         {/* ══════════════════════════════════════════════════════ */}
-        <aside className="ew-zone ew-zone--right">
-          {/* Card: Medical Attachments Filter & Gallery */}
-          <div className="ew-card ew-card--records">
-            <div className="ew-card__header">
-              <h4>Hồ sơ & Tài liệu y tế</h4>
-              <span className="record-total">{attachments.length} tệp</span>
+        <aside className="ew-zone ew-zone--side ew-zone--right">
+          {/* 1. Card: Patient Identity */}
+          <div className="ew-card ew-card--patient">
+            <div className="patient-avatar-wrap">
+              <div className="patient-avatar-circle">
+                {encounter.patientData?.image ? (
+                  <img src={encounter.patientData.image} alt={patientName} />
+                ) : (
+                  <span>{patientName.slice(0, 2).toUpperCase()}</span>
+                )}
+              </div>
+              <div className="patient-main-info">
+                <h3>{patientName}</h3>
+                <span className="patient-code-tag">{encounter.patientCode}</span>
+              </div>
             </div>
 
-            <div className="record-filter-tabs">
-              <button
-                type="button"
-                className={`filter-tab ${selectedRecordCategory === 'all' ? 'active' : ''}`}
-                onClick={() => setSelectedRecordCategory('all')}
-              >
-                Tất cả
-              </button>
-              <button
-                type="button"
-                className={`filter-tab ${selectedRecordCategory === 'xray' ? 'active' : ''}`}
-                onClick={() => setSelectedRecordCategory('xray')}
-              >
-                🩻 X-quang
-              </button>
-              <button
-                type="button"
-                className={`filter-tab ${selectedRecordCategory === 'lab' ? 'active' : ''}`}
-                onClick={() => setSelectedRecordCategory('lab')}
-              >
-                🧪 Xét nghiệm
-              </button>
-              <button
-                type="button"
-                className={`filter-tab ${selectedRecordCategory === 'record' ? 'active' : ''}`}
-                onClick={() => setSelectedRecordCategory('record')}
-              >
-                📄 Hồ sơ
-              </button>
-            </div>
+            <div className="patient-meta-list">
+              {encounter.bookingFor === 'FAMILY' && (
+                <div className="meta-row" style={{ background: '#f0fdfa', padding: '6px 8px', borderRadius: '6px', border: '1px solid #ccfbf1' }}>
+                  <span className="meta-label" style={{ color: '#0f766e', fontWeight: 700 }}>Đối tượng khám:</span>
+                  <span className="meta-value" style={{ color: '#0d9488', fontWeight: 700 }}>
+                    👨‍👩‍👧 {encounter.relationship === 'CHILD' ? 'Con cái' : encounter.relationship === 'PARENT' ? 'Bố/Mẹ' : encounter.relationship === 'SPOUSE' ? 'Vợ/Chồng' : 'Người thân'}
+                  </span>
+                </div>
+              )}
+              <div className="meta-row">
+                <span className="meta-label">Tuổi & Giới tính:</span>
+                <span className="meta-value">{patientAgeDisplay} · {patientGender}</span>
+              </div>
+              <div className="meta-row">
+                <span className="meta-label">Số điện thoại:</span>
+                <a href={`tel:${encounter.patientPhoneNumber || encounter.patientData?.phoneNumber}`} className="meta-value link-phone">
+                  <Phone size={13} />
+                  <span>{encounter.patientPhoneNumber || encounter.patientData?.phoneNumber || 'Chưa có SĐT'}</span>
+                </a>
+              </div>
+              <div className="meta-row">
+                <span className="meta-label">Địa chỉ:</span>
+                <span className="meta-value text-truncate" title={encounter.patientAddress || encounter.patientData?.address}>
+                  {encounter.patientAddress || encounter.patientData?.address || 'TP. Hồ Chí Minh'}
+                </span>
+              </div>
 
-            <div className="records-list">
-              {filteredAttachments.length > 0 ? (
-                filteredAttachments.map((item) => (
-                  <div
-                    key={item.id}
-                    className="record-row"
-                    onClick={() => setPreviewAttachment(item)}
-                    title="Nhấp để phóng to xem ngay lập tức"
-                  >
-                    <div className="record-icon">
-                      {item.category === 'xray' ? '🩻' : item.category === 'lab' ? '🧪' : item.category === 'mri' ? '🧲' : '📄'}
-                    </div>
-                    <div className="record-info">
-                      <div className="record-name">{item.fileName}</div>
-                      <div className="record-date">{item.examinationDate || '18/09/2026'} · {item.uploadedBy === 'PATIENT' ? 'Bệnh nhân' : 'Bác sĩ'}</div>
-                    </div>
-                    <button type="button" className="btn-quick-view">
-                      <Eye size={13} />
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <div className="no-record-match">
-                  <span>Không có tài liệu nào trong danh mục này.</span>
+              {encounter.bookingFor === 'FAMILY' && encounter.patientData && (
+                <div className="meta-row" style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed #e2e8f0' }}>
+                  <span className="meta-label" style={{ color: '#64748b' }}>Người giám hộ:</span>
+                  <span className="meta-value" style={{ fontWeight: 600, color: '#334155' }}>
+                    {encounter.patientData.lastName} {encounter.patientData.firstName} {encounter.patientData.phoneNumber ? `(${encounter.patientData.phoneNumber})` : ''}
+                  </span>
                 </div>
               )}
             </div>
-          </div>
 
-          {/* Card: Active Prescription Summary */}
-          <div className="ew-card ew-card--med-summary">
-            <div className="ew-card__header">
-              <h4>Đơn thuốc đã kê</h4>
-              <span className="med-count">{medicines.length} thuốc</span>
-            </div>
-
-            {medicines.length > 0 ? (
-              <div className="med-summary-list">
-                {medicines.map((m, i) => (
-                  <div key={i} className="med-summary-row">
-                    <div className="med-bullet">•</div>
-                    <div className="med-text">
-                      <strong>{m.name || 'Thuốc'}</strong> — {m.quantity} {m.unit}
-                      <div className="med-sub">{m.dosage}</div>
-                    </div>
-                  </div>
-                ))}
+            {/* Cảnh báo tiền sử dị ứng / bệnh lý của người thân */}
+            {encounter.familyMemberData?.medicalHistory && (
+              <div style={{ marginTop: '12px', background: '#fff1f2', border: '1px solid #ffe4e6', borderRadius: '8px', padding: '8px 10px', fontSize: '0.8rem', color: '#be123c' }}>
+                <div style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px', color: '#e11d48' }}>
+                  <AlertCircle size={14} /> Tiền sử bệnh & Dị ứng:
+                </div>
+                <div>{encounter.familyMemberData.medicalHistory}</div>
               </div>
-            ) : (
-              <div className="empty-med-hint">Chưa có thuốc trong phiên khám.</div>
             )}
           </div>
 
-          {/* Card: Follow-up Care Entitlements */}
-          <div className="ew-card ew-card--followup">
+          {/* 2. Card: Current Encounter Info */}
+          <div className="ew-card ew-card--encounter-meta">
             <div className="ew-card__header">
-              <h4>Quyền lợi hỗ trợ sau khám</h4>
-              <span className="badge-care">Follow-up</span>
+              <h4>Thông tin phiên khám</h4>
+              <span className="badge-today">Hôm nay</span>
             </div>
 
-            <p className="followup-desc">
-              Sau khi bác sĩ hoàn tất phiên khám, hệ thống tự động cấp quyền lợi chăm sóc kết nối cho người bệnh:
-            </p>
-
-            <div className="followup-items">
-              <div className="followup-item">
-                <div className="fu-icon"><MessageSquare size={16} /></div>
-                <div className="fu-info">
-                  <strong>Chat hỏi đáp kết quả:</strong>
-                  <span>Thời hạn 7 ngày kể từ ngày khám</span>
+            <div className="encounter-specs">
+              <div className="spec-item">
+                <Clock size={14} className="spec-icon" />
+                <div>
+                  <label>Khung giờ khám:</label>
+                  <strong>{encounter.timeTypeBooking?.valueVi || '10:00 - 11:00'}</strong>
                 </div>
-                <span className={`fu-status ${isCompleted ? 'active' : 'pending'}`}>
-                  {isCompleted ? '✓ Khả dụng' : 'Chờ hoàn tất'}
-                </span>
               </div>
 
-              <div className="followup-item">
-                <div className="fu-icon"><Video size={16} /></div>
-                <div className="fu-info">
-                  <strong>Video tái khám ngắn:</strong>
-                  <span>1 lượt (15 phút) trong 7 ngày</span>
+              <div className="spec-item">
+                <Calendar size={14} className="spec-icon" />
+                <div>
+                  <label>Ngày khám:</label>
+                  <strong>{encounter.date}</strong>
                 </div>
-                <span className={`fu-status ${isCompleted ? 'active' : 'pending'}`}>
-                  {isCompleted ? '✓ Khả dụng' : 'Chờ hoàn tất'}
-                </span>
               </div>
+
+              <div className="spec-item">
+                <Stethoscope size={14} className="spec-icon" />
+                <div>
+                  <label>Chuyên khoa & Bác sĩ:</label>
+                  <span>{encounter.doctorBookingData?.doctorInfoData?.specialtyData?.name || 'Cơ xương khớp'}</span>
+                </div>
+              </div>
+
+              <div className="spec-item">
+                <MapPin size={14} className="spec-icon" />
+                <div>
+                  <label>Cơ sở tiếp nhận:</label>
+                  <span>{encounter.doctorBookingData?.doctorInfoData?.clinicData?.name || 'Cơ sở BookingCare'}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="payment-status-box">
+              <span className={`pill-pay ${encounter.paymentStatus === 'paid' ? 'paid' : 'unpaid'}`}>
+                {encounter.paymentStatus === 'paid' ? '✓ Đã thanh toán trực tuyến' : '⏳ Thanh toán tại phòng khám'}
+              </span>
             </div>
           </div>
+
+          {/* 3. Thanh điều hướng Tab tra cứu 30% */}
+          <div className="ew-side-nav-tabs">
+            <button
+              type="button"
+              className={`side-nav-tab ${sideActiveTab === 'history' ? 'active' : ''}`}
+              onClick={() => setSideActiveTab('history')}
+              title="Xem lịch sử các lần khám trước"
+            >
+              <Clock size={13} />
+              <span>Lịch sử khám</span>
+              <span className="tab-badge">{encounter.patientHistory?.length || 0}</span>
+            </button>
+
+            <button
+              type="button"
+              className={`side-nav-tab ${sideActiveTab === 'records' ? 'active' : ''}`}
+              onClick={() => setSideActiveTab('records')}
+              title="Xem ảnh X-quang, Xét nghiệm, Hồ sơ"
+            >
+              <FileText size={13} />
+              <span>Tài liệu CLS</span>
+              <span className="tab-badge">{attachments?.length || 0}</span>
+            </button>
+
+            <button
+              type="button"
+              className={`side-nav-tab ${sideActiveTab === 'meds' ? 'active' : ''}`}
+              onClick={() => setSideActiveTab('meds')}
+              title="Xem tóm tắt đơn thuốc & quyền lợi"
+            >
+              <Pill size={13} />
+              <span>Đơn thuốc & Hỗ trợ</span>
+              <span className="tab-badge">{medicines?.length || 0}</span>
+            </button>
+
+            <button
+              type="button"
+              className={`side-nav-tab ${sideActiveTab === 'all' ? 'active' : ''}`}
+              onClick={() => setSideActiveTab('all')}
+              title="Cuộn xem tất cả"
+            >
+              <span>Tất cả</span>
+            </button>
+          </div>
+
+          {/* 4. Khối Tab: Lịch sử khám bệnh */}
+          {(sideActiveTab === 'history' || sideActiveTab === 'all') && (
+            <div className="ew-card ew-card--history">
+              <div className="ew-card__header">
+                <h4>Lịch sử khám bệnh</h4>
+                <span className="history-count">{encounter.patientHistory?.length || 0} lần</span>
+              </div>
+
+              <div className="history-timeline">
+                {/* Current visit marker */}
+                <div className="history-node history-node--current">
+                  <div className="node-dot" />
+                  <div className="node-content">
+                    <div className="node-date">
+                      <strong>{encounter.date}</strong>
+                      <span className="badge-active-now">Đang khám</span>
+                    </div>
+                    <p className="node-dx">{form.diagnosis || 'Phiên khám hiện tại'}</p>
+                  </div>
+                </div>
+
+                {/* Past visits */}
+                {encounter.patientHistory && encounter.patientHistory.length > 0 ? (
+                  encounter.patientHistory.map((hist) => (
+                    <div
+                      key={hist.id}
+                      className="history-node"
+                      onClick={() => setViewHistoryItem(hist)}
+                      title="Bấm để xem chi tiết ca khám cũ này"
+                    >
+                      <div className="node-dot" />
+                      <div className="node-content">
+                        <div className="node-date">
+                          <span>{hist.date}</span>
+                          {hist.attachmentsCount > 0 && (
+                            <span className="node-att-badge">{hist.attachmentsCount} tài liệu</span>
+                          )}
+                        </div>
+                        <p className="node-dx">{hist.diagnosis}</p>
+                        <small className="node-doc">BS. {hist.doctorName}</small>
+
+                        {/* Quick Inherit Bar */}
+                        <div className="node-inherit-actions" onClick={(e) => e.stopPropagation()}>
+                          {hist.diagnosis && (
+                            <button
+                              type="button"
+                              className="btn-inherit-dx"
+                              onClick={() => handleInheritDiagnosis(hist.diagnosis)}
+                              title="Kế thừa chẩn đoán này vào ca hiện tại"
+                            >
+                              <Copy size={11} /> Kế thừa CĐ
+                            </button>
+                          )}
+                          {(hist.bookingMedicines?.length > 0 || hist.medicines?.length > 0) && (
+                            <button
+                              type="button"
+                              className="btn-inherit-rx"
+                              onClick={() => handleInheritMedicines(hist.bookingMedicines || hist.medicines)}
+                              title="Sao chép đơn thuốc từ ca khám này"
+                            >
+                              <Pill size={11} /> Đơn thuốc
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="no-history-hint">
+                    <em>Chưa có tiền sử khám hoàn thành nào trước đây tại hệ thống.</em>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 5. Khối Tab: Hồ sơ & Tài liệu y tế */}
+          {(sideActiveTab === 'records' || sideActiveTab === 'all') && (
+            <div className="ew-card ew-card--records">
+              <div className="ew-card__header">
+                <h4>Hồ sơ & Tài liệu y tế</h4>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <button
+                    type="button"
+                    className="btn-action-upload"
+                    onClick={() => setShowUploadModal(true)}
+                    style={{
+                      background: '#2563eb',
+                      color: '#ffffff',
+                      border: 'none',
+                      padding: '3px 8px',
+                      borderRadius: '5px',
+                      fontSize: '0.72rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <Upload size={11} /> Tải lên
+                  </button>
+                  <span className="record-total">{attachments.length} tệp</span>
+                </div>
+              </div>
+
+              <div className="record-filter-tabs">
+                <button
+                  type="button"
+                  className={`filter-tab ${selectedRecordCategory === 'all' ? 'active' : ''}`}
+                  onClick={() => setSelectedRecordCategory('all')}
+                >
+                  Tất cả
+                </button>
+                <button
+                  type="button"
+                  className={`filter-tab ${selectedRecordCategory === 'xray' ? 'active' : ''}`}
+                  onClick={() => setSelectedRecordCategory('xray')}
+                >
+                  🩻 X-quang
+                </button>
+                <button
+                  type="button"
+                  className={`filter-tab ${selectedRecordCategory === 'lab' ? 'active' : ''}`}
+                  onClick={() => setSelectedRecordCategory('lab')}
+                >
+                  🧪 Xét nghiệm
+                </button>
+                <button
+                  type="button"
+                  className={`filter-tab ${selectedRecordCategory === 'record' ? 'active' : ''}`}
+                  onClick={() => setSelectedRecordCategory('record')}
+                >
+                  📄 Hồ sơ
+                </button>
+              </div>
+
+              <div className="records-list">
+                {filteredAttachments.length > 0 ? (
+                  filteredAttachments.map((item) => (
+                    <div
+                      key={item.id}
+                      className="record-row"
+                      onClick={() => setPreviewAttachment(item)}
+                      title="Nhấp để phóng to xem ngay lập tức"
+                    >
+                      <div className="record-icon">
+                        {item.category === 'xray' ? '🩻' : item.category === 'lab' ? '🧪' : item.category === 'mri' ? '🧲' : '📄'}
+                      </div>
+                      <div className="record-info">
+                        <div className="record-name">{item.fileName}</div>
+                        <div className="record-date">{item.examinationDate || '18/09/2026'} · {item.uploadedBy === 'PATIENT' ? 'Bệnh nhân' : 'Bác sĩ'}</div>
+                      </div>
+                      <button type="button" className="btn-quick-view">
+                        <Eye size={13} />
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="no-record-match">
+                    <span>Không có tài liệu nào trong danh mục này.</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 6. Khối Tab: Đơn thuốc đã kê & Quyền lợi hỗ trợ sau khám */}
+          {(sideActiveTab === 'meds' || sideActiveTab === 'all') && (
+            <>
+              {/* Card: Active Prescription Summary */}
+              <div className="ew-card ew-card--med-summary">
+                <div className="ew-card__header">
+                  <h4>Đơn thuốc đã kê</h4>
+                  <span className="med-count">{medicines.length} thuốc</span>
+                </div>
+
+                {medicines.length > 0 ? (
+                  <div className="med-summary-list">
+                    {medicines.map((m, i) => (
+                      <div key={i} className="med-summary-row">
+                        <div className="med-bullet">•</div>
+                        <div className="med-text">
+                          <strong>{m.name || 'Thuốc'}</strong> — {m.quantity} {m.unit}
+                          <div className="med-sub">{m.dosage}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="empty-med-hint">Chưa có thuốc trong phiên khám.</div>
+                )}
+              </div>
+
+              {/* Card: Follow-up Care Entitlements */}
+              <div className="ew-card ew-card--followup">
+                <div className="ew-card__header">
+                  <h4>Quyền lợi hỗ trợ sau khám</h4>
+                  <span className="badge-care">Follow-up</span>
+                </div>
+
+                <p className="followup-desc">
+                  Sau khi bác sĩ hoàn tất phiên khám, hệ thống tự động cấp quyền lợi chăm sóc kết nối cho người bệnh:
+                </p>
+
+                <div className="followup-items">
+                  <div className="followup-item">
+                    <div className="fu-icon"><MessageSquare size={16} /></div>
+                    <div className="fu-info">
+                      <strong>Chat hỏi đáp kết quả:</strong>
+                      <span>Thời hạn 7 ngày kể từ ngày khám</span>
+                    </div>
+                    <span className={`fu-status ${isCompleted ? 'active' : 'pending'}`}>
+                      {isCompleted ? '✓ Khả dụng' : 'Chờ hoàn tất'}
+                    </span>
+                  </div>
+
+                  <div className="followup-item">
+                    <div className="fu-icon"><Video size={16} /></div>
+                    <div className="fu-info">
+                      <strong>Video tái khám ngắn:</strong>
+                      <span>1 lượt (15 phút) trong 7 ngày</span>
+                    </div>
+                    <span className={`fu-status ${isCompleted ? 'active' : 'pending'}`}>
+                      {isCompleted ? '✓ Khả dụng' : 'Chờ hoàn tất'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </aside>
       </div>
 
