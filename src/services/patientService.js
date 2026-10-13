@@ -34,6 +34,11 @@ export const cancelBooking = (bookingId) => {
   return axiosInstance.put(`/api/v1/patient/bookings/${bookingId}/cancel`);
 };
 
+// Xem trước chính sách hoàn tiền khi hủy lịch (Canonical Policy Engine SSOT)
+export const getBookingCancelPreview = (bookingId) => {
+  return axiosInstance.get(`/api/v1/patient/bookings/${bookingId}/cancel-preview`);
+};
+
 // ═══════════════════════════════════════════════════════════════════════
 // [Fix Bug 9.5] Bổ sung 2 hàm bị thiếu export — Redux slice đang gọi nhưng chưa export
 // ═══════════════════════════════════════════════════════════════════════

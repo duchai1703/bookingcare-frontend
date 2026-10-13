@@ -273,20 +273,71 @@ const AppointmentHistory = () => {
   };
 
   // Hủy lịch
+  const loadCancelEstimate = (bookingId) => {
+    setCancelModal((prev) => ({
+      ...prev,
+      isLoadingEstimate: true,
+      estimateError: null,
+      estimate: null,
+    }));
+    getBookingCancelPreview(bookingId)
+      .then((res) => {
+        if (res && res.errCode === 0 && res.data) {
+          setCancelModal((prev) => {
+            if (prev.bookingId !== bookingId) return prev;
+            return {
+              ...prev,
+              isLoadingEstimate: false,
+              estimateError: null,
+              estimate: {
+                hours: res.data.hoursBefore,
+                rate: res.data.refundRate,
+                amount: res.data.refundAmount,
+                price: res.data.originalAmount,
+                timingExplanation: res.data.timingExplanation,
+              },
+            };
+          });
+        } else {
+          setCancelModal((prev) => ({
+            ...prev,
+            isLoadingEstimate: false,
+            estimate: null,
+            estimateError: res?.message || 'Không thể tải chính sách hoàn tiền từ máy chủ. Vui lòng thử lại.',
+          }));
+        }
+      })
+      .catch(() => {
+        setCancelModal((prev) => ({
+          ...prev,
+          isLoadingEstimate: false,
+          estimate: null,
+          estimateError: 'Không thể kết nối đến máy chủ để lấy chính sách hoàn tiền.',
+        }));
+      });
+  };
+
   const handleOpenCancelModal = (bookingOrId) => {
     const bookingObj = typeof bookingOrId === 'object'
       ? bookingOrId
       : bookings.find((b) => b.id === bookingOrId) || (detailBooking?.id === bookingOrId ? detailBooking : null);
+    const bookingId = bookingObj?.id || bookingOrId;
     setCancelModal({
       isOpen: true,
-      bookingId: bookingObj?.id || bookingOrId,
+      bookingId,
       booking: bookingObj,
       isCancelling: false,
+      isLoadingEstimate: true,
+      estimate: null,
+      estimateError: null,
     });
+    if (bookingId) {
+      loadCancelEstimate(bookingId);
+    }
   };
 
   const handleCloseCancelModal = () => {
-    setCancelModal({ isOpen: false, bookingId: null, booking: null, isCancelling: false });
+    setCancelModal({ isOpen: false, bookingId: null, booking: null, isCancelling: false, isLoadingEstimate: false, estimate: null, estimateError: null });
   };
 
   const handleConfirmCancel = async () => {
@@ -319,7 +370,7 @@ const AppointmentHistory = () => {
     return m.format('DD/MM/YYYY HH:mm');
   };
 
-  // Helper: Tính toán thời gian từ lúc đặt tới lúc hủy và ước tính hoàn tiền
+  // Helper: Tính toán thời gian từ lúc đặt tới lúc hủy và ước tính hoàn tiền (fallback khi offline/lỗi mạng)
   const getRefundEstimate = (booking) => {
     if (!booking) return { hours: 0, rate: 100, amount: 0, price: 0 };
     const created = booking.createdAt ? new Date(booking.createdAt).getTime() : Date.now();
@@ -343,7 +394,6 @@ const AppointmentHistory = () => {
     const amount = Math.round((price * rate) / 100);
     return { hours, rate, amount, price };
   };
-
   // Helper: Format Date chuẩn xác (tránh hiển thị raw timestamp)
   const formatDateTime = (rawDate, timeTypeBooking, isDetailed = false) => {
     if (!rawDate) return '--';
@@ -747,6 +797,22 @@ const AppointmentHistory = () => {
                       <div className="notice-refund">
                         <i className="fas fa-check-circle me-1 text-success" />
                         Đã hoàn 100% ({CommonUtils.formatCurrency(b.refundAmount || b.bookingPrice)} ₫) vào Ví BookingCare
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Thông báo ca vắng mặt (No-Show) */}
+                  {b.statusId === 'S4' && (b.cancellationReason === 'PATIENT_NO_SHOW' || b.cancellationType === 'NO_SHOW' || b.cancellationType === 'SYSTEM_NO_SHOW') && (
+                    <div className="doctor-cancel-notice" style={{ borderLeft: '4px solid #f59e0b', backgroundColor: '#fffbeb' }}>
+                      <div className="notice-reason">
+                        <i className="fas fa-user-times me-1 text-warning" />
+                        <b>Vắng mặt (No-Show):</b> <i>Bệnh nhân không đến khám theo giờ hẹn</i>
+                      </div>
+                      <div className="notice-refund">
+                        <i className="fas fa-check-circle me-1 text-success" />
+                        {b.refundAmount > 0
+                          ? `Đã hoàn ${b.refundRate || 75}% (${CommonUtils.formatCurrency(b.refundAmount)} ₫) vào Ví BookingCare theo quy chế bảo vệ khách hàng`
+                          : 'Hoàn 75% theo quy chế bảo vệ khách hàng vắng mặt'}
                       </div>
                     </div>
                   )}
@@ -1451,7 +1517,8 @@ const AppointmentHistory = () => {
             </div>
 
             {(() => {
-              const estimate = getRefundEstimate(cancelModal.booking);
+              const estimate = cancelModal.estimate;
+              const isLoading = cancelModal.isLoadingEstimate;
               const b = cancelModal.booking;
               return (
                 <div className="cancel-summary-box">
@@ -1479,18 +1546,46 @@ const AppointmentHistory = () => {
                       <i className="fas fa-shield-alt text-teal" />
                       <span>Chính sách hoàn tiền dựa trên thời gian:</span>
                     </div>
-                    <div className="policy-calc-row">
-                      <span>Thời gian từ khi đặt tới lúc hủy:</span>
-                      <strong>{estimate.hours} giờ</strong>
-                    </div>
-                    <div className="policy-calc-row">
-                      <span>Tỷ lệ hoàn tiền áp dụng:</span>
-                      <strong className="text-emerald-600">✓ Hoàn {estimate.rate}%</strong>
-                    </div>
-                    {estimate.price > 0 && (
-                      <div className="policy-calc-row policy-calc-row--highlight">
-                        <span>Số tiền hoàn dự kiến:</span>
-                        <strong className="text-emerald-700">{CommonUtils.formatCurrency(estimate.amount)} ₫</strong>
+                    {isLoading ? (
+                      <div className="policy-loading-row" style={{ padding: '10px 0', color: '#64748b', fontSize: '0.85rem' }}>
+                        <i className="fas fa-spinner fa-spin mr-2" /> Đang kiểm tra tỷ lệ hoàn tiền theo quy định...
+                      </div>
+                    ) : cancelModal.estimateError ? (
+                      <div className="policy-error-row" style={{ padding: '10px 12px', color: '#b91c1c', backgroundColor: '#fef2f2', borderRadius: '6px', fontSize: '0.85rem', margin: '8px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span>
+                          <i className="fas fa-exclamation-triangle me-2 text-danger" />
+                          {cancelModal.estimateError}
+                        </span>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline-danger"
+                          style={{ fontSize: '0.75rem', padding: '2px 8px', marginLeft: '8px' }}
+                          onClick={() => loadCancelEstimate(cancelModal.bookingId)}
+                        >
+                          Thử lại
+                        </button>
+                      </div>
+                    ) : estimate ? (
+                      <>
+                        <div className="policy-calc-row">
+                          <span>Quy định hoàn tiền:</span>
+                          <strong>{estimate.timingExplanation || `Cách giờ khám ${estimate.hours} giờ`}</strong>
+                        </div>
+                        <div className="policy-calc-row">
+                          <span>Tỷ lệ hoàn tiền áp dụng:</span>
+                          <strong className="text-emerald-600">✓ Hoàn {estimate.rate}%</strong>
+                        </div>
+                        {estimate.price > 0 && (
+                          <div className="policy-calc-row policy-calc-row--highlight">
+                            <span>Số tiền hoàn dự kiến:</span>
+                            <strong className="text-emerald-700">{CommonUtils.formatCurrency(estimate.amount)} ₫</strong>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="policy-calc-row">
+                        <span>Tỷ lệ hoàn tiền:</span>
+                        <strong>Theo chính sách quy định khi hủy</strong>
                       </div>
                     )}
                   </div>
@@ -1499,7 +1594,7 @@ const AppointmentHistory = () => {
                     <div className="cancel-account-note cancel-account-note--wallet">
                       <i className="fas fa-bolt text-teal" />
                       <span>
-                        <strong>Hoàn tiền tự động tức thì:</strong> Lịch khám này thanh toán bằng Ví BookingCare. Tiền hoàn ({estimate.rate}%) sẽ được tự động cộng trực tiếp vào số dư Ví của bạn ngay sau khi xác nhận hủy (Zero-Admin).
+                        <strong>Hoàn tiền tự động tức thì:</strong> Lịch khám này thanh toán bằng Ví BookingCare. Tiền hoàn {estimate ? `(${estimate.rate}%)` : ''} sẽ được tự động cộng trực tiếp vào số dư Ví của bạn ngay sau khi xác nhận hủy (Zero-Admin).
                       </span>
                     </div>
                   ) : (
@@ -1521,20 +1616,29 @@ const AppointmentHistory = () => {
               >
                 Giữ lại lịch hẹn
               </button>
-              <button
-                type="button"
-                className="btn-cancel-confirm"
-                disabled={cancelModal.isCancelling}
-                onClick={handleConfirmCancel}
-              >
-                {cancelModal.isCancelling ? (
-                  <>
-                    <i className="fas fa-spinner fa-spin" /> Đang xử lý...
-                  </>
-                ) : (
-                  'Xác nhận hủy lịch'
-                )}
-              </button>
+              {(() => {
+                const b = cancelModal.booking;
+                const isPaid = b?.paymentStatus === 'paid' || b?.statusId === 'S2';
+                const isBlockedByError = isPaid && (cancelModal.isLoadingEstimate || !cancelModal.estimate || !!cancelModal.estimateError);
+
+                return (
+                  <button
+                    type="button"
+                    className="btn-cancel-confirm"
+                    disabled={cancelModal.isCancelling || isBlockedByError}
+                    onClick={handleConfirmCancel}
+                    title={isBlockedByError ? 'Cần tải thành công chính sách hoàn tiền từ máy chủ trước khi xác nhận hủy lịch đã thanh toán.' : undefined}
+                  >
+                    {cancelModal.isCancelling ? (
+                      <>
+                        <i className="fas fa-spinner fa-spin" /> Đang xử lý...
+                      </>
+                    ) : (
+                      'Xác nhận hủy lịch'
+                    )}
+                  </button>
+                );
+              })()}
             </div>
           </div>
         </div>
