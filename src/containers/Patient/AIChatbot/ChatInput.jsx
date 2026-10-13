@@ -64,28 +64,24 @@ const ChatInput = ({ onSubmit, disabled, isThinking }) => {
       return;
     }
 
-    // Revoke previous preview if existed
-    if (selectedImage?.previewUrl) {
-      URL.revokeObjectURL(selectedImage.previewUrl);
-    }
-
-    const previewUrl = URL.createObjectURL(file);
-    const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
-    setSelectedImage({
-      file,
-      previewUrl,
-      name: file.name,
-      size: `${sizeInMB} MB`,
-    });
-  }, [selectedImage]);
+    const reader = new FileReader();
+    reader.onload = (loadEvt) => {
+      const dataUrl = loadEvt.target?.result;
+      const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+      setSelectedImage({
+        file,
+        previewUrl: dataUrl,
+        name: file.name,
+        size: `${sizeInMB} MB`,
+      });
+    };
+    reader.readAsDataURL(file);
+  }, []);
 
   const handleRemoveImage = useCallback(() => {
-    if (selectedImage?.previewUrl) {
-      URL.revokeObjectURL(selectedImage.previewUrl);
-    }
     setSelectedImage(null);
     setImageError('');
-  }, [selectedImage]);
+  }, []);
 
   // ═══ [Chặn isComposing] — Không submit khi đang gõ dấu tiếng Việt ═══
   const handleCompositionStart = () => {

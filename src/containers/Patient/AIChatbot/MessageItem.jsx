@@ -23,6 +23,12 @@ import RescheduleDraftCard from './RescheduleDraftCard';
 import RescheduleSuccessCard from './RescheduleSuccessCard';
 import RescheduleErrorCard from './RescheduleErrorCard';
 import PaymentActionCard from './PaymentActionCard';
+import AppointmentDetailCard from './AppointmentDetailCard';
+import AppointmentListCard from './AppointmentListCard';
+import WalletTransactionsCard from './WalletTransactionsCard';
+import FamilyCreatedCard from './FamilyCreatedCard';
+import FamilyMemberListCard from './FamilyMemberListCard';
+import NotificationListCard from './NotificationListCard';
 
 // ═══ [DOMPurify: Cấm style/class/script] ═══
 const purifyConfig = {
@@ -60,6 +66,12 @@ const MessageItem = memo(({
   onConfirmRescheduleBooking,
   onRetryReschedule,
   isRescheduleProcessing,
+  onViewAppointmentDetail,
+  onRescheduleBookingItem,
+  onCancelBookingItem,
+  onBookForMember,
+  onViewHistory,
+  onOptionSelect,
 }) => {
   const [copied, setCopied] = useState(false);
 
@@ -67,13 +79,51 @@ const MessageItem = memo(({
   const sanitizedText = useMemo(() => {
     if (!msg.text) return '';
     let text = msg.text;
-    // Ẩn khối raw JSON khi đã có Health Assessment Card hiển thị
-    if (msg.healthAssessment) {
+    // Triệt tiêu hoàn toàn khối JSON raw dù có hay không có thẻ healthAssessment
+    text = text.replace(/```(?:json)?\s*\{[\s\S]*?\}\s*```/gi, '').trim();
+    text = text.replace(/```(?:json)?\s*\{[\s\S]*$/gi, '').trim();
+    // Bỏ khối JSON đơn lẻ nếu rò rỉ dưới dạng text thuần
+    if (text.startsWith('{') && text.endsWith('}') && (text.includes('"summary"') || text.includes('"riskLevel"') || text.includes('"status"') || text.includes('"bookingId"'))) {
+      return '';
+    }
+    const hasStructuredCard = Boolean(
+      msg.healthAssessment ||
+      msg.bookingDraft ||
+      msg.bookingResult ||
+      msg.cancellationDraft ||
+      msg.cancellationResult ||
+      msg.rescheduleDraft ||
+      msg.rescheduleResult ||
+      msg.paymentData ||
+      msg.appointmentDetail ||
+      msg.appointmentList ||
+      msg.walletTransactions ||
+      msg.familyCreated ||
+      msg.familyList ||
+      msg.notificationList
+    );
+    if (hasStructuredCard) {
       text = text.replace(/```(?:json)?[\s\S]*?```/gi, '').trim();
     }
     const closed = autoCloseMarkdown(text);
     return DOMPurify.sanitize(closed, purifyConfig);
-  }, [msg.text, msg.healthAssessment]);
+  }, [
+    msg.text,
+    msg.healthAssessment,
+    msg.bookingDraft,
+    msg.bookingResult,
+    msg.cancellationDraft,
+    msg.cancellationResult,
+    msg.rescheduleDraft,
+    msg.rescheduleResult,
+    msg.paymentData,
+    msg.appointmentDetail,
+    msg.appointmentList,
+    msg.walletTransactions,
+    msg.familyCreated,
+    msg.familyList,
+    msg.notificationList,
+  ]);
 
   // ═══ [AI Homograph Phishing Guard] ═══
   const linkRenderer = useMemo(
@@ -126,16 +176,18 @@ const MessageItem = memo(({
 
   // ═══ [User Message — Image Preview + Bubble] ═══
   if (msg.role === 'user') {
+    const userImageSrc = msg.previewUrl || msg.imageUrl || (typeof msg.image === 'string' ? msg.image : msg.image?.url);
+    const hasImage = Boolean(msg.hasImage || userImageSrc);
     return (
       <div
         className="message-item user-msg"
         translate="no" /* [Browser Auto-Translate Ban] */
       >
-        {msg.hasImage && (
+        {hasImage && (
           <div className="user-msg-image-container">
-            {msg.previewUrl ? (
+            {userImageSrc ? (
               <img
-                src={msg.previewUrl}
+                src={userImageSrc}
                 alt="Ảnh đã gửi"
                 className="user-msg-image"
                 loading="lazy"
@@ -162,6 +214,7 @@ const MessageItem = memo(({
           <HealthAssessmentCard
             assessment={msg.healthAssessment}
             onQuestionClick={onQuestionClick}
+            onOptionSelect={onOptionSelect}
             onSpecialtyClick={onSpecialtyClick}
           />
         )}
@@ -307,6 +360,65 @@ const MessageItem = memo(({
           </div>
         )}
 
+        {/* Structured Appointment Detail Card (Phase 06E) */}
+        {msg.appointmentDetail && (
+          <div className="ai-appointment-detail-block">
+            <AppointmentDetailCard
+              appointmentDetail={msg.appointmentDetail}
+            />
+          </div>
+        )}
+
+        {/* Structured Appointment List Card (Phase 06 / Test 5 Parity) */}
+        {msg.appointmentList && (
+          <div className="ai-appointment-list-block">
+            <AppointmentListCard
+              appointmentList={msg.appointmentList}
+              onViewDetail={onViewAppointmentDetail}
+              onReschedule={onRescheduleBookingItem}
+              onCancel={onCancelBookingItem}
+            />
+          </div>
+        )}
+
+        {/* Structured Wallet Transactions Card (Phase 06E) */}
+        {msg.walletTransactions && (
+          <div className="ai-wallet-transactions-block">
+            <WalletTransactionsCard
+              walletTransactions={msg.walletTransactions}
+            />
+          </div>
+        )}
+
+        {/* Structured Family Member Created Card (Phase 06E) */}
+        {msg.familyCreated && (
+          <div className="ai-family-created-block">
+            <FamilyCreatedCard
+              familyCreated={msg.familyCreated}
+            />
+          </div>
+        )}
+
+        {/* Structured Family Member List Card (Phase 06E / Test D Parity) */}
+        {msg.familyList && (
+          <div className="ai-family-list-block">
+            <FamilyMemberListCard
+              familyList={msg.familyList}
+              onBookForMember={onBookForMember}
+              onViewHistory={onViewHistory}
+            />
+          </div>
+        )}
+
+        {/* Structured Notification List Card (Phase 06E) */}
+        {msg.notificationList && (
+          <div className="ai-notification-list-block">
+            <NotificationListCard
+              notificationList={msg.notificationList}
+            />
+          </div>
+        )}
+
         {/* Structured Vision Analysis Card (Phase 02 Fallback khi chưa có Assessment Card) */}
         {!msg.healthAssessment && msg.visionAnalysis && (
           <div className="vision-analysis-card">
@@ -371,7 +483,7 @@ const MessageItem = memo(({
         )}
 
         {/* Regular Markdown Stream Text */}
-        {msg.text && (
+        {Boolean(sanitizedText && sanitizedText.trim()) && (
           <div className="ai-msg">
             <div className="prose prose-sm max-w-none">
               <ReactMarkdown
@@ -400,8 +512,8 @@ const MessageItem = memo(({
           </div>
         )}
 
-        {/* Copy Button — Hiện khi có text */}
-        {msg.text && (
+        {/* Copy Button — Chỉ hiện khi có nội dung văn bản hiển thị */}
+        {Boolean(sanitizedText && sanitizedText.trim()) && (
           <button
             className={`copy-btn ${copied ? 'copied' : ''}`}
             onClick={handleCopy}

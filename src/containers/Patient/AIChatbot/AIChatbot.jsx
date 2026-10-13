@@ -163,13 +163,13 @@ const AIChatbot = memo(() => {
       document.removeEventListener('visibilitychange', handleVisibility);
   }, []);
 
-  // ──── [Guard: Smart Scroll + Tự cuộn] ────
-  const scrollToBottom = useCallback(() => {
+  // ──── [Guard: Smart Scroll + Tự cuộn SSE] ────
+  const isUserAtBottomRef = useRef(true);
+
+  const scrollToBottom = useCallback((force = false) => {
     if (chatBodyRef.current) {
       const el = chatBodyRef.current;
-      const isNearBottom =
-        el.scrollHeight - el.scrollTop - el.clientHeight < 100;
-      if (isNearBottom) {
+      if (force || isUserAtBottomRef.current) {
         el.scrollTop = el.scrollHeight;
       }
     }
@@ -179,20 +179,37 @@ const AIChatbot = memo(() => {
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
+  // Observer tự động giữ cuộn ở bottom khi cards hoặc streaming chunks mở rộng chiều cao
+  useEffect(() => {
+    const el = chatBodyRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => {
+      if (isUserAtBottomRef.current) {
+        el.scrollTop = el.scrollHeight;
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   // ──── [Scroll-to-bottom FAB — Show/Hide Logic] ────
   const handleChatScroll = useCallback(() => {
     if (chatBodyRef.current) {
       const el = chatBodyRef.current;
       const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-      setShowScrollBtn(distanceFromBottom > 120);
+      const isAtBottom = distanceFromBottom <= 80;
+      isUserAtBottomRef.current = isAtBottom;
+      setShowScrollBtn(!isAtBottom);
     }
   }, []);
 
   const handleScrollToBottomClick = useCallback(() => {
     if (chatBodyRef.current) {
-      chatBodyRef.current.scrollTo({
-        top: chatBodyRef.current.scrollHeight,
+      const el = chatBodyRef.current;
+      isUserAtBottomRef.current = true;
+      setShowScrollBtn(false);
+      el.scrollTo({
+        top: el.scrollHeight,
         behavior: 'smooth',
       });
     }
@@ -201,9 +218,9 @@ const AIChatbot = memo(() => {
   // ──── [Guard: Mobile Viewport Fix — iOS Safari 100dvh] ────
   useEffect(() => {
     const handleResize = () => {
-      if (window.visualViewport && chatBodyRef.current) {
+      if (window.visualViewport && chatBodyRef.current && window.innerWidth <= 480) {
         const vh = window.visualViewport.height;
-        chatBodyRef.current.style.maxHeight = `${vh * 0.6}px`;
+        chatBodyRef.current.style.maxHeight = `${vh * 0.65}px`;
       }
     };
     window.visualViewport?.addEventListener('resize', handleResize);
@@ -216,11 +233,16 @@ const AIChatbot = memo(() => {
   // SUBMIT HANDLER — TRÁI TIM FRONTEND (Hỗ trợ Text + Image Vision)
   // ═══════════════════════════════════════════════════════════════════
   const handleSubmit = useCallback(
-    async (payload, force = false) => {
+    async (payload, force = false, followUpArg = null) => {
       console.log('🔵 [FE_STREAM] 1. Bắt đầu gửi câu hỏi hoặc hình ảnh.');
       // [Double Submit Mutex]
       if (submitLockRef.current && !force) return;
       submitLockRef.current = true;
+
+      let followUpData = followUpArg;
+      if (!followUpData && payload && typeof payload === 'object' && payload.isFollowUp) {
+        followUpData = payload;
+      }
 
       // Chuẩn hóa input (string từ suggestion chips hoặc object từ ChatInput)
       let userText = '';
@@ -230,13 +252,13 @@ const AIChatbot = memo(() => {
       if (typeof payload === 'string') {
         userText = payload.trim();
       } else if (payload && typeof payload === 'object') {
-        userText = (payload.text || '').trim();
+        userText = (payload.text || payload.label || '').trim();
         imageFile = payload.imageFile || null;
         previewUrl = payload.previewUrl || null;
       }
 
       // Nếu chỉ có ảnh không có text, đặt prompt mặc định cho AI phân tích
-      const displayText = userText || (imageFile ? 'Phân tích hình ảnh này' : '');
+      const displayText = userText || (imageFile ? 'Phân tích hình ảnh này' : (followUpData ? (followUpData.label || followUpData.text) : ''));
       if (!displayText && !imageFile) {
         submitLockRef.current = false;
         return;
@@ -245,8 +267,12 @@ const AIChatbot = memo(() => {
       const requestId = crypto.randomUUID?.() || Date.now().toString();
       activeRequestIdRef.current = requestId;
 
-      // Reset stream buffer for new request
+      // Reset stream buffer and active slot selection for new request
       streamTextRef.current = '';
+      setSelectedScheduleId(null);
+      setSelectedDoctorId(null);
+      isUserAtBottomRef.current = true;
+      scrollToBottom(true);
 
       // [AbortController Inside Submit]
       if (abortControllerRef.current) {
@@ -339,6 +365,14 @@ const AIChatbot = memo(() => {
             history: historyPayload,
             imageId: uploadedImageId || undefined,
             language,
+            ...(followUpData ? {
+              isFollowUp: true,
+              assessmentId: followUpData.assessmentId,
+              questionId: followUpData.questionId,
+              optionId: followUpData.optionId,
+              value: followUpData.value,
+              followUpPayload: followUpData,
+            } : {}),
           }),
         });
 
@@ -423,7 +457,27 @@ const AIChatbot = memo(() => {
                 if (parsed.healthAssessment || parsed.type === 'HEALTH_ASSESSMENT' || parsed.event === 'health:assessment') {
                   const assessmentResult = parsed.healthAssessment || (parsed.type === 'HEALTH_ASSESSMENT' ? parsed.data : null) || parsed.data;
                   if (assessmentResult && isMountedRef.current) {
+                    const targetId = assessmentResult.assessmentId || parsed.assessmentId;
+
                     setMessages((prev) => {
+                      // Kiểm tra xem đã có card nào có cùng assessmentId trong danh sách chưa
+                      const existingIdx = prev.findIndex(
+                        (m) => m.healthAssessment && (m.healthAssessment.assessmentId === targetId || m.healthAssessment.data?.assessmentId === targetId) && m.id !== aiMsgId
+                      );
+
+                      if (existingIdx !== -1 && targetId) {
+                        // Cập nhật card cũ tại chỗ và loại bỏ tin nhắn placeholder aiMsgId thừa
+                        const nextState = prev
+                          .filter((m) => m.id !== aiMsgId)
+                          .map((m) => {
+                            const isMatch = m.healthAssessment && (m.healthAssessment.assessmentId === targetId || m.healthAssessment.data?.assessmentId === targetId);
+                            return isMatch ? { ...m, healthAssessment: assessmentResult } : m;
+                          });
+                        latestMessagesRef.current = nextState;
+                        return nextState;
+                      }
+
+                      // Lượt khởi tạo card đầu tiên
                       const nextState = prev.map((m) =>
                         m.id === aiMsgId
                           ? { ...m, healthAssessment: assessmentResult }
@@ -455,6 +509,7 @@ const AIChatbot = memo(() => {
                 if (parsed.slotSearchResults || parsed.type === 'SLOT_SEARCH_RESULTS' || parsed.event === 'slot:search') {
                   const slotResults = parsed.slotSearchResults || (parsed.type === 'SLOT_SEARCH_RESULTS' ? parsed : null) || parsed.data;
                   if (slotResults && isMountedRef.current) {
+                    setSelectedScheduleId(null);
                     setMessages((prev) => {
                       const nextState = prev.map((m) =>
                         m.id === aiMsgId
@@ -643,6 +698,102 @@ const AIChatbot = memo(() => {
                   }
                 }
 
+                // ═══ [Appointment Detail Structured Event (Phase 06E)] ═══
+                if (parsed.appointmentDetail || parsed.type === 'APPOINTMENT_DETAIL' || parsed.event === 'appointment:detail') {
+                  const detailData = parsed.appointmentDetail || (parsed.type === 'APPOINTMENT_DETAIL' ? parsed.data : null) || parsed.data;
+                  if (detailData && isMountedRef.current) {
+                    setMessages((prev) => {
+                      const nextState = prev.map((m) =>
+                        m.id === aiMsgId
+                          ? { ...m, appointmentDetail: detailData }
+                          : m
+                      );
+                      latestMessagesRef.current = nextState;
+                      return nextState;
+                    });
+                  }
+                }
+
+                // ═══ [Appointment List Structured Event (Phase 06 / Test 5 Parity)] ═══
+                if (parsed.appointmentList || parsed.type === 'APPOINTMENT_LIST' || parsed.event === 'appointment:list') {
+                  const listData = parsed.appointmentList || (parsed.type === 'APPOINTMENT_LIST' ? parsed.data : null) || parsed.data;
+                  if (listData && isMountedRef.current) {
+                    setMessages((prev) => {
+                      const nextState = prev.map((m) =>
+                        m.id === aiMsgId
+                          ? { ...m, appointmentList: listData }
+                          : m
+                      );
+                      latestMessagesRef.current = nextState;
+                      return nextState;
+                    });
+                  }
+                }
+
+                // ═══ [Wallet Transactions Structured Event (Phase 06E)] ═══
+                if (parsed.walletTransactions || parsed.type === 'WALLET_TRANSACTIONS' || parsed.event === 'wallet:transactions') {
+                  const walletData = parsed.walletTransactions || (parsed.type === 'WALLET_TRANSACTIONS' ? parsed.data : null) || parsed.data;
+                  if (walletData && isMountedRef.current) {
+                    setMessages((prev) => {
+                      const nextState = prev.map((m) =>
+                        m.id === aiMsgId
+                          ? { ...m, walletTransactions: walletData }
+                          : m
+                      );
+                      latestMessagesRef.current = nextState;
+                      return nextState;
+                    });
+                  }
+                }
+
+                // ═══ [Family Member Created Structured Event (Phase 06E)] ═══
+                if (parsed.familyCreated || parsed.type === 'FAMILY_MEMBER_CREATED' || parsed.event === 'family:created') {
+                  const familyData = parsed.familyCreated || (parsed.type === 'FAMILY_MEMBER_CREATED' ? parsed.data : null) || parsed.data;
+                  if (familyData && isMountedRef.current) {
+                    setMessages((prev) => {
+                      const nextState = prev.map((m) =>
+                        m.id === aiMsgId
+                          ? { ...m, familyCreated: familyData }
+                          : m
+                      );
+                      latestMessagesRef.current = nextState;
+                      return nextState;
+                    });
+                  }
+                }
+
+                // ═══ [Family Members List Structured Event (Phase 06E / Test D Parity)] ═══
+                if (parsed.familyList || parsed.type === 'FAMILY_LIST' || parsed.event === 'family:list') {
+                  const familyListData = parsed.familyList || (parsed.type === 'FAMILY_LIST' ? parsed.data : null) || parsed.data;
+                  if (familyListData && isMountedRef.current) {
+                    setMessages((prev) => {
+                      const nextState = prev.map((m) =>
+                        m.id === aiMsgId
+                          ? { ...m, familyList: familyListData }
+                          : m
+                      );
+                      latestMessagesRef.current = nextState;
+                      return nextState;
+                    });
+                  }
+                }
+
+                // ═══ [Notification List Structured Event (Phase 06E)] ═══
+                if (parsed.notificationList || parsed.type === 'NOTIFICATION_LIST' || parsed.event === 'notification:list') {
+                  const notifData = parsed.notificationList || (parsed.type === 'NOTIFICATION_LIST' ? parsed.data : null) || parsed.data;
+                  if (notifData && isMountedRef.current) {
+                    setMessages((prev) => {
+                      const nextState = prev.map((m) =>
+                        m.id === aiMsgId
+                          ? { ...m, notificationList: notifData }
+                          : m
+                      );
+                      latestMessagesRef.current = nextState;
+                      return nextState;
+                    });
+                  }
+                }
+
                 if (parsed.text) {
                   // PURE APPEND
                   if (isMountedRef.current) {
@@ -731,8 +882,12 @@ const AIChatbot = memo(() => {
   // ──── [Phase 04: Slot Discovery Selection -> Phase 05 Booking Draft] ────
   const handleSelectSlot = useCallback(async (slot, doctor) => {
     if (!slot) return;
-    setSelectedScheduleId(slot.scheduleId);
-    console.log(`[FE_SLOT_SELECTED] Doctor: ${doctor?.doctorId || 'unknown'}, Schedule: ${slot.scheduleId}, Time: ${slot.displayTime}`);
+    const scheduleId = slot.scheduleId || slot.id;
+    const doctorId = doctor?.doctorId || doctor?.id;
+    setSelectedScheduleId(scheduleId);
+    isUserAtBottomRef.current = true;
+    scrollToBottom(true);
+    console.log(`[FE_SLOT_SELECTED] Doctor: ${doctorId || 'unknown'}, Schedule: ${scheduleId}, Time: ${slot.displayTime}`);
 
     const baseUrl = import.meta.env.VITE_BACKEND_URL;
     if (!tokenRef.current) return;
@@ -763,8 +918,8 @@ const AIChatbot = memo(() => {
         },
         credentials: 'include',
         body: JSON.stringify({
-          doctorId: doctor?.doctorId,
-          scheduleId: slot.scheduleId,
+          doctorId: doctorId || undefined,
+          scheduleId: scheduleId,
         }),
       });
 
@@ -858,7 +1013,7 @@ const AIChatbot = memo(() => {
                 ...m,
                 bookingDraft: null,
                 bookingResult: resData.data,
-                text: '🎉 Đặt lịch khám thành công! Hệ thống đã ghi nhận lịch hẹn của bạn. Vui lòng kiểm tra email để xác nhận lịch khám.',
+                text: '🎉 Đặt lịch khám và thanh toán thành công! Lịch khám của bạn đã được xác nhận (S2). Bạn có thể xem chi tiết trong mục Lịch hẹn của tôi.',
               };
             }
             return m;
@@ -888,6 +1043,23 @@ const AIChatbot = memo(() => {
       }
     } catch (err) {
       console.error('[FE_CONFIRM_ERR]', err);
+      setMessages((prev) => {
+        const next = prev.map((m) => {
+          if (m.bookingDraft && m.bookingDraft.draftId === draft.draftId) {
+            return {
+              ...m,
+              bookingError: {
+                error: 'network_error',
+                message: 'Lỗi mạng khi xác nhận đặt lịch. Vui lòng thử lại sau.',
+              },
+            };
+          }
+          return m;
+        });
+        latestMessagesRef.current = next;
+        if (typeof saveMessages === 'function') saveMessages(next);
+        return next;
+      });
     } finally {
       setIsBookingProcessing(false);
     }
@@ -977,6 +1149,23 @@ const AIChatbot = memo(() => {
       }
     } catch (err) {
       console.error('[FE_CANCEL_CONFIRM_ERR]', err);
+      setMessages((prev) => {
+        const next = prev.map((m) => {
+          if (m.cancellationDraft && m.cancellationDraft.draftId === draft.draftId) {
+            return {
+              ...m,
+              cancellationError: {
+                error: 'network_error',
+                message: 'Lỗi mạng khi xác nhận hủy lịch. Vui lòng thử lại sau.',
+              },
+            };
+          }
+          return m;
+        });
+        latestMessagesRef.current = next;
+        if (typeof saveMessages === 'function') saveMessages(next);
+        return next;
+      });
     } finally {
       setIsCancelProcessing(false);
     }
@@ -1069,6 +1258,23 @@ const AIChatbot = memo(() => {
       }
     } catch (err) {
       console.error('[FE_RESCHEDULE_CONFIRM_ERR]', err);
+      setMessages((prev) => {
+        const next = prev.map((m) => {
+          if (m.rescheduleDraft && m.rescheduleDraft.draftId === draft.draftId) {
+            return {
+              ...m,
+              rescheduleError: {
+                error: 'network_error',
+                message: 'Lỗi mạng khi xác nhận đổi lịch. Vui lòng thử lại sau.',
+              },
+            };
+          }
+          return m;
+        });
+        latestMessagesRef.current = next;
+        if (typeof saveMessages === 'function') saveMessages(next);
+        return next;
+      });
     } finally {
       setIsRescheduleProcessing(false);
     }
@@ -1079,9 +1285,25 @@ const AIChatbot = memo(() => {
   }, [handleSubmit]);
 
   // ──── [Phase 04: Specialty Click Callback from Health Assessment] ────
-  const handleSpecialtyClick = useCallback((specialtyName) => {
+  const handleSpecialtyClick = useCallback((specialtyName, specialtyId) => {
     if (!specialtyName) return;
     handleSubmit(`Tìm bác sĩ chuyên khoa ${specialtyName}`);
+  }, [handleSubmit]);
+
+  // ──── [Phase 06 / Test 5: Appointment List Action Handlers] ────
+  const handleViewAppointmentDetail = useCallback((bookingId) => {
+    if (!bookingId) return;
+    handleSubmit(`Cho tôi xem chi tiết lịch khám #BK-${bookingId}`);
+  }, [handleSubmit]);
+
+  const handleRescheduleBookingItem = useCallback((bookingId) => {
+    if (!bookingId) return;
+    handleSubmit(`Tôi muốn đổi lịch #BK-${bookingId}`);
+  }, [handleSubmit]);
+
+  const handleCancelBookingItem = useCallback((bookingId) => {
+    if (!bookingId) return;
+    handleSubmit(`Hủy lịch hẹn #BK-${bookingId}`);
   }, [handleSubmit]);
 
   // Lắng nghe event click "Tư vấn AI" từ doctor card
@@ -1202,6 +1424,7 @@ const AIChatbot = memo(() => {
                       key={msg.id}
                       msg={msg}
                       onQuestionClick={handleSubmit}
+                      onOptionSelect={(optPayload) => handleSubmit(optPayload.label || optPayload.text, false, optPayload)}
                       onSpecialtyClick={handleSpecialtyClick}
                       onSelectDoctor={handleSelectDoctor}
                       onSelectSlot={handleSelectSlot}
@@ -1219,6 +1442,11 @@ const AIChatbot = memo(() => {
                       onConfirmRescheduleBooking={handleConfirmRescheduleBooking}
                       onRetryReschedule={handleRetryReschedule}
                       isRescheduleProcessing={isRescheduleProcessing}
+                      onViewAppointmentDetail={handleViewAppointmentDetail}
+                      onRescheduleBookingItem={handleRescheduleBookingItem}
+                      onCancelBookingItem={handleCancelBookingItem}
+                      onBookForMember={(name) => handleSubmit({ text: `Đặt lịch khám cho ${name}` })}
+                      onViewHistory={(name) => handleSubmit({ text: `Cho tôi xem lịch sử khám của ${name}` })}
                     />
                   ))}
 

@@ -73,7 +73,13 @@ function normalizeStoredMessages(rawList) {
       !item.slotSearchResults &&
       !item.bookingDraft &&
       !item.bookingResult &&
-      !item.bookingError
+      !item.bookingError &&
+      !item.appointmentDetail &&
+      !item.appointmentList &&
+      !item.walletTransactions &&
+      !item.familyCreated &&
+      !item.familyList &&
+      !item.notificationList
     ) continue;
 
     const id = item.id || uuidv4();
@@ -88,6 +94,7 @@ function normalizeStoredMessages(rawList) {
       role,
       text: text.trim(),
       hasImage,
+      previewUrl: item.previewUrl || undefined,
       imageId: item.imageId || undefined,
       visionAnalysis: item.visionAnalysis || undefined,
       healthAssessment: item.healthAssessment || undefined,
@@ -96,6 +103,20 @@ function normalizeStoredMessages(rawList) {
       bookingDraft: item.bookingDraft || undefined,
       bookingResult: item.bookingResult || undefined,
       bookingError: item.bookingError || undefined,
+      cancellationDraft: item.cancellationDraft || undefined,
+      cancellationResult: item.cancellationResult || undefined,
+      cancellationError: item.cancellationError || undefined,
+      rescheduleDraft: item.rescheduleDraft || undefined,
+      rescheduleResult: item.rescheduleResult || undefined,
+      rescheduleError: item.rescheduleError || undefined,
+      paymentData: item.paymentData || undefined,
+      appointmentDetail: item.appointmentDetail || undefined,
+      appointmentList: item.appointmentList || undefined,
+      walletTransactions: item.walletTransactions || undefined,
+      familyCreated: item.familyCreated || undefined,
+      familyList: item.familyList || undefined,
+      notificationList: item.notificationList || undefined,
+      citations: item.citations || undefined,
       isLocal: Boolean(item.isLocal),
       createdAt: item.createdAt || Date.now(),
     });
