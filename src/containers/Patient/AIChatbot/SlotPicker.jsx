@@ -5,7 +5,7 @@
 // STRICT RULE: No booking transaction, selection only
 // ═══════════════════════════════════════════════════════════════════════
 
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import {
   Calendar,
   Clock,
@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Globe,
+  Loader2,
 } from 'lucide-react';
 
 const SlotPicker = memo(({
@@ -21,6 +22,8 @@ const SlotPicker = memo(({
   selectedScheduleId,
   onSelectSlot,
 }) => {
+  const [isSubmittingSlot, setIsSubmittingSlot] = useState(false);
+
   if (!slotData || typeof slotData !== 'object') return null;
 
   const data = slotData.data || slotData;
@@ -40,9 +43,15 @@ const SlotPicker = memo(({
 
   const selectedSlot = slots.find((s) => s.scheduleId === selectedScheduleId);
 
-  const handleSlotClick = (slot) => {
+  const handleSlotClick = async (slot) => {
+    if (isSubmittingSlot) return;
     if (onSelectSlot) {
-      onSelectSlot(slot, doctor);
+      setIsSubmittingSlot(true);
+      try {
+        await onSelectSlot(slot, doctor);
+      } finally {
+        setIsSubmittingSlot(false);
+      }
     }
   };
 
@@ -92,11 +101,16 @@ const SlotPicker = memo(({
                       type="button"
                       className={`slot-chip ${isSelected ? 'selected' : ''}`}
                       onClick={() => handleSlotClick(slot)}
+                      disabled={isSubmittingSlot}
                       title={`Chọn khung giờ ${slot.displayTime}`}
                     >
-                      <Clock size={12} className="chip-clock-icon" />
+                      {isSubmittingSlot && isSelected ? (
+                        <Loader2 size={12} className="chip-clock-icon animate-spin" />
+                      ) : (
+                        <Clock size={12} className="chip-clock-icon" />
+                      )}
                       <span className="chip-time">{slot.displayTime}</span>
-                      {isSelected && (
+                      {isSelected && !isSubmittingSlot && (
                         <CheckCircle2 size={12} className="chip-check-icon" />
                       )}
                     </button>
@@ -123,11 +137,16 @@ const SlotPicker = memo(({
                       type="button"
                       className={`slot-chip ${isSelected ? 'selected' : ''}`}
                       onClick={() => handleSlotClick(slot)}
+                      disabled={isSubmittingSlot}
                       title={`Chọn khung giờ ${slot.displayTime}`}
                     >
-                      <Clock size={12} className="chip-clock-icon" />
+                      {isSubmittingSlot && isSelected ? (
+                        <Loader2 size={12} className="chip-clock-icon animate-spin" />
+                      ) : (
+                        <Clock size={12} className="chip-clock-icon" />
+                      )}
                       <span className="chip-time">{slot.displayTime}</span>
-                      {isSelected && (
+                      {isSelected && !isSubmittingSlot && (
                         <CheckCircle2 size={12} className="chip-check-icon" />
                       )}
                     </button>

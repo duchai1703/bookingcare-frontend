@@ -26,12 +26,17 @@ const BookingSuccessCard = memo(({ bookingResult }) => {
   const schedule = data.schedule || {};
   const patient = data.patient || {};
   const price = data.price || {};
-  const message = data.message || 'Đặt lịch thành công! Vui lòng kiểm tra email để xác nhận lịch hẹn.';
-  const nextStep = data.nextStep || 'Kiểm tra hộp thư email của bạn để xác nhận lịch hẹn chính thức.';
+  const isWalletPaid = data.paymentMethod === 'WALLET' || bookingStatus === 'S2';
+  const message = data.message || (isWalletPaid
+    ? 'Đặt lịch khám và thanh toán bằng Ví BookingCare thành công!'
+    : 'Đặt lịch thành công! Vui lòng kiểm tra email để xác nhận lịch hẹn.');
+  const nextStep = data.nextStep || (isWalletPaid
+    ? 'Lịch khám của bạn đã được thanh toán và xác nhận thành công (S2). Vui lòng đến đúng giờ hẹn tại cơ sở y tế.'
+    : 'Kiểm tra hộp thư email của bạn để xác nhận lịch hẹn chính thức.');
 
   // Map actual domain status
-  const statusLabel = bookingStatus === 'S2'
-    ? 'Đã xác nhận & Thanh toán (S2)'
+  const statusLabel = isWalletPaid
+    ? 'Đã xác nhận & Thanh toán Ví BookingCare (S2)'
     : 'Chờ xác nhận qua Email (S1)';
 
   return (
@@ -90,7 +95,7 @@ const BookingSuccessCard = memo(({ bookingResult }) => {
           <div className="row-content">
             <div className="status-pill-row">
               <span className="status-label">Trạng thái:</span>
-              <span className={`status-badge ${bookingStatus === 'S2' ? 'status-s2' : 'status-s1'}`}>
+              <span className={`status-badge ${isWalletPaid ? 'status-s2' : 'status-s1'}`}>
                 {statusLabel}
               </span>
             </div>
@@ -100,9 +105,13 @@ const BookingSuccessCard = memo(({ bookingResult }) => {
           </div>
         </div>
 
-        {/* Next Step / Email Reminder */}
+        {/* Next Step / Guidance */}
         <div className="success-next-step">
-          <Mail size={15} className="mail-icon" />
+          {isWalletPaid ? (
+            <CheckCircle2 size={16} className="check-icon text-success" />
+          ) : (
+            <Mail size={15} className="mail-icon" />
+          )}
           <div className="next-step-content">
             <p className="next-step-title">Bước tiếp theo:</p>
             <p className="next-step-desc">{nextStep}</p>

@@ -128,6 +128,19 @@ const BookingDraftCard = memo(({
           </div>
         </div>
 
+        {/* Medical Reason (nếu bệnh nhân đã cung cấp) */}
+        {data.reason && (
+          <div className="draft-section reason-section">
+            <div className="section-icon">
+              <Stethoscope size={18} />
+            </div>
+            <div className="section-content">
+              <span className="reason-label">Lý do khám:</span>
+              <span className="reason-text">{data.reason}</span>
+            </div>
+          </div>
+        )}
+
         {/* Price & Payment */}
         <div className="draft-section price-section">
           <div className="section-icon">
@@ -138,9 +151,31 @@ const BookingDraftCard = memo(({
               <span className="price-label">Giá khám:</span>
               <span className="price-value">{price.formatted || 'Theo quy định'}</span>
             </div>
-            <span className="payment-note">Hình thức: Thanh toán / Xác nhận theo quy trình bệnh viện</span>
+            <span className="payment-note">Hình thức: Thanh toán qua Ví BookingCare</span>
+            {data.wallet && (
+              <div className="wallet-balance-row">
+                <span className="wallet-balance-label">Số dư ví hiện tại: </span>
+                <span className={`wallet-balance-val ${data.wallet.hasSufficientBalance === false ? 'balance-insufficient' : 'balance-ok'}`}>
+                  {data.wallet.formattedBalance}
+                </span>
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Insufficient Wallet Balance Warning */}
+        {data.wallet?.hasSufficientBalance === false && (
+          <div className="draft-disclaimer wallet-insufficient-alert">
+            <AlertCircle size={16} className="disclaimer-icon text-danger" />
+            <p className="disclaimer-text text-danger font-medium">
+              Số dư Ví BookingCare không đủ để thanh toán lịch khám này. Vui lòng{' '}
+              <a href="/patient/wallet" target="_blank" rel="noopener noreferrer" className="wallet-link">
+                Nạp tiền vào ví
+              </a>{' '}
+              để tiếp tục đặt lịch.
+            </p>
+          </div>
+        )}
 
         {/* Real-time Availability Disclaimer */}
         <div className="draft-disclaimer">
@@ -169,8 +204,8 @@ const BookingDraftCard = memo(({
           type="button"
           className="draft-btn-primary"
           onClick={handleConfirmClick}
-          disabled={busy}
-          title="Xác nhận đặt lịch khám chính thức"
+          disabled={busy || data.wallet?.hasSufficientBalance === false}
+          title={data.wallet?.hasSufficientBalance === false ? 'Số dư ví không đủ. Vui lòng nạp tiền vào ví.' : 'Xác nhận đặt lịch khám chính thức'}
         >
           {busy ? (
             <>
@@ -180,7 +215,7 @@ const BookingDraftCard = memo(({
           ) : (
             <>
               <CheckCircle2 size={16} />
-              <span>Xác nhận đặt lịch</span>
+              <span>{data.wallet?.hasSufficientBalance === false ? 'Số dư ví không đủ' : 'Xác nhận đặt lịch'}</span>
             </>
           )}
         </button>
