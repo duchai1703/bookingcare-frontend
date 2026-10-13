@@ -260,7 +260,18 @@ const DoctorRevenue = () => {
       setWalletLoading(true);
       const res = await getDoctorWallet();
       if (res && res.errCode === 0 && res.data) {
-        setDoctorWallet(res.data);
+        const wData = res.data;
+        const avail = Number(wData.availableBalance ?? wData.balance ?? 0);
+        const resv = Number(wData.reservedBalance ?? wData.holdBalance ?? 0);
+        setDoctorWallet({
+          ...wData,
+          id: wData.id || wData.walletId || 1,
+          balance: avail,
+          availableBalance: avail,
+          holdBalance: resv,
+          reservedBalance: resv,
+          totalBalance: avail + resv,
+        });
       }
     } catch (err) {
       console.error('Error fetching doctor wallet:', err);
@@ -733,7 +744,7 @@ const DoctorRevenue = () => {
                 <span className="kpi-label">Số dư ví khả dụng</span>
                 <span className="kpi-badge kpi-badge--neutral">Có thể rút</span>
               </div>
-              <div className="kpi-value">{formatVND(doctorWallet?.balance || 0)}</div>
+              <div className="kpi-value">{formatVND(doctorWallet?.availableBalance ?? doctorWallet?.balance ?? 0)}</div>
               <div className="kpi-subtext">
                 <i className="fas fa-wallet"></i> Tiền thực tế sẵn sàng rút về ngân hàng
               </div>
@@ -1156,7 +1167,7 @@ const DoctorRevenue = () => {
                   {walletLoading ? (
                     <span className="dw-skeleton">Đang tải...</span>
                   ) : (
-                    formatVND(doctorWallet?.balance || 0)
+                    formatVND(doctorWallet?.availableBalance ?? doctorWallet?.balance ?? 0)
                   )}
                 </div>
               </div>
@@ -1176,7 +1187,7 @@ const DoctorRevenue = () => {
                   <span className="dw-card-meta-label">MÃ ĐỊNH DANH VÍ</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span className="dw-card-meta-val" style={{ fontFamily: 'monospace' }}>
-                      WAL-{String(doctorWallet?.id || 1).padStart(7, '0')}
+                      WAL-{String(doctorWallet?.walletId ?? doctorWallet?.id ?? 1).padStart(7, '0')}
                     </span>
                     <span className="dw-card-status-chip">
                       <span className="dw-chip-bullet"></span>
@@ -1203,7 +1214,7 @@ const DoctorRevenue = () => {
                 <div className="dw-sub-card dw-sub-card--pending">
                   <span className="dw-sub-label">Đang chờ rút (Hold)</span>
                   <span className="dw-sub-val text-blue">
-                    {formatVND(doctorWallet?.holdBalance || 0)}
+                    {formatVND(doctorWallet?.reservedBalance ?? doctorWallet?.holdBalance ?? 0)}
                   </span>
                   <span className="dw-sub-hint">Khóa chờ ngân hàng duyệt chi</span>
                 </div>
@@ -1244,7 +1255,7 @@ const DoctorRevenue = () => {
                     type="button"
                     className="btn-withdraw-main"
                     onClick={() => setShowWithdrawModal(true)}
-                    disabled={(doctorWallet?.balance || 0) < 50000}
+                    disabled={(Number(doctorWallet?.availableBalance ?? doctorWallet?.balance ?? 0)) < 50000}
                   >
                     <i className="fas fa-arrow-down"></i> Rút tiền
                   </button>
@@ -1433,7 +1444,7 @@ const DoctorRevenue = () => {
                   type="button"
                   className="dw-btn-mini-withdraw"
                   onClick={() => setShowWithdrawModal(true)}
-                  disabled={(doctorWallet?.balance || 0) < 50000}
+                  disabled={(Number(doctorWallet?.availableBalance ?? doctorWallet?.balance ?? 0)) < 50000}
                 >
                   <i className="fas fa-plus"></i> Tạo yêu cầu rút tiền
                 </button>
@@ -1748,11 +1759,18 @@ const DoctorRevenue = () => {
                                 🟡 Giữ T+24h
                               </span>
                             )}
-                            {isAvail && (
+                            {isAvail && item.note && item.note.includes('DEFERRED_LIQUIDITY_LIMIT') ? (
+                              <div>
+                                <span className="tw-inline-block tw-px-2.5 tw-py-1 tw-rounded-full tw-text-xs tw-font-bold tw-bg-amber-50 tw-text-amber-800 tw-border tw-border-amber-300" title={item.note}>
+                                  ⏳ Chờ hạn mức đợt sau
+                                </span>
+                                <div className="tw-text-2xs tw-text-amber-700 tw-mt-0.5">Xếp hàng FIFO</div>
+                              </div>
+                            ) : isAvail ? (
                               <span className="tw-inline-block tw-px-2.5 tw-py-1 tw-rounded-full tw-text-xs tw-font-bold tw-bg-emerald-50 tw-text-emerald-700 tw-border tw-border-emerald-200">
                                 🟢 Khả dụng
                               </span>
-                            )}
+                            ) : null}
                             {isPaid && (
                               <span className="tw-inline-block tw-px-2.5 tw-py-1 tw-rounded-full tw-text-xs tw-font-bold tw-bg-blue-50 tw-text-blue-700 tw-border tw-border-blue-200">
                                 🔵 Đã trả vào ví
@@ -1771,11 +1789,15 @@ const DoctorRevenue = () => {
                                 {countdown}
                               </span>
                             )}
-                            {isAvail && (
+                            {isAvail && item.note && item.note.includes('DEFERRED_LIQUIDITY_LIMIT') ? (
+                              <span className="tw-text-xs tw-font-semibold tw-text-amber-700">
+                                Đã chốt, chờ ngân quỹ đợt sau
+                              </span>
+                            ) : isAvail ? (
                               <span className="tw-text-xs tw-font-semibold tw-text-emerald-600">
                                 Sẵn sàng thanh toán
                               </span>
-                            )}
+                            ) : null}
                             {isPaid && item.paidAt && (
                               <span className="tw-text-xs tw-text-slate-500">
                                 {new Date(item.paidAt).toLocaleDateString('vi-VN')}
@@ -2248,7 +2270,7 @@ const DoctorRevenue = () => {
                 <div className="dw-available-banner">
                   <div className="dw-available-info">
                     <span className="dw-avail-label">Số dư khả dụng hiện tại:</span>
-                    <strong className="dw-avail-amount">{formatVND(doctorWallet?.balance || 0)}</strong>
+                    <strong className="dw-avail-amount">{formatVND(doctorWallet?.availableBalance ?? doctorWallet?.balance ?? 0)}</strong>
                   </div>
                   <span className="dw-min-notice">Tối thiểu: 50.000 ₫ · Miễn phí rút</span>
                 </div>
@@ -2288,7 +2310,7 @@ const DoctorRevenue = () => {
                       className="dw-preset-btn dw-preset-btn--highlight"
                       onClick={() => handleSelectPreset('ALL')}
                     >
-                      Tất cả ({formatVND(doctorWallet?.balance || 0)})
+                      Tất cả ({formatVND(doctorWallet?.availableBalance ?? doctorWallet?.balance ?? 0)})
                     </button>
                   </div>
                 </div>
@@ -2374,7 +2396,7 @@ const DoctorRevenue = () => {
                 <button
                   type="submit"
                   className="dw-btn-primary"
-                  disabled={isSubmittingWithdraw || withdrawAmount < 50000 || withdrawAmount > (doctorWallet?.balance || 0)}
+                  disabled={isSubmittingWithdraw || withdrawAmount < 50000 || withdrawAmount > (Number(doctorWallet?.availableBalance ?? doctorWallet?.balance ?? 0))}
                 >
                   {isSubmittingWithdraw ? (
                     <>

@@ -1,5 +1,6 @@
 // src/containers/System/Admin/Financial/DoctorSettlementsTab.jsx
 // Phân hệ Quản trị Quyết toán Thù lao Bác sĩ theo Ca khám (Doctor Settlement Governance)
+// Chuẩn Enterprise FinTech: Cơ chế T+0 (Khám xong thù lao khả dụng ngay), Modal xác nhận riêng biệt (Tuyệt đối không dùng window.confirm).
 import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import moment from 'moment';
@@ -7,55 +8,50 @@ import {
   RotateCw,
   Search,
   CheckCircle2,
-  Clock,
   Coins,
   ShieldCheck,
-  User,
-  ArrowRight,
   Send,
   Sparkles,
-  Calendar,
-  AlertCircle,
   FileCheck,
   CheckSquare,
   Square,
   Eye,
-  Unlock,
   X,
-  Zap
+  FileSpreadsheet,
+  Layers,
+  ArrowRight,
+  TrendingUp,
+  AlertCircle,
+  Play,
+  Database,
+  ArrowDownRight,
+  Wallet
 } from 'lucide-react';
 import {
   getAdminDoctorSettlements,
   payoutDoctorSettlements,
-  releaseEligibleDoctorSettlements,
-  unlockSingleDoctorSettlement
+  runAutoDoctorPayoutCycle
 } from '../../../../services/walletService';
+import MoneyRoutingAuditDrawer from './MoneyRoutingAuditDrawer';
 
 const STATUS_CONFIG = {
-  EARNED: {
-    label: 'Tạm tính (Giữ T+24h)',
-    desc: 'Đang giữ 24h chờ đối soát khiếu nại',
-    bg: '#fffbeb',
-    color: '#b45309',
-    border: '#fde68a',
-  },
   AVAILABLE: {
     label: 'Khả dụng (Chờ chi)',
-    desc: 'Đã đủ điều kiện chi trả vào ví bác sĩ',
+    desc: 'Đã hoàn tất khám (T+0), sẵn sàng kết chuyển vào ví',
     bg: '#ecfdf5',
     color: '#047857',
     border: '#a7f3d0',
   },
   PAID: {
     label: 'Đã chi trả',
-    desc: 'Đã kết chuyển thành công vào ví bác sĩ',
+    desc: 'Đã kết chuyển thành công vào ví bác sĩ kèm mã bút toán',
     bg: '#eff6ff',
     color: '#1d4ed8',
     border: '#bfdbfe',
   },
   HELD: {
     label: 'Đang tạm giữ',
-    desc: 'Có khiếu nại ca khám phát sinh',
+    desc: 'Có khiếu nại ca khám phát sinh cần can thiệp',
     bg: '#fef2f2',
     color: '#b91c1c',
     border: '#fecaca',
@@ -67,6 +63,13 @@ const STATUS_CONFIG = {
     color: '#64748b',
     border: '#cbd5e1',
   },
+  EARNED: {
+    label: 'Khả dụng (T+0)',
+    desc: 'Đã hoàn tất khám, sẵn sàng thanh toán',
+    bg: '#ecfdf5',
+    color: '#047857',
+    border: '#a7f3d0',
+  }
 };
 
 export default function DoctorSettlementsTab() {
@@ -78,7 +81,6 @@ export default function DoctorSettlementsTab() {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
-  const [releasing, setReleasing] = useState(false);
 
   // Selection state for batch payout
   const [selectedIds, setSelectedIds] = useState([]);
@@ -87,9 +89,21 @@ export default function DoctorSettlementsTab() {
   const [payoutNote, setPayoutNote] = useState('');
   const [submittingPayout, setSubmittingPayout] = useState(false);
 
-  // Detail & Single Unlock Modal State
+  // Detail Modal State
   const [selectedDetailItem, setSelectedDetailItem] = useState(null);
-  const [unlockingId, setUnlockingId] = useState(null);
+
+  // Liquidity Budget Allocation Controls (Thác nước thanh khoản)
+  const [budgetMode, setBudgetMode] = useState('UNLIMITED'); // 'UNLIMITED' | 'CUSTOM'
+  const [customBudgetAmount, setCustomBudgetAmount] = useState(5000000);
+  const [customBudgetStr, setCustomBudgetStr] = useState('5,000,000');
+
+  // Custom Execution Confirmation Modal (thay thế hoàn toàn window.confirm)
+  const [confirmRunModalOpen, setConfirmRunModalOpen] = useState(false);
+  const [isRunningAutoCycle, setIsRunningAutoCycle] = useState(false);
+  
+
+  // Money Routing Audit Drawer
+  const [isAuditDrawerOpen, setIsAuditDrawerOpen] = useState(false);
 
   const formatMoney = (val) => (Number(val) || 0).toLocaleString('vi-VN') + ' ₫';
 
@@ -122,65 +136,32 @@ export default function DoctorSettlementsTab() {
     loadSettlements();
   }, [loadSettlements]);
 
-  // Quét và mở khóa T+24h
-  const handleReleaseEligible = async () => {
-    setReleasing(true);
+  // Kích hoạt chu trình quyết toán tự động toàn sàn
+  const handleExecuteAutoPayout = async () => {
+    setIsRunningAutoCycle(true);
     try {
-      const res = await releaseEligibleDoctorSettlements();
+      const payload = {};
+      if (budgetMode === 'CUSTOM' && customBudgetAmount > 0) {
+        payload.liquidityBudgetLimit = customBudgetAmount;
+      }
+      const res = await runAutoDoctorPayoutCycle(payload);
       if (res && res.errCode === 0) {
-        toast.success(res.message || 'Quét và mở khóa thù lao thành công!');
+        toast.success(res.message || 'Chu trình tự động hoàn tất!');
+        setConfirmRunModalOpen(false);
         loadSettlements();
+        // Mở drawer kiểm toán ngay để admin xem nhật ký và luồng tiền
+        setIsAuditDrawerOpen(true);
       } else {
-        toast.error(res?.errMessage || 'Không thể quét mở khóa thù lao');
+        toast.warn(res?.message || res?.errMessage || 'Không thể chạy chu trình tự động');
       }
     } catch (err) {
-      toast.error('Lỗi kết nối khi quét mở khóa thù lao');
+      toast.error(err.response?.data?.errMessage || err.message || 'Lỗi khi kích hoạt chu trình tự động');
     } finally {
-      setReleasing(false);
+      setIsRunningAutoCycle(false);
     }
   };
 
-  // Mở khóa khẩn cấp toàn bộ (T+0 Demo Mode)
-  const handleReleaseAllInstant = async () => {
-    if (!window.confirm('Kích hoạt chế độ T+0 Demo: Mở khóa NGAY LẬP TỨC toàn bộ các ca khám đang giữ sang trạng thái Khả Dụng (AVAILABLE) để thực hiện chi trả?')) {
-      return;
-    }
-    setReleasing(true);
-    try {
-      const res = await releaseEligibleDoctorSettlements({ forceAll: true });
-      if (res && res.errCode === 0) {
-        toast.success(res.message || 'Đã mở khóa toàn bộ ca khám sang trạng thái Khả Dụng (T+0)!');
-        loadSettlements();
-      } else {
-        toast.error(res?.errMessage || 'Không thể mở khóa toàn bộ');
-      }
-    } catch (err) {
-      toast.error('Lỗi kết nối khi mở khóa toàn bộ');
-    } finally {
-      setReleasing(false);
-    }
-  };
-
-  // Mở khóa sớm đơn lẻ 1 ca khám (Bypass T+24h)
-  const handleUnlockSingle = async (itemId) => {
-    if (!window.confirm(`Xác nhận mở khóa sớm thù lao ca khám #${itemId} sang trạng thái Khả dụng (AVAILABLE)?`)) {
-      return;
-    }
-    setUnlockingId(itemId);
-    try {
-      const res = await unlockSingleDoctorSettlement(itemId);
-      if (res && res.errCode === 0) {
-        toast.success(res.message || 'Mở khóa thù lao thành công!');
-        loadSettlements();
-      } else {
-        toast.error(res?.errMessage || 'Không thể mở khóa thù lao');
-      }
-    } catch (err) {
-      toast.error('Lỗi kết nối khi mở khóa thù lao');
-    } finally {
-      setUnlockingId(null);
-    }
-  };
+  
 
   // Chọn checkbox
   const handleToggleSelect = (id) => {
@@ -192,7 +173,7 @@ export default function DoctorSettlementsTab() {
   };
 
   const handleSelectAllAvailable = () => {
-    const availableIds = items.filter((x) => x.status === 'AVAILABLE').map((x) => x.id);
+    const availableIds = items.filter((x) => x.status === 'AVAILABLE' || x.status === 'EARNED').map((x) => x.id);
     if (selectedIds.length === availableIds.length && availableIds.length > 0) {
       setSelectedIds([]);
     } else {
@@ -239,79 +220,83 @@ export default function DoctorSettlementsTab() {
 
   const totalPages = Math.ceil(total / limit) || 1;
 
+  // Tính thù lao khả dụng tổng cộng
+  const availableAmountTotal = (Number(summary?.availableAmount) || 0) + (Number(summary?.earnedAmount) || 0);
+  const availableCountTotal = (Number(summary?.availableCount) || 0) + (Number(summary?.earnedCount) || 0);
+
   return (
     <div className="doctor-settlements-tab tw-space-y-6">
-      {/* ── 1. KPI Cards: 3 Trạng thái Tiền Bác sĩ ── */}
+      {/* ── 1. KPI Cards: Tổng quan Dòng tiền Quyết toán ── */}
       <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-4 tw-gap-4">
-        {/* Card 1: EARNED T+24h */}
-        <div className="tw-bg-white tw-p-5 tw-rounded-2xl tw-border tw-border-amber-200 tw-shadow-sm">
-          <div className="tw-flex tw-justify-between tw-items-center">
-            <span className="tw-text-xs tw-font-bold tw-text-amber-700 tw-uppercase tw-tracking-wider">
-              1. Tạm Tính (Giữ T+24h)
-            </span>
-            <div className="tw-w-8 tw-h-8 tw-rounded-lg tw-bg-amber-50 tw-text-amber-600 tw-flex tw-items-center tw-justify-center">
-              <Clock size={18} />
-            </div>
-          </div>
-          <div className="tw-text-2xl tw-font-black tw-text-amber-700 tw-mt-2">
-            {formatMoney(summary?.earnedAmount)}
-          </div>
-          <div className="tw-text-xs tw-text-amber-600 tw-mt-1">
-            {summary?.earnedCount || 0} ca vừa khám xong, giữ 24h chống khiếu nại
-          </div>
-        </div>
-
-        {/* Card 2: AVAILABLE */}
+        {/* Card 1: Khả dụng (Sẵn sàng chi T+0) */}
         <div className="tw-bg-white tw-p-5 tw-rounded-2xl tw-border tw-border-emerald-200 tw-shadow-sm">
           <div className="tw-flex tw-justify-between tw-items-center">
             <span className="tw-text-xs tw-font-bold tw-text-emerald-700 tw-uppercase tw-tracking-wider">
-              2. Khả Dụng (Sẵn Sàng Chi)
+              1. Thù Lao Khả Dụng (T+0)
             </span>
             <div className="tw-w-8 tw-h-8 tw-rounded-lg tw-bg-emerald-50 tw-text-emerald-600 tw-flex tw-items-center tw-justify-center">
               <CheckCircle2 size={18} />
             </div>
           </div>
-          <div className="tw-text-2xl tw-font-black tw-text-emerald-700 tw-mt-2">
-            {formatMoney(summary?.availableAmount)}
+          <div className="tw-text-2xl tw-font-black tw-text-emerald-700 tw-mt-2 tw-font-mono">
+            {formatMoney(availableAmountTotal)}
           </div>
           <div className="tw-text-xs tw-text-emerald-600 tw-mt-1">
-            {summary?.availableCount || 0} ca đã qua 24h, đủ điều kiện trả ví
+            {availableCountTotal} ca khám hoàn tất, sẵn sàng kết chuyển vào ví
           </div>
         </div>
 
-        {/* Card 3: PAID */}
+        {/* Card 2: Đã Chi Trả Vào Ví */}
         <div className="tw-bg-white tw-p-5 tw-rounded-2xl tw-border tw-border-indigo-200 tw-shadow-sm">
           <div className="tw-flex tw-justify-between tw-items-center">
             <span className="tw-text-xs tw-font-bold tw-text-indigo-700 tw-uppercase tw-tracking-wider">
-              3. Đã Chi Trả Vào Ví
+              2. Đã Chi Trả Vào Ví
             </span>
             <div className="tw-w-8 tw-h-8 tw-rounded-lg tw-bg-indigo-50 tw-text-indigo-600 tw-flex tw-items-center tw-justify-center">
               <Coins size={18} />
             </div>
           </div>
-          <div className="tw-text-2xl tw-font-black tw-text-indigo-700 tw-mt-2">
+          <div className="tw-text-2xl tw-font-black tw-text-indigo-700 tw-mt-2 tw-font-mono">
             {formatMoney(summary?.paidAmount)}
           </div>
           <div className="tw-text-xs tw-text-indigo-600 tw-mt-1">
-            {summary?.paidCount || 0} ca đã hạch toán kết chuyển vào ví
+            {summary?.paidCount || 0} ca đã hạch toán kết chuyển vào ví bác sĩ
           </div>
         </div>
 
-        {/* Card 4: Platform Fee Kept */}
+        {/* Card 3: Phí Dịch Vụ Sàn Thu */}
         <div className="tw-bg-white tw-p-5 tw-rounded-2xl tw-border tw-border-slate-200 tw-shadow-sm">
           <div className="tw-flex tw-justify-between tw-items-center">
-            <span className="tw-text-xs tw-font-bold tw-text-slate-500 tw-uppercase tw-tracking-wider">
-              Phí Dịch Vụ Sàn Thu
+            <span className="tw-text-xs tw-font-bold tw-text-slate-600 tw-uppercase tw-tracking-wider">
+              3. Doanh Thu Sàn Giữ Lại
             </span>
             <div className="tw-w-8 tw-h-8 tw-rounded-lg tw-bg-slate-50 tw-text-slate-600 tw-flex tw-items-center tw-justify-center">
               <ShieldCheck size={18} />
             </div>
           </div>
-          <div className="tw-text-2xl tw-font-black tw-text-slate-800 tw-mt-2">
+          <div className="tw-text-2xl tw-font-black tw-text-slate-800 tw-mt-2 tw-font-mono">
             {formatMoney(summary?.totalPlatformFee)}
           </div>
           <div className="tw-text-xs tw-text-slate-500 tw-mt-1">
-            Chiết khấu sàn từ tổng {formatMoney(summary?.totalGross)}
+            Phí hoa hồng nền tảng từ toàn bộ các ca khám
+          </div>
+        </div>
+
+        {/* Card 4: Tổng Doanh Thu Ca Khám (Gross Volume) */}
+        <div className="tw-bg-white tw-p-5 tw-rounded-2xl tw-border tw-border-slate-200 tw-shadow-sm">
+          <div className="tw-flex tw-justify-between tw-items-center">
+            <span className="tw-text-xs tw-font-bold tw-text-slate-600 tw-uppercase tw-tracking-wider">
+              4. Tổng Doanh Thu Ca Khám
+            </span>
+            <div className="tw-w-8 tw-h-8 tw-rounded-lg tw-bg-slate-50 tw-text-slate-600 tw-flex tw-items-center tw-justify-center">
+              <TrendingUp size={18} />
+            </div>
+          </div>
+          <div className="tw-text-2xl tw-font-black tw-text-slate-800 tw-mt-2 tw-font-mono">
+            {formatMoney(summary?.totalGross)}
+          </div>
+          <div className="tw-text-xs tw-text-slate-500 tw-mt-1">
+            Tổng giá trị dịch vụ bệnh nhân đã thanh toán
           </div>
         </div>
       </div>
@@ -343,38 +328,37 @@ export default function DoctorSettlementsTab() {
           >
             <option value="ALL">Tất cả trạng thái thù lao</option>
             <option value="AVAILABLE">Khả dụng (Sẵn sàng chi trả)</option>
-            <option value="EARNED">Tạm tính (Đang giữ T+24h)</option>
-            <option value="PAID">Đã chi trả</option>
+            <option value="PAID">Đã chi trả vào ví</option>
             <option value="HELD">Đang tạm giữ khiếu nại</option>
           </select>
         </div>
 
         <div className="tw-flex tw-items-center tw-gap-2">
-          {/* Nút quét mở khóa T+24h */}
+          
+
+          {/* Nút Xem Nhật Ký Tự Động & Sơ Đồ Luồng Tiền */}
           <button
             type="button"
-            className="tw-px-3.5 tw-py-2 tw-text-sm tw-font-semibold tw-text-amber-800 hover:tw-text-amber-900 tw-bg-amber-50 hover:tw-bg-amber-100 tw-rounded-xl tw-border tw-border-amber-200 tw-flex tw-items-center tw-gap-1.5 tw-transition"
-            onClick={handleReleaseEligible}
-            disabled={releasing}
-            title="Tự động kiểm tra và chuyển các ca khám đã quá 24h từ EARNED sang AVAILABLE"
+            className="tw-px-3.5 tw-py-2 tw-text-sm tw-font-bold tw-text-indigo-700 hover:tw-text-indigo-800 tw-bg-indigo-50 hover:tw-bg-indigo-100 tw-rounded-xl tw-border tw-border-indigo-200 tw-flex tw-items-center tw-gap-1.5 tw-transition tw-cursor-pointer"
+            onClick={() => setIsAuditDrawerOpen(true)}
+            title="Mở nhật ký phiên chạy tự động và bóc tách sơ đồ dòng tiền từng ca khám"
           >
-            <Sparkles size={14} className={releasing ? 'tw-animate-spin' : ''} />
-            <span>{releasing ? 'Đang mở khóa...' : 'Quét Mở Khóa T+24h'}</span>
+            <Layers size={15} className="tw-text-indigo-600" />
+            <span>Sổ Nhật Ký & Luồng Tiền Tự Động</span>
           </button>
 
-          {/* Nút Mở khóa tất cả T+0 (Demo Mode) */}
+          {/* Nút Quyết Toán Tự Động Toàn Sàn - Mở Modal UI đẹp, không popup đen */}
           <button
             type="button"
-            className="tw-px-3.5 tw-py-2 tw-text-sm tw-font-bold tw-text-purple-800 hover:tw-text-purple-900 tw-bg-purple-50 hover:tw-bg-purple-100 tw-rounded-xl tw-border tw-border-purple-200 tw-flex tw-items-center tw-gap-1.5 tw-transition"
-            onClick={handleReleaseAllInstant}
-            disabled={releasing}
-            title="Mở khóa tức thời toàn bộ các ca khám đang giữ sang Khả dụng (Chế độ T+0 Demo)"
+            className="tw-px-3.5 tw-py-2 tw-text-sm tw-font-bold tw-text-emerald-800 hover:tw-text-emerald-900 tw-bg-emerald-50 hover:tw-bg-emerald-100 tw-rounded-xl tw-border tw-border-emerald-300 tw-flex tw-items-center tw-gap-1.5 tw-transition tw-cursor-pointer"
+            onClick={() => setConfirmRunModalOpen(true)}
+            title="Quét toàn bộ ca khám Khả dụng, phân bổ vào từng ví Bác sĩ và ghi nhận sổ cái"
           >
-            <Zap size={14} className={releasing ? 'tw-animate-bounce' : 'tw-text-purple-600'} />
-            <span>Mở Khóa T+0 (Demo)</span>
+            <Sparkles size={15} className="tw-text-emerald-600" />
+            <span>Chạy Quyết Toán Toàn Sàn</span>
           </button>
 
-          {/* Nút chi trả hàng loạt */}
+          {/* Nút chi trả hàng loạt đã tick */}
           {selectedIds.length > 0 && (
             <button
               type="button"
@@ -388,7 +372,7 @@ export default function DoctorSettlementsTab() {
 
           <button
             type="button"
-            className="tw-px-3.5 tw-py-2 tw-text-sm tw-font-semibold tw-text-slate-600 hover:tw-text-indigo-600 tw-bg-slate-50 hover:tw-bg-indigo-50 tw-rounded-xl tw-border tw-border-slate-200 tw-flex tw-items-center tw-gap-1.5 tw-transition"
+            className="tw-px-3.5 tw-py-2 tw-text-sm tw-font-semibold tw-text-slate-600 hover:tw-text-indigo-600 tw-bg-slate-50 hover:tw-bg-indigo-50 tw-rounded-xl tw-border tw-border-slate-200 tw-flex tw-items-center tw-gap-1.5 tw-transition tw-cursor-pointer"
             onClick={loadSettlements}
             disabled={loading}
           >
@@ -440,21 +424,9 @@ export default function DoctorSettlementsTab() {
                 </tr>
               ) : (
                 items.map((item) => {
-                  const statusInfo = STATUS_CONFIG[item.status] || STATUS_CONFIG.EARNED;
-                  const isAvailable = item.status === 'AVAILABLE';
+                  const statusInfo = STATUS_CONFIG[item.status] || STATUS_CONFIG.AVAILABLE;
+                  const isAvailable = item.status === 'AVAILABLE' || item.status === 'EARNED';
                   const isSelected = selectedIds.includes(item.id);
-
-                  // Tính thời gian mở khóa khả dụng nếu đang EARNED
-                  let countdownText = null;
-                  if (item.status === 'EARNED' && item.availableAt) {
-                    const diffMs = new Date(item.availableAt).getTime() - Date.now();
-                    if (diffMs > 0) {
-                      const hoursLeft = Math.ceil(diffMs / (1000 * 60 * 60));
-                      countdownText = `Mở sau ~${hoursLeft}h`;
-                    } else {
-                      countdownText = 'Đã đủ điều kiện mở';
-                    }
-                  }
 
                   return (
                     <tr
@@ -506,7 +478,7 @@ export default function DoctorSettlementsTab() {
                         </div>
                       </td>
 
-                      <td className="tw-p-4 tw-text-right tw-font-medium tw-text-slate-700">
+                      <td className="tw-p-4 tw-text-right tw-font-medium tw-text-slate-700 tw-font-mono">
                         {formatMoney(item.grossAmount)}
                       </td>
 
@@ -514,32 +486,41 @@ export default function DoctorSettlementsTab() {
                         <div className="tw-text-xs tw-font-bold tw-text-slate-700">
                           {item.platformFeeRate}%
                         </div>
-                        <div className="tw-text-2xs tw-text-slate-400">
+                        <div className="tw-text-2xs tw-text-slate-400 tw-font-mono">
                           -{formatMoney(item.platformFee)}
                         </div>
                       </td>
 
                       <td className="tw-p-4 tw-text-right">
-                        <div className="tw-font-black tw-text-emerald-700 tw-text-base">
+                        <div className="tw-font-black tw-text-emerald-700 tw-text-base tw-font-mono">
                           {formatMoney(item.netAmount)}
                         </div>
                       </td>
 
                       <td className="tw-p-4 tw-text-center">
-                        <span
-                          className="tw-inline-block tw-px-2.5 tw-py-1 tw-rounded-full tw-text-xs tw-font-bold tw-border"
-                          style={{
-                            backgroundColor: statusInfo.bg,
-                            color: statusInfo.color,
-                            borderColor: statusInfo.border,
-                          }}
-                        >
-                          {statusInfo.label}
-                        </span>
-                        {countdownText && (
-                          <div className="tw-text-2xs tw-text-amber-600 tw-mt-0.5 tw-font-semibold">
-                            {countdownText}
+                        {item.status === 'AVAILABLE' && item.note && item.note.includes('DEFERRED_LIQUIDITY_LIMIT') ? (
+                          <div>
+                            <span
+                              className="tw-inline-block tw-px-2.5 tw-py-1 tw-rounded-full tw-text-xs tw-font-bold tw-border tw-bg-amber-50 tw-text-amber-800 tw-border-amber-300"
+                              title={item.note}
+                            >
+                              ⏳ Xếp Hàng Đợt Sau (FIFO)
+                            </span>
+                            <div className="tw-text-2xs tw-text-amber-700 tw-mt-0.5">
+                              Chưa đủ hạn mức đợt này
+                            </div>
                           </div>
+                        ) : (
+                          <span
+                            className="tw-inline-block tw-px-2.5 tw-py-1 tw-rounded-full tw-text-xs tw-font-bold tw-border"
+                            style={{
+                              backgroundColor: statusInfo.bg,
+                              color: statusInfo.color,
+                              borderColor: statusInfo.border,
+                            }}
+                          >
+                            {statusInfo.label}
+                          </span>
                         )}
                         {item.paidAt && (
                           <div className="tw-text-2xs tw-text-slate-400 tw-mt-0.5">
@@ -558,33 +539,16 @@ export default function DoctorSettlementsTab() {
                                 setSelectedIds([item.id]);
                                 handleOpenPayout(null);
                               }}
-                              title="Chi trả thù lao vào ví bác sĩ"
+                              title="Chi trả thù lao vào ví bác sĩ ngay"
                             >
                               <Send size={12} />
                               <span>Chi trả</span>
                             </button>
                           )}
 
-                          {item.status === 'EARNED' && (
-                            <button
-                              type="button"
-                              disabled={unlockingId === item.id}
-                              className="tw-px-2.5 tw-py-1.5 tw-bg-amber-500 hover:tw-bg-amber-600 tw-text-white tw-rounded-xl tw-text-xs tw-font-semibold tw-border-none tw-cursor-pointer tw-flex tw-items-center tw-gap-1 tw-shadow-sm tw-transition disabled:tw-opacity-50"
-                              onClick={() => handleUnlockSingle(item.id)}
-                              title="Mở khóa sớm thù lao (Bypass T+24h)"
-                            >
-                              {unlockingId === item.id ? (
-                                <RotateCw size={12} className="tw-animate-spin" />
-                              ) : (
-                                <Unlock size={12} />
-                              )}
-                              <span>Mở khóa</span>
-                            </button>
-                          )}
-
                           {item.status === 'PAID' && item.walletTransactionId && (
-                            <span className="tw-text-2xs tw-font-mono tw-text-slate-400 tw-px-1.5 tw-py-0.5 tw-bg-slate-50 tw-rounded tw-border tw-border-slate-200">
-                              TX #{item.walletTransactionId}
+                            <span className="tw-text-2xs tw-font-mono tw-text-slate-600 tw-px-1.5 tw-py-0.5 tw-bg-slate-100 tw-rounded tw-border tw-border-slate-200">
+                              TX #{item.walletTransactionId.substring(0, 8)}
                             </span>
                           )}
 
@@ -592,7 +556,7 @@ export default function DoctorSettlementsTab() {
                             type="button"
                             className="tw-p-1.5 tw-bg-slate-100 hover:tw-bg-slate-200 tw-text-slate-600 hover:tw-text-slate-900 tw-rounded-xl tw-border-none tw-cursor-pointer tw-transition"
                             onClick={() => setSelectedDetailItem(item)}
-                            title="Xem chi tiết ca khám & thù lao"
+                            title="Xem chi tiết phân tích tài chính ca khám"
                           >
                             <Eye size={14} />
                           </button>
@@ -607,23 +571,46 @@ export default function DoctorSettlementsTab() {
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="tw-p-4 tw-border-t tw-border-slate-200 tw-flex tw-justify-between tw-items-center">
-            <span className="tw-text-xs tw-text-slate-500">
-              Hiển thị {items.length} / {total} khoản quyết toán (Trang {page} / {totalPages})
-            </span>
-            <div className="tw-flex tw-gap-1">
+        {total > 0 && (
+          <div className="tw-p-4 tw-border-t tw-border-slate-200 tw-flex tw-flex-col sm:tw-flex-row sm:tw-items-center sm:tw-justify-between tw-gap-3 tw-bg-slate-50/50">
+            <div className="tw-flex tw-items-center tw-gap-3">
+              <span className="tw-text-xs tw-text-slate-600 tw-font-medium">
+                Hiển thị <strong className="tw-text-slate-900">{items.length}</strong> / <strong className="tw-text-slate-900">{total}</strong> khoản quyết toán
+              </span>
+              <span className="tw-text-2xs tw-text-slate-400">|</span>
+              <div className="tw-flex tw-items-center tw-gap-1.5 tw-text-xs tw-text-slate-500">
+                <span>Số dòng:</span>
+                <select
+                  value={limit}
+                  onChange={(e) => {
+                    setLimit(Number(e.target.value));
+                    setPage(1);
+                  }}
+                  className="tw-px-2 tw-py-1 tw-text-xs tw-border tw-border-slate-200 tw-rounded-lg tw-bg-white tw-font-semibold tw-text-slate-700"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="tw-flex tw-items-center tw-gap-1.5">
               <button
                 type="button"
-                className="tw-px-3 tw-py-1.5 tw-text-xs tw-font-semibold tw-border tw-border-slate-200 tw-rounded-lg tw-bg-white hover:tw-bg-slate-50 disabled:tw-opacity-50"
+                className="tw-px-3 tw-py-1.5 tw-text-xs tw-font-semibold tw-border tw-border-slate-200 tw-rounded-lg tw-bg-white hover:tw-bg-slate-50 disabled:tw-opacity-40 tw-cursor-pointer disabled:tw-cursor-not-allowed tw-transition"
                 disabled={page <= 1}
                 onClick={() => setPage(page - 1)}
               >
                 Trước
               </button>
+              <span className="tw-px-3 tw-py-1.5 tw-text-xs tw-font-mono tw-font-bold tw-text-slate-700 tw-bg-white tw-border tw-border-slate-200 tw-rounded-lg">
+                Trang {page} / {Math.max(1, totalPages)}
+              </span>
               <button
                 type="button"
-                className="tw-px-3 tw-py-1.5 tw-text-xs tw-font-semibold tw-border tw-border-slate-200 tw-rounded-lg tw-bg-white hover:tw-bg-slate-50 disabled:tw-opacity-50"
+                className="tw-px-3 tw-py-1.5 tw-text-xs tw-font-semibold tw-border tw-border-slate-200 tw-rounded-lg tw-bg-white hover:tw-bg-slate-50 disabled:tw-opacity-40 tw-cursor-pointer disabled:tw-cursor-not-allowed tw-transition"
                 disabled={page >= totalPages}
                 onClick={() => setPage(page + 1)}
               >
@@ -634,14 +621,265 @@ export default function DoctorSettlementsTab() {
         )}
       </div>
 
-      {/* ── MODAL: XÁC NHẬN CHI TRẢ THÙ LAO VÀO VÍ BÁC SĨ ── */}
+      {/* ── MODAL XÁC NHẬN CHẠY QUYẾT TOÁN TỰ ĐỘNG (THAY THẾ WINDOW.CONFIRM) ── */}
+      {confirmRunModalOpen && (
+        <div
+          className="tw-fixed tw-inset-0 tw-bg-slate-900/60 tw-backdrop-blur-sm tw-z-50 tw-flex tw-items-center tw-justify-center tw-p-4 tw-animate-in tw-fade-in tw-duration-150"
+          onClick={() => !isRunningAutoCycle && setConfirmRunModalOpen(false)}
+        >
+          <div
+            className="tw-bg-white tw-rounded-3xl tw-shadow-2xl tw-w-full tw-max-w-lg tw-overflow-hidden tw-border tw-border-slate-100"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="tw-p-6 tw-bg-slate-50 tw-border-b tw-border-slate-100 tw-flex tw-items-center tw-justify-between">
+              <div className="tw-flex tw-items-center tw-gap-3">
+                <div className="tw-w-10 tw-h-10 tw-rounded-2xl tw-bg-emerald-100 tw-text-emerald-700 tw-flex tw-items-center tw-justify-center">
+                  <Sparkles size={20} />
+                </div>
+                <div>
+                  <h3 className="tw-font-bold tw-text-base tw-text-slate-900 tw-m-0">
+                    Kích Hoạt Chu Trình Quyết Toán Tự Động
+                  </h3>
+                  <div className="tw-text-xs tw-text-slate-500">
+                    Cơ chế T+0 • Phân bổ thù lao trực tiếp vào Ví Bác sĩ
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="tw-text-slate-400 hover:tw-text-slate-600 tw-border-none tw-bg-transparent tw-p-1 tw-cursor-pointer"
+                onClick={() => !isRunningAutoCycle && setConfirmRunModalOpen(false)}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="tw-p-6 tw-space-y-4">
+              {/* Thống kê ca khám sẵn sàng */}
+              <div className="tw-grid tw-grid-cols-2 tw-gap-3">
+                <div className="tw-p-4 tw-bg-emerald-50/60 tw-border tw-border-emerald-200 tw-rounded-2xl">
+                  <div className="tw-text-2xs tw-font-bold tw-text-emerald-800 tw-uppercase tw-tracking-wider">
+                    Ca Khám Chờ Chi Trả
+                  </div>
+                  <div className="tw-text-2xl tw-font-black tw-text-emerald-700 tw-mt-1 tw-font-mono">
+                    {availableCountTotal} ca
+                  </div>
+                  <div className="tw-text-2xs tw-text-emerald-600 tw-mt-0.5">
+                    Trạng thái: AVAILABLE (T+0)
+                  </div>
+                </div>
+
+                <div className="tw-p-4 tw-bg-indigo-50/60 tw-border tw-border-indigo-200 tw-rounded-2xl">
+                  <div className="tw-text-2xs tw-font-bold tw-text-indigo-800 tw-uppercase tw-tracking-wider">
+                    Tổng Thù Lao Dự Kiến
+                  </div>
+                  <div className="tw-text-xl tw-font-black tw-text-indigo-700 tw-mt-1 tw-font-mono">
+                    {formatMoney(availableAmountTotal)}
+                  </div>
+                  <div className="tw-text-2xs tw-text-indigo-600 tw-mt-0.5">
+                    Hạch toán vào Ví bác sĩ
+                  </div>
+                </div>
+              </div>
+
+              {/* Sơ đồ luồng tiền đối soát */}
+              <div className="tw-p-4 tw-bg-slate-900 tw-text-white tw-rounded-2xl tw-space-y-2.5">
+                <div className="tw-text-xs tw-font-bold tw-text-slate-300">
+                  Quy Trình Tự Động Hóa Vận Hành
+                </div>
+                <div className="tw-text-2xs tw-text-slate-300 tw-space-y-1.5 tw-font-mono">
+                  <div className="tw-flex tw-items-center tw-gap-2">
+                    <span className="tw-w-2 tw-h-2 tw-rounded-full tw-bg-emerald-400"></span>
+                    <span>1. Quét toàn bộ ca khám đã hoàn tất (AVAILABLE)</span>
+                  </div>
+                  <div className="tw-flex tw-items-center tw-gap-2">
+                    <span className="tw-w-2 tw-h-2 tw-rounded-full tw-bg-blue-400"></span>
+                    <span>2. Gom nhóm theo từng Bác sĩ & trích từ Quỹ Escrow sàn</span>
+                  </div>
+                  <div className="tw-flex tw-items-center tw-gap-2">
+                    <span className="tw-w-2 tw-h-2 tw-rounded-full tw-bg-purple-400"></span>
+                    <span>3. Cộng số dư khả dụng vào Ví Bác sĩ & ghi nhận Bút toán kép</span>
+                  </div>
+                  <div className="tw-flex tw-items-center tw-gap-2">
+                    <span className="tw-w-2 tw-h-2 tw-rounded-full tw-bg-amber-400"></span>
+                    <span>4. Lưu vết Sơ đồ dòng tiền vào Sổ Nhật Ký Kiểm Toán</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── ĐIỀU PHỐI HẠN MỨC THANH KHOẢN (LIQUIDITY BUDGET WATERFALL) ── */}
+              {availableCountTotal > 0 && (
+                <div className="tw-p-4 tw-bg-slate-50 tw-border tw-border-slate-200 tw-rounded-2xl tw-space-y-3">
+                  <div className="tw-flex tw-items-center tw-justify-between">
+                    <div>
+                      <span className="tw-text-xs tw-font-bold tw-text-slate-900 tw-block">
+                        Hạn Mức Ngân Quỹ Giải Ngân (Liquidity Budget Cap)
+                      </span>
+                      <span className="tw-text-2xs tw-text-slate-500">
+                        Kiểm soát lượng tiền mặt thực chi đợt này khi sàn có vốn đầu tư bên ngoài
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Mode selector */}
+                  <div className="tw-grid tw-grid-cols-2 tw-gap-2">
+                    <button
+                      type="button"
+                      className={`tw-py-2 tw-px-3 tw-text-xs tw-font-bold tw-rounded-xl tw-border tw-transition tw-cursor-pointer ${
+                        budgetMode === 'UNLIMITED'
+                          ? 'tw-bg-emerald-600 tw-text-white tw-border-emerald-600 tw-shadow-sm'
+                          : 'tw-bg-white tw-text-slate-700 tw-border-slate-200 hover:tw-bg-slate-100'
+                      }`}
+                      onClick={() => setBudgetMode('UNLIMITED')}
+                    >
+                      100% Khả dụng (Không giới hạn)
+                    </button>
+                    <button
+                      type="button"
+                      className={`tw-py-2 tw-px-3 tw-text-xs tw-font-bold tw-rounded-xl tw-border tw-transition tw-cursor-pointer ${
+                        budgetMode === 'CUSTOM'
+                          ? 'tw-bg-indigo-600 tw-text-white tw-border-indigo-600 tw-shadow-sm'
+                          : 'tw-bg-white tw-text-slate-700 tw-border-slate-200 hover:tw-bg-slate-100'
+                      }`}
+                      onClick={() => setBudgetMode('CUSTOM')}
+                    >
+                      Giới hạn Hạn mức (Custom Cap)
+                    </button>
+                  </div>
+
+                  {/* Custom input */}
+                  {budgetMode === 'CUSTOM' && (
+                    <div className="tw-pt-2 tw-border-t tw-border-slate-200 tw-space-y-2">
+                      <div className="tw-flex tw-items-center tw-gap-2">
+                        <div className="tw-relative tw-flex-1">
+                          <input
+                            type="text"
+                            className="tw-w-full tw-pl-3 tw-pr-8 tw-py-2 tw-text-sm tw-font-mono tw-font-bold tw-border tw-border-slate-300 tw-rounded-xl focus:tw-outline-none focus:tw-border-indigo-500"
+                            placeholder="Nhập số tiền tối đa (₫)..."
+                            value={customBudgetStr}
+                            onChange={(e) => {
+                              const raw = e.target.value.replace(/[^0-9]/g, '');
+                              const num = parseInt(raw, 10) || 0;
+                              setCustomBudgetAmount(num);
+                              setCustomBudgetStr(num > 0 ? num.toLocaleString('vi-VN') : '');
+                            }}
+                          />
+                          <span className="tw-absolute tw-right-3 tw-top-1/2 -tw-translate-y-1/2 tw-text-xs tw-font-bold tw-text-slate-400">
+                            ₫
+                          </span>
+                        </div>
+
+                        {/* Quick Presets */}
+                        <div className="tw-flex tw-gap-1">
+                          {[
+                            { label: '30%', ratio: 0.3 },
+                            { label: '50%', ratio: 0.5 },
+                            { label: '70%', ratio: 0.7 },
+                          ].map((p) => (
+                            <button
+                              key={p.label}
+                              type="button"
+                              className="tw-px-2 tw-py-1.5 tw-text-2xs tw-font-bold tw-text-slate-600 hover:tw-text-indigo-600 tw-bg-white tw-border tw-border-slate-200 tw-rounded-lg tw-cursor-pointer hover:tw-bg-indigo-50"
+                              onClick={() => {
+                                const val = Math.round(availableAmountTotal * p.ratio);
+                                setCustomBudgetAmount(val);
+                                setCustomBudgetStr(val > 0 ? val.toLocaleString('vi-VN') : '');
+                              }}
+                            >
+                              {p.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Simulation info */}
+                      <div className="tw-p-2.5 tw-bg-indigo-50/70 tw-border tw-border-indigo-100 tw-rounded-xl tw-text-2xs tw-text-indigo-900 tw-space-y-1">
+                        <div className="tw-flex tw-justify-between">
+                          <span>Ngân sách giải ngân đợt này:</span>
+                          <strong className="tw-font-mono">{formatMoney(customBudgetAmount)}</strong>
+                        </div>
+                        <div className="tw-flex tw-justify-between">
+                          <span>Dự kiến hoãn chi sang đợt tiếp (FIFO):</span>
+                          <strong className="tw-font-mono tw-text-amber-700">
+                            {formatMoney(Math.max(0, availableAmountTotal - customBudgetAmount))}
+                          </strong>
+                        </div>
+                        <div className="tw-text-2xs tw-text-slate-500 tw-italic tw-pt-0.5">
+                          * Các ca khám hoàn thành trước sẽ được ưu tiên giải ngân trước (FIFO). Ca khám chưa đủ hạn mức sẽ giữ nguyên để dời sang đợt kế tiếp.
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {availableCountTotal === 0 && (
+                <div className="tw-p-3.5 tw-bg-amber-50 tw-border tw-border-amber-200 tw-rounded-2xl tw-flex tw-items-start tw-gap-2.5">
+                  <AlertCircle size={18} className="tw-text-amber-600 tw-shrink-0 tw-mt-0.5" />
+                  <div className="tw-text-xs tw-text-amber-800">
+                    <strong>Hiện không có ca khám nào ở trạng thái Khả Dụng</strong>. Bạn có thể bấm nút{' '}
+                    <button
+                      type="button"
+                      className="tw-font-bold tw-underline tw-text-amber-900 hover:tw-text-amber-950 tw-bg-transparent tw-border-none tw-cursor-pointer tw-p-0"
+                      onClick={handleSeedTestData}
+                    >
+                      "Nạp 20 Ca Mẫu"
+                    </button>{' '}
+                    để tạo dữ liệu đối soát thử nghiệm.
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer Actions */}
+            <div className="tw-p-4 tw-bg-slate-50 tw-border-t tw-border-slate-100 tw-flex tw-items-center tw-justify-between">
+              <button
+                type="button"
+                className="tw-px-4 tw-py-2 tw-text-xs tw-font-semibold tw-text-slate-600 hover:tw-text-slate-800 tw-bg-transparent tw-border-none tw-cursor-pointer"
+                onClick={() => setConfirmRunModalOpen(false)}
+                disabled={isRunningAutoCycle}
+              >
+                Hủy bỏ
+              </button>
+
+              <div className="tw-flex tw-items-center tw-gap-2">
+                {availableCountTotal === 0 ? (
+                  <button
+                    type="button"
+                    className="tw-px-5 tw-py-2.5 tw-bg-slate-800 hover:tw-bg-slate-900 tw-text-white tw-rounded-xl tw-text-xs tw-font-bold tw-border-none tw-cursor-pointer tw-flex tw-items-center tw-gap-1.5 tw-transition"
+                    onClick={handleSeedTestData}
+                    disabled={seedingData}
+                  >
+                    <Database size={14} className={seedingData ? 'tw-animate-spin' : ''} />
+                    <span>{seedingData ? 'Đang nạp...' : 'Nạp 20 Ca Mẫu Trước'}</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="tw-px-5 tw-py-2.5 tw-bg-emerald-600 hover:tw-bg-emerald-700 tw-text-white tw-rounded-xl tw-text-xs tw-font-bold tw-border-none tw-cursor-pointer tw-flex tw-items-center tw-gap-1.5 tw-shadow-sm tw-transition"
+                    onClick={handleExecuteAutoPayout}
+                    disabled={isRunningAutoCycle}
+                  >
+                    <Play size={14} className={isRunningAutoCycle ? 'tw-animate-spin' : ''} />
+                    <span>{isRunningAutoCycle ? 'Hệ thống đang đối soát...' : 'Xác Nhận & Khởi Chạy Ngay'}</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL: XÁC NHẬN CHI TRẢ THÙ LAO VÀO VÍ BÁC SĨ (THỦ CÔNG) ── */}
       {payoutModalOpen && (
         <div
-          className="tw-fixed tw-inset-0 tw-bg-black/50 tw-z-50 tw-flex tw-items-center tw-justify-center tw-p-4 tw-backdrop-blur-sm"
+          className="tw-fixed tw-inset-0 tw-bg-slate-900/60 tw-backdrop-blur-sm tw-z-50 tw-flex tw-items-center tw-justify-center tw-p-4"
           onClick={() => !submittingPayout && setPayoutModalOpen(false)}
         >
           <div
-            className="tw-bg-white tw-rounded-3xl tw-shadow-2xl tw-w-full tw-max-w-md tw-overflow-hidden tw-border tw-border-slate-200"
+            className="tw-bg-white tw-rounded-3xl tw-shadow-2xl tw-w-full tw-max-w-md tw-overflow-hidden tw-border tw-border-slate-100"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="tw-px-6 tw-py-4 tw-bg-emerald-600 tw-text-white tw-flex tw-justify-between tw-items-center">
@@ -665,7 +903,7 @@ export default function DoctorSettlementsTab() {
                 </div>
                 <div className="tw-text-xs tw-text-emerald-800">
                   Tổng thù lao thực nhận:
-                  <div className="tw-text-2xl tw-font-black tw-text-emerald-700 tw-mt-0.5">
+                  <div className="tw-text-2xl tw-font-black tw-text-emerald-700 tw-mt-0.5 tw-font-mono">
                     {formatMoney(
                       items
                         .filter((x) => selectedIds.includes(x.id))
@@ -674,7 +912,7 @@ export default function DoctorSettlementsTab() {
                   </div>
                 </div>
                 <div className="tw-text-2xs tw-text-emerald-600 tw-border-t tw-border-emerald-200 tw-pt-2">
-                  Khoản tiền này sẽ được cộng trực tiếp vào số dư khả dụng ví của Bác sĩ và ghi nhận bút toán kép Sổ cái.
+                  Khoản tiền này sẽ được cộng trực tiếp vào số dư khả dụng ví của Bác sĩ và ghi nhận bút toán kép Sổ cái kèm mã truy vết.
                 </div>
               </div>
 
@@ -685,7 +923,7 @@ export default function DoctorSettlementsTab() {
                 <input
                   type="text"
                   className="tw-w-full tw-p-2.5 tw-border tw-border-slate-300 tw-rounded-xl tw-text-sm"
-                  placeholder="VD: Quyết toán tuần 1 tháng 10..."
+                  placeholder="VD: Quyết toán ca khám hoàn tất..."
                   value={payoutNote}
                   onChange={(e) => setPayoutNote(e.target.value)}
                 />
@@ -712,14 +950,15 @@ export default function DoctorSettlementsTab() {
           </div>
         </div>
       )}
+
       {/* ── MODAL: CHI TIẾT CA KHÁM & QUYẾT TOÁN THÙ LAO ── */}
       {selectedDetailItem && (
         <div
-          className="tw-fixed tw-inset-0 tw-bg-black/50 tw-z-50 tw-flex tw-items-center tw-justify-center tw-p-4 tw-backdrop-blur-sm"
+          className="tw-fixed tw-inset-0 tw-bg-slate-900/60 tw-backdrop-blur-sm tw-z-50 tw-flex tw-items-center tw-justify-center tw-p-4"
           onClick={() => setSelectedDetailItem(null)}
         >
           <div
-            className="tw-bg-white tw-rounded-3xl tw-shadow-2xl tw-w-full tw-max-w-lg tw-overflow-hidden tw-border tw-border-slate-200 tw-animate-in tw-fade-in tw-zoom-in-95 tw-duration-150"
+            className="tw-bg-white tw-rounded-3xl tw-shadow-2xl tw-w-full tw-max-w-lg tw-overflow-hidden tw-border tw-border-slate-100"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="tw-px-6 tw-py-4 tw-bg-slate-900 tw-text-white tw-flex tw-justify-between tw-items-center">
@@ -761,21 +1000,7 @@ export default function DoctorSettlementsTab() {
                     {STATUS_CONFIG[selectedDetailItem.status]?.desc || ''}
                   </div>
                 </div>
-                {selectedDetailItem.status === 'EARNED' && (
-                  <button
-                    type="button"
-                    disabled={unlockingId === selectedDetailItem.id}
-                    className="tw-px-3 tw-py-1.5 tw-bg-amber-600 hover:tw-bg-amber-700 tw-text-white tw-rounded-xl tw-text-xs tw-font-bold tw-border-none tw-cursor-pointer tw-flex tw-items-center tw-gap-1 tw-shadow-sm"
-                    onClick={async () => {
-                      await handleUnlockSingle(selectedDetailItem.id);
-                      setSelectedDetailItem(null);
-                    }}
-                  >
-                    <Unlock size={12} />
-                    <span>Mở khóa sớm</span>
-                  </button>
-                )}
-                {selectedDetailItem.status === 'AVAILABLE' && (
+                {(selectedDetailItem.status === 'AVAILABLE' || selectedDetailItem.status === 'EARNED') && (
                   <button
                     type="button"
                     className="tw-px-3 tw-py-1.5 tw-bg-emerald-600 hover:tw-bg-emerald-700 tw-text-white tw-rounded-xl tw-text-xs tw-font-bold tw-border-none tw-cursor-pointer tw-flex tw-items-center tw-gap-1 tw-shadow-sm"
@@ -828,7 +1053,7 @@ export default function DoctorSettlementsTab() {
                 </div>
                 <div className="tw-flex tw-justify-between tw-text-xs">
                   <span className="tw-text-slate-400">Doanh thu gốc bệnh nhân trả:</span>
-                  <span className="tw-font-semibold tw-text-slate-200">
+                  <span className="tw-font-semibold tw-text-slate-200 tw-font-mono">
                     {formatMoney(selectedDetailItem.originalAmount || selectedDetailItem.grossAmount)}
                   </span>
                 </div>
@@ -836,14 +1061,14 @@ export default function DoctorSettlementsTab() {
                   <span className="tw-text-rose-300">
                     Chiết khấu sàn thu ({Number(selectedDetailItem.platformFeeRate || 0)}%):
                   </span>
-                  <span className="tw-font-semibold tw-text-rose-400">
+                  <span className="tw-font-semibold tw-text-rose-400 tw-font-mono">
                     -{formatMoney(selectedDetailItem.platformFee)}
                   </span>
                 </div>
                 {Number(selectedDetailItem.clinicShare || 0) > 0 && (
                   <div className="tw-flex tw-justify-between tw-text-xs">
                     <span className="tw-text-amber-300">Phần trích cơ sở y tế:</span>
-                    <span className="tw-font-semibold tw-text-amber-400">
+                    <span className="tw-font-semibold tw-text-amber-400 tw-font-mono">
                       -{formatMoney(selectedDetailItem.clinicShare)}
                     </span>
                   </div>
@@ -852,7 +1077,7 @@ export default function DoctorSettlementsTab() {
                   <span className="tw-text-xs tw-font-bold tw-text-emerald-400">
                     Thù lao Bác sĩ thực nhận (Net):
                   </span>
-                  <span className="tw-text-lg tw-font-black tw-text-emerald-400">
+                  <span className="tw-text-lg tw-font-black tw-text-emerald-400 tw-font-mono">
                     {formatMoney(selectedDetailItem.netAmount)}
                   </span>
                 </div>
@@ -869,11 +1094,9 @@ export default function DoctorSettlementsTab() {
                   </span>
                 </div>
                 <div className="tw-flex tw-justify-between">
-                  <span className="tw-text-slate-500">Mở khóa T+24h dự kiến:</span>
-                  <span className="tw-font-medium tw-text-amber-700">
-                    {selectedDetailItem.availableAt
-                      ? moment(selectedDetailItem.availableAt).format('DD/MM/YYYY HH:mm:ss')
-                      : 'N/A'}
+                  <span className="tw-text-slate-500">Tính chất chu trình:</span>
+                  <span className="tw-font-semibold tw-text-emerald-700">
+                    T+0 (Khả dụng thanh toán ngay)
                   </span>
                 </div>
                 {selectedDetailItem.paidAt && (
@@ -907,6 +1130,13 @@ export default function DoctorSettlementsTab() {
           </div>
         </div>
       )}
+
+      {/* ── DRAWER: SỔ NHẬT KÝ TỰ ĐỘNG & SƠ ĐỒ TRUY VẾT LUỒNG TIỀN (MONEY ROUTING AUDIT) ── */}
+      <MoneyRoutingAuditDrawer
+        isOpen={isAuditDrawerOpen}
+        onClose={() => setIsAuditDrawerOpen(false)}
+        onRefreshParent={loadSettlements}
+      />
     </div>
   );
 }

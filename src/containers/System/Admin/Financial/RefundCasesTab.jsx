@@ -1,9 +1,11 @@
 // src/containers/System/Admin/Financial/RefundCasesTab.jsx
 // Phân hệ Quản trị Hoàn tiền Bệnh nhân Độc lập (Enterprise Refund Governance Console)
 import React, { useState, useEffect, useCallback } from 'react';
+import MoneyRoutingAuditDrawer from './MoneyRoutingAuditDrawer';
 import { toast } from 'react-toastify';
 import moment from 'moment';
 import {
+  Layers,
   RotateCw,
   Search,
   CheckCircle2,
@@ -49,6 +51,7 @@ const STATUS_BADGES = {
 };
 
 export default function RefundCasesTab() {
+  const [isAuditDrawerOpen, setIsAuditDrawerOpen] = useState(false);
   const [cases, setCases] = useState([]);
   const [stats, setStats] = useState(null);
   const [total, setTotal] = useState(0);
@@ -259,15 +262,28 @@ export default function RefundCasesTab() {
           </select>
         </div>
 
-        <button
-          type="button"
-          className="tw-px-3.5 tw-py-2 tw-text-sm tw-font-semibold tw-text-slate-600 hover:tw-text-indigo-600 tw-bg-slate-50 hover:tw-bg-indigo-50 tw-rounded-xl tw-border tw-border-slate-200 tw-flex tw-items-center tw-gap-1.5 tw-transition"
-          onClick={loadCases}
-          disabled={loading}
-        >
-          <RotateCw size={14} className={loading ? 'tw-animate-spin' : ''} />
-          <span>Làm mới</span>
-        </button>
+        <div className="tw-flex tw-items-center tw-gap-2">
+          {/* Nút Xem Nhật Ký Tự Động & Sơ Đồ Luồng Tiền */}
+          <button
+            type="button"
+            className="tw-px-3.5 tw-py-2 tw-text-sm tw-font-bold tw-text-indigo-700 hover:tw-text-indigo-800 tw-bg-indigo-50 hover:tw-bg-indigo-100 tw-rounded-xl tw-border tw-border-indigo-200 tw-flex tw-items-center tw-gap-1.5 tw-transition tw-cursor-pointer"
+            onClick={() => setIsAuditDrawerOpen(true)}
+            title="Mở nhật ký phiên chạy tự động và bóc tách sơ đồ dòng tiền từng ca hoàn"
+          >
+            <Layers size={15} className="tw-text-indigo-600" />
+            <span>Sổ Nhật Ký & Luồng Tiền Tự Động</span>
+          </button>
+
+          <button
+            type="button"
+            className="tw-px-3.5 tw-py-2 tw-text-sm tw-font-semibold tw-text-slate-600 hover:tw-text-indigo-600 tw-bg-slate-50 hover:tw-bg-indigo-50 tw-rounded-xl tw-border tw-border-slate-200 tw-flex tw-items-center tw-gap-1.5 tw-transition"
+            onClick={loadCases}
+            disabled={loading}
+          >
+            <RotateCw size={14} className={loading ? 'tw-animate-spin' : ''} />
+            <span>Làm mới</span>
+          </button>
+        </div>
       </div>
 
       {/* ── 3. Table of Refund Cases ── */}
@@ -415,23 +431,46 @@ export default function RefundCasesTab() {
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="tw-p-4 tw-border-t tw-border-slate-200 tw-flex tw-justify-between tw-items-center">
-            <span className="tw-text-xs tw-text-slate-500">
-              Hiển thị {cases.length} / {total} hồ sơ (Trang {page} / {totalPages})
-            </span>
-            <div className="tw-flex tw-gap-1">
+        {total > 0 && (
+          <div className="tw-p-4 tw-border-t tw-border-slate-200 tw-flex tw-flex-col sm:tw-flex-row sm:tw-items-center sm:tw-justify-between tw-gap-3 tw-bg-slate-50/50">
+            <div className="tw-flex tw-items-center tw-gap-3">
+              <span className="tw-text-xs tw-text-slate-600 tw-font-medium">
+                Hiển thị <strong className="tw-text-slate-900">{cases.length}</strong> / <strong className="tw-text-slate-900">{total}</strong> hồ sơ
+              </span>
+              <span className="tw-text-2xs tw-text-slate-400">|</span>
+              <div className="tw-flex tw-items-center tw-gap-1.5 tw-text-xs tw-text-slate-500">
+                <span>Số dòng:</span>
+                <select
+                  value={limit}
+                  onChange={(e) => {
+                    setLimit(Number(e.target.value));
+                    setPage(1);
+                  }}
+                  className="tw-px-2 tw-py-1 tw-text-xs tw-border tw-border-slate-200 tw-rounded-lg tw-bg-white tw-font-semibold tw-text-slate-700"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="tw-flex tw-items-center tw-gap-1.5">
               <button
                 type="button"
-                className="tw-px-3 tw-py-1.5 tw-text-xs tw-font-semibold tw-border tw-border-slate-200 tw-rounded-lg tw-bg-white hover:tw-bg-slate-50 disabled:tw-opacity-50"
+                className="tw-px-3 tw-py-1.5 tw-text-xs tw-font-semibold tw-border tw-border-slate-200 tw-rounded-lg tw-bg-white hover:tw-bg-slate-50 disabled:tw-opacity-40 tw-cursor-pointer disabled:tw-cursor-not-allowed tw-transition"
                 disabled={page <= 1}
                 onClick={() => setPage(page - 1)}
               >
                 Trước
               </button>
+              <span className="tw-px-3 tw-py-1.5 tw-text-xs tw-font-mono tw-font-bold tw-text-slate-700 tw-bg-white tw-border tw-border-slate-200 tw-rounded-lg">
+                Trang {page} / {Math.max(1, totalPages)}
+              </span>
               <button
                 type="button"
-                className="tw-px-3 tw-py-1.5 tw-text-xs tw-font-semibold tw-border tw-border-slate-200 tw-rounded-lg tw-bg-white hover:tw-bg-slate-50 disabled:tw-opacity-50"
+                className="tw-px-3 tw-py-1.5 tw-text-xs tw-font-semibold tw-border tw-border-slate-200 tw-rounded-lg tw-bg-white hover:tw-bg-slate-50 disabled:tw-opacity-40 tw-cursor-pointer disabled:tw-cursor-not-allowed tw-transition"
                 disabled={page >= totalPages}
                 onClick={() => setPage(page + 1)}
               >
@@ -713,6 +752,13 @@ export default function RefundCasesTab() {
           </div>
         </div>
       )}
+
+      {/* ── 5. Ngăn kéo Nhật Ký & Truy Vết Luồng Tiền Tự Động Hóa ── */}
+      <MoneyRoutingAuditDrawer
+        isOpen={isAuditDrawerOpen}
+        onClose={() => setIsAuditDrawerOpen(false)}
+        onRefreshParent={loadCases}
+      />
     </div>
   );
 }

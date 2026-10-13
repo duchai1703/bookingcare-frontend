@@ -98,6 +98,8 @@ export default function FinancialExceptionHub({ onNavigateTab }) {
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [priorityFilter, setPriorityFilter] = useState('ALL');
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [lastCycleReport, setLastCycleReport] = useState(null);
   const [selectedDrawerItem, setSelectedDrawerItem] = useState(null);
   const [metrics, setMetrics] = useState(null);
@@ -341,7 +343,7 @@ export default function FinancialExceptionHub({ onNavigateTab }) {
 
         {/* Card 2: Khẩn cấp */}
         <div
-          onClick={() => setPriorityFilter('CRITICAL')}
+          onClick={() => { setPriorityFilter('CRITICAL'); setPage(1); }}
           className={`tw-p-5 tw-rounded-3xl tw-bg-rose-50/50 tw-border tw-transition tw-cursor-pointer hover:tw-shadow-md ${
             priorityFilter === 'CRITICAL' ? 'tw-border-rose-600 tw-ring-2 tw-ring-rose-600/20' : 'tw-border-rose-200'
           }`}
@@ -364,7 +366,7 @@ export default function FinancialExceptionHub({ onNavigateTab }) {
 
         {/* Card 3: Ưu tiên cao */}
         <div
-          onClick={() => setPriorityFilter('HIGH')}
+          onClick={() => { setPriorityFilter('HIGH'); setPage(1); }}
           className={`tw-p-5 tw-rounded-3xl tw-bg-amber-50/50 tw-border tw-transition tw-cursor-pointer hover:tw-shadow-md ${
             priorityFilter === 'HIGH' ? 'tw-border-amber-600 tw-ring-2 tw-ring-amber-600/20' : 'tw-border-amber-200'
           }`}
@@ -387,7 +389,7 @@ export default function FinancialExceptionHub({ onNavigateTab }) {
 
         {/* Card 4: Thông thường */}
         <div
-          onClick={() => setPriorityFilter('NORMAL')}
+          onClick={() => { setPriorityFilter('NORMAL'); setPage(1); }}
           className={`tw-p-5 tw-rounded-3xl tw-bg-blue-50/50 tw-border tw-transition tw-cursor-pointer hover:tw-shadow-md ${
             priorityFilter === 'NORMAL' ? 'tw-border-blue-600 tw-ring-2 tw-ring-blue-600/20' : 'tw-border-blue-200'
           }`}
@@ -428,7 +430,7 @@ export default function FinancialExceptionHub({ onNavigateTab }) {
                   ? 'tw-bg-slate-900 tw-text-white tw-border-slate-900'
                   : 'tw-bg-slate-50 tw-text-slate-600 tw-border-slate-200 hover:tw-bg-slate-100'
               }`}
-              onClick={() => setCategoryFilter(cat.id)}
+              onClick={() => { setCategoryFilter(cat.id); setPage(1); }}
             >
               {cat.label}
             </button>
@@ -495,7 +497,7 @@ export default function FinancialExceptionHub({ onNavigateTab }) {
                   </td>
                 </tr>
               ) : (
-                filteredItems.map((item) => {
+                filteredItems.slice((page - 1) * pageSize, page * pageSize).map((item) => {
                   const pCfg = PRIORITY_BADGE[item.priority] || PRIORITY_BADGE.NORMAL;
                   const cCfg = CATEGORY_CONFIG[item.category] || CATEGORY_CONFIG.WITHDRAWAL;
                   const CategoryIcon = cCfg.icon;
@@ -625,6 +627,54 @@ export default function FinancialExceptionHub({ onNavigateTab }) {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination Controls */}
+        <div className="tw-p-4 tw-border-t tw-border-slate-200 tw-flex tw-flex-col sm:tw-flex-row sm:tw-items-center sm:tw-justify-between tw-gap-3 tw-bg-slate-50/50">
+          <div className="tw-flex tw-items-center tw-gap-3">
+            <span className="tw-text-xs tw-text-slate-600 tw-font-medium">
+              Hiển thị <strong className="tw-text-slate-900">{filteredItems.length > 0 ? (page - 1) * pageSize + 1 : 0}</strong> - <strong className="tw-text-slate-900">{Math.min(page * pageSize, filteredItems.length)}</strong> trên tổng số <strong className="tw-text-slate-900">{filteredItems.length}</strong> ngoại lệ
+            </span>
+            <span className="tw-text-2xs tw-text-slate-400">|</span>
+            <div className="tw-flex tw-items-center tw-gap-1.5 tw-text-xs tw-text-slate-500">
+              <span>Số dòng:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(1);
+                }}
+                className="tw-px-2 tw-py-1 tw-text-xs tw-border tw-border-slate-200 tw-rounded-lg tw-bg-white tw-font-semibold tw-text-slate-700"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="tw-flex tw-items-center tw-gap-1.5">
+            <button
+              type="button"
+              className="tw-px-3 tw-py-1.5 tw-text-xs tw-font-semibold tw-border tw-border-slate-200 tw-rounded-lg tw-bg-white hover:tw-bg-slate-50 disabled:tw-opacity-40 tw-cursor-pointer disabled:tw-cursor-not-allowed tw-transition"
+              disabled={page <= 1}
+              onClick={() => setPage(page - 1)}
+            >
+              Trước
+            </button>
+            <span className="tw-px-3 tw-py-1.5 tw-text-xs tw-font-mono tw-font-bold tw-text-slate-700 tw-bg-white tw-border tw-border-slate-200 tw-rounded-lg">
+              Trang {page} / {Math.max(1, Math.ceil(filteredItems.length / pageSize))}
+            </span>
+            <button
+              type="button"
+              className="tw-px-3 tw-py-1.5 tw-text-xs tw-font-semibold tw-border tw-border-slate-200 tw-rounded-lg tw-bg-white hover:tw-bg-slate-50 disabled:tw-opacity-40 tw-cursor-pointer disabled:tw-cursor-not-allowed tw-transition"
+              disabled={page >= Math.ceil(filteredItems.length / pageSize)}
+              onClick={() => setPage(page + 1)}
+            >
+              Sau
+            </button>
+          </div>
         </div>
       </div>
 

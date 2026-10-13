@@ -318,5 +318,39 @@ export const runFinancialAutomationCycle = (data = {}) => {
   return axiosInstance.post('/api/v1/admin/financial/automation/run-cycle', data);
 };
 
+export const allocateFloatCapital = (data) => {
+  return axiosInstance.post('/api/v1/admin/financial/float-allocate', data);
+};
+
+export const reimburseFloatCapital = (data) => {
+  return axiosInstance.post('/api/v1/admin/financial/float-reimburse', data);
+};
+
+export const getPeriodicTreasuryCycles = (params) => {
+  return axiosInstance.get('/api/v1/admin/financial/periodic-cycles', { params });
+};
+
+export const getMasterTreasuryOverview = () => {
+  return axiosInstance.get('/api/v1/admin/financial/master-overview');
+};
+
+export const runMasterAutomationCycle = (data = {}) => {
+  return axiosInstance.post('/api/v1/admin/financial/master-automation-run', data);
+};
+
+export const getFinancialAutomationLogs = (params) => {
+  return axiosInstance.get('/api/v1/admin/financial/automation-logs', { params });
+};
+
+export const getFinancialAutomationLogDetail = (id) => {
+  return axiosInstance.get(`/api/v1/admin/financial/automation-logs/${id}`);
+};
+
+export const runAutoDoctorPayoutCycle = (data = {}) => {
+  return axiosInstance.post('/api/v1/admin/financial/doctor-settlements/auto-run', data);
+};
+
+
+
 
 
