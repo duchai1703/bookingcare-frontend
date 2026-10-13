@@ -15,7 +15,12 @@ import {
   Globe,
   Sliders,
   Sparkles,
-  Users
+  Users,
+  UserX,
+  Info,
+  Scale,
+  Zap,
+  ArrowRight
 } from 'lucide-react';
 import { createAdminPolicy, createAdminPolicyVersion } from '../../../../services/policyService';
 import HierarchicalDoctorSelector from './HierarchicalDoctorSelector';
@@ -69,6 +74,33 @@ const CreatePolicyModal = ({ isOpen, onClose, existingPolicy = null, isNewVersio
   const [defaultRefundPercent, setDefaultRefundPercent] = useState(
     existingRules.defaultRefundPercent !== undefined ? existingRules.defaultRefundPercent : 0
   );
+
+  // No-Show Governance Rules
+  const [noShowRefundPercent, setNoShowRefundPercent] = useState(
+    existingRules.noShowRefundPercent !== undefined ? existingRules.noShowRefundPercent : 75
+  );
+  const [noShowDoctorCompensationPercent, setNoShowDoctorCompensationPercent] = useState(
+    existingRules.noShowDoctorCompensationPercent !== undefined ? existingRules.noShowDoctorCompensationPercent : 80
+  );
+  const [noShowAutoScanHours, setNoShowAutoScanHours] = useState(
+    existingRules.noShowAutoScanHours !== undefined ? existingRules.noShowAutoScanHours : 4
+  );
+
+  // No-Show Real-time Simulation
+  const sampleNoShowPaid = 500000;
+  const sampleNoShowRefund = Math.round((sampleNoShowPaid * (Number(noShowRefundPercent) || 0)) / 100);
+  const sampleNoShowRetained = Math.max(0, sampleNoShowPaid - sampleNoShowRefund);
+  const sampleNoShowDoctor = Math.round((sampleNoShowRetained * (Number(noShowDoctorCompensationPercent) || 0)) / 100);
+  const sampleNoShowPlatform = Math.max(0, sampleNoShowRetained - sampleNoShowDoctor);
+  const retainedPercent = Math.max(0, 100 - (Number(noShowRefundPercent) || 0));
+
+  const getTierRateTag = (rate) => {
+    const r = Number(rate) || 0;
+    if (r >= 100) return 'full';
+    if (r >= 70) return 'high';
+    if (r >= 40) return 'med';
+    return 'low';
+  };
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -148,6 +180,9 @@ const CreatePolicyModal = ({ isOpen, onClose, existingPolicy = null, isNewVersio
       rulesObj = {
         tiers: sortedTiers,
         defaultRefundPercent: parseInt(defaultRefundPercent, 10) || 0,
+        noShowRefundPercent: parseInt(noShowRefundPercent, 10) !== undefined ? parseInt(noShowRefundPercent, 10) : 75,
+        noShowDoctorCompensationPercent: parseInt(noShowDoctorCompensationPercent, 10) || 80,
+        noShowAutoScanHours: parseInt(noShowAutoScanHours, 10) || 4,
         note: description || 'Áp dụng theo điều khoản hoàn trả BookingCare'
       };
     }
@@ -497,99 +532,323 @@ const CreatePolicyModal = ({ isOpen, onClose, existingPolicy = null, isNewVersio
             </div>
           ) : (
             <div className="rules-builder-box">
-              <div className="rules-header">
-                <div className="flex items-center gap-2">
-                  <Clock size={16} className="text-amber-600" />
-                  <span className="font-semibold text-gray-800">Cấu hình Bậc thang Hoàn tiền khi Bệnh nhân Hủy lịch</span>
+              {/* ===== SECTION 1: CẤU HÌNH BẬC THANG HOÀN TIỀN KHI HỦY LỊCH ===== */}
+              <div className="rules-section-header">
+                <div className="section-title-group">
+                  <div className="section-icon-badge amber">
+                    <Clock size={16} />
+                  </div>
+                  <div>
+                    <h4 className="section-title">Cấu hình Bậc thang Hoàn tiền khi Bệnh nhân Hủy lịch</h4>
+                    <p className="section-desc">Tự động áp dụng tỷ lệ hoàn tiền vào Ví Bệnh nhân căn cứ theo mốc thời gian người bệnh hủy trước giờ khám</p>
+                  </div>
                 </div>
                 <button
                   type="button"
-                  className="btn-add-tier"
+                  className="btn-add-tier-modern"
                   onClick={handleAddTier}
                 >
                   <Plus size={14} /> Thêm mốc thời gian
                 </button>
               </div>
 
-              <div className="tiers-table-wrapper">
-                <table className="tiers-table">
-                  <thead>
-                    <tr>
-                      <th>Số giờ trước giờ khám (tối thiểu)</th>
-                      <th>Tỷ lệ hoàn tiền (%)</th>
-                      <th>Nhãn mô tả hiển thị cho bệnh nhân</th>
-                      <th style={{ width: 40 }}></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {tiers.map((tier, idx) => (
-                      <tr key={idx}>
-                        <td>
-                          <div className="input-with-unit">
-                            <input
-                              type="number"
-                              min="0"
-                              value={tier.minHoursBefore}
-                              onChange={(e) => handleTierChange(idx, 'minHoursBefore', e.target.value)}
-                              className="tier-input"
-                            />
-                            <span>giờ</span>
-                          </div>
-                        </td>
-                        <td>
-                          <div className="input-with-unit">
-                            <input
-                              type="number"
-                              min="0"
-                              max="100"
-                              value={tier.refundPercent}
-                              onChange={(e) => handleTierChange(idx, 'refundPercent', e.target.value)}
-                              className="tier-input"
-                            />
-                            <span>%</span>
-                          </div>
-                        </td>
-                        <td>
+              {/* Tiers List Container */}
+              <div className="tiers-modern-container">
+                <div className="tiers-header-row">
+                  <div className="col-hours">Số giờ trước khám (tối thiểu)</div>
+                  <div className="col-rate">Tỷ lệ hoàn tiền (%)</div>
+                  <div className="col-label">Nhãn hiển thị cho bệnh nhân</div>
+                  <div className="col-actions"></div>
+                </div>
+
+                <div className="tiers-list-body">
+                  {tiers.map((tier, idx) => (
+                    <div className="tier-card-row" key={idx}>
+                      <div className="col-hours">
+                        <div className="pill-input-field">
+                          <span className="pill-prefix">≥</span>
+                          <input
+                            type="number"
+                            min="0"
+                            value={tier.minHoursBefore}
+                            onChange={(e) => handleTierChange(idx, 'minHoursBefore', e.target.value)}
+                            className="pill-input-control"
+                          />
+                          <span className="pill-suffix">giờ trước</span>
+                        </div>
+                      </div>
+
+                      <div className="col-rate">
+                        <div className="pill-input-field rate-field">
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={tier.refundPercent}
+                            onChange={(e) => handleTierChange(idx, 'refundPercent', e.target.value)}
+                            className="pill-input-control font-bold"
+                          />
+                          <span className="pill-suffix font-bold">%</span>
+                        </div>
+                        <span className={`tier-rate-badge rate-${getTierRateTag(tier.refundPercent)}`}>
+                          {tier.refundPercent}% hoàn
+                        </span>
+                      </div>
+
+                      <div className="col-label">
+                        <div className="pill-input-field label-field">
                           <input
                             type="text"
                             value={tier.label || ''}
                             onChange={(e) => handleTierChange(idx, 'label', e.target.value)}
-                            className="tier-input"
+                            className="pill-input-control"
                             placeholder="VD: Hủy trước 24 giờ"
                           />
-                        </td>
-                        <td>
-                          {tiers.length > 1 && (
-                            <button
-                              type="button"
-                              className="btn-remove-tier"
-                              onClick={() => handleRemoveTier(idx)}
-                              title="Xóa mốc này"
-                            >
-                              <Trash2 size={15} />
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        </div>
+                      </div>
+
+                      <div className="col-actions">
+                        {tiers.length > 1 && (
+                          <button
+                            type="button"
+                            className="btn-trash-ghost"
+                            onClick={() => handleRemoveTier(idx)}
+                            title="Xóa mốc thời gian này"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <div className="fallback-refund-row">
-                <span className="text-sm text-gray-600">
-                  Tỷ lệ hoàn tiền mặc định nếu hủy sau các mốc trên (hoặc vắng mặt):
-                </span>
-                <div className="input-with-unit" style={{ width: 100 }}>
+              {/* Fallback Refund Strip */}
+              <div className="fallback-refund-strip">
+                <div className="fallback-info">
+                  <div className="fallback-icon">
+                    <Info size={15} />
+                  </div>
+                  <div>
+                    <span className="fallback-title">Tỷ lệ hoàn tiền mặc định nếu hủy trễ ngoài các mốc trên:</span>
+                    <span className="fallback-subtitle">Áp dụng khi người bệnh hủy lịch muộn hơn mốc thời gian tối thiểu cuối cùng</span>
+                  </div>
+                </div>
+                <div className="pill-input-field rate-field fallback-input">
                   <input
                     type="number"
                     min="0"
                     max="100"
                     value={defaultRefundPercent}
                     onChange={(e) => setDefaultRefundPercent(e.target.value)}
-                    className="tier-input"
+                    className="pill-input-control font-bold"
                   />
-                  <span>%</span>
+                  <span className="pill-suffix font-bold">%</span>
+                </div>
+              </div>
+
+              {/* ===== SECTION 2: PHÂN HỆ QUY CHẾ BỆNH NHÂN VẮNG MẶT (NO-SHOW GOVERNANCE) ===== */}
+              <div className="noshow-enterprise-card">
+                {/* Header Banner */}
+                <div className="noshow-card-header">
+                  <div className="header-left">
+                    <div className="noshow-icon-badge">
+                      <UserX size={17} />
+                    </div>
+                    <div>
+                      <div className="badge-title-row">
+                        <h4 className="noshow-title">Quy Chế Bệnh Nhân Vắng Mặt (No-Show Governance)</h4>
+                        <span className="live-status-pill">
+                          <Zap size={11} className="zap-icon" /> Tự động hóa toàn sàn
+                        </span>
+                      </div>
+                      <p className="noshow-subtitle">
+                        Tự động xử lý hoàn tiền về Ví Bệnh nhân và trích bồi thường thời gian giữ chỗ cho Bác sĩ khi ca khám hết hạn mà không có kết quả khám.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="noshow-card-body">
+                  {/* Row 1: 2 Main Config Cards */}
+                  <div className="noshow-config-grid">
+                    {/* Card 1: Hoàn tiền Khách */}
+                    <div className="config-box patient-refund-box">
+                      <div className="box-top">
+                        <div className="box-label-group">
+                          <span className="box-label">Tỷ lệ tự động hoàn cho Bệnh nhân</span>
+                          <span className="policy-badge teal">Ví Bệnh nhân</span>
+                        </div>
+                        <span className="suggested-hint">Mặc định: 75%</span>
+                      </div>
+
+                      <div className="box-input-wrapper">
+                        <div className="modern-num-input teal-focus">
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={noShowRefundPercent}
+                            onChange={(e) => setNoShowRefundPercent(e.target.value)}
+                            className="num-control"
+                          />
+                          <span className="num-unit">%</span>
+                        </div>
+                        <div className="dynamic-progress-bar">
+                          <div
+                            className="bar-fill teal-fill"
+                            style={{ width: `${Math.min(100, Math.max(0, Number(noShowRefundPercent) || 0))}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <p className="box-help-text">
+                        Hệ thống tự động kích hoạt hoàn về <strong>Ví Bệnh nhân</strong> khi quá hạn ca khám mà không yêu cầu thủ tục khiếu nại.
+                      </p>
+                    </div>
+
+                    {/* Card 2: Bồi thường Bác sĩ */}
+                    <div className="config-box doctor-compensation-box">
+                      <div className="box-top">
+                        <div className="box-label-group">
+                          <span className="box-label">Bồi thường Thù lao Bác sĩ</span>
+                          <span className="policy-badge emerald">Phần {retainedPercent}% giữ lại</span>
+                        </div>
+                        <span className="suggested-hint">Mặc định: 80% phần phạt</span>
+                      </div>
+
+                      <div className="box-input-wrapper">
+                        <div className="modern-num-input emerald-focus">
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={noShowDoctorCompensationPercent}
+                            onChange={(e) => setNoShowDoctorCompensationPercent(e.target.value)}
+                            className="num-control"
+                          />
+                          <span className="num-unit">%</span>
+                        </div>
+                        <div className="dynamic-progress-bar">
+                          <div
+                            className="bar-fill emerald-fill"
+                            style={{ width: `${Math.min(100, Math.max(0, Number(noShowDoctorCompensationPercent) || 0))}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <p className="box-help-text">
+                        Bác sĩ nhận <strong>{noShowDoctorCompensationPercent}%</strong> phần giữ lại bù công chờ khám, sàn thu <strong>{Math.max(0, 100 - (Number(noShowDoctorCompensationPercent) || 80))}%</strong> phí xử lý & đối soát.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Row 2: Buffer Time Strip */}
+                  <div className="buffer-time-strip">
+                    <div className="buffer-info">
+                      <div className="buffer-icon">
+                        <Clock size={16} />
+                      </div>
+                      <div>
+                        <span className="buffer-label">Thời hạn đệm chốt No-Show tự động</span>
+                        <span className="buffer-desc">Khoảng thời gian chờ sau khi hết giờ ca khám để Cron tự động quét và kích hoạt quy trình No-Show</span>
+                      </div>
+                    </div>
+                    <div className="buffer-input-wrap">
+                      <div className="modern-num-input sm">
+                        <input
+                          type="number"
+                          min="1"
+                          max="72"
+                          value={noShowAutoScanHours}
+                          onChange={(e) => setNoShowAutoScanHours(e.target.value)}
+                          className="num-control"
+                        />
+                        <span className="num-unit">giờ</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Row 3: FinTech Double-Entry Ledger Simulation */}
+                  <div className="ledger-simulation-panel">
+                    <div className="simulation-header">
+                      <div className="sim-title-group">
+                        <span className="sim-title">
+                          Mô phỏng hạch toán Sổ cái trên ca khám mẫu <strong>500.000 ₫</strong>:
+                        </span>
+                        <span className="sim-subtitle">Hệ thống phân bổ đối soát 3 bên theo thời gian thực</span>
+                      </div>
+                      <div className="sim-tag">
+                        <Scale size={13} />
+                        <span>Cân bằng số dư 100%</span>
+                      </div>
+                    </div>
+
+                    <div className="sim-cards-grid">
+                      {/* Card 1: Khách */}
+                      <div className="sim-metric-card sim-patient">
+                        <div className="card-top-row">
+                          <span className="card-recipient">Hoàn Ví Khách</span>
+                          <span className="card-rate-pill teal">{noShowRefundPercent}%</span>
+                        </div>
+                        <div className="card-amount">
+                          {new Intl.NumberFormat('vi-VN').format(sampleNoShowRefund)} <span className="currency-unit">₫</span>
+                        </div>
+                        <div className="card-footer-note">
+                          <CheckCircle2 size={12} className="check-icon" />
+                          <span>Khả dụng ngay trong ví người bệnh</span>
+                        </div>
+                      </div>
+
+                      {/* Card 2: Bác sĩ */}
+                      <div className="sim-metric-card sim-doctor">
+                        <div className="card-top-row">
+                          <span className="card-recipient">Thù lao Bác sĩ nhận</span>
+                          <span className="card-rate-pill emerald">{noShowDoctorCompensationPercent}% phạt</span>
+                        </div>
+                        <div className="card-amount">
+                          {new Intl.NumberFormat('vi-VN').format(sampleNoShowDoctor)} <span className="currency-unit">₫</span>
+                        </div>
+                        <div className="card-footer-note">
+                          <CheckCircle2 size={12} className="check-icon" />
+                          <span>Cộng trực tiếp vào Ví Bác sĩ</span>
+                        </div>
+                      </div>
+
+                      {/* Card 3: Sàn */}
+                      <div className="sim-metric-card sim-platform">
+                        <div className="card-top-row">
+                          <span className="card-recipient">Phí Điều phối BookingCare</span>
+                          <span className="card-rate-pill slate">{Math.max(0, 100 - (Number(noShowDoctorCompensationPercent) || 80))}% phạt</span>
+                        </div>
+                        <div className="card-amount">
+                          {new Intl.NumberFormat('vi-VN').format(sampleNoShowPlatform)} <span className="currency-unit">₫</span>
+                        </div>
+                        <div className="card-footer-note">
+                          <CheckCircle2 size={12} className="check-icon" />
+                          <span>Doanh thu dịch vụ & đối soát sàn</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Bottom Formula Audit Strip */}
+                    <div className="ledger-formula-strip">
+                      <div className="formula-math">
+                        <span className="formula-item val-teal">{new Intl.NumberFormat('vi-VN').format(sampleNoShowRefund)} ₫</span>
+                        <span className="formula-op">+</span>
+                        <span className="formula-item val-emerald">{new Intl.NumberFormat('vi-VN').format(sampleNoShowDoctor)} ₫</span>
+                        <span className="formula-op">+</span>
+                        <span className="formula-item val-slate">{new Intl.NumberFormat('vi-VN').format(sampleNoShowPlatform)} ₫</span>
+                        <span className="formula-op">=</span>
+                        <span className="formula-total">500.000 ₫</span>
+                      </div>
+                      <div className="formula-verified">
+                        <ShieldCheck size={13} />
+                        <span>Sổ cái đối soát khớp 100% (Zero-drift Ledger)</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

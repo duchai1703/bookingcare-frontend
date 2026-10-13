@@ -297,13 +297,20 @@ const PolicyDetailDrawer = ({ isOpen, onClose, policyId, onUpgradeVersion }) => 
                       </div>
                     </>
                   ) : (
-                    Array.isArray(rules.tiers) && rules.tiers.map((t, idx) => (
-                      <div key={idx} className="rule-tag-item refund">
-                        <span>Hủy &gt;{t.minHoursBefore}h:</span>
-                        <strong>Hoàn {t.refundPercent}%</strong>
-                        {t.label && <small style={{ color: '#92400E' }}>({t.label})</small>}
+                    <>
+                      {Array.isArray(rules.tiers) && rules.tiers.map((t, idx) => (
+                        <div key={idx} className="rule-tag-item refund">
+                          <span>Hủy &gt;{t.minHoursBefore}h:</span>
+                          <strong>Hoàn {t.refundPercent}%</strong>
+                          {t.label && <small style={{ color: '#92400E' }}>({t.label})</small>}
+                        </div>
+                      ))}
+                      <div className="rule-tag-item" style={{ background: '#FEF3C7', border: '1px solid #FDE68A', color: '#92400E' }}>
+                        <span>Vắng mặt (No-Show):</span>
+                        <strong>Hoàn {rules.noShowRefundPercent !== undefined ? rules.noShowRefundPercent : 75}%</strong>
+                        <small style={{ color: '#B45309' }}>(Bù BS {rules.noShowDoctorCompensationPercent || 80}%)</small>
                       </div>
-                    ))
+                    </>
                   )}
                 </div>
               </div>

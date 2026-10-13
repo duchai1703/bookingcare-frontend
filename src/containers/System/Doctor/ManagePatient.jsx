@@ -15,6 +15,7 @@ import { processLogout } from '../../../redux/slices/userSlice';
 import { LANGUAGES, BOOKING_STATUS } from '../../../utils/constants';
 import RemedyModal from './RemedyModal';
 import AppointmentScannerModal from './AppointmentScannerModal';
+import DoctorActionConfirmModal from './DoctorActionConfirmModal';
 import { FEATURES } from '../../../config/features';
 
 
@@ -46,7 +47,7 @@ import {
   FileCheck,
   Building2,
   MessageSquare,
-
+  UserX
 } from 'lucide-react';
 
 import './ManagePatient.scss';
@@ -90,6 +91,7 @@ const ManagePatient = () => {
   const [isOpenScanner, setIsOpenScanner] = useState(false);
   const [isOpenRemedyModal, setIsOpenRemedyModal] = useState(false);
   const [dataRemedyModal, setDataRemedyModal] = useState({});
+  const [confirmModalState, setConfirmModalState] = useState({ isOpen: false, mode: 'CANCEL', booking: null, loading: false });
 
   // [Multi-Facility] Đọc ngữ cảnh cơ sở đang chọn từ DoctorLayout
   const outletCtx = useOutletContext();
@@ -246,24 +248,67 @@ const ManagePatient = () => {
     setSelectedBooking(scannedBooking);
   };
 
-  // ===== HỦY LỊCH HẸN =====
-  const handleCancelBooking = async (booking) => {
-    const patientName = booking.patientName || booking.patientData?.firstName || 'bệnh nhân';
-    const isConfirm = window.confirm(
-      `Bạn có chắc chắn muốn hủy lịch hẹn #${booking.id} của ${patientName}?`
-    );
-    if (!isConfirm) return;
+    // ===== HỦY LỊCH HẸN =====
+  const handleCancelBooking = (booking) => {
+    setConfirmModalState({
+      isOpen: true,
+      mode: 'CANCEL',
+      booking,
+      loading: false,
+    });
+  };
 
+  // ===== XÁC NHẬN BỆNH NHÂN VẮNG MẶT (NO-SHOW) =====
+  const handleMarkNoShow = (booking) => {
+    setConfirmModalState({
+      isOpen: true,
+      mode: 'NO_SHOW',
+      booking,
+      loading: false,
+    });
+  };
+
+  // ===== THỰC HIỆN XÁC NHẬN HỦY / NO-SHOW TỪ MODAL =====
+  const handleConfirmDoctorAction = async ({ reason, note, isNoShow }) => {
+    const booking = confirmModalState.booking;
+    if (!booking) return;
+
+    setConfirmModalState((prev) => ({ ...prev, loading: true }));
     try {
-      const res = await cancelBooking(booking.id, {});
-      if (res && res.errCode === 0) {
-        toast.success('Hủy lịch hẹn thành công!');
-        fetchPatientList(currentDate);
+      if (isNoShow) {
+        const res = await cancelBooking(booking.id, {
+          reason: 'PATIENT_NO_SHOW',
+          note: note || 'Bác sĩ xác nhận bệnh nhân vắng mặt (No-Show)',
+          isNoShow: true,
+        });
+        if (res && res.errCode === 0) {
+          toast.success('Đã xác nhận bệnh nhân vắng mặt. Hồ sơ hoàn tiền tự động 75% và thù lao bù giờ cho bạn đã được kích hoạt!');
+          fetchPatientList(currentDate);
+          setSelectedBooking(null);
+          setConfirmModalState({ isOpen: false, mode: 'NO_SHOW', booking: null, loading: false });
+        } else {
+          toast.error(res?.message || 'Không thể ghi nhận vắng mặt!');
+          setConfirmModalState((prev) => ({ ...prev, loading: false }));
+        }
       } else {
-        toast.error(res?.message || 'Không thể hủy lịch!');
+        const res = await cancelBooking(booking.id, {
+          reason: reason || 'Bác sĩ hủy lịch hẹn',
+          cancellationReason: 'DOCTOR_UNAVAILABLE',
+          note: note || reason || 'Bác sĩ hủy lịch hẹn',
+        });
+        if (res && res.errCode === 0) {
+          toast.success('Hủy lịch hẹn thành công! Đã kích hoạt hoàn trả 100% cho bệnh nhân.');
+          fetchPatientList(currentDate);
+          setSelectedBooking(null);
+          setConfirmModalState({ isOpen: false, mode: 'CANCEL', booking: null, loading: false });
+        } else {
+          toast.error(res?.message || 'Không thể hủy lịch!');
+          setConfirmModalState((prev) => ({ ...prev, loading: false }));
+        }
       }
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Lỗi khi thực hiện hủy lịch hẹn!');
+      toast.error(err?.response?.data?.message || 'Lỗi khi thực hiện thao tác!');
+      setConfirmModalState((prev) => ({ ...prev, loading: false }));
     }
   };
 
@@ -866,6 +911,16 @@ const ManagePatient = () => {
 
                     <button
                       type="button"
+                      className="btn-action-noshow"
+                      onClick={() => handleMarkNoShow(selectedBooking)}
+                      title="Xác nhận bệnh nhân không đến khám (No-Show) để hoàn tiền tự động theo quy chế"
+                    >
+                      <UserX size={15} />
+                      <span>Vắng mặt (No-Show)</span>
+                    </button>
+
+                    <button
+                      type="button"
                       className="btn-action-remedy"
                       onClick={() => {
                         setDataRemedyModal(selectedBooking);
@@ -994,6 +1049,18 @@ const ManagePatient = () => {
             setIsOpenRemedyModal(false);
             fetchPatientList(currentDate);
           }}
+        />
+      )}
+
+      {/* Modal Xác nhận Hủy lịch & Vắng mặt No-Show */}
+      {confirmModalState.isOpen && (
+        <DoctorActionConfirmModal
+          isOpen={confirmModalState.isOpen}
+          mode={confirmModalState.mode}
+          booking={confirmModalState.booking}
+          loading={confirmModalState.loading}
+          onClose={() => setConfirmModalState((prev) => ({ ...prev, isOpen: false }))}
+          onConfirm={handleConfirmDoctorAction}
         />
       )}
 

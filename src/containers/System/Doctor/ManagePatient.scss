@@ -949,6 +949,16 @@
               }
             }
 
+            .btn-action-noshow {
+              background: #fffbeb;
+              border: 1px solid #fde68a;
+              color: #b45309;
+
+              &:hover {
+                background: #fef3c7;
+              }
+            }
+
             .btn-action-remedy {
               background: #f0fdf4;
               border: 1px solid #bbf7d0;

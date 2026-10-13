@@ -33,11 +33,12 @@ import {
 
 const REASON_LABELS = {
   DOCTOR_UNAVAILABLE: { label: 'Bác sĩ bận đột xuất / Không tiếp nhận', color: 'rose', force100: true },
+  DOCTOR_CANCELLED: { label: 'Bác sĩ bận đột xuất / Không tiếp nhận', color: 'rose', force100: true },
   CLINIC_FORCE_MAJEURE: { label: 'Cơ sở y tế đóng cửa / Sự cố bất khả kháng', color: 'amber', force100: true },
   SYSTEM_DUPLICATE_PAYMENT: { label: 'Lỗi hệ thống / Thanh toán trùng lặp', color: 'purple', force100: true },
   PATIENT_ON_TIME: { label: 'Bệnh nhân hủy đúng hạn (>= 24h)', color: 'emerald', force100: false },
   PATIENT_LATE: { label: 'Bệnh nhân hủy cận giờ (< 24h)', color: 'amber', force100: false },
-  PATIENT_NO_SHOW: { label: 'Bệnh nhân vắng mặt (No-show)', color: 'slate', force100: false },
+  PATIENT_NO_SHOW: { label: 'Bệnh nhân vắng mặt (No-Show - Tự động 75%)', color: 'amber', force100: false },
   ADMIN_DISPUTE_RESOLUTION: { label: 'Khiếu nại / Phân xử Admin', color: 'indigo', force100: false },
   OTHER: { label: 'Lý do khác', color: 'slate', force100: false },
 };
@@ -81,6 +82,7 @@ export default function RefundCasesTab() {
         limit,
         status: statusFilter,
         reason: reasonFilter,
+        cancellationReason: reasonFilter,
         search,
       });
       if (res && res.errCode === 0) {
@@ -259,6 +261,8 @@ export default function RefundCasesTab() {
             <option value="DOCTOR_UNAVAILABLE">Bác sĩ bận / Không tiếp nhận</option>
             <option value="CLINIC_FORCE_MAJEURE">Cơ sở y tế đóng cửa / Sự cố</option>
             <option value="ADMIN_DISPUTE_RESOLUTION">Phân xử khiếu nại (Admin)</option>
+            <option value="SYSTEM_DUPLICATE_PAYMENT">Lỗi hệ thống / Thanh toán trùng lặp</option>
+            <option value="OTHER">Lý do khác</option>
           </select>
         </div>
 
