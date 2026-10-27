@@ -1,0 +1,32 @@
+name: BookingCare Frontend CI
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  pull_request:
+    branches: [ "master", "main" ]
+
+jobs:
+  build_verification:
+    name: Vite Build Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: 'package-lock.json'
+
+      - name: Install Dependencies
+        run: npm ci --quiet --legacy-peer-deps
+
+      - name: Build React/Vite Project
+        run: npm run build
+
+      - name: Test Docker Nginx Build
+        run: docker build -t bookingcare-frontend:test .

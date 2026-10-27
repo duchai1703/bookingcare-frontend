@@ -1,0 +1,77 @@
+# =========================================================================
+# BOOKINGCARE FRONTEND — PRODUCTION CI/CD PIPELINE (.gitlab-ci.yml)
+# Phục vụ: Kiểm thử build tĩnh React/Vite, đóng gói Alpine Nginx và Triển khai
+# =========================================================================
+
+stages:
+  - quality_gate
+  - package
+  - deploy
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: ""
+  IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+  IMAGE_LATEST: $CI_REGISTRY_IMAGE:latest
+
+# =========================================================================
+# GIAI ĐOẠN 1: QUALITY GATE (BUILD TĨNH REACT/VITE)
+# =========================================================================
+frontend_build_test:
+  stage: quality_gate
+  image: node:18-alpine
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}-frontend
+    paths:
+      - node_modules/
+  script:
+    - echo "[CI FRONTEND] Cài đặt dependencies React..."
+    - npm ci --quiet --legacy-peer-deps
+    - echo "[CI FRONTEND] Kiểm tra biên dịch tĩnh Vite..."
+    - npm run build
+  artifacts:
+    name: "frontend-dist-$CI_COMMIT_SHORT_SHA"
+    paths:
+      - dist/
+    expire_in: 3 days
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH'
+
+# =========================================================================
+# GIAI ĐOẠN 2: PACKAGE (BUILD ALPINE NGINX DOCKER IMAGE)
+# =========================================================================
+frontend_docker_build:
+  stage: package
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+  script:
+    - echo "[CI FRONTEND] Đang đóng gói Docker Image với Nginx 1.25 Alpine..."
+    - docker build --pull -t $IMAGE_TAG -t $IMAGE_LATEST .
+    - docker push $IMAGE_TAG
+    - docker push $IMAGE_LATEST
+    - echo "[CI SUCCESS] Đã xuất bản Image Frontend: $IMAGE_TAG"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH == "main"'
+
+# =========================================================================
+# GIAI ĐOẠN 3: DEPLOY (CẬP NHẬT GIAO DIỆN PRODUCTION)
+# =========================================================================
+frontend_deploy_production:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client bash
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts || true
+  script:
+    - echo "[CD FRONTEND] Cập nhật phiên bản Frontend mới nhất trên Server..."
+    - ssh $SERVER_USER@$SERVER_IP "cd /app/bookingcare-frontend && git pull origin master && docker compose up --build -d app-frontend"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH == "main"'
+      when: manual
