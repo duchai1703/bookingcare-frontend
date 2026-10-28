@@ -13,6 +13,7 @@ import 'moment/locale/vi';
 import {
   getPatientBookings,
   cancelBooking,
+  getBookingCancelPreview,
   getBookingAttachments,
   uploadBookingAttachment,
   downloadBookingAttachment,
@@ -271,48 +272,65 @@ const AppointmentHistory = () => {
   };
 
   // Hủy lịch
-  const loadCancelEstimate = (bookingId) => {
+  const loadCancelEstimate = (bookingId, bookingObj = null) => {
     setCancelModal((prev) => ({
       ...prev,
       isLoadingEstimate: true,
       estimateError: null,
       estimate: null,
     }));
-    getBookingCancelPreview(bookingId)
-      .then((res) => {
-        if (res && res.errCode === 0 && res.data) {
-          setCancelModal((prev) => {
-            if (prev.bookingId !== bookingId) return prev;
-            return {
+    try {
+      getBookingCancelPreview(bookingId)
+        .then((res) => {
+          if (res && res.errCode === 0 && res.data) {
+            setCancelModal((prev) => {
+              if (prev.bookingId !== bookingId) return prev;
+              return {
+                ...prev,
+                isLoadingEstimate: false,
+                estimateError: null,
+                estimate: {
+                  hours: res.data.hoursBefore,
+                  rate: res.data.refundRate,
+                  amount: res.data.refundAmount,
+                  price: res.data.originalAmount,
+                  timingExplanation: res.data.timingExplanation,
+                },
+              };
+            });
+          } else {
+            const targetBooking = bookingObj || cancelModal.booking;
+            const fallback = getRefundEstimate(targetBooking);
+            setCancelModal((prev) => ({
               ...prev,
               isLoadingEstimate: false,
+              estimate: fallback,
               estimateError: null,
-              estimate: {
-                hours: res.data.hoursBefore,
-                rate: res.data.refundRate,
-                amount: res.data.refundAmount,
-                price: res.data.originalAmount,
-                timingExplanation: res.data.timingExplanation,
-              },
-            };
-          });
-        } else {
+            }));
+          }
+        })
+        .catch((err) => {
+          console.warn('Failed to fetch cancel preview, falling back to client estimation:', err);
+          const targetBooking = bookingObj || cancelModal.booking;
+          const fallback = getRefundEstimate(targetBooking);
           setCancelModal((prev) => ({
             ...prev,
             isLoadingEstimate: false,
-            estimate: null,
-            estimateError: res?.message || 'Không thể tải chính sách hoàn tiền từ máy chủ. Vui lòng thử lại.',
+            estimate: fallback,
+            estimateError: null,
           }));
-        }
-      })
-      .catch(() => {
-        setCancelModal((prev) => ({
-          ...prev,
-          isLoadingEstimate: false,
-          estimate: null,
-          estimateError: 'Không thể kết nối đến máy chủ để lấy chính sách hoàn tiền.',
-        }));
-      });
+        });
+    } catch (err) {
+      console.error('Error in loadCancelEstimate:', err);
+      const targetBooking = bookingObj || cancelModal.booking;
+      const fallback = getRefundEstimate(targetBooking);
+      setCancelModal((prev) => ({
+        ...prev,
+        isLoadingEstimate: false,
+        estimate: fallback,
+        estimateError: null,
+      }));
+    }
   };
 
   const handleOpenCancelModal = (bookingOrId) => {
@@ -330,7 +348,7 @@ const AppointmentHistory = () => {
       estimateError: null,
     });
     if (bookingId) {
-      loadCancelEstimate(bookingId);
+      loadCancelEstimate(bookingId, bookingObj);
     }
   };
 
@@ -1556,7 +1574,7 @@ const AppointmentHistory = () => {
                           type="button"
                           className="btn btn-sm btn-outline-danger"
                           style={{ fontSize: '0.75rem', padding: '2px 8px', marginLeft: '8px' }}
-                          onClick={() => loadCancelEstimate(cancelModal.bookingId)}
+                          onClick={() => loadCancelEstimate(cancelModal.bookingId, cancelModal.booking)}
                         >
                           Thử lại
                         </button>
