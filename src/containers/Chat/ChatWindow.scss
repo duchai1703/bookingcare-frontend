@@ -30,18 +30,25 @@
     border-bottom: 1px solid #e2e8f0;
     z-index: 10;
     flex-shrink: 0;
+    gap: 12px;
 
     .partner-profile-summary,
     .header-partner-info {
       display: flex;
       align-items: center;
       gap: 12px;
+      min-width: 0;
+      flex: 1 1 auto;
 
       .partner-meta {
+        min-width: 0;
+        flex: 1 1 auto;
+
         .name-status-row {
           display: flex;
           align-items: center;
           gap: 8px;
+          flex-wrap: wrap;
 
           .partner-title {
             margin: 0;
@@ -49,6 +56,9 @@
             font-weight: 700;
             color: #0f172a;
             line-height: 1.25;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
           }
 
           .badge-patient-family {
@@ -107,6 +117,38 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+
+      .btn-toggle-context-panel {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 36px;
+        padding: 0 12px;
+        border-radius: 8px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        border: 1px solid #cbd5e1;
+        background-color: #ffffff;
+        color: #334155;
+        white-space: nowrap;
+
+        &:hover {
+          background-color: #f1f5f9;
+          color: #087f8c;
+          border-color: #087f8c;
+          transform: translateY(-1px);
+        }
+
+        &.is-active {
+          background-color: #f0fdfa;
+          color: #087f8c;
+          border-color: #99f6e4;
+        }
+      }
 
       .btn-call-trigger {
         display: inline-flex;

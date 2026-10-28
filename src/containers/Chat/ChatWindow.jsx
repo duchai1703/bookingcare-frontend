@@ -27,7 +27,6 @@ import {
 import { useCall } from '../Call/CallContext';
 import Avatar from '../../components/Common/Avatar';
 import CallHistoryItem from './CallHistoryItem';
-import { FEATURES } from '../../config/features';
 import './ChatWindow.scss';
 
 const ChatWindow = ({
@@ -36,6 +35,7 @@ const ChatWindow = ({
   onClose,
   onStatusChange,
   isDrawer = false,
+  extraHeaderActions = null,
 }) => {
   const { userInfo } = useSelector((state) => state.user);
   const isDoctor = userInfo?.roleId === 'R2';
@@ -599,49 +599,47 @@ const ChatWindow = ({
         </div>
 
         <div className="header-actions">
-          {/* Audio Call Button (Feature Flag) */}
-          {FEATURES.ENABLE_VIDEO_CALL && (
-            <button
-              type="button"
-              className="btn-call-trigger btn-audio-call"
-              onClick={() => handleStartCall('AUDIO')}
-              disabled={!isFollowUpActive || currentStatus === 'CLOSED' || isReadOnly}
-              title={
-                !isFollowUpActive
-                  ? 'Thời hạn 7 ngày sau khám đã kết thúc'
-                  : currentStatus === 'CLOSED'
-                  ? 'Cuộc trò chuyện đã đóng'
-                  : 'Gọi thoại bảo mật P2P'
-              }
-              id="btn-chat-audio-call"
-              aria-label="Gọi thoại"
-            >
-              <Phone size={15} />
-              <span>Gọi thoại</span>
-            </button>
-          )}
+          {extraHeaderActions}
 
-          {/* Video Call Button (Feature Flag) */}
-          {FEATURES.ENABLE_VIDEO_CALL && (
-            <button
-              type="button"
-              className="btn-call-trigger btn-video-call"
-              onClick={() => handleStartCall('VIDEO')}
-              disabled={!isFollowUpActive || currentStatus === 'CLOSED' || isReadOnly}
-              title={
-                !isFollowUpActive
-                  ? 'Thời hạn 7 ngày sau khám đã kết thúc'
-                  : currentStatus === 'CLOSED'
-                  ? 'Cuộc trò chuyện đã đóng'
-                  : 'Gọi video trực tiếp sau khám'
-              }
-              id="btn-chat-video-call"
-              aria-label="Gọi video"
-            >
-              <Video size={15} />
-              <span>Gọi video</span>
-            </button>
-          )}
+          {/* Audio Call Button */}
+          <button
+            type="button"
+            className="btn-call-trigger btn-audio-call"
+            onClick={() => handleStartCall('AUDIO')}
+            disabled={!isFollowUpActive || currentStatus === 'CLOSED' || isReadOnly}
+            title={
+              !isFollowUpActive
+                ? 'Thời hạn 7 ngày sau khám đã kết thúc'
+                : currentStatus === 'CLOSED'
+                ? 'Cuộc trò chuyện đã đóng'
+                : 'Gọi thoại bảo mật P2P'
+            }
+            id="btn-chat-audio-call"
+            aria-label="Gọi thoại"
+          >
+            <Phone size={15} />
+            <span>Gọi thoại</span>
+          </button>
+
+          {/* Video Call Button */}
+          <button
+            type="button"
+            className="btn-call-trigger btn-video-call"
+            onClick={() => handleStartCall('VIDEO')}
+            disabled={!isFollowUpActive || currentStatus === 'CLOSED' || isReadOnly}
+            title={
+              !isFollowUpActive
+                ? 'Thời hạn 7 ngày sau khám đã kết thúc'
+                : currentStatus === 'CLOSED'
+                ? 'Cuộc trò chuyện đã đóng'
+                : 'Gọi video trực tiếp sau khám'
+            }
+            id="btn-chat-video-call"
+            aria-label="Gọi video"
+          >
+            <Video size={15} />
+            <span>Gọi video</span>
+          </button>
 
           {/* Status Toggle Button (Doctor only) */}
           {isDoctor && (
@@ -758,7 +756,6 @@ const ChatWindow = ({
           timelineItems.map((item) => {
             // Render Call History Item
             if (item._timelineType === 'CALL') {
-              if (!FEATURES.ENABLE_VIDEO_CALL) return null;
               return (
                 <CallHistoryItem
                   key={item._key}

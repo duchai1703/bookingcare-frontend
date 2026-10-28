@@ -21,7 +21,7 @@ $bg-portal: #f8fafc;
   }
 
   .portal-container {
-    max-width: 1240px;
+    max-width: 1360px;
     margin: 0 auto;
     padding: 0 20px;
     width: 100%;
@@ -34,8 +34,8 @@ $bg-portal: #f8fafc;
 
     .portal-grid {
       display: grid;
-      grid-template-columns: 280px 1fr;
-      gap: 24px;
+      grid-template-columns: 260px 1fr;
+      gap: 20px;
       align-items: start;
 
       @media (max-width: 960px) {

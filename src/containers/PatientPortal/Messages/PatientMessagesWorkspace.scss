@@ -23,7 +23,7 @@
   // CỘT 1: SIDEBAR DANH SÁCH BÁC SĨ (340px)
   // ========================================================
   .pmw-sidebar {
-    width: 350px;
+    width: 320px;
     flex-shrink: 0;
     border-right: 1px solid #e2e8f0;
     display: flex;
@@ -405,24 +405,29 @@
 
     // Header khung chat
     .pmw-chat-header {
-      padding: 14px 20px;
+      padding: 10px 16px;
       border-bottom: 1px solid #e2e8f0;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
+      gap: 12px;
+      row-gap: 8px;
       background: #ffffff;
       flex-shrink: 0;
+      min-height: 60px;
+      flex-wrap: wrap;
 
       &__doctor {
         display: flex;
         align-items: center;
-        gap: 12px;
-        min-width: 0;
+        gap: 10px;
+        min-width: 160px;
+        flex: 1 1 auto;
+        overflow: hidden;
 
         .pmw-doc-avatar-lg {
-          width: 46px;
-          height: 46px;
+          width: 42px;
+          height: 42px;
           border-radius: 50%;
           overflow: hidden;
           background: #e2e8f0;
@@ -430,7 +435,7 @@
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 22px;
+          font-size: 20px;
 
           img {
             width: 100%;
@@ -441,9 +446,11 @@
 
         .pmw-doc-header-info {
           min-width: 0;
+          flex: 1 1 auto;
+          overflow: hidden;
 
           h3 {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 700;
             color: #0f172a;
             margin: 0 0 2px 0;
@@ -458,10 +465,21 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            flex-wrap: wrap;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex-wrap: nowrap;
+
+            .pmw-doc-spec {
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              flex-shrink: 0;
+            }
 
             .pmw-meta-dot {
               color: #cbd5e1;
+              flex-shrink: 0;
             }
 
             .pmw-patient-context {
@@ -469,6 +487,11 @@
               background: #f0fdfa;
               padding: 1px 6px;
               border-radius: 4px;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              max-width: 220px;
+              flex-shrink: 1;
             }
           }
         }
@@ -477,17 +500,20 @@
       &__actions {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
         flex-shrink: 0;
+        flex-wrap: wrap;
+        justify-content: flex-end;
 
         .pmw-header-status-pill {
-          display: flex;
+          display: inline-flex;
           align-items: center;
-          gap: 6px;
-          font-size: 11.5px;
+          gap: 5px;
+          font-size: 11px;
           font-weight: 600;
-          padding: 5px 10px;
-          border-radius: 20px;
+          padding: 4px 9px;
+          border-radius: 999px;
+          white-space: nowrap;
 
           &--active {
             background: #ecfdf5;
@@ -509,22 +535,83 @@
           }
         }
 
+        .pmw-btn-call {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          height: 32px;
+          padding: 0 10px;
+          border-radius: 8px;
+          font-size: 11.5px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+          border: 1px solid transparent;
+          white-space: nowrap;
+
+          &.pmw-btn-video-call {
+            background-color: #eff6ff;
+            color: #2563eb;
+            border-color: #bfdbfe;
+
+            &:hover:not(:disabled) {
+              background-color: #dbeafe;
+              border-color: #93c5fd;
+              transform: translateY(-1px);
+              box-shadow: 0 2px 6px rgba(37, 99, 235, 0.15);
+            }
+          }
+
+          &.pmw-btn-audio-call {
+            background-color: #f0fdf4;
+            color: #16a34a;
+            border-color: #bbf7d0;
+
+            &:hover:not(:disabled) {
+              background-color: #dcfce7;
+              border-color: #86efac;
+              transform: translateY(-1px);
+              box-shadow: 0 2px 6px rgba(22, 163, 74, 0.15);
+            }
+          }
+
+          &:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            filter: grayscale(0.5);
+          }
+
+          &:active:not(:disabled) {
+            transform: scale(0.97);
+          }
+        }
+
         .pmw-btn-view-records {
           display: inline-flex;
           align-items: center;
-          padding: 6px 12px;
-          font-size: 12px;
+          gap: 6px;
+          height: 32px;
+          padding: 0 10px;
+          font-size: 11.5px;
           font-weight: 600;
           color: #0d9488;
           background: #f0fdfa;
           border: 1px solid #99f6e4;
           border-radius: 8px;
           cursor: pointer;
-          transition: all 0.15s ease;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+          white-space: nowrap;
 
           &:hover {
             background: #ccfbf1;
+            border-color: #5eead4;
             color: #0f766e;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(13, 148, 136, 0.12);
+          }
+
+          &:active {
+            transform: scale(0.97);
           }
         }
       }

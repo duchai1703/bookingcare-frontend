@@ -25,7 +25,6 @@ import RatingModal from './RatingModal';
 import AppointmentQrModal from './AppointmentQrModal';
 import SmartRescheduleModal from './SmartRescheduleModal';
 import PatientChatModal from './PatientChatModal';
-import { FEATURES } from '../../config/features';
 
 import './AppointmentHistory.scss';
 
@@ -65,7 +64,6 @@ const AppointmentHistory = () => {
   const [chatModal, setChatModal] = useState({ isOpen: false, booking: null });
 
   const handleOpenChat = (booking) => {
-    if (!FEATURES.ENABLE_CHAT) return;
     if (booking?.id) {
       navigate(`/patient/chat?bookingId=${booking.id}`);
     } else {
@@ -877,16 +875,14 @@ const AppointmentHistory = () => {
                         </button>
                       )}
 
-                      {FEATURES.ENABLE_CHAT && (
-                        <button
-                          type="button"
-                          className="btn-card-action btn-card-chat"
-                          onClick={() => handleOpenChat(b)}
-                          title="Nhắn tin trao đổi sau khám với bác sĩ"
-                        >
-                          <i className="fas fa-comments" /> Nhắn tin với bác sĩ
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        className="btn-card-action btn-card-chat"
+                        onClick={() => handleOpenChat(b)}
+                        title="Nhắn tin trao đổi sau khám với bác sĩ"
+                      >
+                        <i className="fas fa-comments" /> Nhắn tin với bác sĩ
+                      </button>
                     </>
                   )}
                 </div>
@@ -984,7 +980,7 @@ const AppointmentHistory = () => {
                           Đánh giá
                         </button>
                       )}
-                      {FEATURES.ENABLE_CHAT && b.statusId === 'S3' && (
+                      {b.statusId === 'S3' && (
                         <button
                           type="button"
                           className="btn-tbl-chat"
@@ -1050,7 +1046,7 @@ const AppointmentHistory = () => {
                     <span>Mã QR</span>
                   </button>
 
-                  {FEATURES.ENABLE_CHAT && detailBooking.statusId === 'S3' && (
+                  {detailBooking.statusId === 'S3' && (
                     <button
                       type="button"
                       className="btn-modal-chat"
@@ -1679,14 +1675,12 @@ const AppointmentHistory = () => {
       {/* ═══════════════════════════════════════════════════════════
           MODAL NHẮN TIN SAU KHÁM VỚI BÁC SĨ (S3)
       ═══════════════════════════════════════════════════════════ */}
-      {FEATURES.ENABLE_CHAT && (
-        <PatientChatModal
-          isOpen={chatModal.isOpen}
-          onClose={() => setChatModal({ isOpen: false, booking: null })}
-          booking={chatModal.booking}
-          guardianName={userInfo ? `${userInfo.lastName || ''} ${userInfo.firstName || ''}`.trim() : ''}
-        />
-      )}
+      <PatientChatModal
+        isOpen={chatModal.isOpen}
+        onClose={() => setChatModal({ isOpen: false, booking: null })}
+        booking={chatModal.booking}
+        guardianName={userInfo ? `${userInfo.lastName || ''} ${userInfo.firstName || ''}`.trim() : ''}
+      />
     </div>
   );
 };

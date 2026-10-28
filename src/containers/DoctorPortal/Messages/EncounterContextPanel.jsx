@@ -24,7 +24,6 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import CommonUtils from '../../../utils/CommonUtils';
-import { FEATURES } from '../../../config/features';
 import './EncounterContextPanel.scss';
 
 const EncounterContextPanel = ({ workspaceData, isLoading, onClose }) => {
@@ -314,8 +313,8 @@ const EncounterContextPanel = ({ workspaceData, isLoading, onClose }) => {
               )}
             </section>
 
-            {/* Telemedicine Call Logs (Feature Flag) */}
-            {FEATURES.ENABLE_VIDEO_CALL && callHistory && callHistory.length > 0 && (
+            {/* Telemedicine Call Logs */}
+            {callHistory && callHistory.length > 0 && (
               <section className="section-card call-logs-card">
                 <div className="card-heading-row">
                   <div className="heading-left">

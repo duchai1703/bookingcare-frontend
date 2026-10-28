@@ -369,27 +369,25 @@ const DoctorMessagesWorkspace = () => {
       <div className="messages-detail-pane">
         {selectedConversation ? (
           <div className="active-chat-wrapper">
-            {/* Top Toolbar for toggling Clinical Context Panel */}
-            <div className="workspace-action-bar">
-              <button
-                type="button"
-                className={`btn-toggle-context-panel ${isPanelOpen ? 'is-active' : ''}`}
-                onClick={() => setIsPanelOpen(!isPanelOpen)}
-                title={isPanelOpen ? 'Thu gọn hồ sơ ca khám' : 'Mở rộng hồ sơ ca khám'}
-                id="btn-toggle-encounter-panel"
-              >
-                <Stethoscope size={15} />
-                <span>{isPanelOpen ? 'Ẩn hồ sơ ca khám' : 'Xem hồ sơ ca khám'}</span>
-                {isPanelOpen ? <PanelRightClose size={15} /> : <PanelRightOpen size={15} />}
-              </button>
-            </div>
-
             <ChatWindow
               key={selectedConversation.id}
               conversation={selectedConversation}
               workspaceData={workspaceData}
               onStatusChange={handleStatusChange}
               isDrawer={false}
+              extraHeaderActions={
+                <button
+                  type="button"
+                  className={`btn-toggle-context-panel ${isPanelOpen ? 'is-active' : ''}`}
+                  onClick={() => setIsPanelOpen(!isPanelOpen)}
+                  title={isPanelOpen ? 'Thu gọn hồ sơ ca khám' : 'Mở rộng hồ sơ ca khám'}
+                  id="btn-toggle-encounter-panel"
+                >
+                  <Stethoscope size={15} />
+                  <span>{isPanelOpen ? 'Ẩn hồ sơ ca khám' : 'Xem hồ sơ ca khám'}</span>
+                  {isPanelOpen ? <PanelRightClose size={15} /> : <PanelRightOpen size={15} />}
+                </button>
+              }
             />
           </div>
         ) : (

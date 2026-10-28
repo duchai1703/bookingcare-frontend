@@ -199,15 +199,72 @@ class ChatSocketService {
    */
   sendMessage({ conversationId, clientMessageId, content, messageType = 'TEXT' }) {
     const socket = this.connect();
-    if (!socket || !socket.connected) {
+    if (!socket) {
       return Promise.reject(new Error('Chưa kết nối tới máy chủ thời gian thực.'));
     }
 
+    const finalClientMessageId =
+      clientMessageId ||
+      (typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`);
+
+    if (!socket.connected) {
+      return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => {
+          cleanup();
+          reject(new Error('Chưa kết nối tới máy chủ thời gian thực. Vui lòng thử lại.'));
+        }, 5000);
+
+        const onConnect = () => {
+          cleanup();
+          this.sendMessage({
+            conversationId,
+            clientMessageId: finalClientMessageId,
+            content,
+            messageType,
+          })
+            .then(resolve)
+            .catch(reject);
+        };
+
+        const onErr = (err) => {
+          cleanup();
+          reject(new Error(err?.message || 'Lỗi kết nối máy chủ chat.'));
+        };
+
+        const cleanup = () => {
+          clearTimeout(timer);
+          socket.off('connect', onConnect);
+          socket.off('connect_error', onErr);
+        };
+
+        socket.once('connect', onConnect);
+        socket.once('connect_error', onErr);
+      });
+    }
+
     return new Promise((resolve, reject) => {
+      let finished = false;
+      const timeout = setTimeout(() => {
+        if (!finished) {
+          finished = true;
+          reject(new Error('Hết thời gian chờ phản hồi từ máy chủ chat.'));
+        }
+      }, 10000);
+
       socket.emit(
         'chat:message:send',
-        { conversationId, clientMessageId, content, messageType },
+        {
+          conversationId: parseInt(conversationId, 10),
+          clientMessageId: finalClientMessageId,
+          content,
+          messageType,
+        },
         (response) => {
+          if (finished) return;
+          finished = true;
+          clearTimeout(timeout);
           if (response && response.success) {
             resolve(response.data);
           } else {

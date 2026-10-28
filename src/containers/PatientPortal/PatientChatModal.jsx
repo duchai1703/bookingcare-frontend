@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { MessageSquare, AlertCircle, Users, User } from 'lucide-react';
 import { getOrCreateConversationForBooking } from '../../services/chatApiService';
-import { FEATURES } from '../../config/features';
 import ChatWindow from '../Chat/ChatWindow';
 import './PatientChatModal.scss';
 
@@ -107,7 +106,7 @@ const PatientChatModal = ({ isOpen, onClose, booking, guardianName }) => {
     };
   }, [isOpen, booking]);
 
-  if (!isOpen || !FEATURES.ENABLE_CHAT) return null;
+  if (!isOpen) return null;
 
   return (
     <div className="patient-chat-modal-backdrop" onClick={onClose}>

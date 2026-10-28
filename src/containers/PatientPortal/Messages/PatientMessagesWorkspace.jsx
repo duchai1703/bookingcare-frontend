@@ -11,6 +11,7 @@ import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom'
 import moment from 'moment';
 import 'moment/locale/vi';
 import { toast } from 'react-toastify';
+import { v4 as uuidv4 } from 'uuid';
 import {
   getUserConversations,
   getConversationWorkspace,
@@ -20,6 +21,8 @@ import {
 } from '../../../services/chatApiService';
 import chatSocketService from '../../../services/chatSocketService';
 import { downloadBookingAttachment } from '../../../services/patientService';
+import { useCall } from '../../Call/CallContext';
+import CallHistoryItem from '../../Chat/CallHistoryItem';
 import CommonUtils from '../../../utils/CommonUtils';
 import { path } from '../../../utils/constants';
 import './PatientMessagesWorkspace.scss';
@@ -121,6 +124,7 @@ const PatientMessagesWorkspace = () => {
   const queryBookingId = searchParams.get('bookingId');
 
   const { userInfo } = useSelector((state) => state.user);
+  const { initiateCall } = useCall();
 
   // States danh sách hội thoại
   const [conversations, setConversations] = useState([]);
@@ -135,8 +139,9 @@ const PatientMessagesWorkspace = () => {
   const [selectedEncounterForDrawer, setSelectedEncounterForDrawer] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  // States tin nhắn
+  // States tin nhắn & Cuộc gọi
   const [messages, setMessages] = useState([]);
+  const [callHistory, setCallHistory] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -149,6 +154,27 @@ const PatientMessagesWorkspace = () => {
   // Cuộn xuống tin nhắn mới nhất
   const scrollToBottom = (behavior = 'smooth') => {
     messagesEndRef.current?.scrollIntoView({ behavior });
+  };
+
+  // Kích hoạt cuộc gọi WebRTC Audio/Video với Bác sĩ
+  const handleStartCall = (callType) => {
+    if (!selectedConversation?.isFollowUpActive || selectedConversation?.isReadOnly) {
+      toast.warning('Cuộc gọi chỉ khả dụng khi lịch hẹn trong thời hạn 7 ngày và cuộc trò chuyện đang mở.');
+      return;
+    }
+    const receiverId = selectedConversation.doctorId;
+    const doc = selectedConversation.doctorUser;
+    const partnerName = doc ? `BS. ${doc.lastName || ''} ${doc.firstName || ''}`.trim() : 'Bác sĩ';
+    const partnerAvatar = doc?.image ? CommonUtils.decodeBase64Image(doc.image) : null;
+
+    initiateCall({
+      bookingId: selectedConversation.bookingId,
+      receiverId,
+      callType,
+      partnerName,
+      partnerAvatar,
+      partnerRole: 'R2',
+    });
   };
 
   // 1. Tải danh sách cuộc trò chuyện của bệnh nhân
@@ -228,7 +254,7 @@ const PatientMessagesWorkspace = () => {
     };
   }, [selectedConversation?.id]);
 
-  // 3. Tải tin nhắn & Đánh dấu đã đọc
+  // 3. Tải tin nhắn & Đánh dấu đã đọc & Lịch sử cuộc gọi
   const fetchMessages = useCallback(async (convId) => {
     if (!convId) return;
     try {
@@ -236,6 +262,7 @@ const PatientMessagesWorkspace = () => {
       const res = await getConversationMessages(convId, { limit: 50 });
       if (res && res.errCode === 0) {
         setMessages(res.data?.messages || res.data || []);
+        setCallHistory(res.data?.callHistory || res.meta?.callHistory || []);
         setTimeout(() => scrollToBottom('instant'), 80);
         // Đánh dấu đã đọc
         markMessagesAsRead(convId).catch(() => {});
@@ -252,10 +279,11 @@ const PatientMessagesWorkspace = () => {
       fetchMessages(selectedConversation.id);
     } else {
       setMessages([]);
+      setCallHistory([]);
     }
   }, [selectedConversation?.id, fetchMessages]);
 
-  // 4. Kết nối Socket Realtime cho cuộc hội thoại được chọn
+  // 4. Kết nối Socket Realtime cho cuộc hội thoại được chọn & Đồng bộ Cuộc gọi
   useEffect(() => {
     if (!selectedConversation?.id) return;
 
@@ -264,11 +292,29 @@ const PatientMessagesWorkspace = () => {
       console.warn('Failed to join conversation room:', err);
     });
 
+    const curConvId = parseInt(selectedConversation.id, 10);
+    const curBookingId = selectedConversation.bookingId ? parseInt(selectedConversation.bookingId, 10) : null;
+
     const unsubNewMessage = chatSocketService.on('chat:message:new', (data) => {
       const msg = data?.message || data;
-      if (data?.conversationId === selectedConversation.id || msg?.conversationId === selectedConversation.id) {
+      const dataConvId = data?.conversationId ? parseInt(data.conversationId, 10) : null;
+      const msgConvId = msg?.conversationId ? parseInt(msg.conversationId, 10) : null;
+
+      if ((dataConvId && dataConvId === curConvId) || (msgConvId && msgConvId === curConvId)) {
         setMessages((prev) => {
-          if (prev.some((m) => m.id === msg.id)) return prev;
+          const exists = prev.some(
+            (m) =>
+              (m.id && msg.id && m.id === msg.id) ||
+              (m.clientMessageId && msg.clientMessageId && m.clientMessageId === msg.clientMessageId)
+          );
+          if (exists) {
+            return prev.map((m) =>
+              (m.id && msg.id && m.id === msg.id) ||
+              (m.clientMessageId && msg.clientMessageId && m.clientMessageId === msg.clientMessageId)
+                ? msg
+                : m
+            );
+          }
           return [...prev, msg];
         });
         setTimeout(() => scrollToBottom('smooth'), 50);
@@ -277,20 +323,101 @@ const PatientMessagesWorkspace = () => {
     });
 
     const unsubTyping = chatSocketService.on('chat:typing', (data) => {
-      if (data?.conversationId === selectedConversation.id && data?.userId !== userInfo?.id) {
-        setPartnerTyping(true);
+      const typingConvId = data?.conversationId ? parseInt(data.conversationId, 10) : null;
+      if (typingConvId === curConvId && Number(data?.userId) !== Number(userInfo?.id)) {
+        setPartnerTyping(Boolean(data?.isTyping !== false));
         if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
         typingTimeoutRef.current = setTimeout(() => setPartnerTyping(false), 2500);
       }
     });
 
+    const unsubError = chatSocketService.on('chat:error', (data) => {
+      if (data?.message) {
+        toast.warning(data.message);
+      }
+    });
+
+    // Lắng nghe bản ghi lịch sử cuộc gọi thời gian thực
+    const handleCallHistoryRecord = (data) => {
+      if (!data) return;
+      const dataConvId = data.conversationId ? parseInt(data.conversationId, 10) : null;
+      const dataBookId = data.bookingId ? parseInt(data.bookingId, 10) : null;
+
+      const isMatch =
+        (dataConvId && curConvId && dataConvId === curConvId) ||
+        (dataBookId && curBookingId && dataBookId === curBookingId);
+
+      if (isMatch) {
+        setCallHistory((prev) => {
+          const exists = prev.some(
+            (c) =>
+              (c.callId && data.callId && c.callId === data.callId) ||
+              (c.id && data.callSessionId && c.id === data.callSessionId) ||
+              (c.id && data.id && c.id === data.id)
+          );
+          if (exists) {
+            return prev.map((c) =>
+              ((c.callId && c.callId === data.callId) ||
+                (c.id && (c.id === data.callSessionId || c.id === data.id)))
+                ? { ...c, ...data }
+                : c
+            );
+          }
+          return [...prev, data];
+        });
+      }
+    };
+
+    const unsubCallHistory = chatSocketService.on('call:history:record', handleCallHistoryRecord);
+    const unsubCallEnded = chatSocketService.on('call:ended', () => {
+      setTimeout(() => fetchMessages(selectedConversation.id), 350);
+    });
+    const unsubCallCancelled = chatSocketService.on('call:cancelled', () => {
+      setTimeout(() => fetchMessages(selectedConversation.id), 350);
+    });
+    const unsubCallRejected = chatSocketService.on('call:rejected', () => {
+      setTimeout(() => fetchMessages(selectedConversation.id), 350);
+    });
+    const unsubCallTimeout = chatSocketService.on('call:timeout', () => {
+      setTimeout(() => fetchMessages(selectedConversation.id), 350);
+    });
+    const unsubCallMissed = chatSocketService.on('call:missed', () => {
+      setTimeout(() => fetchMessages(selectedConversation.id), 350);
+    });
+
     return () => {
       if (typeof unsubNewMessage === 'function') unsubNewMessage();
       if (typeof unsubTyping === 'function') unsubTyping();
+      if (typeof unsubError === 'function') unsubError();
+      if (typeof unsubCallHistory === 'function') unsubCallHistory();
+      if (typeof unsubCallEnded === 'function') unsubCallEnded();
+      if (typeof unsubCallCancelled === 'function') unsubCallCancelled();
+      if (typeof unsubCallRejected === 'function') unsubCallRejected();
+      if (typeof unsubCallTimeout === 'function') unsubCallTimeout();
+      if (typeof unsubCallMissed === 'function') unsubCallMissed();
       chatSocketService.leaveConversation(selectedConversation.id);
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     };
-  }, [selectedConversation?.id, userInfo?.id]);
+  }, [selectedConversation?.id, userInfo?.id, fetchMessages]);
+
+  // Kết hợp dòng thời gian: Tin nhắn + Lịch sử cuộc gọi
+  const timelineItems = useMemo(() => {
+    const formattedMessages = messages.map((m) => ({
+      ...m,
+      _timelineType: 'MESSAGE',
+      _sortTime: new Date(m.createdAt).getTime() || 0,
+      _key: `msg_${m.id || m.clientMessageId}`,
+    }));
+
+    const formattedCalls = callHistory.map((c) => ({
+      ...c,
+      _timelineType: 'CALL',
+      _sortTime: new Date(c.createdAt || c.startedAt || c.endedAt || Date.now()).getTime() || 0,
+      _key: `call_${c.callId || c.id}`,
+    }));
+
+    return [...formattedMessages, ...formattedCalls].sort((a, b) => a._sortTime - b._sortTime);
+  }, [messages, callHistory]);
 
   // Gửi tin nhắn
   const handleSendMessage = async (e) => {
@@ -303,19 +430,74 @@ const PatientMessagesWorkspace = () => {
       return;
     }
 
+    if (trimmed.length > 2000) {
+      toast.warning('Nội dung tin nhắn không được vượt quá 2000 ký tự.');
+      return;
+    }
+
+    const clientMsgId = uuidv4();
     setIsSending(true);
+
+    // Optimistic message: hiển thị ngay lập tức trên giao diện
+    const optimisticMsg = {
+      id: null,
+      clientMessageId: clientMsgId,
+      conversationId: selectedConversation.id,
+      senderId: userInfo?.id,
+      content: trimmed,
+      messageType: 'TEXT',
+      createdAt: new Date().toISOString(),
+      sender: {
+        id: userInfo?.id,
+        firstName: userInfo?.firstName,
+        lastName: userInfo?.lastName,
+        image: userInfo?.image,
+        roleId: userInfo?.roleId,
+      },
+    };
+
+    setMessages((prev) => [...prev, optimisticMsg]);
+    setInputText('');
+    if (textareaRef.current) textareaRef.current.style.height = 'auto';
+    setTimeout(() => scrollToBottom('smooth'), 50);
+
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    chatSocketService.sendTyping(selectedConversation.id, false);
+
     try {
-      chatSocketService.sendMessage({
+      const savedMsg = await chatSocketService.sendMessage({
         conversationId: selectedConversation.id,
+        clientMessageId: clientMsgId,
         content: trimmed,
         messageType: 'TEXT',
       });
-      setInputText('');
-      if (textareaRef.current) textareaRef.current.style.height = 'auto';
+      if (savedMsg) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.clientMessageId === clientMsgId || (savedMsg.id && m.id === savedMsg.id) ? savedMsg : m
+          )
+        );
+      }
     } catch (err) {
-      toast.error('Lỗi khi gửi tin nhắn!');
+      console.error('Lỗi khi gửi tin nhắn:', err);
+      toast.error(err?.message || 'Lỗi khi gửi tin nhắn!');
+      // Rollback optimistic message nếu gửi thất bại
+      setMessages((prev) => prev.filter((m) => m.clientMessageId !== clientMsgId));
+      setInputText(trimmed);
     } finally {
       setIsSending(false);
+    }
+  };
+
+  // Typing indicator
+  const handleInputChange = (e) => {
+    setInputText(e.target.value);
+    if (selectedConversation?.id) {
+      chatSocketService.sendTyping(selectedConversation.id, true);
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = setTimeout(() => {
+        chatSocketService.sendTyping(selectedConversation.id, false);
+      }, 2000);
     }
   };
 
@@ -715,37 +897,83 @@ const PatientMessagesWorkspace = () => {
                     BS. {selectedConversation.doctorUser?.lastName} {selectedConversation.doctorUser?.firstName}
                   </h3>
                   <div className="pmw-doc-meta-sub">
-                    <span>{selectedConversation.doctorUser?.doctorInfoData?.specialtyData?.name || 'Chuyên khoa'}</span>
+                    <span className="pmw-doc-spec">
+                      {selectedConversation.doctorUser?.doctorInfoData?.specialtyData?.name || 'Chuyên khoa'}
+                    </span>
                     <span className="pmw-meta-dot">·</span>
-                    <span className="pmw-patient-context">
-                      Hồ sơ người khám: <strong>{selectedConversation.patientIdentity?.actualPatientName}</strong>{' '}
+                    <span
+                      className="pmw-patient-context"
+                      title={`Hồ sơ người khám: ${selectedConversation.patientIdentity?.actualPatientName || ''} (${getRelationshipBadge(selectedConversation.patientIdentity).label})`}
+                    >
+                      Khám: <strong>{selectedConversation.patientIdentity?.actualPatientName}</strong>{' '}
                       ({getRelationshipBadge(selectedConversation.patientIdentity).label})
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Trạng thái quyền chat & Nút mở hồ sơ */}
+              {/* Trạng thái quyền chat & Nút gọi WebRTC & Nút mở hồ sơ */}
               <div className="pmw-chat-header__actions">
                 {selectedConversation.isFollowUpActive ? (
-                  <div className="pmw-header-status-pill pmw-header-status-pill--active">
+                  <div
+                    className="pmw-header-status-pill pmw-header-status-pill--active"
+                    title={`Quyền chat sau khám 7 ngày: ${formatRemainingTime(selectedConversation.remainingTimeMs)}`}
+                  >
                     <span className="status-dot" />
-                    <span>Quyền chat {formatRemainingTime(selectedConversation.remainingTimeMs)}</span>
+                    <span>{formatRemainingTime(selectedConversation.remainingTimeMs)}</span>
                   </div>
                 ) : (
-                  <div className="pmw-header-status-pill pmw-header-status-pill--readonly">
+                  <div
+                    className="pmw-header-status-pill pmw-header-status-pill--readonly"
+                    title="Hết hạn 7 ngày trao đổi sau khám — Chuyển sang lưu trữ"
+                  >
                     <i className="fas fa-eye tw-mr-1" />
-                    <span>Chế độ chỉ xem hồ sơ</span>
+                    <span>Lưu trữ</span>
                   </div>
                 )}
+
+                {/* WebRTC Video Call & Audio Call triggers */}
+                <button
+                  type="button"
+                  className="pmw-btn-call pmw-btn-video-call"
+                  onClick={() => handleStartCall('VIDEO')}
+                  disabled={!selectedConversation.isFollowUpActive || selectedConversation.isReadOnly}
+                  title={
+                    !selectedConversation.isFollowUpActive
+                      ? 'Thời hạn 7 ngày sau khám đã kết thúc'
+                      : 'Gọi video trực tiếp với bác sĩ'
+                  }
+                  id="btn-patient-video-call"
+                >
+                  <i className="fas fa-video tw-mr-1.5" />
+                  <span>Gọi video</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="pmw-btn-call pmw-btn-audio-call"
+                  onClick={() => handleStartCall('AUDIO')}
+                  disabled={!selectedConversation.isFollowUpActive || selectedConversation.isReadOnly}
+                  title={
+                    !selectedConversation.isFollowUpActive
+                      ? 'Thời hạn 7 ngày sau khám đã kết thúc'
+                      : 'Gọi thoại bảo mật với bác sĩ'
+                  }
+                  id="btn-patient-audio-call"
+                >
+                  <i className="fas fa-phone-alt tw-mr-1.5" />
+                  <span>Gọi thoại</span>
+                </button>
 
                 <button
                   type="button"
                   className="pmw-btn-view-records"
                   onClick={() => handleOpenDrawer()}
-                  title="Mở hồ sơ chẩn đoán & đơn thuốc"
+                  title="Mở hồ sơ chẩn đoán & đơn thuốc của ca khám này"
+                  id="btn-patient-view-records"
                 >
-                  <i className="fas fa-file-medical tw-mr-1.5" /> Hồ sơ phiên khám
+                  <i className="fas fa-file-medical tw-mr-1.5" />
+                  <span>Hồ sơ ca khám</span>
                 </button>
               </div>
             </header>
@@ -802,24 +1030,38 @@ const PatientMessagesWorkspace = () => {
                   </React.Fragment>
                 ))}
 
-                {/* 2. Luồng tin nhắn chat */}
+                {/* 2. Luồng tin nhắn chat & Lịch sử cuộc gọi */}
                 {isLoadingMessages ? (
                   <div className="pmw-stream-loading">
                     <i className="fas fa-spinner fa-spin" /> Đang tải lịch sử trao đổi...
                   </div>
-                ) : messages.length === 0 ? (
+                ) : timelineItems.length === 0 ? (
                   <div className="pmw-stream-empty">
                     <p>Chưa có tin nhắn nào trong hội thoại này. Bạn có thể gửi câu hỏi hoặc thắc mắc sau buổi khám.</p>
                   </div>
                 ) : (
-                  messages.map((msg) => {
-                    const isMe = msg.senderId === userInfo?.id;
+                  timelineItems.map((item) => {
+                    // Hiển thị mốc cuộc gọi WebRTC
+                    if (item._timelineType === 'CALL') {
+                      return (
+                        <CallHistoryItem
+                          key={item._key}
+                          call={item}
+                          currentUserId={userInfo?.id}
+                          onCallAgain={handleStartCall}
+                          canCallAgain={selectedConversation.isFollowUpActive && !selectedConversation.isReadOnly}
+                        />
+                      );
+                    }
+
+                    // Hiển thị tin nhắn thông thường
+                    const isMe = Number(item.senderId || item.sender?.id) === Number(userInfo?.id);
                     return (
-                      <div key={msg.id} className={`pmw-msg-bubble-wrap ${isMe ? 'me' : 'other'}`}>
+                      <div key={item._key} className={`pmw-msg-bubble-wrap ${isMe ? 'me' : 'other'}`}>
                         <div className="pmw-msg-bubble">
-                          <p className="pmw-msg-text">{msg.content}</p>
+                          <p className="pmw-msg-text">{item.content}</p>
                           <span className="pmw-msg-meta">
-                            {moment(msg.createdAt).format('HH:mm')}
+                            {moment(item.createdAt).format('HH:mm')}
                             {isMe && <i className="fas fa-check tw-ml-1" style={{ fontSize: 10 }} />}
                           </span>
                         </div>
@@ -848,7 +1090,7 @@ const PatientMessagesWorkspace = () => {
                     className="pmw-textarea"
                     placeholder="Nhập nội dung trao đổi sau khám với bác sĩ (nhấn Enter để gửi)..."
                     value={inputText}
-                    onChange={(e) => setInputText(e.target.value)}
+                    onChange={handleInputChange}
                     onKeyDown={handleKeyDown}
                   />
                   <button

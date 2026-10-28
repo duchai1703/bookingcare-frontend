@@ -105,9 +105,6 @@ import AIChatbot from './Patient/AIChatbot/AIChatbot';
 // [WebRTC 1-1 Audio/Video Call Manager]
 import { CallProvider } from './Call/CallContext';
 
-// [Enterprise Feature Flags]
-import { FEATURES } from '../config/features';
-
 import './App.scss';
 
 // Tự động cuộn trang lên đỉnh (0, 0) khi chuyển route SPA
@@ -351,17 +348,8 @@ const App = () => {
             <Route path="doctor-profile" element={<DoctorProfile />} />
             <Route path="doctor-revenue" element={<DoctorRevenue />} />
             <Route path="encounter/:bookingId" element={<EncounterWorkspace />} />
-            {FEATURES.ENABLE_CHAT ? (
-              <>
-                <Route path="messages" element={<DoctorMessagesWorkspace />} />
-                <Route path="messages/:conversationId" element={<DoctorMessagesWorkspace />} />
-              </>
-            ) : (
-              <>
-                <Route path="messages" element={<Navigate to="manage-patient" replace />} />
-                <Route path="messages/:conversationId" element={<Navigate to="manage-patient" replace />} />
-              </>
-            )}
+            <Route path="messages" element={<DoctorMessagesWorkspace />} />
+            <Route path="messages/:conversationId" element={<DoctorMessagesWorkspace />} />
             <Route path="medicines" element={<MedicineManage />} />
             <Route path="medical-catalogs" element={<MedicalCatalogManage />} />
             <Route path="shorthands" element={<DoctorShorthandManage />} />
