@@ -3,7 +3,7 @@
 // Renders Structured Preliminary Health Assessment with Strict Safety Boundaries
 // ═══════════════════════════════════════════════════════════════════
 
-import React, { memo, useState } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import {
   Activity,
   AlertTriangle,
@@ -47,6 +47,10 @@ const HealthAssessmentCard = memo(({ assessment, onQuestionClick, onOptionSelect
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [openTextValues, setOpenTextValues] = useState({});
   const [submittingQuestionId, setSubmittingQuestionId] = useState(null);
+
+  useEffect(() => {
+    setSubmittingQuestionId(null);
+  }, [assessment]);
 
   if (!assessment || typeof assessment !== 'object') return null;
 
