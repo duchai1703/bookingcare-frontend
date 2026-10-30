@@ -4,7 +4,7 @@
 // Interactive Quick Actions: Book for Member & View Medical History
 // ═══════════════════════════════════════════════════════════════════════
 
-import React, { memo } from 'react';
+import React, { memo, useState, useCallback } from 'react';
 import {
   Users,
   User,
@@ -18,8 +18,19 @@ import {
 
 const RELATION_MAP = {
   CHILD: 'Con',
+  CON: 'Con',
+  CON_CAI: 'Con',
   PARENT: 'Bố / Mẹ',
+  BO_ME: 'Bố / Mẹ',
+  BO: 'Bố',
+  ME: 'Mẹ',
+  CHA: 'Bố',
   SPOUSE: 'Vợ / Chồng',
+  VO_CHONG: 'Vợ / Chồng',
+  VO: 'Vợ',
+  CHONG: 'Chồng',
+  SIBLING: 'Anh / Chị / Em',
+  ANH_CHI_EM: 'Anh / Chị / Em',
   OTHER: 'Người thân khác',
 };
 
@@ -34,6 +45,19 @@ const GENDER_MAP = {
 };
 
 const FamilyMemberListCard = memo(({ familyList, onSelectMember, onBookForMember, onViewHistory }) => {
+  const [clickedMemberId, setClickedMemberId] = useState(null);
+
+  const handleBook = useCallback((member) => {
+    if (clickedMemberId) return;
+    setClickedMemberId(member.id);
+    if (onBookForMember) {
+      onBookForMember(member);
+    }
+    setTimeout(() => {
+      setClickedMemberId(null);
+    }, 2000);
+  }, [clickedMemberId, onBookForMember]);
+
   if (!familyList || typeof familyList !== 'object') return null;
 
   const data = familyList.data || familyList;
@@ -111,7 +135,8 @@ const FamilyMemberListCard = memo(({ familyList, onSelectMember, onBookForMember
                     <button
                       type="button"
                       className="btn-family-action btn-book-for"
-                      onClick={() => onBookForMember && onBookForMember(fullName)}
+                      onClick={() => handleBook(member)}
+                      disabled={clickedMemberId === member.id}
                       title={`Đặt lịch khám cho ${fullName}`}
                     >
                       <CalendarPlus size={13} />
@@ -120,7 +145,7 @@ const FamilyMemberListCard = memo(({ familyList, onSelectMember, onBookForMember
                     <button
                       type="button"
                       className="btn-family-action btn-history-for"
-                      onClick={() => onViewHistory && onViewHistory(fullName)}
+                      onClick={() => onViewHistory && onViewHistory(member)}
                       title={`Xem lịch sử khám của ${fullName}`}
                     >
                       <History size={13} />

@@ -69,6 +69,8 @@ const AIChatbot = memo(() => {
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [selectedDoctorId, setSelectedDoctorId] = useState(null);
   const [selectedScheduleId, setSelectedScheduleId] = useState(null);
+  const [selectedFamilyMember, setSelectedFamilyMember] = useState(null);
+  const selectedFamilyMemberRef = useRef(null);
   const [isBookingProcessing, setIsBookingProcessing] = useState(false);
   const [isCancelProcessing, setIsCancelProcessing] = useState(false);
   const [isRescheduleProcessing, setIsRescheduleProcessing] = useState(false);
@@ -80,6 +82,11 @@ const AIChatbot = memo(() => {
   const tokenRef = useRef(accessToken);  // [useRef Token — Chống Stale Closure]
   const latestMessagesRef = useRef([]);  // [Stale Closure Breaker — finally dùng ref này]
   const activeRequestIdRef = useRef(null); // [Active Request ID Ref — Chống Race Condition]
+
+  // ──── [Sync selectedFamilyMemberRef] ────
+  useEffect(() => {
+    selectedFamilyMemberRef.current = selectedFamilyMember;
+  }, [selectedFamilyMember]);
 
   // ──── [Guard: useRef Stale Closure] — Sync token ────
   useEffect(() => {
@@ -257,6 +264,18 @@ const AIChatbot = memo(() => {
         previewUrl = payload.previewUrl || null;
       }
 
+      // Family Member Context Tracking (BUG-08 & BUG-09)
+      let targetFamilyMember = (payload && typeof payload === 'object' && payload.selectedFamilyMember)
+        ? payload.selectedFamilyMember
+        : selectedFamilyMemberRef.current;
+
+      if (/(đặt\s*cho\s*(bản\s*thân|tôi|chính\s*tôi)|đổi\s*sang\s*đặt\s*cho\s*(tôi|bản\s*thân))/i.test(userText)) {
+        targetFamilyMember = null;
+        setSelectedFamilyMember(null);
+      } else if (payload && typeof payload === 'object' && payload.selectedFamilyMember) {
+        setSelectedFamilyMember(payload.selectedFamilyMember);
+      }
+
       // Nếu chỉ có ảnh không có text, đặt prompt mặc định cho AI phân tích
       const displayText = userText || (imageFile ? 'Phân tích hình ảnh này' : (followUpData ? (followUpData.label || followUpData.text) : ''));
       if (!displayText && !imageFile) {
@@ -350,7 +369,17 @@ const AIChatbot = memo(() => {
           : messages;
         const historyPayload = historySource
           .filter((m) => !m.isLocal && typeof m.text === 'string' && m.text.trim() !== '')
-          .map((m) => ({ role: m.role || m.sender, text: m.text, hasImage: m.hasImage }));
+          .map((m) => ({
+            role: m.role || m.sender,
+            text: m.text,
+            hasImage: m.hasImage,
+            selectedFamilyMember: m.selectedFamilyMember || undefined,
+            bookingDraft: m.bookingDraft ? {
+              patientTarget: m.bookingDraft.patientTarget,
+              bookingFor: m.bookingDraft.bookingFor,
+              familyMemberId: m.bookingDraft.familyMemberId,
+            } : undefined,
+          }));
 
         const response = await fetch(`${baseUrl}/api/v1/ai/chat`, {
           method: 'POST',
@@ -365,6 +394,12 @@ const AIChatbot = memo(() => {
             history: historyPayload,
             imageId: uploadedImageId || undefined,
             language,
+            action: (payload && typeof payload === 'object' ? payload.action : undefined),
+            bookingFor: (payload && typeof payload === 'object' && payload.bookingFor) || (targetFamilyMember ? 'FAMILY' : undefined),
+            relationship: targetFamilyMember?.relationship || (payload && typeof payload === 'object' ? payload.relationship : undefined),
+            memberName: targetFamilyMember?.fullName || (payload && typeof payload === 'object' ? payload.memberName : undefined),
+            selectedFamilyMember: targetFamilyMember || undefined,
+            familyMemberId: targetFamilyMember?.id || (payload && typeof payload === 'object' ? payload.familyMemberId : undefined),
             ...(followUpData ? {
               isFollowUp: true,
               assessmentId: followUpData.assessmentId,
@@ -466,12 +501,17 @@ const AIChatbot = memo(() => {
                       );
 
                       if (existingIdx !== -1 && targetId) {
-                        // Cập nhật card cũ tại chỗ và loại bỏ tin nhắn placeholder aiMsgId thừa
+                        // Cập nhật card cũ tại chỗ; nếu tin nhắn mới có text thì giữ lại text bubble
                         const nextState = prev
-                          .filter((m) => m.id !== aiMsgId)
                           .map((m) => {
                             const isMatch = m.healthAssessment && (m.healthAssessment.assessmentId === targetId || m.healthAssessment.data?.assessmentId === targetId);
                             return isMatch ? { ...m, healthAssessment: assessmentResult } : m;
+                          })
+                          .filter((m) => {
+                            if (m.id === aiMsgId) {
+                              return Boolean(m.text && m.text.trim());
+                            }
+                            return true;
                           });
                         latestMessagesRef.current = nextState;
                         return nextState;
@@ -920,6 +960,10 @@ const AIChatbot = memo(() => {
         body: JSON.stringify({
           doctorId: doctorId || undefined,
           scheduleId: scheduleId,
+          bookingFor: selectedFamilyMemberRef.current ? 'FAMILY' : 'SELF',
+          familyMemberId: selectedFamilyMemberRef.current?.id || undefined,
+          familyMemberName: selectedFamilyMemberRef.current?.fullName || undefined,
+          relationship: selectedFamilyMemberRef.current?.relationship || undefined,
         }),
       });
 
@@ -1306,6 +1350,32 @@ const AIChatbot = memo(() => {
     handleSubmit(`Hủy lịch hẹn #BK-${bookingId}`);
   }, [handleSubmit]);
 
+  // ──── [Family Member Actions (BUG-08, BUG-09, BUG-10, BUG-11)] ────
+  const handleBookForMember = useCallback((member) => {
+    const memObj = (member && typeof member === 'object') ? member : { fullName: member };
+    setSelectedFamilyMember(memObj);
+    selectedFamilyMemberRef.current = memObj;
+    handleSubmit({
+      action: 'BOOK_FOR_FAMILY_MEMBER',
+      text: `Đặt lịch khám cho ${memObj.fullName || 'người thân'}`,
+      selectedFamilyMember: memObj,
+      familyMemberId: memObj.id,
+      bookingFor: 'FAMILY',
+      relationship: memObj.relationship,
+      memberName: memObj.fullName,
+    });
+  }, [handleSubmit]);
+
+  const handleViewHistory = useCallback((member) => {
+    const memObj = (member && typeof member === 'object') ? member : { fullName: member };
+    setSelectedFamilyMember(memObj);
+    handleSubmit({
+      text: `Cho tôi xem lịch sử khám của ${memObj.fullName || 'người thân'}`,
+      selectedFamilyMember: memObj,
+      familyMemberId: memObj.id,
+    });
+  }, [handleSubmit]);
+
   // Lắng nghe event click "Tư vấn AI" từ doctor card
   useEffect(() => {
     const handleOpenChat = (e) => {
@@ -1445,8 +1515,8 @@ const AIChatbot = memo(() => {
                       onViewAppointmentDetail={handleViewAppointmentDetail}
                       onRescheduleBookingItem={handleRescheduleBookingItem}
                       onCancelBookingItem={handleCancelBookingItem}
-                      onBookForMember={(name) => handleSubmit({ text: `Đặt lịch khám cho ${name}` })}
-                      onViewHistory={(name) => handleSubmit({ text: `Cho tôi xem lịch sử khám của ${name}` })}
+                      onBookForMember={handleBookForMember}
+                      onViewHistory={handleViewHistory}
                     />
                   ))}
 
