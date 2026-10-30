@@ -4427,6 +4427,14 @@ $chat-transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             color: #ea580c;
             font-weight: 600;
           }
+
+          .badge-refunded {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            color: #475569;
+            font-weight: 600;
+          }
         }
       }
 
@@ -5002,88 +5010,124 @@ $chat-transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       }
     }
   }
+}
 
-  // ═════════════════════════════════════════════════════════════════════
-  // [Phase 06 / Test 5 Parity] AppointmentListCard Styles
-  // ═════════════════════════════════════════════════════════════════════
-  .ai-appointment-list-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 14px;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
-    margin: 8px 0;
-    width: 100%;
-    box-sizing: border-box;
+// ═════════════════════════════════════════════════════════════════════
+// [Phase 06 / Test 5 Parity] AppointmentListCard Styles
+// ═════════════════════════════════════════════════════════════════════
+.ai-appointment-list-block {
+  width: 100%;
+  margin: 6px 0;
+}
 
-    .appt-list-header {
+.ai-appointment-list-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  margin: 8px 0;
+  width: 100%;
+  box-sizing: border-box;
+
+  .appt-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f1f5f9;
+
+    .appt-list-title {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid #f1f5f9;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 0.94rem;
+      color: #0f172a;
 
-      .appt-list-title {
-        display: flex;
-        align-items: center;
-        gap: 8px;
+      .header-icon {
+        color: #0284c7;
+      }
+
+      .count-badge {
+        background: #e0f2fe;
+        color: #0369a1;
+        font-size: 0.72rem;
         font-weight: 700;
-        font-size: 0.92rem;
-        color: #0f172a;
+        padding: 2px 8px;
+        border-radius: 999px;
+      }
+    }
+  }
 
-        .header-icon {
-          color: #0284c7;
-        }
+  .appt-list-body {
+    .appt-empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 20px;
+      color: #64748b;
+      gap: 8px;
 
-        .count-badge {
-          background: #e0f2fe;
-          color: #0369a1;
-          font-size: 0.72rem;
-          font-weight: 600;
-          padding: 2px 7px;
-          border-radius: 999px;
-        }
+      .empty-icon {
+        color: #94a3b8;
+      }
+
+      .empty-text {
+        font-size: 0.85rem;
+        margin: 0;
       }
     }
 
-    .appt-list-body {
-      .appt-empty-state {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        padding: 16px;
-        color: #64748b;
-        gap: 8px;
+    .appt-items-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 520px;
+      overflow-y: auto;
+      padding-right: 4px;
 
-        .empty-icon {
-          color: #94a3b8;
-        }
-
-        .empty-text {
-          font-size: 0.82rem;
-          margin: 0;
-        }
+      &::-webkit-scrollbar {
+        width: 5px;
+      }
+      &::-webkit-scrollbar-track {
+        background: #f8fafc;
+        border-radius: 4px;
+      }
+      &::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
       }
 
-      .appt-items-wrapper {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
+      .appt-item-card {
+        border: 1px solid #e2e8f0;
+        border-left: 3.5px solid #0284c7;
+        border-radius: 10px;
+        padding: 12px 14px;
+        background: #ffffff;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+        transition: all 0.2s ease;
 
-        .appt-item-card {
-          border: 1px solid #e2e8f0;
-          border-radius: 10px;
-          padding: 10px 12px;
-          background: #f8fafc;
-          transition: all 0.2s ease;
+        &.status-s1 {
+          border-left-color: #f59e0b;
+        }
+        &.status-s2 {
+          border-left-color: #0284c7;
+        }
+        &.status-s3 {
+          border-left-color: #10b981;
+        }
+        &.status-s4 {
+          border-left-color: #ef4444;
+        }
 
-          &:hover {
-            border-color: #cbd5e1;
-            background: #ffffff;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-          }
+        &:hover {
+          border-color: #cbd5e1;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+          transform: translateY(-1px);
+        }
 
           .appt-item-top {
             display: flex;
@@ -5201,6 +5245,45 @@ $chat-transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
                 border-radius: 3px;
                 font-weight: 500;
               }
+
+              .badge-refunded-sm {
+                display: inline-flex;
+                align-items: center;
+                gap: 3px;
+                background: #f1f5f9;
+                color: #475569;
+                border: 1px solid #cbd5e1;
+                font-size: 0.68rem;
+                padding: 1px 5px;
+                border-radius: 3px;
+                font-weight: 600;
+              }
+
+              .badge-refund-pending-sm {
+                display: inline-flex;
+                align-items: center;
+                gap: 3px;
+                background: #fffbeb;
+                color: #d97706;
+                border: 1px solid #fde68a;
+                font-size: 0.68rem;
+                padding: 1px 5px;
+                border-radius: 3px;
+                font-weight: 600;
+              }
+
+              .badge-cancelled-sm {
+                display: inline-flex;
+                align-items: center;
+                gap: 3px;
+                background: #fee2e2;
+                color: #991b1b;
+                border: 1px solid #fecaca;
+                font-size: 0.68rem;
+                padding: 1px 5px;
+                border-radius: 3px;
+                font-weight: 600;
+              }
             }
           }
 
@@ -5263,7 +5346,6 @@ $chat-transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       }
     }
   }
-}
 
 // ═══════════════════════════════════════════════════════════════════════
 // [Phase 06E] FAMILY MEMBER LIST CARD

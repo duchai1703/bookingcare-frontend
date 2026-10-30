@@ -209,6 +209,20 @@ const MessageItem = memo(({
     <div className="ai-msg-wrapper" translate="no">
       <div className="ai-avatar-small">🤖</div>
       <div className="ai-msg-content">
+        {/* Regular Markdown Stream Text */}
+        {Boolean(sanitizedText && sanitizedText.trim()) && (
+          <div className="ai-msg">
+            <div className="prose prose-sm max-w-none">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={linkRenderer}
+              >
+                {sanitizedText}
+              </ReactMarkdown>
+            </div>
+          </div>
+        )}
+
         {/* Structured Health Assessment Card (Phase 03) */}
         {msg.healthAssessment && (
           <HealthAssessmentCard
@@ -482,19 +496,7 @@ const MessageItem = memo(({
           </div>
         )}
 
-        {/* Regular Markdown Stream Text */}
-        {Boolean(sanitizedText && sanitizedText.trim()) && (
-          <div className="ai-msg">
-            <div className="prose prose-sm max-w-none">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                components={linkRenderer}
-              >
-                {sanitizedText}
-              </ReactMarkdown>
-            </div>
-          </div>
-        )}
+
 
         {/* Knowledge Citations / Provenance (Phase 07) */}
         {Array.isArray(msg.citations) && msg.citations.length > 0 && (

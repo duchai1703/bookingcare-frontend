@@ -214,7 +214,9 @@ const AppointmentDetailCard = memo(({ appointmentDetail }) => {
                   ? data.status.isPaid
                   : (data.status?.paymentStatus === 'paid' || data.appointmentStatus?.paymentStatus === 'paid' || data.bookingStatus?.paymentStatus === 'paid' || statusCode === 'S2' || statusCode === 'S3'));
 
-              const method = financial.paymentMethod || data.status?.paymentMethod || data.appointmentStatus?.paymentMethod || data.bookingStatus?.paymentMethod || (isPaid ? 'WALLET' : 'Chưa chọn');
+              const isRefunded = financial.isRefunded || financial.refund?.isRefunded || financial.refundStatus === 'completed' || data.status?.paymentStatus === 'refunded' || data.appointmentStatus?.paymentStatus === 'refunded' || (statusCode === 'S4' && (Number(financial.refundAmount || financial.refund?.refundAmount) > 0 || financial.refundRate > 0));
+
+              const method = financial.paymentMethod || data.status?.paymentMethod || data.appointmentStatus?.paymentMethod || data.bookingStatus?.paymentMethod || (isPaid || isRefunded ? 'WALLET' : 'Chưa chọn');
 
               return (
                 <>
@@ -230,7 +232,9 @@ const AppointmentDetailCard = memo(({ appointmentDetail }) => {
                   <div className="grid-item">
                     <span className="item-label">Tình trạng:</span>
                     <span className="item-value">
-                      {isPaid ? (
+                      {isRefunded ? (
+                        <span className="badge-refunded"><RotateCcw size={12} /> Đã hoàn tiền</span>
+                      ) : isPaid ? (
                         <span className="badge-paid"><CheckCircle2 size={12} /> Đã thanh toán</span>
                       ) : (
                         <span className="badge-unpaid">Chưa thanh toán</span>

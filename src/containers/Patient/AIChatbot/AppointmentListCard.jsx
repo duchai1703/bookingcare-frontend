@@ -37,8 +37,22 @@ const AppointmentListCard = memo(({
   if (!appointmentList || typeof appointmentList !== 'object') return null;
 
   const data = appointmentList.data || appointmentList;
-  const bookings = Array.isArray(data.bookings) ? data.bookings : [];
-  const total = typeof data.total === 'number' ? data.total : bookings.length;
+  const bookings = Array.isArray(data.bookings)
+    ? data.bookings
+    : (Array.isArray(appointmentList.bookings)
+      ? appointmentList.bookings
+      : (Array.isArray(data)
+        ? data
+        : (Array.isArray(appointmentList) ? appointmentList : [])));
+  const total = typeof data.total === 'number'
+    ? data.total
+    : (typeof appointmentList.total === 'number' ? appointmentList.total : bookings.length);
+
+  const famName = data.familyMemberName || appointmentList.familyMemberName || (bookings.find(b => b.bookingFor === 'FAMILY')?.familyMemberData?.fullName);
+  const isFamily = Boolean(famName || data.bookingFor === 'FAMILY' || appointmentList.bookingFor === 'FAMILY' || (bookings.length > 0 && bookings.every(b => b.bookingFor === 'FAMILY')));
+  const headerTitle = isFamily
+    ? `Lịch sử khám của ${famName || 'người thân'}`
+    : 'Lịch khám của bạn';
 
   return (
     <div className="ai-appointment-list-card" role="region" aria-label="Danh sách lịch khám">
@@ -46,7 +60,7 @@ const AppointmentListCard = memo(({
       <div className="appt-list-header">
         <div className="appt-list-title">
           <Calendar size={18} className="header-icon" />
-          <span>Lịch khám của bạn</span>
+          <span>{headerTitle}</span>{' '}
           <span className="count-badge">{total} lịch</span>
         </div>
       </div>
@@ -56,7 +70,11 @@ const AppointmentListCard = memo(({
         {bookings.length === 0 ? (
           <div className="appt-empty-state">
             <AlertCircle size={24} className="empty-icon" />
-            <p className="empty-text">Bạn hiện chưa có lịch khám nào phù hợp với yêu cầu tra cứu.</p>
+            <p className="empty-text">
+              {isFamily
+                ? `Hồ sơ ${famName || 'người thân'} hiện chưa có lịch khám nào trong hệ thống.`
+                : 'Bạn hiện chưa có lịch khám nào phù hợp với yêu cầu tra cứu.'}
+            </p>
           </div>
         ) : (
           <div className="appt-items-wrapper">
@@ -79,9 +97,11 @@ const AppointmentListCard = memo(({
 
               const isActive = ['S1', 'S1.5', 'S2'].includes(statusCode);
               const isPaid = booking.isPaid || booking.paymentStatus === 'paid' || statusCode === 'S2' || statusCode === 'S3';
+              const isRefunded = booking.isRefunded || booking.refundStatus === 'completed' || booking.paymentStatus === 'refunded' || (statusCode === 'S4' && Number(booking.refundAmount) > 0);
+              const isProcessingRefund = booking.refundStatus === 'processing' || booking.refundStatus === 'pending';
 
               return (
-                <div key={bookingId} className="appt-item-card">
+                <div key={bookingId} className={`appt-item-card ${statusInfo.className || ''}`}>
                   {/* Top Bar: Code + Status */}
                   <div className="appt-item-top">
                     <div className="appt-code-group">
@@ -107,7 +127,7 @@ const AppointmentListCard = memo(({
                       <Stethoscope size={13} className="line-icon" />
                       <span className="line-text font-semibold">{booking.doctor || 'Bác sĩ phụ trách'}</span>
                       {booking.specialty && (
-                        <span className="specialty-sub">({booking.specialty})</span>
+                        <span className="specialty-sub"> ({booking.specialty})</span>
                       )}
                     </div>
 
@@ -129,8 +149,22 @@ const AppointmentListCard = memo(({
                     {/* Financial / Payment */}
                     <div className="detail-line payment-line">
                       <CreditCard size={13} className="line-icon" />
-                      <span className="price-tag font-semibold">{booking.priceFormatted || '—'}</span>
-                      {isPaid ? (
+                      <span className="price-tag font-semibold">
+                        {booking.priceFormatted || (booking.price ? `${Number(booking.price).toLocaleString('vi-VN')} đ` : (booking.bookingPrice ? `${Number(booking.bookingPrice).toLocaleString('vi-VN')} đ` : '—'))}
+                      </span>
+                      {isRefunded ? (
+                        <span className="badge-refunded-sm">
+                          <RotateCcw size={11} /> Đã hoàn tiền ({booking.refundRate ? `${booking.refundRate}%` : '100%'}{booking.refundAmount ? ` — ${Number(booking.refundAmount).toLocaleString('vi-VN')} đ` : ''})
+                        </span>
+                      ) : isProcessingRefund ? (
+                        <span className="badge-refund-pending-sm">
+                          <Clock size={11} /> Đang xử lý hoàn tiền
+                        </span>
+                      ) : statusCode === 'S4' ? (
+                        <span className="badge-cancelled-sm">
+                          <XCircle size={11} /> Đã hủy (Hoàn 0 đ)
+                        </span>
+                      ) : isPaid ? (
                         <span className="badge-paid-sm">
                           <CheckCircle2 size={11} /> Đã thanh toán
                         </span>
@@ -153,14 +187,37 @@ const AppointmentListCard = memo(({
                     </button>
 
                     {isActive && (
+                      <>
+                        <button
+                          type="button"
+                          className="btn-action btn-reschedule"
+                          onClick={() => onReschedule && onReschedule(bookingId)}
+                          title="Đổi lịch hẹn khám này"
+                        >
+                          <RotateCcw size={12} />
+                          <span>Đổi lịch</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-action btn-cancel"
+                          onClick={() => onCancel && onCancel(bookingId)}
+                          title="Hủy lịch hẹn khám này"
+                        >
+                          <XCircle size={12} />
+                          <span>Hủy lịch</span>
+                        </button>
+                      </>
+                    )}
+
+                    {(statusCode === 'S3' || statusCode === 'S4' || isNoShow) && (
                       <button
                         type="button"
-                        className="btn-action btn-cancel"
-                        onClick={() => onCancel && onCancel(bookingId)}
-                        title="Hủy lịch hẹn khám này"
+                        className="btn-action btn-reschedule"
+                        onClick={() => onReschedule && onReschedule(bookingId)}
+                        title="Đặt lại lịch khám này"
                       >
-                        <XCircle size={12} />
-                        <span>Hủy lịch</span>
+                        <RotateCcw size={12} />
+                        <span>Đặt lại lịch</span>
                       </button>
                     )}
                   </div>
