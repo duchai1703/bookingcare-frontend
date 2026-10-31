@@ -15,6 +15,8 @@ import {
   AlertCircle,
   Globe,
   Loader2,
+  MapPin,
+  CreditCard,
 } from 'lucide-react';
 
 const SlotPicker = memo(({
@@ -30,6 +32,9 @@ const SlotPicker = memo(({
   const doctor = data.doctor || {};
   const dateLabel = data.dateLabel || 'Ngày khám';
   const timezone = data.timezone || 'Asia/Ho_Chi_Minh';
+  const clinic = data.clinic || doctor.clinic;
+  const clinicAddress = data.clinicAddress || doctor.clinicAddress;
+  const price = data.priceFormatted || data.price || doctor.priceFormatted || doctor.price;
   const slots = Array.isArray(data.slots) ? data.slots : [];
   const emptyMessage = data.message || 'Hiện tại chưa có khung giờ khám trống cho ngày đã chọn.';
 
@@ -66,6 +71,18 @@ const SlotPicker = memo(({
               Lịch khám của {doctor.name || 'Bác sĩ'}
             </span>
             <span className="header-date">{dateLabel}</span>
+            {clinic && (
+              <span className="header-clinic" style={{ fontSize: '0.78rem', color: '#475569', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <MapPin size={12} className="inline-icon text-primary" />
+                <span>{clinic} {clinicAddress ? `(${clinicAddress})` : ''}</span>
+              </span>
+            )}
+            {price && (
+              <span className="header-price" style={{ fontSize: '0.78rem', color: '#0284c7', fontWeight: 600, marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <CreditCard size={12} className="inline-icon" />
+                <span>Giá khám: {price}</span>
+              </span>
+            )}
           </div>
         </div>
         <div className="header-right">
