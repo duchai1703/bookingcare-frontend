@@ -1110,13 +1110,28 @@ const AIChatbot = memo(() => {
   }, [isBookingProcessing, saveMessages]);
 
   const handleCancelDraft = useCallback((msgId) => {
+    // BUG-17 Fix: Find draft metadata to navigate back to slot picker preserving doctor & family context
+    const targetMsg = (latestMessagesRef.current || []).find((m) => m.id === msgId);
+    const draftData = targetMsg?.bookingDraft?.data || targetMsg?.bookingDraft;
+    const docName = draftData?.doctor?.name;
+    const docDate = draftData?.schedule?.dateFormatted || draftData?.schedule?.date;
+    const famName = draftData?.familyMember?.fullName;
+    const isFamily = draftData?.bookingFor === 'FAMILY' && famName;
+
     setMessages((prev) => {
       const next = prev.map((m) => (m.id === msgId ? { ...m, bookingDraft: null } : m));
       latestMessagesRef.current = next;
       if (typeof saveMessages === 'function') saveMessages(next);
       return next;
     });
-  }, [saveMessages]);
+
+    if (docName) {
+      const retryQuery = isFamily
+        ? `Tôi muốn chọn lại khung giờ khám khác cho ${famName} với bác sĩ ${docName}${docDate ? ` vào ngày ${docDate}` : ''}`
+        : `Tôi muốn chọn lại khung giờ khám khác với bác sĩ ${docName}${docDate ? ` vào ngày ${docDate}` : ''}`;
+      handleSubmit(retryQuery);
+    }
+  }, [handleSubmit, saveMessages]);
 
   const handleRetrySlot = useCallback(() => {
     handleSubmit('Xem lại các khung giờ khám còn trống');
