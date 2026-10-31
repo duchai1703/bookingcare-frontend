@@ -105,6 +105,10 @@ const MessageItem = memo(({
     if (hasStructuredCard) {
       text = text.replace(/```(?:json)?[\s\S]*?```/gi, '').trim();
     }
+    // BUG-08 Fix: Suppress duplicate markdown table of transactions when structured WalletTransactionsCard is present
+    if (msg.walletTransactions) {
+      text = text.replace(/\|[^\n]+\|\n\|[-:\s|]+\|\n(?:\|[^\n]+\|\n?)*/gi, '').trim();
+    }
     const closed = autoCloseMarkdown(text);
     return DOMPurify.sanitize(closed, purifyConfig);
   }, [
