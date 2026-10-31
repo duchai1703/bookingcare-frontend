@@ -40,6 +40,20 @@ const normalizeGender = (g) => {
   return g;
 };
 
+const formatRelationship = (rel) => {
+  if (!rel) return 'Người thân';
+  const r = String(rel).trim().toUpperCase();
+  if (['PARENT', 'BỐ', 'MẸ', 'BO', 'ME', 'CHA', 'BỐ/MẸ'].includes(r)) return 'Bố/Mẹ';
+  if (['CHILD', 'CON', 'CON GÁI', 'CON TRAI', 'BÉ'].includes(r)) return 'Con';
+  if (['SPOUSE', 'VỢ', 'CHỒNG', 'VO', 'CHONG'].includes(r)) return 'Vợ/Chồng';
+  return 'Người thân';
+};
+
+const capitalizeWords = (str) => {
+  if (!str) return '—';
+  return str.toString().trim().replace(/\s+/g, ' ').toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+};
+
 const AppointmentDetailCard = memo(({ appointmentDetail }) => {
   if (!appointmentDetail || typeof appointmentDetail !== 'object') return null;
 
@@ -114,12 +128,19 @@ const AppointmentDetailCard = memo(({ appointmentDetail }) => {
             <div className="grid-item">
               <span className="item-label">Họ tên:</span>
               <span className="item-value font-semibold">
-                {patientName}
-                {data.bookingFor === 'FAMILY' && (
-                  <span className="family-pill">Người thân ({familyMemberName || 'Hồ sơ'})</span>
-                )}
+                {capitalizeWords(familyMemberName || patientName)}
               </span>
             </div>
+            {data.bookingFor === 'FAMILY' && (
+              <div className="grid-item">
+                <span className="item-label">Đối tượng:</span>
+                <span className="item-value">
+                  <span className="family-pill">
+                    {formatRelationship(familyMember.relationship || data.relationship || data.familyMemberRelationship || data.familyMemberData?.relationship)}
+                  </span>
+                </span>
+              </div>
+            )}
             {patientPhone && (
               <div className="grid-item">
                 <span className="item-label">Số điện thoại:</span>
