@@ -20,6 +20,7 @@ import {
   ArrowUpRight,
   TrendingUp,
   AlertOctagon,
+  AlertTriangle,
   CheckCircle2,
   Wallet,
   Building2,
@@ -60,6 +61,8 @@ import RefundCasesTab from './RefundCasesTab';
 import DoctorSettlementsTab from './DoctorSettlementsTab';
 import FinancialExceptionHub from './FinancialExceptionHub';
 import MasterTreasuryConsole from './MasterTreasuryConsole';
+import VisualCashFlowDashboard from './VisualCashFlowDashboard';
+import WithdrawalSplitViewWorkspace from './WithdrawalSplitViewWorkspace';
 import './LiquidityDashboard.scss';
 
 const TAB_ROUTES = {
@@ -1207,7 +1210,7 @@ const LiquidityDashboard = ({ defaultTab }) => {
         <div className="ld-tab-body">
           {/* ══════════════ TAB 1: MASTER TREASURY & LIQUIDITY CONSOLE ══════════════ */}
           {(activeTab === 'solvency' || activeTab === 'overview') && (
-            <MasterTreasuryConsole onNavigateTab={handleSwitchTab} />
+            <VisualCashFlowDashboard onNavigateTab={handleSwitchTab} />
           )}
 
           {/* ══════════════ TAB 2: INFLOWS STREAM (DÒNG TIỀN THU VÀO) ══════════════ */}
@@ -1638,7 +1641,7 @@ const LiquidityDashboard = ({ defaultTab }) => {
                                   className="tw-px-2.5 tw-py-1 tw-bg-slate-100 hover:tw-bg-slate-200 tw-text-slate-600 tw-rounded tw-text-xs tw-font-medium"
                                   onClick={() => handleOpenProcessModal(req)}
                                 >
-                                  Xem chi tiết
+                                  <span>Xem chi tiết</span>
                                 </button>
                               )}
                             </td>
@@ -2311,7 +2314,40 @@ const LiquidityDashboard = ({ defaultTab }) => {
       </div>
 
       {/* ===== MODAL: [PHASE 3] DUYỆT RÚT TIỀN / TỪ CHỐI ===== */}
-      {selectedWithdrawal && (
+      {/* ===== [RAMP FINTECH] CỬA SỔ LÀM VIỆC 2 CỘT SPLIT-VIEW DUYỆT CHI & RÚT TIỀN ===== */}
+      <WithdrawalSplitViewWorkspace
+        isOpen={Boolean(selectedWithdrawal)}
+        withdrawal={selectedWithdrawal}
+        onClose={() => !isProcessingAction && setSelectedWithdrawal(null)}
+        onSubmitAction={async ({ action, bankTxnRef, adminNote }) => {
+          if (!selectedWithdrawal) return;
+          setIsProcessingAction(true);
+          try {
+            const res = await processAdminWithdrawal(selectedWithdrawal.id, {
+              action,
+              adminNote,
+              bankTransactionRef: bankTxnRef,
+              receiptImage: receiptImg || null,
+            });
+
+            if (res && res.errCode === 0) {
+              toast.success(res.errMessage || 'Đã xử lý yêu cầu rút tiền thành công!');
+              setSelectedWithdrawal(null);
+              loadWithdrawals();
+              loadMetrics();
+            } else {
+              toast.error(res?.errMessage || 'Không thể xử lý yêu cầu rút tiền');
+            }
+          } catch (err) {
+            toast.error('Lỗi khi xử lý yêu cầu rút tiền');
+          } finally {
+            setIsProcessingAction(false);
+          }
+        }}
+        isProcessing={isProcessingAction}
+      />
+
+      {false && selectedWithdrawal && (
         <div
           className="ops-modal-backdrop"
           onClick={() => !isProcessingAction && setSelectedWithdrawal(null)}

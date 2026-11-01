@@ -354,3 +354,21 @@ export const runAutoDoctorPayoutCycle = (data = {}) => {
 
 
 
+
+
+/**
+ * [PHASE 1 - CASH FLOW ARCHITECTURE & RAMP FINTECH ENGINE]
+ * Lấy toàn bộ dữ liệu 5 Khối Vốn Lõi, Đối soát Bất biến & 4 Biểu đồ Recharts
+ */
+export const getVisualCashflowMetrics = () => {
+  return axiosInstance.get('/api/v1/admin/financial/visual-cashflow');
+};
+
+/**
+ * [PHASE 1 - CASH FLOW ARCHITECTURE & RAMP FINTECH ENGINE]
+ * Admin rút tiền lời công ty ("-30k xài") ra chi dùng cá nhân
+ * @param {Object} data { amount: number, note?: string, bankAccountInfo?: string }
+ */
+export const withdrawPlatformProfit = (data) => {
+  return axiosInstance.post('/api/v1/admin/financial/withdraw-platform-profit', data);
+};

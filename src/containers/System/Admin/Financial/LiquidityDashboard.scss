@@ -9,7 +9,7 @@
   padding: 20px 24px 40px 24px;
   box-sizing: border-box;
   min-height: calc(100vh - 70px);
-  background: #f8fafc;
+  background: #FAF9F5;
   color: #0f172a;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 
@@ -261,7 +261,7 @@
         align-items: center;
         gap: 6px;
         padding: 8px 14px;
-        background: #f8fafc;
+        background: #FAF9F5;
         border: 1px solid #cbd5e1;
         border-radius: 8px;
         font-size: 13px;
@@ -527,7 +527,7 @@
       align-items: center;
       gap: 6px;
       padding: 6px 12px;
-      background: #f8fafc;
+      background: #FAF9F5;
       border-bottom: 1.5px solid #e2e8f0;
       overflow-x: auto;
       scrollbar-width: thin;
@@ -658,7 +658,7 @@
           justify-content: space-between;
           align-items: center;
           padding: 12px 16px;
-          background: #f8fafc;
+          background: #FAF9F5;
           border-radius: 10px;
           border: 1px solid #e2e8f0;
 
@@ -719,7 +719,7 @@
       .reconciliation-card {
         padding: 18px;
         border-radius: 12px;
-        background: #f8fafc;
+        background: #FAF9F5;
         border: 1px solid #e2e8f0;
 
         .reconciliation-status {
@@ -926,7 +926,7 @@
         }
 
         .portal-stat {
-          background: #f8fafc;
+          background: #FAF9F5;
           border-radius: 8px;
           padding: 8px 12px;
           margin-bottom: 12px;
@@ -1048,7 +1048,7 @@
       text-align: left;
 
       thead {
-        background: #f8fafc;
+        background: #FAF9F5;
 
         tr {
           th {
@@ -1200,7 +1200,7 @@
       }
 
       &:hover:not(:disabled) {
-        background: #f8fafc;
+        background: #FAF9F5;
         border-color: #94a3b8;
       }
     }
@@ -1303,7 +1303,7 @@
           gap: 6px;
           padding: 8px 14px;
           border-radius: 8px;
-          background: #f8fafc;
+          background: #FAF9F5;
           border: 1px solid #cbd5e1;
           color: #334155;
           font-size: 12px;
@@ -1333,7 +1333,7 @@
         }
 
         .hero-kpi-item {
-          background: #f8fafc;
+          background: #FAF9F5;
           border: 1px solid #e2e8f0;
           border-radius: 10px;
           padding: 14px 16px;
@@ -1454,7 +1454,7 @@
           font-size: 12px;
           font-weight: 600;
           border: 1px solid #cbd5e1;
-          background: #f8fafc;
+          background: #FAF9F5;
           color: #334155;
           cursor: pointer;
           transition: all 0.15s ease;
@@ -1526,7 +1526,7 @@
         }
 
         .biz-days-card {
-          background: #f8fafc;
+          background: #FAF9F5;
           border: 1px solid #e2e8f0;
           border-radius: 8px;
           padding: 10px 14px;
@@ -1600,7 +1600,7 @@
           gap: 12px;
 
           .tier-card-item {
-            background: #f8fafc;
+            background: #FAF9F5;
             border: 1px solid #cbd5e1;
             border-radius: 10px;
             padding: 14px 16px;
@@ -1842,7 +1842,7 @@
         justify-content: center;
         padding: 40px 20px;
         text-align: center;
-        background: #f8fafc;
+        background: #FAF9F5;
         border-radius: 10px;
         border: 1px dashed #cbd5e1;
 
@@ -2078,7 +2078,7 @@
         padding: 6px 14px;
         border-radius: 6px;
         border: 1px solid #cbd5e1;
-        background: #f8fafc;
+        background: #FAF9F5;
         color: #334155;
         font-size: 12.5px;
         font-weight: 600;
@@ -2184,7 +2184,7 @@
               font-size: 11.5px;
               font-weight: 600;
               border: 1px solid #cbd5e1;
-              background: #f8fafc;
+              background: #FAF9F5;
               color: #334155;
               cursor: pointer;
               transition: all 0.15s ease;
@@ -2211,7 +2211,7 @@
             font-size: 14px;
             font-weight: 600;
             color: #0f172a;
-            background: #f8fafc;
+            background: #FAF9F5;
             box-sizing: border-box;
             transition: all 0.2s ease;
 
@@ -2272,7 +2272,7 @@
             }
 
             .simulator-metric-list {
-              background: #f8fafc;
+              background: #FAF9F5;
               border-radius: 12px;
               padding: 16px;
               border: 1px solid #e2e8f0;
@@ -2324,4 +2324,293 @@
 @keyframes pulse-ring {
   0% { transform: scale(0.9); opacity: 0.8; }
   100% { transform: scale(1.6); opacity: 0; }
+}
+
+
+// ==========================================
+// RAMP FINTECH DESIGN SYSTEM COMPONENT OVERRIDES
+// ==========================================
+@import '../../../../styles/rampDesignTokens.scss';
+
+.ramp-tabs-header-wrapper {
+  background-color: #FFFFFF;
+  border-bottom: 1px solid $ramp-border-subtle;
+  margin-bottom: 24px;
+  padding: 0 4px;
+  overflow-x: auto;
+
+  .ramp-underline-tabs {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    height: 48px;
+    white-space: nowrap;
+
+    .ramp-tab-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      height: 48px;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: $ramp-ink-muted;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 0 2px;
+      transition: all 0.15s ease;
+      text-decoration: none;
+
+      &:hover {
+        color: $ramp-ink-primary;
+      }
+
+      &.active {
+        color: $ramp-ink-primary;
+        font-weight: 700;
+        border-bottom-color: $ramp-border-dark;
+      }
+
+      .ramp-tab-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 1px 7px;
+        border-radius: 9999px;
+        background-color: #FEE2E2;
+        color: #B91C1C;
+        border: 1px solid #FECACA;
+        line-height: 1.3;
+      }
+    }
+  }
+}
+
+.ramp-stat-strip {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background-color: $ramp-bg-canvas;
+  border: 1px solid $ramp-border-subtle;
+  border-radius: 8px;
+  padding: 8px 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+
+  .stat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    color: $ramp-ink-body;
+
+    .pill-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+
+      &.emerald { background-color: #10B981; }
+      &.rose { background-color: #EF4444; }
+      &.teal { background-color: #14B8A6; }
+      &.slate { background-color: #64748B; }
+      &.amber { background-color: #F59E0B; }
+    }
+
+    .pill-label {
+      color: $ramp-ink-muted;
+      font-weight: 500;
+    }
+
+    strong {
+      color: $ramp-ink-primary;
+      font-weight: 700;
+    }
+
+    &.warning {
+      .text-rose {
+        color: #B91C1C;
+        font-weight: 700;
+      }
+    }
+  }
+
+  .stat-divider {
+    color: $ramp-border-strong;
+    font-size: 12px;
+  }
+}
+
+// Bảng Ramp chuẩn mực
+.ramp-table-wrapper {
+  background-color: #FFFFFF;
+  border: 1px solid $ramp-border-subtle;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+
+  .ramp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+
+    thead tr {
+      background-color: $ramp-bg-canvas;
+      border-bottom: 1px solid $ramp-border-subtle;
+
+      th {
+        padding: 10px 14px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: $ramp-ink-muted;
+        text-align: left;
+        white-space: nowrap;
+
+        &.text-right {
+          text-align: right;
+        }
+
+        &.col-cb {
+          width: 36px;
+          text-align: center;
+        }
+      }
+    }
+
+    tbody tr {
+      border-bottom: 1px solid $ramp-border-subtle;
+      transition: background-color 0.12s ease;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      &:hover:not(.ramp-anomaly-row) {
+        background-color: $ramp-bg-surface-hover;
+      }
+
+      td {
+        padding: 12px 14px;
+        color: $ramp-ink-body;
+        vertical-align: middle;
+
+        &.text-right {
+          text-align: right;
+        }
+
+        &.col-cb {
+          text-align: center;
+        }
+      }
+
+      &.ramp-anomaly-row {
+        background-color: #FEFCE8;
+        border-top: 1px dashed rgba(234, 179, 8, 0.4);
+        border-bottom: 1px solid rgba(234, 179, 8, 0.25);
+
+        td {
+          padding: 8px 16px;
+        }
+      }
+    }
+  }
+}
+
+
+// Ẩn triệt để 4 thẻ to và header công nghiệp cũ
+.liquidity-dashboard-page {
+  .ld-header-bar,
+  .ld-alert-banner,
+  .ld-kpi-grid {
+    display: none !important;
+  }
+
+  // Tái cấu trúc thanh Navigation Tabs thành Minimalist Underline Tabs chuẩn Ramp
+  .ld-tabs-container {
+    background: transparent !important;
+    border-radius: 0 !important;
+    border: none !important;
+    border-bottom: 1px solid #EBEAE5 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    margin-bottom: 24px !important;
+
+    .ld-tabs-nav {
+      display: flex !important;
+      align-items: center !important;
+      gap: 28px !important;
+      padding: 0 4px !important;
+      background: transparent !important;
+      border-bottom: none !important;
+      overflow-x: auto !important;
+
+      .tab-nav-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 24px !important;
+        flex-shrink: 0 !important;
+
+        .tab-group-label {
+          display: none !important;
+        }
+      }
+
+      .tab-group-divider {
+        display: none !important;
+      }
+
+      .tab-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        padding: 0 2px !important;
+        height: 46px !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        border-bottom: 2px solid transparent !important;
+        font-size: 13.5px !important;
+        font-weight: 500 !important;
+        color: #73726C !important;
+        cursor: pointer !important;
+        transition: all 0.15s ease !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+
+        &:hover {
+          color: #141413 !important;
+          background: transparent !important;
+        }
+
+        &.active {
+          color: #141413 !important;
+          font-weight: 700 !important;
+          border-bottom: 2px solid #141413 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+
+        .tab-badge {
+          font-size: 11px !important;
+          font-weight: 700 !important;
+          padding: 1px 7px !important;
+          border-radius: 9999px !important;
+          border: 1px solid transparent !important;
+        }
+      }
+    }
+  }
+
+  // Thay đổi giao diện compact subpage header chuẩn Ramp
+  .ld-subpage-header {
+    background: #FFFFFF;
+    border: 1px solid #EBEAE5;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+  }
 }

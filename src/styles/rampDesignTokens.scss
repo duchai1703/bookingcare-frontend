@@ -1,0 +1,213 @@
+// bookingcare-frontend/src/styles/rampDesignTokens.scss
+// RAMP FINTECH DESIGN SYSTEM (Chuẩn mực giao diện FinTech tối giản & đẳng cấp)
+// 100% học tập và bám sát phong cách Ramp (Warm Paper White, Electric Lime, Hairline Borders, Tabular Numbers)
+
+// ==========================================
+// 1. SCSS VARIABLES
+// ==========================================
+$ramp-bg-canvas:        #FAF9F5; // Nền toàn trang giấy ngà ấm
+$ramp-bg-sidebar:       #F4F3EE; // Nền sidebar
+$ramp-bg-surface:       #FFFFFF; // Nền card, bảng và modal
+$ramp-bg-surface-hover: #F2F1EC; // Hover nhẹ nhàng
+$ramp-bg-subtle:        #ECEBE4; // Input search, phân vùng phụ
+
+// Accent Vàng Chanh Ramp
+$ramp-lime-primary:     #D4FF00; // Vàng chanh neon biểu tượng
+$ramp-lime-hover:       #C4ED00;
+$ramp-lime-text:        #111111; // Chữ đen đậm tương phản tối đa
+
+// Mực & Phông chữ (Ink Hierarchy)
+$ramp-ink-primary:      #141413; // Tiêu đề & số tiền chính (Đen than sâu)
+$ramp-ink-body:         #2B2A27; // Nội dung
+$ramp-ink-muted:        #73726C; // Chữ phụ, nhãn cột
+$ramp-ink-faint:        #A3A29B; // Placeholder, icon mờ
+
+// Đường viền Hairline 1px
+$ramp-border-subtle:    #EBEAE5; // Viền bảng, phân cách
+$ramp-border-strong:    #D5D4CD; // Viền input focus
+$ramp-border-dark:      #2B2A27; // Gạch chân active
+
+// Trạng thái (Pills & Alerts)
+$ramp-status-warning-bg:   #FEF9C3;
+$ramp-status-warning-ink:  #854D0E;
+$ramp-status-success-bg:   #DCFCE7;
+$ramp-status-success-ink:  #166534;
+$ramp-status-danger-bg:    #FEE2E2;
+$ramp-status-danger-ink:   #991B1B;
+$ramp-status-info-bg:      #F1F5F9;
+$ramp-status-info-ink:     #334155;
+
+// Đổ bóng (Soft Elevation)
+$ramp-shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.04);
+$ramp-shadow-md:  0 4px 12px rgba(0, 0, 0, 0.06);
+$ramp-shadow-lg:  0 12px 32px rgba(0, 0, 0, 0.08);
+
+// ==========================================
+// 2. REUSABLE UTILITY CLASSES
+// ==========================================
+
+// Nút bấm Vàng Chanh Ramp (Primary Action)
+.ramp-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background-color: $ramp-lime-primary;
+  color: $ramp-lime-text;
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  text-decoration: none;
+
+  &:hover:not(:disabled) {
+    background-color: $ramp-lime-hover;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: #E2E1D9;
+    color: #8C8B84;
+  }
+}
+
+// Nút bấm Secondary (Nền trắng viền 1px thanh lịch)
+.ramp-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background-color: #FFFFFF;
+  color: $ramp-ink-primary;
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid $ramp-border-subtle;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+
+  &:hover:not(:disabled) {
+    background-color: $ramp-bg-surface-hover;
+    border-color: $ramp-border-strong;
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// Nút Ghost / Review nhỏ gọn trong bảng
+.ramp-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background-color: #FFFFFF;
+  color: $ramp-ink-primary;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid $ramp-border-subtle;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background-color: $ramp-bg-surface-hover;
+    border-color: $ramp-border-strong;
+  }
+}
+
+// Status Pill Tags
+.ramp-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+
+  &.warning {
+    background-color: $ramp-status-warning-bg;
+    color: $ramp-status-warning-ink;
+    border: 1px solid rgba(133, 77, 14, 0.15);
+  }
+
+  &.success {
+    background-color: $ramp-status-success-bg;
+    color: $ramp-status-success-ink;
+    border: 1px solid rgba(22, 101, 52, 0.15);
+  }
+
+  &.danger {
+    background-color: $ramp-status-danger-bg;
+    color: $ramp-status-danger-ink;
+    border: 1px solid rgba(153, 27, 27, 0.15);
+  }
+
+  &.neutral {
+    background-color: #F2F1EC;
+    color: $ramp-ink-muted;
+    border: 1px solid $ramp-border-subtle;
+  }
+}
+
+// Hàng Cảnh Báo Nội Dòng (The Ramp Inline Anomaly Row)
+.ramp-inline-anomaly {
+  background-color: #FEFCE8;
+  border-top: 1px dashed rgba(234, 179, 8, 0.35);
+  border-bottom: 1px solid rgba(234, 179, 8, 0.2);
+  color: #854D0E;
+  font-size: 12px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .anomaly-arrow {
+    font-weight: bold;
+    color: #CA8A04;
+  }
+
+  .anomaly-link {
+    color: #854D0E;
+    font-weight: 700;
+    text-decoration: underline;
+    cursor: pointer;
+    margin-left: 6px;
+
+    &:hover {
+      color: #A16207;
+    }
+  }
+}
+
+// Định dạng số tiền tabular
+.ramp-tabular-num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+  font-family: inherit;
+}
+

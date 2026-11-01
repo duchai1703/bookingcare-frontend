@@ -1,0 +1,172 @@
+// bookingcare-frontend/src/containers/System/Admin/Financial/VaultDetailDrawer.scss
+@import '../../../../styles/rampDesignTokens.scss';
+
+.ramp-vault-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(20, 20, 19, 0.4);
+  backdrop-filter: blur(2px);
+  z-index: 1060;
+  display: flex;
+  justify-content: flex-end;
+  animation: rampOverlayFade 0.2s ease-out;
+
+  .ramp-vault-drawer-panel {
+    width: 100%;
+    max-width: 580px;
+    height: 100%;
+    background-color: #FFFFFF;
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.12);
+    display: flex;
+    flex-direction: column;
+    animation: rampDrawerSlide 0.25s ease-out;
+
+    .drawer-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid $ramp-border-subtle;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      .header-title-box {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        .drawer-icon-box {
+          width: 38px;
+          height: 38px;
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background-color: #FAF9F5;
+          border: 1px solid $ramp-border-subtle;
+          color: $ramp-ink-primary;
+        }
+
+        h3 {
+          font-size: 16px;
+          font-weight: 700;
+          color: $ramp-ink-primary;
+          margin: 0;
+        }
+
+        p {
+          font-size: 11px;
+          color: $ramp-ink-muted;
+          margin: 2px 0 0 0;
+        }
+      }
+
+      .close-drawer-btn {
+        background: none;
+        border: none;
+        color: $ramp-ink-muted;
+        cursor: pointer;
+        padding: 6px;
+        border-radius: 6px;
+        transition: all 0.15s;
+
+        &:hover {
+          color: $ramp-ink-primary;
+          background-color: $ramp-bg-surface-hover;
+        }
+      }
+    }
+
+    .drawer-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+
+      .kpi-summary-box {
+        background-color: #FAF9F5;
+        border: 1px solid $ramp-border-subtle;
+        border-radius: 10px;
+        padding: 16px;
+        margin-bottom: 20px;
+
+        .summary-label {
+          font-size: 11px;
+          font-weight: 600;
+          color: $ramp-ink-muted;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+        }
+
+        .summary-value {
+          font-size: 24px;
+          font-weight: 700;
+          color: $ramp-ink-primary;
+          font-variant-numeric: tabular-nums;
+          margin: 4px 0 8px 0;
+        }
+
+        .summary-subtext {
+          font-size: 12px;
+          color: $ramp-ink-body;
+        }
+      }
+
+      .drawer-section-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: $ramp-ink-primary;
+        margin: 20px 0 10px 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .meta-data-list {
+        border: 1px solid $ramp-border-subtle;
+        border-radius: 8px;
+        overflow: hidden;
+
+        .meta-data-item {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 10px 14px;
+          border-bottom: 1px solid $ramp-border-subtle;
+          font-size: 12px;
+
+          &:last-child {
+            border-bottom: none;
+          }
+
+          .item-label {
+            color: $ramp-ink-muted;
+          }
+
+          .item-value {
+            font-weight: 600;
+            color: $ramp-ink-primary;
+          }
+        }
+      }
+    }
+
+    .drawer-footer {
+      padding: 14px 24px;
+      border-top: 1px solid $ramp-border-subtle;
+      background-color: #FAF9F5;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+  }
+}
+
+@keyframes rampOverlayFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes rampDrawerSlide {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
