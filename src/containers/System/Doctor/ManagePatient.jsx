@@ -910,16 +910,6 @@ const ManagePatient = () => {
 
                     <button
                       type="button"
-                      className="btn-action-noshow"
-                      onClick={() => handleMarkNoShow(selectedBooking)}
-                      title="Xác nhận bệnh nhân không đến khám (No-Show) để hoàn tiền tự động theo quy chế"
-                    >
-                      <UserX size={15} />
-                      <span>Vắng mặt (No-Show)</span>
-                    </button>
-
-                    <button
-                      type="button"
                       className="btn-action-remedy"
                       onClick={() => {
                         setDataRemedyModal(selectedBooking);
