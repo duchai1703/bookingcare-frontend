@@ -381,3 +381,29 @@ export const withdrawPlatformProfit = (data) => {
 export const getTransactionLineage = (id) => {
   return axiosInstance.get(`/api/v1/admin/financial/transaction-lineage/${id}`);
 };
+
+/**
+ * [PHASE 8] Admin xem chi tiết Ví điện tử theo người dùng (Doctor/Patient)
+ * @param {string|number} userId
+ */
+export const getAdminUserWalletDetail = (userId) => {
+  return axiosInstance.get(`/api/v1/admin/users/${userId}/wallet-detail`);
+};
+
+/**
+ * [PHASE 8] Admin tra cứu sổ cái biến động số dư theo người dùng có phân trang
+ * @param {string|number} userId
+ * @param {Object} params { page, limit, type, direction, search, startDate, endDate }
+ */
+export const getAdminUserWalletTransactions = (userId, params) => {
+  return axiosInstance.get(`/api/v1/admin/users/${userId}/wallet/transactions`, { params });
+};
+
+/**
+ * [PHASE 8] Admin khóa / mở khóa ví người dùng
+ * @param {string|number} userId
+ * @param {Object} data { reason?: string, targetStatus?: 'LOCKED' | 'ACTIVE' }
+ */
+export const toggleAdminUserWalletLock = (userId, data) => {
+  return axiosInstance.post(`/api/v1/admin/users/${userId}/wallet/toggle-lock`, data);
+};

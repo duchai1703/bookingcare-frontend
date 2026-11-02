@@ -1,0 +1,514 @@
+// src/components/Common/UserFintechCard.scss
+// Thiết kế thẻ thanh toán ATM FinTech dập nổi chuẩn Ramp & Apple Card
+
+.fintech-card-container {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: 24px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.04);
+  align-items: stretch;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 16px;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// 1. THẺ ATM VẬT LÝ DẬP NỔI (PHYSICAL CARD)
+// ══════════════════════════════════════════════════════════════════════
+.atm-physical-card {
+  position: relative;
+  width: 100%;
+  min-height: 236px;
+  border-radius: 20px;
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  user-select: none;
+  box-shadow: 0 16px 32px -8px rgba(15, 23, 42, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 40px -8px rgba(15, 23, 42, 0.34), 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+  }
+
+  &.is-locked {
+    filter: grayscale(0.85);
+    opacity: 0.85;
+
+    &::after {
+      content: 'ĐANG TẠM KHÓA';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-12deg);
+      background: rgba(225, 29, 72, 0.92);
+      color: #ffffff;
+      font-weight: 900;
+      font-size: 14px;
+      letter-spacing: 0.12em;
+      padding: 6px 20px;
+      border-radius: 8px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+      z-index: 10;
+      border: 2px solid #ffffff;
+    }
+  }
+
+  // Lớp phủ bóng kính phản quang
+  .card-glass-specular {
+    position: absolute;
+    top: -50%;
+    left: -20%;
+    width: 140%;
+    height: 140%;
+    background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0) 65%);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .card-texture-overlay {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 0);
+    background-size: 8px 8px;
+    opacity: 0.6;
+    pointer-events: none;
+    z-index: 1;
+  }
+}
+
+// THEME BÁC SĨ: EMERALD OBSIDIAN
+.theme-doctor .atm-physical-card {
+  background: linear-gradient(135deg, #022c22 0%, #064e3b 45%, #047857 100%);
+  color: #ffffff;
+}
+
+// THEME BỆNH NHÂN: ROYAL SAPPHIRE & INDIGO
+.theme-patient .atm-physical-card {
+  background: linear-gradient(135deg, #090d16 0%, #172554 48%, #1d4ed8 100%);
+  color: #ffffff;
+}
+
+// Dòng 1: Brand & Contactless + Chip
+.card-row-top {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .card-brand-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .brand-symbol {
+      display: flex;
+      align-items: center;
+
+      .dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        opacity: 0.88;
+
+        &.dot-1 {
+          background: #ef4444;
+          margin-right: -6px;
+        }
+
+        &.dot-2 {
+          background: #f59e0b;
+        }
+      }
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+
+      .brand-title {
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        line-height: 1.1;
+      }
+
+      .brand-badge {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        opacity: 0.72;
+      }
+    }
+  }
+
+  .card-chip-cluster {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    .nfc-icon {
+      color: rgba(255, 255, 255, 0.7);
+      transform: rotate(90deg);
+    }
+
+    // Chip vàng EMV
+    .emv-gold-chip {
+      width: 38px;
+      height: 28px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #ffd700 0%, #d4af37 50%, #aa771c 100%);
+      border: 1px solid #855811;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) inset;
+      position: relative;
+      overflow: hidden;
+
+      .chip-line {
+        position: absolute;
+        background: #855811;
+        opacity: 0.65;
+
+        &.line-1 {
+          top: 36%;
+          left: 0;
+          right: 0;
+          height: 1px;
+        }
+        &.line-2 {
+          top: 64%;
+          left: 0;
+          right: 0;
+          height: 1px;
+        }
+        &.line-3 {
+          top: 0;
+          bottom: 0;
+          left: 50%;
+          width: 1px;
+        }
+      }
+    }
+  }
+}
+
+// Dòng 2: Số dư khả dụng
+.card-row-balance {
+  position: relative;
+  z-index: 2;
+  margin: 12px 0 6px;
+
+  .balance-caption {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.72);
+    margin-bottom: 3px;
+  }
+
+  .balance-num {
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: #ffffff;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  }
+}
+
+// Dòng 3: Số thẻ dập nổi dạng 16 chữ số
+.card-row-number {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  .card-digits {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    color: rgba(255, 255, 255, 0.92);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+
+  .btn-toggle-eye {
+    background: rgba(255, 255, 255, 0.12);
+    border: none;
+    color: rgba(255, 255, 255, 0.8);
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.25);
+      color: #ffffff;
+    }
+  }
+}
+
+// Dòng 4: Tên chủ thẻ, Mã ví & Trạng thái
+.card-row-bottom {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 12px;
+  align-items: flex-end;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding-top: 10px;
+
+  .meta-caption {
+    display: block;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 2px;
+  }
+
+  .holder-name {
+    display: block;
+    font-size: 11px;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 170px;
+  }
+
+  .code-copy-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.12);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.22);
+    }
+  }
+
+  .card-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    padding: 3px 8px;
+    border-radius: 999px;
+
+    &.active {
+      background: rgba(16, 185, 129, 0.2);
+      color: #6ee7b7;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+
+      .pulse-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #10b981;
+        box-shadow: 0 0 6px #10b981;
+      }
+    }
+
+    &.locked {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+
+      .pulse-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #ef4444;
+      }
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// 2. KHỐI PHẢI: BẢNG CHỈ SỐ KÉT VỐN & THAO TÁC NHANH
+// ══════════════════════════════════════════════════════════════════════
+.atm-meta-dashboard {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+
+  .meta-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+
+    .meta-title-group {
+      flex: 1;
+
+      .meta-title {
+        font-size: 16px;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0 0 4px;
+        letter-spacing: -0.01em;
+      }
+
+      .meta-sub {
+        font-size: 12px;
+        color: #64748b;
+        margin: 0;
+        line-height: 1.4;
+      }
+    }
+
+    .meta-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .btn-quick-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #0f172a;
+        color: #ffffff;
+        border: none;
+        padding: 8px 14px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.15s;
+
+        &:hover {
+          background: #1e293b;
+        }
+      }
+
+      .btn-lock-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.15s;
+
+        &.lock {
+          color: #dc2626;
+          border-color: #fecaca;
+          background: #fef2f2;
+
+          &:hover {
+            background: #fee2e2;
+          }
+        }
+
+        &.unlock {
+          color: #059669;
+          border-color: #a7f3d0;
+          background: #ecfdf5;
+
+          &:hover {
+            background: #d1fae5;
+          }
+        }
+      }
+    }
+  }
+
+  // 3 Thẻ chỉ số két vốn
+  .meta-kpis-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+
+    .kpi-mini-card {
+      background: #f8fafc;
+      border: 1px solid #f1f5f9;
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+
+      .kpi-label {
+        font-size: 11px;
+        font-weight: 700;
+        color: #64748b;
+        margin-bottom: 4px;
+      }
+
+      .kpi-val {
+        font-size: 18px;
+        font-weight: 800;
+        margin-bottom: 4px;
+
+        &.text-emerald {
+          color: #059669;
+        }
+
+        &.text-amber {
+          color: #d97706;
+        }
+      }
+
+      .kpi-desc {
+        font-size: 11px;
+        color: #94a3b8;
+        line-height: 1.3;
+      }
+
+      .kpi-bank-info {
+        margin: 4px 0;
+
+        .bank-name-text {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          font-size: 12px;
+          color: #0f172a;
+          margin-bottom: 2px;
+        }
+
+        .bank-acc-text {
+          font-size: 11px;
+          color: #475569;
+          font-weight: 600;
+        }
+      }
+    }
+  }
+}
+

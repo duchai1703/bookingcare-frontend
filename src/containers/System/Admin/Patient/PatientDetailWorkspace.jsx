@@ -22,12 +22,25 @@ import {
   PlusCircle,
   Building2,
   Stethoscope,
-  ChevronRight
+  ChevronRight,
+  GitCommit,
+  Wallet,
+  Filter,
+  Search,
 } from 'lucide-react';
 import { getAdminPatientWorkspace } from '../../../../services/patientManageService';
 import { path } from '../../../../utils/constants';
 import RefundModal from './RefundModal';
 import './PatientWorkspace.scss';
+import { toast } from 'react-toastify';
+import UserFintechCard from '../../../../components/Common/UserFintechCard';
+import RampPagination from '../../../../components/Common/RampPagination';
+import TransactionLifecycleDrawer from '../Financial/TransactionLifecycleDrawer';
+import {
+  getAdminUserWalletDetail,
+  getAdminUserWalletTransactions,
+  toggleAdminUserWalletLock
+} from '../../../../services/walletService';
 
 const formatCurrencyVND = (num) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num || 0);
@@ -48,6 +61,80 @@ const PatientDetailWorkspace = () => {
 
   // Selected booking for refund modal
   const [refundBooking, setRefundBooking] = useState(null);
+
+  // [RAMP FINTECH] Patient Wallet & Personal Sub-Ledger State
+  const [patientWalletData, setPatientWalletData] = useState(null);
+  const [walletTxList, setWalletTxList] = useState([]);
+  const [walletTxPagination, setWalletTxPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
+  const [walletTxLoading, setWalletTxLoading] = useState(false);
+  const [walletTxTypeFilter, setWalletTxTypeFilter] = useState('ALL');
+  const [walletTxSearch, setWalletTxSearch] = useState('');
+  const [isTogglingWalletLock, setIsTogglingWalletLock] = useState(false);
+  const [selectedTxForLifecycle, setSelectedTxForLifecycle] = useState(null);
+  const [isLifecycleDrawerOpen, setIsLifecycleDrawerOpen] = useState(false);
+
+  const fetchPatientWallet = useCallback(async () => {
+    if (!id) return;
+    try {
+      const res = await getAdminUserWalletDetail(id);
+      if (res && res.errCode === 0) {
+        setPatientWalletData(res.data);
+      }
+    } catch (err) {
+      console.error('Error fetching patient wallet:', err);
+    }
+  }, [id]);
+
+  const fetchPatientWalletTransactions = useCallback(async (page = 1, type = walletTxTypeFilter, search = walletTxSearch) => {
+    if (!id) return;
+    setWalletTxLoading(true);
+    try {
+      const res = await getAdminUserWalletTransactions(id, {
+        page,
+        limit: 10,
+        type: type === 'ALL' ? undefined : type,
+        search: search || undefined,
+      });
+      if (res && res.errCode === 0 && res.data) {
+        setWalletTxList(res.data.items || []);
+        setWalletTxPagination(res.data.pagination || { page, limit: 10, total: 0, totalPages: 1 });
+      }
+    } catch (err) {
+      console.error('Error fetching patient wallet tx:', err);
+    } finally {
+      setWalletTxLoading(false);
+    }
+  }, [id, walletTxTypeFilter, walletTxSearch]);
+
+  useEffect(() => {
+    if (activeTab === 'payments') {
+      fetchPatientWallet();
+      fetchPatientWalletTransactions(1, walletTxTypeFilter, walletTxSearch);
+    }
+  }, [activeTab, id, fetchPatientWallet, fetchPatientWalletTransactions, walletTxTypeFilter]);
+
+  const handleToggleWalletLock = async () => {
+    if (!id) return;
+    setIsTogglingWalletLock(true);
+    try {
+      const res = await toggleAdminUserWalletLock(id, { reason: 'Admin thao tác trực tiếp từ hồ sơ bệnh nhân' });
+      if (res && res.errCode === 0) {
+        toast.success(res.errMessage || 'Cập nhật trạng thái ví thành công');
+        fetchPatientWallet();
+      } else {
+        toast.error(res?.errMessage || 'Lỗi khi cập nhật trạng thái ví');
+      }
+    } catch (err) {
+      toast.error('Lỗi kết nối: ' + err.message);
+    } finally {
+      setIsTogglingWalletLock(false);
+    }
+  };
+
+  const handleOpenLifecycle = (txId) => {
+    setSelectedTxForLifecycle(txId);
+    setIsLifecycleDrawerOpen(true);
+  };
 
   const fetchWorkspace = useCallback(async (signal) => {
     setLoading(true);
@@ -504,6 +591,258 @@ const PatientDetailWorkspace = () => {
         {/* ===== TAB 3: PAYMENTS & REFUNDS ===== */}
         {activeTab === 'payments' && (
           <>
+            {/* ═══════════════════════════════════════════════════════════ */}
+            {/* [RAMP FINTECH] THẺ ATM VÍ ĐIỆN TỬ BỆNH NHÂN (VIRTUAL CARD)   */}
+            {/* ═══════════════════════════════════════════════════════════ */}
+            <UserFintechCard
+              cardType="patient"
+              wallet={patientWalletData?.wallet}
+              holderName={profile?.fullName || patientWalletData?.user?.fullName || 'BỆNH NHÂN'}
+              holderCode={patientWalletData?.user ? `BN-${String(patientWalletData.user.id).padStart(6, '0')}` : `BN-${String(id).padStart(6, '0')}`}
+              linkedBank={patientWalletData?.linkedBank}
+              onToggleLock={handleToggleWalletLock}
+              isTogglingLock={isTogglingWalletLock}
+            />
+
+            {/* ═══════════════════════════════════════════════════════════ */}
+            {/* [RAMP FINTECH] SỔ CÁI DÒNG TIỀN & BIẾN ĐỘNG SỐ DƯ VÍ BỆNH NHÂN */}
+            {/* ═══════════════════════════════════════════════════════════ */}
+            <div className="ws-card" style={{ padding: 0, overflow: 'hidden' }}>
+              <div style={{
+                padding: '16px 20px',
+                borderBottom: '1px solid #E2E8F0',
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 12
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 8,
+                    background: '#EFF6FF',
+                    color: '#2563EB',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <Wallet size={18} />
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 800, fontSize: '0.98rem', color: '#0F172A', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span>Sổ Cái Kế Toán Ví Bệnh Nhân (Sub-Ledger & Cash Flow)</span>
+                      <span style={{
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        padding: '2px 8px',
+                        borderRadius: 999,
+                        background: '#F1F5F9',
+                        color: '#475569'
+                      }}>
+                        {walletTxPagination.total || 0} bút toán
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '0.76rem', color: '#64748B', marginTop: 2 }}>
+                      Nhật ký biến động số dư ví (Nạp VNPay, Thanh toán giữ chỗ ca khám, Hoàn tiền hủy lịch, Rút tiền)
+                    </div>
+                  </div>
+                </div>
+
+                {/* Filter Pills & Search */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', background: '#F1F5F9', borderRadius: 6, padding: 3, gap: 2 }}>
+                    {[
+                      { key: 'ALL', label: 'Tất cả' },
+                      { key: 'DEPOSIT', label: 'Nạp tiền VNPay' },
+                      { key: 'BOOKING_PAYMENT', label: 'Thanh toán khám' },
+                      { key: 'REFUND', label: 'Hoàn tiền' },
+                      { key: 'WITHDRAWAL', label: 'Rút tiền' },
+                    ].map(f => (
+                      <button
+                        key={f.key}
+                        type="button"
+                        onClick={() => {
+                          setWalletTxTypeFilter(f.key);
+                          fetchPatientWalletTransactions(1, f.key, walletTxSearch);
+                        }}
+                        style={{
+                          border: 'none',
+                          outline: 'none',
+                          padding: '4px 10px',
+                          borderRadius: 4,
+                          fontSize: '0.74rem',
+                          fontWeight: walletTxTypeFilter === f.key ? 700 : 500,
+                          cursor: 'pointer',
+                          background: walletTxTypeFilter === f.key ? '#FFFFFF' : 'transparent',
+                          color: walletTxTypeFilter === f.key ? '#2563EB' : '#64748B',
+                          boxShadow: walletTxTypeFilter === f.key ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div style={{ position: 'relative', minWidth: 200 }}>
+                    <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+                    <input
+                      type="text"
+                      placeholder="Tìm theo Key, mã ca..."
+                      value={walletTxSearch}
+                      onChange={(e) => setWalletTxSearch(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          fetchPatientWalletTransactions(1, walletTxTypeFilter, walletTxSearch);
+                        }
+                      }}
+                      style={{
+                        paddingLeft: 30,
+                        paddingRight: 10,
+                        paddingTop: 5,
+                        paddingBottom: 5,
+                        fontSize: '0.76rem',
+                        border: '1px solid #CBD5E1',
+                        borderRadius: 6,
+                        outline: 'none',
+                        width: '100%'
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Transactions Table */}
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                  <thead>
+                    <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B', textAlign: 'left' }}>
+                      <th style={{ padding: '10px 14px' }}>Thời gian</th>
+                      <th style={{ padding: '10px 14px' }}>Loại bút toán</th>
+                      <th style={{ padding: '10px 14px' }}>Chiều hạch toán</th>
+                      <th style={{ padding: '10px 14px', textAlign: 'right' }}>Số tiền phát sinh</th>
+                      <th style={{ padding: '10px 14px', textAlign: 'right' }}>Số dư sau GD</th>
+                      <th style={{ padding: '10px 14px' }}>Diễn giải & Idempotency Key</th>
+                      <th style={{ padding: '10px 14px', textAlign: 'center' }}>Vòng đời</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {walletTxLoading ? (
+                      <tr>
+                        <td colSpan={7} style={{ padding: '30px', textAlign: 'center', color: '#64748B' }}>
+                          <RotateCw size={18} className="tw-animate-spin" style={{ display: 'inline', marginRight: 8 }} />
+                          Đang tải dữ liệu sổ cái...
+                        </td>
+                      </tr>
+                    ) : walletTxList.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} style={{ padding: '36px', textAlign: 'center', color: '#94A3B8' }}>
+                          Chưa có phát sinh bút toán sổ cái nào trong ví của bệnh nhân này.
+                        </td>
+                      </tr>
+                    ) : (
+                      walletTxList.map((tx) => (
+                        <tr key={tx.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                          <td style={{ padding: '10px 14px', whiteSpace: 'nowrap', color: '#475569', fontSize: '0.78rem' }}>
+                            {moment(tx.createdAt).format('DD/MM/YYYY HH:mm:ss')}
+                          </td>
+                          <td style={{ padding: '10px 14px' }}>
+                            <span style={{
+                              padding: '2px 8px',
+                              borderRadius: 4,
+                              fontSize: '0.72rem',
+                              fontWeight: 700,
+                              background: tx.transactionType === 'DEPOSIT' ? '#ECFDF5' : tx.transactionType === 'REFUND' ? '#EFF6FF' : tx.transactionType === 'BOOKING_PAYMENT' ? '#F8FAFC' : '#FEF3C7',
+                              color: tx.transactionType === 'DEPOSIT' ? '#047857' : tx.transactionType === 'REFUND' ? '#1D4ED8' : tx.transactionType === 'BOOKING_PAYMENT' ? '#334155' : '#B45309',
+                              border: `1px solid ${tx.transactionType === 'DEPOSIT' ? '#A7F3D0' : tx.transactionType === 'REFUND' ? '#BFDBFE' : tx.transactionType === 'BOOKING_PAYMENT' ? '#E2E8F0' : '#FDE68A'}`
+                            }}>
+                              {tx.transactionType}
+                            </span>
+                          </td>
+                          <td style={{ padding: '10px 14px' }}>
+                            <span style={{
+                              padding: '2px 8px',
+                              borderRadius: 4,
+                              fontSize: '0.72rem',
+                              fontWeight: 700,
+                              background: tx.direction === 'CREDIT' ? '#ECFDF5' : '#FEF2F2',
+                              color: tx.direction === 'CREDIT' ? '#059669' : '#DC2626'
+                            }}>
+                              {tx.direction === 'CREDIT' ? '+ Ghi Có (Credit)' : '- Ghi Nợ (Debit)'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 800, color: tx.direction === 'CREDIT' ? '#059669' : '#0F172A' }}>
+                            {tx.direction === 'CREDIT' ? '+' : '-'}{formatCurrencyVND(tx.amount)}
+                          </td>
+                          <td style={{ padding: '10px 14px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 600, color: '#334155' }}>
+                            {formatCurrencyVND(tx.balanceAfter)}
+                          </td>
+                          <td style={{ padding: '10px 14px' }}>
+                            <div style={{ fontSize: '0.78rem', color: '#1E293B', fontWeight: 500 }}>{tx.description || '—'}</div>
+                            {tx.idempotencyKey && (
+                              <div style={{ fontFamily: 'monospace', fontSize: '0.7rem', color: '#94A3B8', marginTop: 2 }}>
+                                Key: {tx.idempotencyKey.slice(0, 24)}...
+                              </div>
+                            )}
+                          </td>
+                          <td style={{ padding: '10px 14px', textAlign: 'center' }}>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenLifecycle(tx.id)}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 4,
+                                padding: '4px 10px',
+                                borderRadius: 6,
+                                border: '1px solid #CBD5E1',
+                                background: '#FFFFFF',
+                                color: '#0F172A',
+                                fontSize: '0.74rem',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = '#F8FAFC';
+                                e.currentTarget.style.borderColor = '#2563EB';
+                                e.currentTarget.style.color = '#2563EB';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = '#FFFFFF';
+                                e.currentTarget.style.borderColor = '#CBD5E1';
+                                e.currentTarget.style.color = '#0F172A';
+                              }}
+                              title="Xem truy vết vòng đời dòng tiền thật VCB & tiền ảo App"
+                            >
+                              <GitCommit size={12} />
+                              <span>Vòng đời</span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Sub-Ledger Pagination */}
+              {walletTxPagination.totalPages > 1 && (
+                <div style={{ padding: '12px 20px', borderTop: '1px solid #E2E8F0', background: '#F8FAFC' }}>
+                  <RampPagination
+                    currentPage={walletTxPagination.page}
+                    totalPages={walletTxPagination.totalPages}
+                    totalItems={walletTxPagination.total}
+                    pageSize={walletTxPagination.limit}
+                    onPageChange={(p) => fetchPatientWalletTransactions(p, walletTxTypeFilter, walletTxSearch)}
+                    itemLabel="bút toán"
+                  />
+                </div>
+              )}
+            </div>
+
             {/* Payment history */}
             <div className="ws-card">
               <h2 className="ws-card-title">
@@ -647,6 +986,16 @@ const PatientDetailWorkspace = () => {
           </div>
         )}
       </div>
+
+      {/* Transaction Lifecycle Drawer (Truy vết vòng đời dòng tiền thật VCB & ví App) */}
+      <TransactionLifecycleDrawer
+        isOpen={isLifecycleDrawerOpen}
+        targetId={selectedTxForLifecycle}
+        onClose={() => {
+          setIsLifecycleDrawerOpen(false);
+          setSelectedTxForLifecycle(null);
+        }}
+      />
 
       {/* Dedicated Refund Modal */}
       {refundBooking && (
