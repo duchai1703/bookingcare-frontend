@@ -57,6 +57,8 @@ const MedicineManage = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [filterUnit, setFilterUnit] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 15;
 
   const fetchItems = async () => {
     setLoading(true);
@@ -106,6 +108,16 @@ const MedicineManage = () => {
       return true;
     });
   }, [items, searchKeyword, filterUnit, filterStatus]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
+  const paginatedItems = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredItems.slice(start, start + pageSize);
+  }, [filteredItems, currentPage, pageSize]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchKeyword, filterUnit, filterStatus]);
 
   // KPI Calculations
   const stats = useMemo(() => {

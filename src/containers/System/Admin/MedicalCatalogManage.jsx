@@ -47,6 +47,8 @@ const MedicalCatalogManage = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [filterType, setFilterType] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 15;
 
   const fetchItems = async () => {
     setLoading(true);
@@ -84,6 +86,16 @@ const MedicalCatalogManage = () => {
       return true;
     });
   }, [items, searchKeyword, filterStatus]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
+  const paginatedItems = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredItems.slice(start, start + pageSize);
+  }, [filteredItems, currentPage, pageSize]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchKeyword, filterType, filterStatus]);
 
   // KPI Calculations
   const stats = useMemo(() => {
@@ -346,7 +358,7 @@ const MedicalCatalogManage = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredItems.map((item) => {
+              {paginatedItems.map((item) => {
                 const typeObj = CATALOG_TYPES.find((t) => t.value === item.type);
                 return (
                   <tr key={item.id}>

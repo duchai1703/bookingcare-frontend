@@ -280,6 +280,9 @@ export default function UnifiedSettlementHub() {
     return true;
   });
 
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
+  const paginatedItems = filteredItems.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   // Đếm số lượng cho từng Pill
   const countAll = unifiedItems.length;
   const countWithdrawals = withdrawals.filter(w => w.status === 'PENDING').length;
