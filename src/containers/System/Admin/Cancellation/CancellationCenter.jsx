@@ -30,6 +30,7 @@ import {
   Star,
   Award,
   ShieldCheck,
+  UserCheck,
 } from 'lucide-react';
 import {
   getDoctorCancellationHistory,

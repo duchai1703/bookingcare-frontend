@@ -28,6 +28,7 @@ import {
   ChevronRight,
   Database
 } from 'lucide-react';
+import RampPagination from '../../../../components/Common/RampPagination';
 import {
   getMasterTreasuryOverview,
   runMasterAutomationCycle

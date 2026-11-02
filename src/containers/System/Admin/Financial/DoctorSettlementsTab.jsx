@@ -33,6 +33,7 @@ import {
   runAutoDoctorPayoutCycle
 } from '../../../../services/walletService';
 import MoneyRoutingAuditDrawer from './MoneyRoutingAuditDrawer';
+import RampPagination from '../../../../components/Common/RampPagination';
 
 const STATUS_CONFIG = {
   AVAILABLE: {

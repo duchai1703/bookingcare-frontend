@@ -22,6 +22,7 @@ import {
   getAdminSpecialtiesList,
   updateSpecialtyWorkingStatus,
 } from '../../../../services/specialtyManageService';
+import RampPagination from '../../../../components/Common/RampPagination';
 import CommonUtils from '../../../../utils/CommonUtils';
 import AddSpecialtyModal from './AddSpecialtyModal';
 import EditSpecialtyModal from './EditSpecialtyModal';

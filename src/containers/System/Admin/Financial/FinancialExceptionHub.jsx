@@ -27,6 +27,7 @@ import {
   getAdminLiquidityMetrics
 } from '../../../../services/walletService';
 import TransactionDetailDrawer from '../../../../components/Financial/TransactionDetailDrawer';
+import RampPagination from '../../../../components/Common/RampPagination';
 
 const PRIORITY_BADGE = {
   CRITICAL: {

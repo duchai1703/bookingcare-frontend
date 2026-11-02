@@ -25,6 +25,7 @@ import {
   HelpCircle,
   Filter
 } from 'lucide-react';
+import RampPagination from '../../../../components/Common/RampPagination';
 import {
   getAdminRefundCases,
   getRefundCaseDetail,

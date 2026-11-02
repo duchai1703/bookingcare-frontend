@@ -28,6 +28,7 @@ import {
 import AssignDoctorModal from './AssignDoctorModal';
 import AddClinicModal from './AddClinicModal';
 import EditClinicModal from './EditClinicModal';
+import RampPagination from '../../../../components/Common/RampPagination';
 import CommonUtils from '../../../../utils/CommonUtils';
 import '../MedicalOperations.scss';
 
