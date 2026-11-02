@@ -62,6 +62,8 @@ import DoctorSettlementsTab from './DoctorSettlementsTab';
 import FinancialExceptionHub from './FinancialExceptionHub';
 import MasterTreasuryConsole from './MasterTreasuryConsole';
 import VisualCashFlowDashboard from './VisualCashFlowDashboard';
+import UnifiedSettlementHub from './UnifiedSettlementHub';
+import UnifiedLedgerHub from './UnifiedLedgerHub';
 import WithdrawalSplitViewWorkspace from './WithdrawalSplitViewWorkspace';
 import './LiquidityDashboard.scss';
 
@@ -83,9 +85,11 @@ const TAB_ROUTES = {
 
 const normalizeTabKey = (key) => {
   if (!key) return 'solvency';
-  if (key === 'settlements') return 'doctor-settlements';
-  if (key === 'refunds') return 'refund-cases';
-  if (key === 'overview') return 'solvency';
+  if (key === 'overview' || key === 'solvency' || key === 'inflows') return 'solvency';
+  if (['settlements', 'withdrawals', 'doctor-settlements', 'refund-cases', 'refunds', 'exceptions', 'withdrawal-policy'].includes(key)) return 'settlements';
+  if (['ledger', 'wallets', 'settings'].includes(key)) return 'ledger';
+
+
   return key;
 };
 
@@ -167,7 +171,7 @@ const LiquidityDashboard = ({ defaultTab }) => {
   const navigate = useNavigate();
 
   // Tabs: 'exceptions' (Mission Control) | 'solvency' | 'inflows' | 'withdrawals' | 'ledger' | 'wallets' | 'settings'
-  const [activeTab, setActiveTab] = useState(defaultTab || 'exceptions');
+  const [activeTab, setActiveTab] = useState(defaultTab ? normalizeTabKey(defaultTab) : 'solvency');
 
   // Synchronize activeTab when defaultTab prop or location changes
   useEffect(() => {
@@ -707,395 +711,78 @@ const LiquidityDashboard = ({ defaultTab }) => {
 
   return (
     <div className="liquidity-dashboard-page">
-      {/* ===== EXECUTIVE HEADER BAR & MACRO KPI GRID (CHỈ HIỂN THỊ TẠI TRANG TỔNG QUAN) ===== */}
-      {isOverview ? (
-        <>
-          <div className="ld-header-bar">
-            <div className="ld-title-group">
-              <div className="ld-badge-sub">
-                <Scale size={13} />
-                <span>Real-World Liquidity & Solvency Governance</span>
-              </div>
-              <h2>Tổng Quan Điều Hành Thu Chi & Ngân Quỹ Sàn</h2>
-              <p>Bảo chứng thanh khoản chi trả thực tế, giám sát nghĩa vụ đến hạn 7 ngày và quản trị an toàn ngân quỹ.</p>
-            </div>
+      {/* ===== [RAMP FINTECH] 3 MASTER NAVIGATION UNDERLINE TABS ===== */}
+      <div className="ramp-tabs-header-wrapper">
+        <nav className="ramp-underline-tabs">
+          <button
+            type="button"
+            className={`ramp-tab-link ${activeTab === 'solvency' ? 'active' : ''}`}
+            onClick={() => handleSwitchTab('solvency')}
+          >
+            <Scale size={15} />
+            <span>1. Dòng Tiền & Ngân Quỹ (Treasury & Cash Flow)</span>
+          </button>
 
-            <div className="ld-header-actions">
-              {liquidityRisk.coverageRatio7d !== undefined ? (
-                <div className="solvency-badge">
-                  <div
-                    className="solvency-pulse"
-                    style={{ background: liquidityRisk.coverageColor || '#10b981' }}
-                  />
-                  <div className="solvency-info">
-                    <span
-                      className="solvency-ratio-num"
-                      style={{ color: liquidityRisk.coverageColor || '#10b981' }}
-                    >
-                      LCR 7 Ngày: {liquidityRisk.coverageRatio7d}x
-                    </span>
-                    <span className="solvency-ratio-desc">{liquidityRisk.coverageLabel}</span>
-                  </div>
-                </div>
-              ) : solvency.solvencyRatio ? (
-                <div className="solvency-badge">
-                  <div
-                    className="solvency-pulse"
-                    style={{ background: solvency.solvencyColor || '#10b981' }}
-                  />
-                  <div className="solvency-info">
-                    <span
-                      className="solvency-ratio-num"
-                      style={{ color: solvency.solvencyColor || '#10b981' }}
-                    >
-                      Hệ số Bảo chứng: {solvency.solvencyRatio}x
-                    </span>
-                    <span className="solvency-ratio-desc">{solvency.solvencyLabel}</span>
-                  </div>
-                </div>
-              ) : null}
+          <button
+            type="button"
+            className={`ramp-tab-link ${activeTab === 'settlements' ? 'active' : ''}`}
+            onClick={() => handleSwitchTab('settlements')}
+          >
+            <ArrowUpRight size={15} />
+            <span>2. Duyệt Chi & Quyết Toán (Disbursements & Settlements)</span>
+            {withdrawalStats?.pendingCount > 0 && (
+              <span className="ramp-tab-pill">
+                {withdrawalStats.pendingCount}
+              </span>
+            )}
+          </button>
 
-              {/* Nút Bảng Đối Soát Chu Kỳ Drilldown */}
-              <button
-                type="button"
-                className="tw-px-3.5 tw-py-2 tw-rounded-xl tw-text-xs tw-font-bold tw-flex tw-items-center tw-gap-1.5 tw-transition tw-border tw-cursor-pointer tw-shadow-sm tw-bg-indigo-50 hover:tw-bg-indigo-100 tw-text-indigo-700 tw-border-indigo-200"
-                onClick={openPeriodicModal}
-                title="Bóc tách dòng tiền vào - ra, số dư két và đối soát chi tiết theo từng chu kỳ & tổng lũy kế"
-              >
-                <Calendar size={14} />
-                <span>Bảng Chu Kỳ Đối Soát</span>
-              </button>
+          <button
+            type="button"
+            className={`ramp-tab-link ${activeTab === 'ledger' ? 'active' : ''}`}
+            onClick={() => handleSwitchTab('ledger')}
+          >
+            <FileSpreadsheet size={15} />
+            <span>3. Sổ Cái & Quản Trị Hệ Thống (Ledger & Governance)</span>
+          </button>
+        </nav>
 
-              {/* Nút Điều Chuyển Vốn Float */}
-              <button
-                type="button"
-                className="tw-px-3.5 tw-py-2 tw-rounded-xl tw-text-xs tw-font-bold tw-flex tw-items-center tw-gap-1.5 tw-transition tw-border tw-cursor-pointer tw-shadow-sm hover:tw-opacity-90"
-                style={{
-                  background: (summary.floatAllocatedAmount > 0) ? '#fdf2f8' : '#eff6ff',
-                  color: (summary.floatAllocatedAmount > 0) ? '#be185d' : '#1d4ed8',
-                  borderColor: (summary.floatAllocatedAmount > 0) ? '#fbcfe8' : '#bfdbfe',
-                }}
-                onClick={() => {
-                  setFloatAmount(0);
-                  setFloatAmountStr('');
-                  setFloatNote('');
-                  setFloatTab((summary.floatAllocatedAmount > 0) ? 'REIMBURSE' : 'ALLOCATE');
-                  setIsFloatModalOpen(true);
-                }}
-                title="Trích rút vốn nhàn rỗi đi đầu tư hoặc bù hoàn vốn về két"
-              >
-                <TrendingUp size={14} />
-                <span>Điều Chuyển Vốn (Float)</span>
-                {summary.floatAllocatedAmount > 0 && (
-                  <span className="tw-px-2 tw-py-0.5 tw-rounded-full tw-text-3xs tw-font-bold tw-bg-pink-600 tw-text-white tw-ml-1">
-                    Đang trích {formatMoney(summary.floatAllocatedAmount)}
-                  </span>
-                )}
-              </button>
+        <div className="ramp-tabs-actions">
+          <button
+            type="button"
+            className="ramp-btn-secondary"
+            onClick={openPeriodicModal}
+            title="Bóc tách dòng tiền vào - ra, số dư két và đối soát chi tiết theo từng chu kỳ"
+          >
+            <Calendar size={13} />
+            <span>Bảng Chu Kỳ Đối Soát</span>
+          </button>
 
-              <button
-                type="button"
-                className="btn-refresh"
-                onClick={() => {
-                  loadMetrics();
-                  if (activeTab === 'inflows') loadCashFlows();
-                  if (activeTab === 'withdrawals') loadWithdrawals();
-                  if (activeTab === 'ledger') loadTransactions();
-                  if (activeTab === 'wallets') loadWallets();
-                  if (activeTab === 'settings') loadConfigs();
-                }}
-                disabled={loadingMetrics}
-              >
-                <RotateCw size={14} className={loadingMetrics ? 'tw-animate-spin' : ''} />
-                <span>Làm mới</span>
-              </button>
-            </div>
-          </div>
-
-          {/* ===== ALERT BANNER THANH KHOẢN THỰC TẾ ===== */}
-          {(liquidityRisk.coverageStatus || solvency.solvencyStatus) && (
-            <div className={`ld-alert-banner ld-alert-banner--${(liquidityRisk.coverageStatus || solvency.solvencyStatus || 'optimal').toLowerCase()}`}>
-              <div className="alert-icon-box">
-                {(liquidityRisk.coverageStatus || solvency.solvencyStatus) === 'OPTIMAL' || (liquidityRisk.coverageStatus || solvency.solvencyStatus) === 'HEALTHY' ? (
-                  <ShieldCheck size={24} />
-                ) : (
-                  <ShieldAlert size={24} />
-                )}
-              </div>
-              <div className="alert-content">
-                <h4>{liquidityRisk.coverageLabel || solvency.solvencyLabel}</h4>
-                <p>
-                  {(liquidityRisk.coverageStatus || solvency.solvencyStatus) === 'OPTIMAL' &&
-                    'Dòng tiền mặt khả dụng tại két sàn hoàn toàn vượt trội so với nghĩa vụ đến hạn 7 ngày tới. Hệ thống vận hành với hệ số phủ thanh khoản cao, bảo chứng 100% việc hoàn tiền và chi trả đúng hẹn.'}
-                  {(liquidityRisk.coverageStatus || solvency.solvencyStatus) === 'HEALTHY' &&
-                    'Hệ thống duy trì đủ thanh khoản thực tế để đáp ứng toàn bộ lệnh rút tiền, hoàn tiền và quyết toán trong 7 ngày tới. Tiến độ giải ngân vận hành thông suốt.'}
-                  {(liquidityRisk.coverageStatus || solvency.solvencyStatus) === 'WARNING' &&
-                    'CẢNH BÁO THANH KHOẢN: Hệ số phủ 7 ngày đang ở ngưỡng tiệm cận. Khuyến nghị Ban Giám đốc tạm dừng các quyết định rút vốn đầu tư ra khỏi tài khoản thanh toán cho đến khi có thêm dòng tiền nạp đối ứng.'}
-                  {(liquidityRisk.coverageStatus || solvency.solvencyStatus) === 'CRITICAL' &&
-                    'BÁO ĐỘNG CỰC KỲ NGUY HIỂM: Nghĩa vụ tài chính đến hạn 7 ngày vượt quá tiền mặt khả dụng thực tế trong két. Đóng băng ngay lập tức mọi đề xuất rút vốn đầu tư để tập trung thanh khoản giải ngân cho bệnh nhân và bác sĩ!'}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* ===== 4 EXECUTIVE KPI CARDS ===== */}
-          <div className="ld-kpi-grid">
-            {/* KPI 1: Tổng Nợ Nghĩa Vụ */}
-            <div className="kpi-card kpi-card--liability">
-              <div className="kpi-card-header">
-                <span className="kpi-title">Tổng Nghĩa Vụ Phải Trả</span>
-                <div className="kpi-icon-wrap tw-bg-amber-50 tw-text-amber-600">
-                  <Coins size={18} />
-                </div>
-              </div>
-              <div className="kpi-value">{formatMoney(summary.totalLiabilities)}</div>
-              <div className="kpi-breakdown">
-                <div className="breakdown-item">
-                  <span>Ví bệnh nhân:</span>
-                  <strong>{formatMoney(summary.patientAvailableLiability)}</strong>
-                </div>
-                <div className="breakdown-item">
-                  <span>Ví Bác sĩ:</span>
-                  <strong>{formatMoney(summary.doctorWalletLiability || 0)}</strong>
-                </div>
-                <div className="breakdown-item">
-                  <span>Ký quỹ giữ chỗ (Hold):</span>
-                  <strong>{formatMoney(summary.escrowActiveHolds)}</strong>
-                </div>
-                <div className="breakdown-item">
-                  <span>Thù lao chờ quyết toán:</span>
-                  <strong>{formatMoney(summary.doctorPayables)}</strong>
-                </div>
-              </div>
-            </div>
-
-            {/* KPI 2: Dòng tiền thực tế két sàn */}
-            <div className="kpi-card kpi-card--inflow">
-              <div className="kpi-card-header">
-                <span className="kpi-title">Tiền Mặt Khả Dụng Két Sàn</span>
-                <div className="kpi-icon-wrap tw-bg-emerald-50 tw-text-emerald-600">
-                  <ArrowDownLeft size={18} />
-                </div>
-              </div>
-              <div className="kpi-value" style={{ color: '#059669' }}>
-                {formatMoney(summary.realNetCashInTreasury !== undefined ? summary.realNetCashInTreasury : summary.totalCashInflow)}
-              </div>
-              <div className="kpi-breakdown">
-                <div className="breakdown-item">
-                  <span>Thu VNPay ca khám:</span>
-                  <strong>{formatMoney(summary.bookingRevenueInflow || 0)}</strong>
-                </div>
-                <div className="breakdown-item">
-                  <span>Nạp ví trực tiếp:</span>
-                  <strong>{formatMoney(summary.walletDepositInflow || 0)}</strong>
-                </div>
-                <div className="breakdown-item">
-                  <span>Vốn bảo chứng Sàn:</span>
-                  <strong>{formatMoney(summary.platformReserveFund || 0)}</strong>
-                </div>
-                <div className="breakdown-item">
-                  <span>Đã giải ngân ra ngoài:</span>
-                  <strong style={{ color: '#e11d48' }}>
-                    -{formatMoney(summary.totalCashOutflow || 0)}
-                  </strong>
-                </div>
-                {summary.floatAllocatedAmount > 0 && (
-                  <div className="breakdown-item tw-bg-pink-50 tw-p-1.5 tw-rounded-md">
-                    <span className="tw-text-pink-800 tw-font-bold">Đang trích đầu tư ngoài sàn:</span>
-                    <strong className="tw-text-pink-700 tw-font-black">
-                      -{formatMoney(summary.floatAllocatedAmount)}
-                    </strong>
-                  </div>
-                )}
-                <div className="tw-pt-2 tw-mt-2 tw-border-t tw-border-slate-100 tw-flex tw-justify-between tw-items-center">
-                  <span className="tw-text-2xs tw-text-slate-400">Điều phối vốn két sàn:</span>
-                  <button
-                    type="button"
-                    className="tw-text-2xs tw-font-bold tw-text-indigo-600 hover:tw-text-indigo-800 tw-border-none tw-bg-transparent tw-p-0 tw-cursor-pointer tw-flex tw-items-center tw-gap-1"
-                    onClick={() => {
-                      setFloatAmount(0);
-                      setFloatAmountStr('');
-                      setFloatNote('');
-                      setFloatTab(summary.floatAllocatedAmount > 0 ? 'REIMBURSE' : 'ALLOCATE');
-                      setIsFloatModalOpen(true);
-                    }}
-                  >
-                    <span>{summary.floatAllocatedAmount > 0 ? 'Quản lý bù hoàn' : 'Trích vốn đầu tư'}</span>
-                    <ChevronRight size={12} />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* KPI 3: Nghĩa vụ đến hạn 7 ngày (LCR 7D) */}
-            <div className="kpi-card kpi-card--due7d tw-cursor-pointer hover:tw-shadow-md tw-transition" onClick={openPeriodicModal} title="Nhấp để mở bảng đối soát toàn bộ chu kỳ">
-              <div className="kpi-card-header">
-                <span className="kpi-title">Nghĩa Vụ Đến Hạn 7 Ngày</span>
-                <div className="kpi-icon-wrap tw-bg-rose-50 tw-text-rose-600">
-                  <Clock size={18} />
-                </div>
-              </div>
-              <div className="kpi-value tw-text-rose-600">
-                {formatMoney(liquidityRisk.totalDue7Days || 0)}
-              </div>
-              <div className="kpi-breakdown">
-                <div className="breakdown-item">
-                  <span>Rút tiền chờ giải ngân:</span>
-                  <strong>{formatMoney(liquidityRisk.dueWithdrawalsAmount || 0)} ({liquidityRisk.dueWithdrawalsCount || 0} lệnh)</strong>
-                </div>
-                <div className="breakdown-item">
-                  <span>Hoàn tiền đang duyệt:</span>
-                  <strong>{formatMoney(liquidityRisk.dueRefundsAmount || 0)} ({liquidityRisk.dueRefundsCount || 0} ca)</strong>
-                </div>
-                <div className="breakdown-item">
-                  <span>Thù lao BS đã mở khóa:</span>
-                  <strong>{formatMoney(liquidityRisk.dueSettlementsAmount || 0)}</strong>
-                </div>
-                <div className="breakdown-item">
-                  <span>Khoản quá hạn (&gt;24h):</span>
-                  {liquidityRisk.overdueCount > 0 ? (
-                    <strong className="tw-text-rose-600">
-                      {liquidityRisk.overdueCount} khoản ({formatMoney(liquidityRisk.overdueAmount)})
-                    </strong>
-                  ) : (
-                    <strong className="tw-text-emerald-600">0 khoản</strong>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* KPI 4: Thặng dư thanh khoản ước tính */}
-            <div className="kpi-card kpi-card--surplus tw-cursor-pointer hover:tw-shadow-md tw-transition" onClick={openPeriodicModal} title="Nhấp để mở bảng đối soát toàn bộ chu kỳ">
-              <div className="kpi-card-header">
-                <span className="kpi-title">Thặng Dư Thanh Khoản Ước Tính</span>
-                <div className="kpi-icon-wrap tw-bg-indigo-50 tw-text-indigo-600">
-                  <TrendingUp size={18} />
-                </div>
-              </div>
-              <div className="kpi-value tw-text-indigo-600">
-                {formatMoney(liquidityRisk.estimatedSurplusLiquidity !== undefined ? liquidityRisk.estimatedSurplusLiquidity : solvency.netWithdrawableLiquidity)}
-              </div>
-              <div className="kpi-breakdown">
-                <div className="breakdown-item">
-                  <span>Hệ số phủ 7 ngày (LCR):</span>
-                  <strong className="tw-text-indigo-700">
-                    {liquidityRisk.coverageRatio7d ? `${liquidityRisk.coverageRatio7d}x` : 'N/A'}
-                  </strong>
-                </div>
-                <div className="breakdown-item">
-                  <span>Mức dự trữ kịch bản ({(solvency.reserveRatio || liquidityRisk.reserveRatio || reserveRatio || 40)}%):</span>
-                  <strong>{formatMoney(solvency.mandatoryReserveCash)}</strong>
-                </div>
-                <div className="breakdown-item">
-                  <span>Đánh giá thanh khoản:</span>
-                  <strong style={{ color: liquidityRisk.coverageColor || '#10b981' }}>
-                    {liquidityRisk.coverageLabel || 'Bình thường'}
-                  </strong>
-                </div>
-                <div className="breakdown-item">
-                  <span className="tw-text-[11px] tw-text-slate-400">
-                    * Đã trừ nghĩa vụ 7 ngày & quỹ dự trữ tối thiểu
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </>
-      ) : (
-        /* ===== COMPACT SUBPAGE HEADER (KHI VÀO TRANG CON NGHIỆP VỤ) ===== */
-        <div className="ld-subpage-header">
-          <div className="subpage-header-main">
-            <nav className="subpage-breadcrumb">
-              <button
-                type="button"
-                className="breadcrumb-item breadcrumb-home"
-                onClick={() => handleSwitchTab('solvency')}
-              >
-                <Scale size={13} />
-                <span>Thu chi & Ngân quỹ</span>
-              </button>
-              <ChevronRight size={13} className="breadcrumb-separator" />
-              <span className="breadcrumb-current">{currentSubpage.title}</span>
-            </nav>
-            <div className="subpage-title-row">
-              <div
-                className="subpage-icon-badge"
-                style={{
-                  color: currentSubpage.color,
-                  background: `${currentSubpage.color}15`
-                }}
-              >
-                <CurrentSubpageIcon size={22} />
-              </div>
-              <div className="subpage-title-text">
-                <div className="subpage-heading-wrap">
-                  <h2>{currentSubpage.title}</h2>
-                  <span className="subpage-tag">{currentSubpage.tag}</span>
-                </div>
-                <p>{currentSubpage.description}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="subpage-header-actions">
-            <button
-              type="button"
-              className="btn-back-overview"
-              onClick={() => handleSwitchTab('solvency')}
-            >
-              <ArrowLeft size={14} />
-              <span>Về Trang Tổng Quan</span>
-            </button>
-
-            {/* Nút Điều Chuyển Vốn Float */}
-              <button
-                type="button"
-                className="tw-px-3.5 tw-py-2 tw-rounded-xl tw-text-xs tw-font-bold tw-flex tw-items-center tw-gap-1.5 tw-transition tw-border tw-cursor-pointer tw-shadow-sm hover:tw-opacity-90"
-                style={{
-                  background: (summary.floatAllocatedAmount > 0) ? '#fdf2f8' : '#eff6ff',
-                  color: (summary.floatAllocatedAmount > 0) ? '#be185d' : '#1d4ed8',
-                  borderColor: (summary.floatAllocatedAmount > 0) ? '#fbcfe8' : '#bfdbfe',
-                }}
-                onClick={() => {
-                  setFloatAmount(0);
-                  setFloatAmountStr('');
-                  setFloatNote('');
-                  setFloatTab((summary.floatAllocatedAmount > 0) ? 'REIMBURSE' : 'ALLOCATE');
-                  setIsFloatModalOpen(true);
-                }}
-                title="Trích rút vốn nhàn rỗi đi đầu tư hoặc bù hoàn vốn về két"
-              >
-                <TrendingUp size={14} />
-                <span>Điều Chuyển Vốn (Float)</span>
-                {summary.floatAllocatedAmount > 0 && (
-                  <span className="tw-px-2 tw-py-0.5 tw-rounded-full tw-text-3xs tw-font-bold tw-bg-pink-600 tw-text-white tw-ml-1">
-                    Đang trích {formatMoney(summary.floatAllocatedAmount)}
-                  </span>
-                )}
-              </button>
-
-              <button
-              type="button"
-              className="btn-refresh"
-              onClick={() => {
-                loadMetrics();
-                if (activeTab === 'inflows') loadCashFlows();
-                if (activeTab === 'withdrawals') loadWithdrawals();
-                if (activeTab === 'ledger') loadTransactions();
-                if (activeTab === 'wallets') loadWallets();
-                if (activeTab === 'settings') loadConfigs();
-              }}
-              disabled={loadingMetrics}
-            >
-              <RotateCw size={14} className={loadingMetrics ? 'tw-animate-spin' : ''} />
-              <span>Làm mới</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            className="ramp-btn-secondary"
+            onClick={() => {
+              setFloatAmount(0);
+              setFloatAmountStr('');
+              setFloatNote('');
+              setFloatTab((summary.floatAllocatedAmount > 0) ? 'REIMBURSE' : 'ALLOCATE');
+              setIsFloatModalOpen(true);
+            }}
+            title="Trích rút vốn nhàn rỗi đi đầu tư hoặc bù hoàn vốn về két"
+          >
+            <TrendingUp size={13} />
+            <span>Điều Chuyển Vốn (Float)</span>
+            {summary.floatAllocatedAmount > 0 && (
+              <span className="tw-px-1.5 tw-py-0.2 tw-rounded-full tw-text-[10px] tw-font-bold tw-bg-pink-600 tw-text-white tw-ml-1">
+                Đang trích {formatMoney(summary.floatAllocatedAmount)}
+              </span>
+            )}
+          </button>
         </div>
-      )}
+      </div>
 
-      {/* ===== NAVIGATION TABS (PHÂN NHÓM 3 KHỐI NGHIỆP VỤ) ===== */}
       <div className="ld-tabs-container tw-mt-4">
+        {false && (
         <div className="ld-tabs-nav">
           {/* Nhóm 1: ĐIỀU HÀNH */}
           <div className="tab-nav-group">
@@ -1207,6 +894,8 @@ const LiquidityDashboard = ({ defaultTab }) => {
           </div>
         </div>
 
+      )}
+
         <div className="ld-tab-body">
           {/* ══════════════ TAB 1: MASTER TREASURY & LIQUIDITY CONSOLE ══════════════ */}
           {(activeTab === 'solvency' || activeTab === 'overview') && (
@@ -1214,7 +903,17 @@ const LiquidityDashboard = ({ defaultTab }) => {
           )}
 
           {/* ══════════════ TAB 2: INFLOWS STREAM (DÒNG TIỀN THU VÀO) ══════════════ */}
-          {activeTab === 'inflows' && (
+          {/* ══════════════ MASTER HUB 2: DISBURSEMENTS & SETTLEMENTS ══════════════ */}
+          {activeTab === 'settlements' && (
+            <UnifiedSettlementHub />
+          )}
+
+          {/* ══════════════ MASTER HUB 3: LEDGER & GOVERNANCE ══════════════ */}
+          {activeTab === 'ledger' && (
+            <UnifiedLedgerHub />
+          )}
+
+          {false && activeTab === 'inflows' && (
             <div className="tab-inflows-layout">
               {/* Summary KPI Cards */}
               <div className="inflows-summary-grid">

@@ -372,3 +372,12 @@ export const getVisualCashflowMetrics = () => {
 export const withdrawPlatformProfit = (data) => {
   return axiosInstance.post('/api/v1/admin/financial/withdraw-platform-profit', data);
 };
+
+/**
+ * [PHASE 2 - TRANSACTION LINEAGE & LIFECYCLE INSPECTOR]
+ * Truy vết chi tiết vòng đời toàn vẹn của một giao dịch bất kỳ
+ * @param {string|number} id ID giao dịch, mã ca khám hoặc mã rút tiền
+ */
+export const getTransactionLineage = (id) => {
+  return axiosInstance.get(`/api/v1/admin/financial/transaction-lineage/${id}`);
+};

@@ -585,6 +585,190 @@
       }
     }
   }
+
+  // 1. BA THẺ TỔNG QUAN DÒNG TIỀN TRUNG TÂM (3 HERO OVERVIEW CARDS)
+  .ramp-hero-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+
+    @media (max-width: 900px) {
+      grid-template-columns: 1fr;
+    }
+
+    .hero-card {
+      background-color: #FFFFFF;
+      border: 1px solid $ramp-border-subtle;
+      border-radius: 10px;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+
+      &:hover {
+        border-color: $ramp-border-strong;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      }
+
+      .card-top-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        .card-label {
+          font-size: 11px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          color: $ramp-ink-muted;
+        }
+
+        .card-icon {
+          color: $ramp-ink-muted;
+
+          &.text-emerald {
+            color: #047857;
+          }
+
+          &.text-amber {
+            color: #B45309;
+          }
+        }
+      }
+
+      .card-amount {
+        font-size: 22px;
+        font-weight: 800;
+        color: $ramp-ink-primary;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.02em;
+
+        &.text-emerald {
+          color: #047857;
+        }
+
+        &.text-amber {
+          color: #B45309;
+        }
+      }
+
+      .card-sub {
+        font-size: 11.5px;
+        color: $ramp-ink-muted;
+      }
+    }
+  }
+
+  // Flow canvas footer drilldown button
+  .flow-canvas-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px dashed $ramp-border-subtle;
+
+    .view-drilldown-btn {
+      font-size: 12px;
+    }
+  }
+
+  // GIAO DỊCH CẦN XỬ LÝ (ACTION QUEUE)
+  .ramp-action-queue-section {
+    background-color: #FFFFFF;
+    border: 1px solid $ramp-border-subtle;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .queue-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      .queue-title {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: $ramp-ink-primary;
+        margin: 0;
+      }
+
+      .queue-count {
+        font-size: 11.5px;
+        color: $ramp-ink-muted;
+      }
+    }
+
+    .action-queue-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+
+      .action-queue-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px;
+        background-color: $ramp-bg-canvas;
+        border: 1px solid $ramp-border-subtle;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+
+        &:hover {
+          background-color: $ramp-bg-surface-hover;
+          border-color: $ramp-border-strong;
+
+          .item-action {
+            color: $ramp-ink-primary;
+            transform: translateX(2px);
+          }
+        }
+
+        .item-left {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+
+          .item-num {
+            font-size: 11px;
+            font-weight: 800;
+            color: $ramp-ink-muted;
+            background-color: #FFFFFF;
+            border: 1px solid $ramp-border-subtle;
+            width: 22px;
+            height: 22px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+
+          .item-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: $ramp-ink-primary;
+          }
+        }
+
+        .item-action {
+          font-size: 12px;
+          font-weight: 600;
+          color: #1D4ED8;
+          transition: all 0.15s ease;
+        }
+      }
+    }
+  }
 }
 
 @keyframes rampFadeIn {

@@ -39,12 +39,14 @@ import {
   Info,
   DollarSign,
   Lock,
+  GitCommit,
 } from 'lucide-react';
 import {
   getVisualCashflowMetrics,
   withdrawPlatformProfit,
 } from '../../../../services/walletService';
 import VaultDetailDrawer from './VaultDetailDrawer';
+import TransactionLifecycleDrawer from './TransactionLifecycleDrawer';
 import './VisualCashFlowDashboard.scss';
 
 const formatCurrencyVND = (num) => {
@@ -64,6 +66,15 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
 
   // Drawer Chi tiết Khối Vốn
   const [selectedVault, setSelectedVault] = useState(null);
+
+  // Drawer Truy Vết Vòng Đời Giao Dịch Toàn Vẹn (Lineage Inspector)
+  const [selectedTxForLineage, setSelectedTxForLineage] = useState(null);
+  const [isLineageDrawerOpen, setIsLineageDrawerOpen] = useState(false);
+
+  const handleOpenLineage = (targetId) => {
+    setSelectedTxForLineage(targetId || 102);
+    setIsLineageDrawerOpen(true);
+  };
 
   // Tải dữ liệu từ Backend
   const loadMetrics = useCallback(async () => {
@@ -445,6 +456,15 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
           </div>
 
           <div className="flow-legend">
+            <button
+              type="button"
+              className="ramp-btn-secondary"
+              style={{ padding: '5px 12px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px', marginRight: '8px' }}
+              onClick={() => handleOpenLineage(stepBreakdown?.step2?.bookingId || 102)}
+            >
+              <GitCommit size={13} />
+              <span>Truy Vết Vòng Đời Ca Khám Này</span>
+            </button>
             <div className="legend-item">
               <span className="legend-line real-cash" />
               <span>Tiền mặt thật (VCB)</span>
@@ -749,13 +769,17 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
                 <th className="text-right">Số Dư Sau GD</th>
                 <th>Thời Gian</th>
                 <th>Trạng Thái</th>
+                <th className="text-right">Vòng Đời</th>
               </tr>
             </thead>
             <tbody>
               {recentTransactions.length > 0 ? (
                 recentTransactions.map((tx, idx) => (
                   <React.Fragment key={tx.id || idx}>
-                    <tr className="vault-row">
+                    <tr
+                      className="vault-row cursor-pointer"
+                      onClick={() => handleOpenLineage(tx.id || tx.referenceId || 102)}
+                    >
                       <td className="tw-font-mono tw-text-xs tw-font-bold tw-text-slate-800">
                         TRX-{String(tx.id).slice(0, 8).toUpperCase()}
                       </td>
@@ -788,18 +812,35 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
                       <td>
                         <span className="ramp-pill success">{tx.status || 'COMPLETED'}</span>
                       </td>
+                      <td className="text-right">
+                        <button
+                          type="button"
+                          className="ramp-btn-ghost"
+                          style={{ padding: '2px 8px', fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenLineage(tx.id || tx.referenceId || 102);
+                          }}
+                        >
+                          <GitCommit size={12} />
+                          <span>Vòng đời</span>
+                        </button>
+                      </td>
                     </tr>
 
                     {/* HÀNG CẢNH BÁO NỘI DÒNG THEO PHONG CÁCH RAMP (INLINE ANOMALY ROW) */}
                     {idx === 0 && tx.transactionType === 'DEPOSIT' && (
                       <tr>
-                        <td colSpan={8} style={{ padding: 0 }}>
-                          <div className="ramp-inline-anomaly">
+                        <td colSpan={9} style={{ padding: 0 }}>
+                          <div
+                            className="ramp-inline-anomaly cursor-pointer"
+                            onClick={() => handleOpenLineage(tx.id || tx.referenceId || 102)}
+                          >
                             <span className="anomaly-arrow">↳</span>
                             <span>
                               Giao dịch nạp tiền VNPay gần nhất đã được đối chiếu khớp 100% với tài khoản ngân hàng VCB.
                             </span>
-                            <span className="anomaly-link">Xem chi tiết giao dịch</span>
+                            <span className="anomaly-link">Xem chi tiết vòng đời ➔</span>
                           </div>
                         </td>
                       </tr>
@@ -923,6 +964,17 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
           onOpenWithdrawModal={() => setIsWithdrawModalOpen(true)}
         />
       )}
+
+      {/* 8. DRAWER TRUY VẾT VÒNG ĐỜI GIAO DỊCH TOÀN VẸN (LINEAGE) */}
+      <TransactionLifecycleDrawer
+        isOpen={isLineageDrawerOpen}
+        targetId={selectedTxForLineage}
+        onClose={() => {
+          setIsLineageDrawerOpen(false);
+          setSelectedTxForLineage(null);
+        }}
+        onNavigateTab={onNavigateTab}
+      />
     </div>
   );
 }

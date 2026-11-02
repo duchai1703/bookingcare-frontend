@@ -1,0 +1,405 @@
+// src/containers/System/Admin/Financial/AppointmentCashFlowModal.scss
+@import '../../../../styles/rampDesignTokens.scss';
+
+.appointment-cashflow-modal {
+  width: 100%;
+  max-width: 780px;
+  background-color: #FFFFFF;
+  border-radius: 12px;
+  border: 1px solid $ramp-border-subtle;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.16);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 90vh;
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid $ramp-border-subtle;
+    background-color: $ramp-bg-canvas;
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+
+      .back-btn {
+        padding: 4px 10px;
+        font-size: 12px;
+      }
+
+      .title-group {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+
+        .modal-title {
+          font-size: 16px;
+          font-weight: 800;
+          color: $ramp-ink-primary;
+          margin: 0;
+          letter-spacing: -0.01em;
+        }
+
+        .booking-ref-badge {
+          font-size: 11px;
+          font-weight: 700;
+          color: $ramp-ink-muted;
+          background-color: $ramp-bg-subtle;
+          padding: 2px 8px;
+          border-radius: 4px;
+        }
+      }
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11.5px;
+        font-weight: 600;
+        padding: 3px 9px;
+        border-radius: 9999px;
+
+        &.success {
+          background-color: $ramp-status-success-bg;
+          color: $ramp-status-success-ink;
+          border: 1px solid rgba(22, 101, 52, 0.2);
+        }
+      }
+
+      .close-icon-btn {
+        background: transparent;
+        border: none;
+        color: $ramp-ink-muted;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &:hover {
+          color: $ramp-ink-primary;
+          background-color: $ramp-bg-subtle;
+        }
+      }
+    }
+  }
+
+  .appointment-meta-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 24px;
+    background-color: #FAF9F6;
+    border-bottom: 1px solid $ramp-border-subtle;
+    font-size: 12px;
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+
+      .meta-icon {
+        color: $ramp-ink-muted;
+      }
+
+      .meta-label {
+        color: $ramp-ink-muted;
+      }
+
+      .meta-val {
+        color: $ramp-ink-primary;
+      }
+    }
+
+    .meta-divider {
+      width: 1px;
+      height: 14px;
+      background-color: $ramp-border-subtle;
+    }
+  }
+
+  .flow-vertical-stack {
+    padding: 20px 24px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    .flow-vertical-connector {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: $ramp-ink-faint;
+      padding: 2px 0;
+    }
+
+    .flow-card-box {
+      background-color: #FFFFFF;
+      border: 1px solid $ramp-border-subtle;
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all 0.15s ease;
+
+      &:hover {
+        border-color: $ramp-border-strong;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+      }
+
+      .card-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        .step-pill {
+          font-size: 11px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          color: $ramp-ink-primary;
+          background-color: $ramp-bg-subtle;
+          padding: 3px 8px;
+          border-radius: 4px;
+
+          &.success {
+            background-color: $ramp-status-success-bg;
+            color: $ramp-status-success-ink;
+          }
+        }
+
+        .amount-tag {
+          font-size: 13.5px;
+          font-weight: 800;
+          font-variant-numeric: tabular-nums;
+
+          &.text-emerald {
+            color: #047857;
+          }
+
+          &.text-red {
+            color: #B91C1C;
+          }
+
+          &.text-indigo {
+            color: #4338CA;
+          }
+        }
+      }
+
+      // Step 1: Pipeline
+      .flow-pipeline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background-color: $ramp-bg-canvas;
+        border: 1px solid $ramp-border-subtle;
+        border-radius: 6px;
+        padding: 12px 16px;
+
+        .pipe-node {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+
+          .node-title {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: $ramp-ink-primary;
+          }
+
+          .node-sub {
+            font-size: 11px;
+            color: $ramp-ink-muted;
+          }
+
+          &.highlight .node-title {
+            color: #1D4ED8;
+          }
+
+          &.target .node-title {
+            color: #047857;
+          }
+        }
+
+        .pipe-arrow {
+          color: $ramp-ink-faint;
+        }
+      }
+
+      .card-footer-meta {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        font-size: 11.5px;
+        color: $ramp-ink-muted;
+        border-top: 1px dashed $ramp-border-subtle;
+        padding-top: 8px;
+
+        strong {
+          color: $ramp-ink-primary;
+        }
+
+        .text-emerald strong {
+          color: #047857;
+        }
+      }
+
+      // Step 2: Balance Grid
+      .balance-calc-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+
+        .calc-item {
+          background-color: $ramp-bg-canvas;
+          border: 1px solid $ramp-border-subtle;
+          border-radius: 6px;
+          padding: 10px 12px;
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+
+          .calc-label {
+            font-size: 11px;
+            color: $ramp-ink-muted;
+          }
+
+          .calc-val {
+            font-size: 14px;
+            font-variant-numeric: tabular-nums;
+          }
+
+          &.highlight-minus .calc-val {
+            color: #B91C1C;
+          }
+
+          &.highlight-remaining .calc-val {
+            color: #047857;
+          }
+        }
+      }
+
+      .step-note {
+        font-size: 11px;
+        color: $ramp-ink-muted;
+        margin: 0;
+        line-height: 1.4;
+      }
+
+      // Step 3: Split Branches
+      .split-branches-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+
+        .branch-card {
+          border-radius: 6px;
+          padding: 12px 14px;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+
+          &.doctor {
+            background-color: #F0FDF4;
+            border: 1px solid #BBF7D0;
+          }
+
+          &.platform {
+            background-color: #FEFCE8;
+            border: 1px solid #FEF08A;
+          }
+
+          .branch-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            .branch-role {
+              font-size: 11px;
+              font-weight: 700;
+              color: $ramp-ink-primary;
+            }
+
+            .branch-pct {
+              font-size: 11px;
+              font-weight: 700;
+              padding: 1px 5px;
+              border-radius: 4px;
+              background-color: #FFFFFF;
+            }
+          }
+
+          .branch-amount {
+            font-size: 18px;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+          }
+
+          .branch-status {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            color: $ramp-ink-muted;
+          }
+        }
+      }
+
+      // Step 4: Completion Summary
+      .completion-summary-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background-color: $ramp-bg-canvas;
+        border: 1px solid $ramp-border-subtle;
+        border-radius: 6px;
+        padding: 12px 16px;
+
+        .comp-item {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+
+          .comp-label {
+            font-size: 11px;
+            color: $ramp-ink-muted;
+          }
+
+          .comp-val {
+            font-size: 14px;
+            font-variant-numeric: tabular-nums;
+          }
+        }
+      }
+    }
+  }
+
+  .modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 14px 24px;
+    border-top: 1px solid $ramp-border-subtle;
+    background-color: #FFFFFF;
+
+    .footer-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+  }
+}
+
