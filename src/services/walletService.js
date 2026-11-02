@@ -366,7 +366,7 @@ export const getVisualCashflowMetrics = () => {
 
 /**
  * [PHASE 1 - CASH FLOW ARCHITECTURE & RAMP FINTECH ENGINE]
- * Admin rút tiền lời công ty ("-30k xài") ra chi dùng cá nhân
+ * Admin rút / kết chuyển lợi nhuận nền tảng ra tài khoản ngân hàng
  * @param {Object} data { amount: number, note?: string, bankAccountInfo?: string }
  */
 export const withdrawPlatformProfit = (data) => {

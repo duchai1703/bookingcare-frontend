@@ -14,6 +14,7 @@ import {
 import { confirmDelete, showSuccess, showError, showWarning } from '../../../utils/confirmDelete';
 import CommonUtils from '../../../utils/CommonUtils';
 import ImageUploadInput from '../../../components/Common/ImageUploadInput';
+import RampPagination from '../../../components/Common/RampPagination';
 import {
   Search,
   Plus,
@@ -583,7 +584,7 @@ const UserManage = () => {
 
         {/* ── Pagination Footer ── */}
         {filteredUsers.length > 0 && (
-          <div className="table-pagination-footer">
+          <div className="table-pagination-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div className="page-size-selector">
               <span>Hiển thị mỗi trang:</span>
               <select value={pageSize} onChange={(e) => setPageSize(Number(e.target.value))}>
@@ -593,59 +594,18 @@ const UserManage = () => {
               </select>
             </div>
 
-            <div className="pagination-controls">
-              <button
-                type="button"
-                className="btn-page-nav"
-                disabled={currentPage <= 1}
-                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-              >
-                <ChevronLeft size={16} />
-                <span>Trước</span>
-              </button>
-
-              {Array.from({ length: totalPages }).map((_, i) => {
-                const pNum = i + 1;
-                // Show first, last, and window around current page
-                if (
-                  pNum === 1 ||
-                  pNum === totalPages ||
-                  (pNum >= currentPage - 1 && pNum <= currentPage + 1)
-                ) {
-                  return (
-                    <button
-                      key={pNum}
-                      type="button"
-                      className={`page-num-btn ${currentPage === pNum ? 'active' : ''}`}
-                      onClick={() => setCurrentPage(pNum)}
-                    >
-                      {pNum}
-                    </button>
-                  );
-                }
-                if (pNum === currentPage - 2 || pNum === currentPage + 2) {
-                  return (
-                    <span key={pNum} className="tw-px-1 tw-text-slate-400">
-                      ...
-                    </span>
-                  );
-                }
-                return null;
-              })}
-
-              <button
-                type="button"
-                className="btn-page-nav"
-                disabled={currentPage >= totalPages}
-                onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-              >
-                <span>Sau</span>
-                <ChevronRight size={16} />
-              </button>
-            </div>
+            <RampPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filteredUsers.length}
+              pageSize={pageSize}
+              onPageChange={(p) => setCurrentPage(p)}
+              showInfo={false}
+            />
           </div>
         )}
       </div>
+      
 
       {/* ── 5. Modal Dialog: Thêm / Sửa Người dùng ── */}
       {showFormModal && (

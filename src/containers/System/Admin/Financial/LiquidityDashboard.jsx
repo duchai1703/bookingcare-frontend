@@ -65,6 +65,7 @@ import VisualCashFlowDashboard from './VisualCashFlowDashboard';
 import UnifiedSettlementHub from './UnifiedSettlementHub';
 import UnifiedLedgerHub from './UnifiedLedgerHub';
 import WithdrawalSplitViewWorkspace from './WithdrawalSplitViewWorkspace';
+import RampPagination from '../../../../components/Common/RampPagination';
 import './LiquidityDashboard.scss';
 
 const TAB_ROUTES = {
@@ -1107,7 +1108,7 @@ const LiquidityDashboard = ({ defaultTab }) => {
           )}
 
           {/* ══════════════ TAB 3: TRUNG TÂM DUYỆT RÚT TIỀN ══════════════ */}
-          {activeTab === 'withdrawals' && (
+          {false && activeTab === 'withdrawals' && (
             <div className="tab-withdrawals-layout">
               {/* Thống kê nhanh */}
               <div className="tw-grid tw-grid-cols-5 tw-gap-3.5 tw-mb-5">
@@ -1380,7 +1381,7 @@ const LiquidityDashboard = ({ defaultTab }) => {
           )}
 
           {/* ══════════════ TAB 3: SỔ CÁI GIAO DỊCH TOÀN SÀN (LEDGER) ══════════════ */}
-          {activeTab === 'ledger' && (
+          {false && activeTab === 'ledger' && (
             <div className="tab-ledger-layout">
               {/* Filters */}
               <div className="ld-filters-bar">
@@ -1552,7 +1553,7 @@ const LiquidityDashboard = ({ defaultTab }) => {
           )}
 
           {/* ══════════════ TAB 4: DANH SÁCH VÍ BỆNH NHÂN (WALLETS) ══════════════ */}
-          {activeTab === 'wallets' && (
+          {false && activeTab === 'wallets' && (
             <div className="tab-wallets-layout">
               {/* Filters */}
               <div className="ld-filters-bar">
@@ -1706,7 +1707,7 @@ const LiquidityDashboard = ({ defaultTab }) => {
           )}
 
           {/* ══════════════ TAB 6: CẤU HÌNH QUỸ BẢO CHỨNG & HẠN MỨC TOÀN SÀN ══════════════ */}
-          {activeTab === 'settings' && (
+          {false && activeTab === 'settings' && (
             <div className="tab-settings-layout">
               <div className="settings-grid">
                 {/* Cột trái: Form cấu hình */}

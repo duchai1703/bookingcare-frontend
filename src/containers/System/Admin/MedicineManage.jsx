@@ -21,6 +21,7 @@ import {
   editMedicine,
   deleteMedicine,
 } from '../../../services/catalogService';
+import RampPagination from '../../../components/Common/RampPagination';
 import './CatalogManage.scss';
 
 const emptyForm = {
@@ -370,7 +371,7 @@ const MedicineManage = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredItems.map((item) => (
+              {paginatedItems.map((item) => (
                 <tr key={item.id}>
                   <td>
                     <div className="item-name-cell">
@@ -440,6 +441,17 @@ const MedicineManage = () => {
               ))}
             </tbody>
           </table>
+        )}
+        {filteredItems.length > 0 && (
+          <RampPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredItems.length}
+            pageSize={pageSize}
+            onPageChange={(p) => setCurrentPage(p)}
+            itemLabel="thuốc"
+            showInfo={true}
+          />
         )}
       </div>
 

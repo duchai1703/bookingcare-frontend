@@ -72,17 +72,19 @@ export default function VaultDetailDrawer({ vaultKey, data, onClose, onOpenWithd
                 </span>
               </div>
               <div className="meta-data-item">
-                <span className="item-label">Tiền lời sàn Admin đã rút ra tiêu ("-30k xài"):</span>
+                <span className="item-label">Lợi nhuận nền tảng đã kết chuyển / rút:</span>
                 <span className="item-value" style={{ color: '#854D0E' }}>
                   -{formatCurrencyVND(item?.adminProfitWithdrawn)}
                 </span>
               </div>
-              <div className="meta-data-item">
-                <span className="item-label">Vốn đối ứng bảo chứng sàn ban đầu:</span>
-                <span className="item-value">
-                  +{formatCurrencyVND(item?.platformReserveFund)}
-                </span>
-              </div>
+              {item?.platformReserveFund > 0 && (
+                <div className="meta-data-item">
+                  <span className="item-label">Vốn đối ứng bảo chứng sàn:</span>
+                  <span className="item-value">
+                    +{formatCurrencyVND(item?.platformReserveFund)}
+                  </span>
+                </div>
+              )}
             </div>
           </>
         );
@@ -212,7 +214,7 @@ export default function VaultDetailDrawer({ vaultKey, data, onClose, onOpenWithd
         return (
           <>
             <div className="kpi-summary-box">
-              <div className="summary-label">Lợi Nhuận Sàn Khả Dụng ("-30k xài")</div>
+              <div className="summary-label">Lợi Nhuận Nền Tảng Khả Dụng</div>
               <div className="summary-value" style={{ color: '#854D0E' }}>
                 {formatCurrencyVND(item?.spendable)}
               </div>

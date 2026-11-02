@@ -28,6 +28,7 @@ import { getAllClinic } from '../../../../services/clinicService';
 import CommonUtils from '../../../../utils/CommonUtils';
 import CommissionModal from './CommissionModal';
 import DoctorPayoutModal from './DoctorPayoutModal';
+import RampPagination from '../../../../components/Common/RampPagination';
 import './DoctorWorkspace.scss';
 
 const formatCurrencyVND = (num) => {
@@ -548,30 +549,14 @@ const DoctorMaster = () => {
         </div>
 
         {/* Pagination Bar */}
-        <div className="table-pagination">
-          <div>
-            {language === 'vi'
-              ? `Hiển thị ${doctors.length} trên tổng số ${pagination.totalCount} bác sĩ (Trang ${pagination.page}/${pagination.totalPages})`
-              : `Showing ${doctors.length} of ${pagination.totalCount} doctors (Page ${pagination.page}/${pagination.totalPages})`}
-          </div>
-
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              className="btn-page"
-              disabled={pagination.page <= 1}
-              onClick={() => setPage(page - 1)}
-            >
-              {language === 'vi' ? '← Trang trước' : '← Previous'}
-            </button>
-            <button
-              className="btn-page"
-              disabled={pagination.page >= pagination.totalPages}
-              onClick={() => setPage(page + 1)}
-            >
-              {language === 'vi' ? 'Trang sau →' : 'Next →'}
-            </button>
-          </div>
-        </div>
+        <RampPagination
+          currentPage={page}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalCount}
+          pageSize={pagination.limit || 15}
+          onPageChange={(p) => setPage(p)}
+          itemLabel={language === 'vi' ? 'bác sĩ' : 'doctors'}
+        />
       </div>
 
       {/* Modals */}

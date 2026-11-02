@@ -42,6 +42,7 @@ import {
 import WithdrawalSplitViewWorkspace from './WithdrawalSplitViewWorkspace';
 import MoneyRoutingAuditDrawer from './MoneyRoutingAuditDrawer';
 import TransactionLifecycleDrawer from './TransactionLifecycleDrawer';
+import RampPagination from '../../../../components/Common/RampPagination';
 import './UnifiedSettlementHub.scss';
 
 const formatMoney = (val) => (Number(val) || 0).toLocaleString('vi-VN') + ' ₫';
@@ -50,6 +51,8 @@ export default function UnifiedSettlementHub() {
   // Operational Filter Pill: 'ALL' | 'WITHDRAWAL' | 'SETTLEMENT' | 'REFUND' | 'OVERDUE'
   const [activeSegment, setActiveSegment] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 15;
   const [loading, setLoading] = useState(false);
 
   // Data states
@@ -465,7 +468,7 @@ export default function UnifiedSettlementHub() {
                 </td>
               </tr>
             ) : (
-              filteredItems.map((item) => (
+              paginatedItems.map((item) => (
                 <React.Fragment key={item.id}>
                   <tr>
                     <td className="col-cb"><input type="checkbox" /></td>
@@ -598,6 +601,20 @@ export default function UnifiedSettlementHub() {
           </tbody>
         </table>
       </div>
+
+      {filteredItems.length > 0 && (
+        <div style={{ padding: '0 4px', marginTop: 12 }}>
+          <RampPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredItems.length}
+            pageSize={pageSize}
+            onPageChange={(p) => setCurrentPage(p)}
+            itemLabel="tác vụ quyết toán"
+            showInfo={true}
+          />
+        </div>
+      )}
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* 5. CỬA SỔ LÀM VIỆC 2 CỘT SPLIT-VIEW DUYỆT RÚT TIỀN (ẢNH 3 & 4)    */}

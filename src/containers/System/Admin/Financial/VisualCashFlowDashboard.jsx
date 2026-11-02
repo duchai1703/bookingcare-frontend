@@ -57,7 +57,7 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Modal Rút Tiền Lời Sàn ("-30k xài")
+  // Modal Rút Lợi Nhuận Nền Tảng
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawNote, setWithdrawNote] = useState('');
@@ -166,14 +166,14 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
             <span>Đồng bộ sổ cái</span>
           </button>
 
-          {/* Nút Vàng Chanh Ramp: Rút Tiền Lời Sàn ("-30k xài") */}
+          {/* Nút Vàng Chanh Ramp: Rút Lợi Nhuận Nền Tảng */}
           <button
             type="button"
             className="ramp-btn-primary"
             onClick={() => setIsWithdrawModalOpen(true)}
           >
             <DollarSign size={15} />
-            <span>Rút Tiền Lời Sàn ("-30k xài")</span>
+            <span>Rút Lợi Nhuận Sàn</span>
           </button>
         </div>
       </div>
@@ -411,7 +411,7 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
                   </div>
                 </td>
                 <td>
-                  <span className="ramp-pill neutral">Lợi nhuận ròng có thể chi dùng ("-30k xài")</span>
+                  <span className="ramp-pill neutral">Lợi nhuận thuần có thể kết chuyển / rút</span>
                 </td>
                 <td className="text-right">
                   <div className="vault-amount" style={{ color: '#854D0E' }}>
@@ -420,7 +420,7 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
                 </td>
                 <td>
                   <span className="tw-text-xs tw-text-slate-500">
-                    Đã rút xài: {(vaults?.platformProfit?.withdrawnByAdmin || 0).toLocaleString('vi-VN')} đ
+                    Đã kết chuyển / rút: {(vaults?.platformProfit?.withdrawnByAdmin || 0).toLocaleString('vi-VN')} đ
                   </span>
                 </td>
                 <td>
@@ -564,7 +564,7 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
             <div className="step-body">
               <div className="step-name">Bác Sĩ Rút Về Ngân Hàng</div>
               <p className="step-desc">
-                Khám xong: Ví BS nhận 270k, sàn ghi nhận 30k lời. Khi BS rút tiền, ví ảo trừ về 0, VCB Cty chuyển khoản 270k kèm số GD ngân hàng.
+                Khám xong: Quyết toán 90% thù lao ví BS và 10% doanh thu sàn. Khi BS rút tiền, ví ảo khấu trừ và VCB Công ty chuyển khoản thực tế qua ngân hàng.
               </p>
               <div className="step-meta-box">
                 <div className="meta-row">
@@ -784,7 +784,15 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
                         TRX-{String(tx.id).slice(0, 8).toUpperCase()}
                       </td>
                       <td>
-                        <span className="tw-font-semibold tw-text-slate-800">{tx.ownerName}</span>
+                        <div className="tw-font-semibold tw-text-slate-800">{tx.ownerName}</div>
+                        {tx.ownerEmail && (
+                          <div className="tw-text-xs tw-text-slate-500" style={{ fontSize: '11px', lineHeight: '1.2' }}>
+                            {tx.ownerEmail}
+                          </div>
+                        )}
+                        <span className="font-mono" style={{ fontSize: '10px', color: '#64748B' }}>
+                          WAL-{String(tx.walletId).padStart(7, '0')}
+                        </span>
                       </td>
                       <td>
                         <span className="ramp-pill neutral">{tx.transactionType}</span>
@@ -860,13 +868,13 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* 6. MODAL RÚT TIỀN LỜI CÔNG TY ("-30K XÀI") - CHUẨN RAMP CONTEXT FORM */}
+      {/* 6. MODAL RÚT LỢI NHUẬN NỀN TẢNG (PLATFORM PROFIT WITHDRAWAL) */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {isWithdrawModalOpen && (
         <div className="ramp-modal-overlay" onClick={() => setIsWithdrawModalOpen(false)}>
           <div className="ramp-modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h4>Rút Tiền Lời Sàn Ra Chi Dùng ("-30k xài")</h4>
+              <h4>Rút Lợi Nhuận Nền Tảng (Platform Profit Withdrawal)</h4>
               <button
                 type="button"
                 className="close-btn"

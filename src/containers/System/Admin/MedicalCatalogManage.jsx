@@ -21,6 +21,7 @@ import {
   editMedicalCatalog,
   deleteMedicalCatalog,
 } from '../../../services/catalogService';
+import RampPagination from '../../../components/Common/RampPagination';
 import './CatalogManage.scss';
 
 const CATALOG_TYPES = [
@@ -407,6 +408,17 @@ const MedicalCatalogManage = () => {
               })}
             </tbody>
           </table>
+        )}
+        {filteredItems.length > 0 && (
+          <RampPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredItems.length}
+            pageSize={pageSize}
+            onPageChange={(p) => setCurrentPage(p)}
+            itemLabel="dịch vụ / kỹ thuật"
+            showInfo={true}
+          />
         )}
       </div>
 

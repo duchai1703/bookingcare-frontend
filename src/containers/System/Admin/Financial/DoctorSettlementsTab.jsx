@@ -575,48 +575,32 @@ export default function DoctorSettlementsTab() {
           <div className="tw-p-4 tw-border-t tw-border-slate-200 tw-flex tw-flex-col sm:tw-flex-row sm:tw-items-center sm:tw-justify-between tw-gap-3 tw-bg-slate-50/50">
             <div className="tw-flex tw-items-center tw-gap-3">
               <span className="tw-text-xs tw-text-slate-600 tw-font-medium">
-                Hiển thị <strong className="tw-text-slate-900">{items.length}</strong> / <strong className="tw-text-slate-900">{total}</strong> khoản quyết toán
+                Số dòng:
               </span>
-              <span className="tw-text-2xs tw-text-slate-400">|</span>
-              <div className="tw-flex tw-items-center tw-gap-1.5 tw-text-xs tw-text-slate-500">
-                <span>Số dòng:</span>
-                <select
-                  value={limit}
-                  onChange={(e) => {
-                    setLimit(Number(e.target.value));
-                    setPage(1);
-                  }}
-                  className="tw-px-2 tw-py-1 tw-text-xs tw-border tw-border-slate-200 tw-rounded-lg tw-bg-white tw-font-semibold tw-text-slate-700"
-                >
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
-              </div>
+              <select
+                value={limit}
+                onChange={(e) => {
+                  setLimit(Number(e.target.value));
+                  setPage(1);
+                }}
+                className="tw-px-2 tw-py-1 tw-text-xs tw-border tw-border-slate-200 tw-rounded-lg tw-bg-white tw-font-semibold tw-text-slate-700"
+              >
+                <option value={10}>10 dòng</option>
+                <option value={20}>20 dòng</option>
+                <option value={50}>50 dòng</option>
+                <option value={100}>100 dòng</option>
+              </select>
             </div>
 
-            <div className="tw-flex tw-items-center tw-gap-1.5">
-              <button
-                type="button"
-                className="tw-px-3 tw-py-1.5 tw-text-xs tw-font-semibold tw-border tw-border-slate-200 tw-rounded-lg tw-bg-white hover:tw-bg-slate-50 disabled:tw-opacity-40 tw-cursor-pointer disabled:tw-cursor-not-allowed tw-transition"
-                disabled={page <= 1}
-                onClick={() => setPage(page - 1)}
-              >
-                Trước
-              </button>
-              <span className="tw-px-3 tw-py-1.5 tw-text-xs tw-font-mono tw-font-bold tw-text-slate-700 tw-bg-white tw-border tw-border-slate-200 tw-rounded-lg">
-                Trang {page} / {Math.max(1, totalPages)}
-              </span>
-              <button
-                type="button"
-                className="tw-px-3 tw-py-1.5 tw-text-xs tw-font-semibold tw-border tw-border-slate-200 tw-rounded-lg tw-bg-white hover:tw-bg-slate-50 disabled:tw-opacity-40 tw-cursor-pointer disabled:tw-cursor-not-allowed tw-transition"
-                disabled={page >= totalPages}
-                onClick={() => setPage(page + 1)}
-              >
-                Sau
-              </button>
-            </div>
+            <RampPagination
+              currentPage={page}
+              totalPages={totalPages}
+              totalItems={total}
+              pageSize={limit}
+              onPageChange={(p) => setPage(p)}
+              itemLabel="khoản quyết toán"
+              showInfo={true}
+            />
           </div>
         )}
       </div>

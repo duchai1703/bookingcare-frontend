@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { getAdminVerificationQueue } from '../../../../services/doctorOnboardingService';
 import DoctorVerificationReviewModal from './DoctorVerificationReviewModal';
+import RampPagination from '../../../../components/Common/RampPagination';
 import './DoctorVerificationQueue.scss';
 
 const TABS = [
@@ -17,6 +18,7 @@ const DoctorVerificationQueue = () => {
   const navigate = useNavigate();
   const [currentTab, setCurrentTab] = useState('ALL');
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [queueData, setQueueData] = useState({
     items: [],
@@ -36,7 +38,7 @@ const DoctorVerificationQueue = () => {
       const res = await getAdminVerificationQueue({
         status: currentTab,
         search: searchTerm,
-        page: 1,
+        page: currentPage,
         limit: 20,
       });
 
@@ -51,7 +53,7 @@ const DoctorVerificationQueue = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentTab, searchTerm]);
+  }, [currentTab, searchTerm, currentPage]);
 
   useEffect(() => {
     fetchQueue();
@@ -319,6 +321,19 @@ const DoctorVerificationQueue = () => {
             </tbody>
           </table>
         </div>
+        {queueData.items && queueData.items.length > 0 && (
+          <div className="p-3">
+            <RampPagination
+              currentPage={currentPage}
+              totalPages={queueData.totalPages || 1}
+              totalItems={queueData.totalItems || queueData.items.length}
+              pageSize={20}
+              onPageChange={(p) => setCurrentPage(p)}
+              itemLabel="hồ sơ"
+              showInfo={true}
+            />
+          </div>
+        )}
       </div>
 
       {/* Split-View Review Modal */}

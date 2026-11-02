@@ -415,32 +415,16 @@ export default function MasterTreasuryConsole({ onNavigateTab }) {
               </div>
 
               {/* Pagination Controls */}
-              <div className="tw-pt-3 tw-flex tw-flex-col sm:tw-flex-row sm:tw-items-center sm:tw-justify-between tw-gap-2">
-                <span className="tw-text-2xs tw-text-slate-500">
-                  Hiển thị {(feedPage - 1) * feedLimit + 1} - {Math.min(feedPage * feedLimit, filtered.length)} trên tổng số {filtered.length} bút toán (Trang {feedPage} / {totalPages})
-                </span>
-
-                <div className="tw-flex tw-items-center tw-gap-1">
-                  <button
-                    type="button"
-                    className="tw-px-3 tw-py-1 tw-text-xs tw-font-semibold tw-border tw-border-slate-200 tw-rounded-lg tw-bg-white hover:tw-bg-slate-50 disabled:tw-opacity-40 tw-cursor-pointer"
-                    disabled={feedPage <= 1}
-                    onClick={() => setFeedPage(feedPage - 1)}
-                  >
-                    Trước
-                  </button>
-                  <span className="tw-px-3 tw-py-1 tw-text-xs tw-font-mono tw-font-bold tw-text-slate-700 tw-bg-slate-100 tw-rounded-lg">
-                    {feedPage} / {totalPages}
-                  </span>
-                  <button
-                    type="button"
-                    className="tw-px-3 tw-py-1 tw-text-xs tw-font-semibold tw-border tw-border-slate-200 tw-rounded-lg tw-bg-white hover:tw-bg-slate-50 disabled:tw-opacity-40 tw-cursor-pointer"
-                    disabled={feedPage >= totalPages}
-                    onClick={() => setFeedPage(feedPage + 1)}
-                  >
-                    Sau
-                  </button>
-                </div>
+              <div className="tw-pt-3">
+                <RampPagination
+                  currentPage={feedPage}
+                  totalPages={totalPages}
+                  totalItems={filtered.length}
+                  pageSize={feedLimit}
+                  onPageChange={(p) => setFeedPage(p)}
+                  itemLabel="bút toán"
+                  showInfo={true}
+                />
               </div>
             </div>
           );

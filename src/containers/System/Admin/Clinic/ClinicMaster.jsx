@@ -544,34 +544,14 @@ const ClinicMaster = () => {
         </div>
 
         {/* Pagination */}
-        <div className="table-pagination">
-          <div>
-            {language === 'vi' ? 'Hiển thị' : 'Showing'} {clinics.length} / {pagination.totalCount} {language === 'vi' ? 'cơ sở y tế' : 'facilities'}
-          </div>
-          <div className="page-btns">
-            <button
-              disabled={page <= 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-            >
-              &lt;
-            </button>
-            {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((pNum) => (
-              <button
-                key={pNum}
-                className={pNum === page ? 'active' : ''}
-                onClick={() => setPage(pNum)}
-              >
-                {pNum}
-              </button>
-            ))}
-            <button
-              disabled={page >= pagination.totalPages}
-              onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
-            >
-              &gt;
-            </button>
-          </div>
-        </div>
+        <RampPagination
+          currentPage={page}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalCount}
+          pageSize={pagination.limit || 15}
+          onPageChange={(p) => setPage(p)}
+          itemLabel={language === 'vi' ? 'cơ sở y tế' : 'facilities'}
+        />
       </div>
 
       {/* Assign Doctor Modal */}

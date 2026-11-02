@@ -38,6 +38,7 @@ import {
   updateFinancialConfigs
 } from '../../../../services/walletService';
 import TransactionLifecycleDrawer from './TransactionLifecycleDrawer';
+import RampPagination from '../../../../components/Common/RampPagination';
 import './UnifiedLedgerHub.scss';
 
 const formatMoney = (val) => (Number(val) || 0).toLocaleString('vi-VN') + ' ₫';
@@ -368,7 +369,19 @@ export default function UnifiedLedgerHub() {
                             <strong className="entity-name">
                               {[tx.wallet?.owner?.lastName, tx.wallet?.owner?.firstName].filter(Boolean).join(' ') || 'Hệ thống'}
                             </strong>
-                            <span className="entity-sub">Ví #{tx.walletId} ({tx.wallet?.walletType})</span>
+                            {tx.wallet?.owner?.email && (
+                              <div className="entity-email" style={{ fontSize: '11px', color: '#64748B', lineHeight: '1.2', marginTop: '1px' }}>
+                                {tx.wallet.owner.email}
+                              </div>
+                            )}
+                            <div className="entity-sub" style={{ marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span className="font-mono" style={{ fontSize: '10px', background: '#F1F5F9', padding: '1px 5px', borderRadius: '4px', color: '#334155', fontWeight: 600 }}>
+                                WAL-{String(tx.walletId).padStart(7, '0')}
+                              </span>
+                              <span style={{ fontSize: '10px', color: '#64748B' }}>
+                                ({tx.wallet?.walletType === 'DOCTOR' ? 'BÁC SĨ' : tx.wallet?.walletType === 'PATIENT' ? 'BỆNH NHÂN' : tx.wallet?.walletType || 'VÍ'})
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </td>
@@ -416,27 +429,14 @@ export default function UnifiedLedgerHub() {
             </table>
           </div>
 
-          <div className="ramp-pagination">
-            <span>Hiển thị {(txPage - 1) * txLimit + 1} - {Math.min(txPage * txLimit, txTotal)} trong tổng số {txTotal} bút toán</span>
-            <div className="pagination-buttons">
-              <button
-                type="button"
-                className="ramp-btn-secondary"
-                disabled={txPage <= 1}
-                onClick={() => setTxPage(p => Math.max(1, p - 1))}
-              >
-                Trang trước
-              </button>
-              <button
-                type="button"
-                className="ramp-btn-secondary"
-                disabled={txPage * txLimit >= txTotal}
-                onClick={() => setTxPage(p => p + 1)}
-              >
-                Trang sau
-              </button>
-            </div>
-          </div>
+          <RampPagination
+            currentPage={txPage}
+            totalPages={Math.ceil(txTotal / txLimit)}
+            totalItems={txTotal}
+            pageSize={txLimit}
+            onPageChange={(p) => setTxPage(p)}
+            itemLabel="bút toán"
+          />
         </div>
       )}
 
@@ -515,7 +515,14 @@ export default function UnifiedLedgerHub() {
                             <strong className="entity-name">
                               {[w.owner?.lastName, w.owner?.firstName].filter(Boolean).join(' ') || 'Chưa cập nhật tên'}
                             </strong>
-                            <span className="entity-sub">{w.owner?.email || `Ví #${w.id}`}</span>
+                            {w.owner?.email && (
+                              <div className="entity-email" style={{ fontSize: '11px', color: '#64748B', lineHeight: '1.2', marginTop: '1px' }}>
+                                {w.owner.email}
+                              </div>
+                            )}
+                            <div className="entity-sub font-mono" style={{ fontSize: '10px', background: '#F1F5F9', padding: '1px 5px', borderRadius: '4px', color: '#334155', fontWeight: 600, display: 'inline-block', marginTop: '2px' }}>
+                              WAL-{String(w.id).padStart(7, '0')}
+                            </div>
                           </div>
                         </div>
                       </td>
@@ -547,17 +554,6 @@ export default function UnifiedLedgerHub() {
                           <button
                             type="button"
                             className="ramp-btn-ghost"
-                            style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}
-                            onClick={() => handleOpenLineage(w.id)}
-                            title="Xem vòng đời dòng tiền ví này"
-                          >
-                            <GitCommit size={12} />
-                            <span>Vòng đời</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            className="ramp-btn-ghost"
                             onClick={() => setSelectedWallet(w)}
                           >
                             Hồ sơ ví
@@ -581,27 +577,14 @@ export default function UnifiedLedgerHub() {
             </table>
           </div>
 
-          <div className="ramp-pagination">
-            <span>Hiển thị {(walletsPage - 1) * walletsLimit + 1} - {Math.min(walletsPage * walletsLimit, walletsTotal)} trong tổng số {walletsTotal} ví</span>
-            <div className="pagination-buttons">
-              <button
-                type="button"
-                className="ramp-btn-secondary"
-                disabled={walletsPage <= 1}
-                onClick={() => setWalletsPage(p => Math.max(1, p - 1))}
-              >
-                Trang trước
-              </button>
-              <button
-                type="button"
-                className="ramp-btn-secondary"
-                disabled={walletsPage * walletsLimit >= walletsTotal}
-                onClick={() => setWalletsPage(p => p + 1)}
-              >
-                Trang sau
-              </button>
-            </div>
-          </div>
+          <RampPagination
+            currentPage={walletsPage}
+            totalPages={Math.ceil(walletsTotal / walletsLimit)}
+            totalItems={walletsTotal}
+            pageSize={walletsLimit}
+            onPageChange={(p) => setWalletsPage(p)}
+            itemLabel="tài khoản ví"
+          />
         </div>
       )}
 
@@ -813,15 +796,6 @@ export default function UnifiedLedgerHub() {
             </div>
 
             <div className="drawer-footer">
-              <button
-                type="button"
-                className="ramp-btn-secondary"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                onClick={() => handleOpenLineage(selectedWallet.id)}
-              >
-                <GitCommit size={13} />
-                <span>Truy vết vòng đời ví này</span>
-              </button>
               <button
                 type="button"
                 className="ramp-btn-primary"

@@ -19,6 +19,7 @@ import {
 import { getAdminPatientsList } from '../../../../services/patientManageService';
 import { path } from '../../../../utils/constants';
 import RefundModal from './RefundModal';
+import RampPagination from '../../../../components/Common/RampPagination';
 import './PatientWorkspace.scss';
 
 const PatientMaster = () => {

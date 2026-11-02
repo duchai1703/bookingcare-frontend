@@ -36,6 +36,7 @@ import {
   getDoctorCancellationDetail,
   getCancellationAnalytics,
 } from '../../../../services/doctorCancellationService';
+import RampPagination from '../../../../components/Common/RampPagination';
 import './CancellationCenter.scss';
 
 const CancellationCenter = () => {
