@@ -61,7 +61,7 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawNote, setWithdrawNote] = useState('');
-  const [bankAccountInfo, setBankAccountInfo] = useState('Vietcombank - 0011001234567 - Admin');
+  const [bankAccountInfo, setBankAccountInfo] = useState('Vietcombank - 9988-1703-8888 - Công ty CP BookingCare');
   const [submittingWithdrawal, setSubmittingWithdrawal] = useState(false);
 
   // Drawer Chi tiết Khối Vốn
@@ -72,7 +72,11 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
   const [isLineageDrawerOpen, setIsLineageDrawerOpen] = useState(false);
 
   const handleOpenLineage = (targetId) => {
-    setSelectedTxForLineage(targetId || 102);
+    if (!targetId) {
+      toast.info('Không có mã giao dịch khả dụng để truy vết');
+      return;
+    }
+    setSelectedTxForLineage(targetId);
     setIsLineageDrawerOpen(true);
   };
 
@@ -460,7 +464,7 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
               type="button"
               className="ramp-btn-secondary"
               style={{ padding: '5px 12px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px', marginRight: '8px' }}
-              onClick={() => handleOpenLineage(stepBreakdown?.step2?.bookingId || 102)}
+              onClick={() => handleOpenLineage(stepBreakdown?.step2?.bookingId)}
             >
               <GitCommit size={13} />
               <span>Truy Vết Vòng Đời Ca Khám Này</span>
@@ -482,7 +486,7 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
             <div className="step-header">
               <span className="step-tag">BƯỚC 1: NẠP TIỀN VÀO VÍ</span>
               <span className="step-amount">
-                +{(stepBreakdown?.step1?.amount || 500000).toLocaleString('vi-VN')} đ
+                +{(stepBreakdown?.step1?.amount || 0).toLocaleString('vi-VN')} đ
               </span>
             </div>
             <div className="step-body">
@@ -502,7 +506,7 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
                 <div className="meta-row">
                   <span className="meta-label">Vào VCB Cty:</span>
                   <span className="meta-val" style={{ color: '#1D4ED8' }}>
-                    +{(stepBreakdown?.step1?.amount || 500000).toLocaleString('vi-VN')} đ
+                    +{(stepBreakdown?.step1?.amount || 0).toLocaleString('vi-VN')} đ
                   </span>
                 </div>
               </div>
@@ -519,13 +523,13 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
             <div className="step-header">
               <span className="step-tag">BƯỚC 2: ĐẶT LỊCH & TẠM GIỮ</span>
               <span className="step-amount">
-                -{(stepBreakdown?.step2?.amount || 300000).toLocaleString('vi-VN')} đ
+                -{(stepBreakdown?.step2?.amount || 0).toLocaleString('vi-VN')} đ
               </span>
             </div>
             <div className="step-body">
               <div className="step-name">Ký Quỹ Ngăn Escrow 2 Tầng</div>
               <p className="step-desc">
-                Ví BN bị trừ tiền đặt cọc. Tiền mặt VCB giữ nguyên không đổi. Khoản 300k được phân bổ thành 2 ngăn chờ khám.
+                Ví BN bị trừ tiền đặt cọc. Tiền mặt VCB giữ nguyên không đổi. Khoản tạm giữ được phân bổ thành 2 ngăn chờ khám: 90% thù lao Bác sĩ & 10% hoa hồng sàn.
               </p>
               <div className="step-meta-box">
                 <div className="meta-row">
@@ -535,13 +539,13 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
                 <div className="meta-row">
                   <span className="meta-label">Ngăn BS (90%):</span>
                   <span className="meta-val" style={{ color: '#047857' }}>
-                    {(stepBreakdown?.step2?.doctorShare || 270000).toLocaleString('vi-VN')} đ
+                    {(stepBreakdown?.step2?.doctorShare || 0).toLocaleString('vi-VN')} đ
                   </span>
                 </div>
                 <div className="meta-row">
                   <span className="meta-label">Ngăn Sàn (10%):</span>
                   <span className="meta-val" style={{ color: '#B45309' }}>
-                    {(stepBreakdown?.step2?.platformShare || 30000).toLocaleString('vi-VN')} đ
+                    {(stepBreakdown?.step2?.platformShare || 0).toLocaleString('vi-VN')} đ
                   </span>
                 </div>
               </div>
@@ -558,7 +562,7 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
             <div className="step-header">
               <span className="step-tag">BƯỚC 3: GIẢI NGÂN & RÚT TIỀN</span>
               <span className="step-amount">
-                -{(stepBreakdown?.step3?.amount || 270000).toLocaleString('vi-VN')} đ
+                -{(stepBreakdown?.step3?.amount || 0).toLocaleString('vi-VN')} đ
               </span>
             </div>
             <div className="step-body">
@@ -578,7 +582,7 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
                 <div className="meta-row">
                   <span className="meta-label">Trừ VCB Cty:</span>
                   <span className="meta-val" style={{ color: '#DC2626' }}>
-                    -{(stepBreakdown?.step3?.amount || 270000).toLocaleString('vi-VN')} đ
+                    -{(stepBreakdown?.step3?.amount || 0).toLocaleString('vi-VN')} đ
                   </span>
                 </div>
               </div>
@@ -778,7 +782,7 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
                   <React.Fragment key={tx.id || idx}>
                     <tr
                       className="vault-row cursor-pointer"
-                      onClick={() => handleOpenLineage(tx.id || tx.referenceId || 102)}
+                      onClick={() => handleOpenLineage(tx.id || tx.referenceId)}
                     >
                       <td className="tw-font-mono tw-text-xs tw-font-bold tw-text-slate-800">
                         TRX-{String(tx.id).slice(0, 8).toUpperCase()}
@@ -827,7 +831,7 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
                           style={{ padding: '2px 8px', fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleOpenLineage(tx.id || tx.referenceId || 102);
+                            handleOpenLineage(tx.id || tx.referenceId);
                           }}
                         >
                           <GitCommit size={12} />
@@ -842,7 +846,7 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
                         <td colSpan={9} style={{ padding: 0 }}>
                           <div
                             className="ramp-inline-anomaly cursor-pointer"
-                            onClick={() => handleOpenLineage(tx.id || tx.referenceId || 102)}
+                            onClick={() => handleOpenLineage(tx.id || tx.referenceId)}
                           >
                             <span className="anomaly-arrow">↳</span>
                             <span>

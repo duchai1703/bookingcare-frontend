@@ -104,9 +104,14 @@ export default function TransactionLifecycleDrawer({
     if (flowType === 'DEPOSIT') {
       return <span className="ramp-pill success">● Đã nạp vào ví</span>;
     }
+    if (flowType === 'DOCTOR_SHARE') {
+      return <span className="ramp-pill success">● Thù lao đã vào ví BS</span>;
+    }
     if (flowType === 'WITHDRAWAL') {
       return stage === 'PAID_OUT' || stage === 'COMPLETED'
-        ? <span className="ramp-pill success">● Đã chuyển khoản</span>
+        ? <span className="ramp-pill success">● Đã chuyển khoản VCB</span>
+        : stage === 'REJECTED'
+        ? <span className="ramp-pill danger">❌ Bị từ chối</span>
         : <span className="ramp-pill warning">⏳ Đang chờ duyệt chi</span>;
     }
     switch (stage) {
@@ -179,6 +184,8 @@ export default function TransactionLifecycleDrawer({
                 ? 'Số tiền nạp vào ví'
                 : lineageData?.flowType === 'WITHDRAWAL'
                 ? 'Số tiền rút về STK'
+                : lineageData?.flowType === 'DOCTOR_SHARE'
+                ? 'Thù lao bác sĩ thực nhận'
                 : 'Tổng giá trị ca khám'}
             </span>
             <span className="stat-value text-emerald font-mono">
@@ -189,14 +196,18 @@ export default function TransactionLifecycleDrawer({
                   ? (summary.depositAmount || summary.totalAmount)
                   : lineageData?.flowType === 'WITHDRAWAL'
                   ? (summary.withdrawalAmount || summary.totalAmount)
-                  : (summary.totalAmount || 300000)
+                  : lineageData?.flowType === 'DOCTOR_SHARE'
+                  ? (summary.doctorShareAmount || summary.totalAmount)
+                  : (summary.totalAmount || 0)
               )}
             </span>
             <span className="stat-sub">
               {lineageData?.flowType === 'DEPOSIT'
-                ? `Mã GD VNPAY: #${summary.vnpayRef || '15716601'}`
+                ? (summary.vnpayRef ? `Mã GD VNPAY: #${summary.vnpayRef}` : 'Cổng VNPAY Sandbox')
                 : lineageData?.flowType === 'WITHDRAWAL'
-                ? `Mã yêu cầu: #${summary.withdrawalId || String(targetId).slice(0, 8)}`
+                ? `Mã yêu cầu: #WD-${summary.withdrawalId || String(targetId).slice(0, 8)}`
+                : lineageData?.flowType === 'DOCTOR_SHARE'
+                ? (summary.settlementId ? `Kỳ đối soát: #${summary.settlementId}` : (summary.bookingId ? `Ca khám: #${summary.bookingId}` : 'Thù lao y khoa'))
                 : summary.bookingId
                 ? `Ca khám: #${summary.bookingId}`
                 : `Giao dịch: ${String(targetId).slice(0, 8)}`}
@@ -205,12 +216,22 @@ export default function TransactionLifecycleDrawer({
 
           <div className="hero-stat-card">
             <span className="stat-label">
-              {lineageData?.flowType === 'WITHDRAWAL' ? 'Bác sĩ yêu cầu rút' : 'Chủ tài khoản (Bệnh nhân)'}
+              {lineageData?.flowType === 'WITHDRAWAL'
+                ? 'Chủ tài khoản thụ hưởng'
+                : lineageData?.flowType === 'DOCTOR_SHARE'
+                ? 'Bác sĩ thụ hưởng'
+                : 'Chủ tài khoản (Bệnh nhân)'}
             </span>
             <span className="stat-value text-primary font-bold">
-              {summary.patientName || 'Bệnh nhân BookingCare'}
+              {lineageData?.flowType === 'DOCTOR_SHARE'
+                ? (summary.doctorName || 'Bác sĩ BookingCare')
+                : (summary.patientName || 'Bệnh nhân BookingCare')}
             </span>
-            <span className="stat-sub">{summary.patientEmail || summary.clinic || 'Phòng khám Đa khoa'}</span>
+            <span className="stat-sub">
+              {lineageData?.flowType === 'DOCTOR_SHARE'
+                ? (summary.doctorEmail || summary.clinic || 'Chuyên khoa')
+                : (summary.patientEmail || summary.clinic || 'Phòng khám Đa khoa')}
+            </span>
           </div>
 
           <div className="hero-stat-card">
@@ -219,6 +240,8 @@ export default function TransactionLifecycleDrawer({
                 ? 'Kênh thanh toán'
                 : lineageData?.flowType === 'WITHDRAWAL'
                 ? 'Ngân hàng thụ hưởng'
+                : lineageData?.flowType === 'DOCTOR_SHARE'
+                ? 'Cơ sở y tế & Doanh thu'
                 : 'Bác sĩ phụ trách'}
             </span>
             <span className="stat-value text-slate-800 font-bold">
@@ -226,13 +249,17 @@ export default function TransactionLifecycleDrawer({
                 ? (summary.gatewayName || 'Cổng VNPAY Sandbox')
                 : lineageData?.flowType === 'WITHDRAWAL'
                 ? (summary.bankName || 'Vietcombank')
-                : (summary.doctorName || 'BS. Nguyễn Văn B')}
+                : lineageData?.flowType === 'DOCTOR_SHARE'
+                ? (summary.clinic || 'Bệnh viện / Phòng khám')
+                : (summary.doctorName || 'Bác sĩ phụ trách')}
             </span>
             <span className="stat-sub">
               {lineageData?.flowType === 'DEPOSIT'
                 ? (summary.bankName ? `Ngân hàng: ${summary.bankName} → VCB Cty` : 'Tài khoản VCB Công Ty')
                 : lineageData?.flowType === 'WITHDRAWAL'
                 ? `STK: ${summary.bankAccountNumber || '••••••••'}`
+                : lineageData?.flowType === 'DOCTOR_SHARE'
+                ? (summary.grossRevenue ? `Doanh thu gộp: ${formatMoney(summary.grossRevenue)}` : (summary.specialty || 'Chuyên khoa'))
                 : (summary.clinic || summary.specialty || 'Chuyên khoa')}
             </span>
           </div>
@@ -618,8 +645,18 @@ export default function TransactionLifecycleDrawer({
                         <span className="col-caption">NGHĨA VỤ SỔ CÁI NỘI BỘ (APP OBLIGATIONS)</span>
                         <div className="obligations-list">
                           <div className="obligation-item">
-                            <span>{lineageData?.flowType === 'WITHDRAWAL' ? 'Bác sĩ thụ hưởng:' : 'Chủ ví (Bệnh nhân):'}</span>
-                            <strong className="font-mono">{summary.patientName}</strong>
+                            <span>
+                              {lineageData?.flowType === 'WITHDRAWAL'
+                                ? 'Người nhận rút tiền:'
+                                : lineageData?.flowType === 'DOCTOR_SHARE'
+                                ? 'Bác sĩ thụ hưởng thù lao:'
+                                : 'Chủ ví (Bệnh nhân):'}
+                            </span>
+                            <strong className="font-mono">
+                              {lineageData?.flowType === 'DOCTOR_SHARE'
+                                ? summary.doctorName
+                                : summary.patientName}
+                            </strong>
                           </div>
                           {lineageData?.flowType === 'DEPOSIT' ? (
                             <div className="obligation-item">
@@ -630,6 +667,11 @@ export default function TransactionLifecycleDrawer({
                             <div className="obligation-item">
                               <span>Ngân hàng nhận:</span>
                               <strong className="font-mono">{summary.bankName || 'Vietcombank'} ({summary.bankAccountNumber || '••••••••'})</strong>
+                            </div>
+                          ) : lineageData?.flowType === 'DOCTOR_SHARE' ? (
+                            <div className="obligation-item">
+                              <span>Kỳ quyết toán & Mã đối soát:</span>
+                              <strong className="font-mono">Kỳ #{summary.settlementId} (DS-{summary.settlementId})</strong>
                             </div>
                           ) : (
                             <div className="obligation-item">
