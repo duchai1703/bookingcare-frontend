@@ -1991,23 +1991,20 @@ const LiquidityDashboard = ({ defaultTab }) => {
             </div>
           )}
 
-          {/* ══════════════ TAB 7: CHÍNH SÁCH SLA & KIỂM TOÁN BẤT BIẾN ══════════════ */}
-          {activeTab === 'withdrawal-policy' && (
+          {/* ══════════════ LEGACY INDIVIDUAL TABS (ĐÃ HỢP NHẤT VÀO MASTER HUBS) ══════════════ */}
+          {false && activeTab === 'withdrawal-policy' && (
             <WithdrawalPolicyAuditTab />
           )}
 
-          {/* ══════════════ TAB 4: QUẢN TRỊ HOÀN TIỀN BỆNH NHÂN ══════════════ */}
-          {(activeTab === 'refund-cases' || activeTab === 'refunds') && (
+          {false && (activeTab === 'refund-cases' || activeTab === 'refunds') && (
             <RefundCasesTab />
           )}
 
-          {/* ══════════════ TAB 5: QUYẾT TOÁN THÙ LAO BÁC SĨ ══════════════ */}
-          {(activeTab === 'doctor-settlements' || activeTab === 'settlements') && (
+          {false && (activeTab === 'doctor-settlements' || activeTab === 'settlements') && (
             <DoctorSettlementsTab />
           )}
 
-          {/* ══════════════ TAB 0: TRUNG TÂM XỬ LÝ NGOẠI LỆ TÀI CHÍNH ══════════════ */}
-          {activeTab === 'exceptions' && (
+          {false && activeTab === 'exceptions' && (
             <FinancialExceptionHub onNavigateTab={handleSwitchTab} />
           )}
         </div>

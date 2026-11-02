@@ -57,7 +57,7 @@ export default function RefundCasesTab() {
   const [stats, setStats] = useState(null);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [limit] = useState(15);
+  const [limit, setLimit] = useState(15);
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [reasonFilter, setReasonFilter] = useState('ALL');
   const [search, setSearch] = useState('');

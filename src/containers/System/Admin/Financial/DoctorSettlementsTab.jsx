@@ -77,7 +77,7 @@ export default function DoctorSettlementsTab() {
   const [summary, setSummary] = useState(null);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [limit] = useState(15);
+  const [limit, setLimit] = useState(15);
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
@@ -548,7 +548,7 @@ export default function DoctorSettlementsTab() {
 
                           {item.status === 'PAID' && item.walletTransactionId && (
                             <span className="tw-text-2xs tw-font-mono tw-text-slate-600 tw-px-1.5 tw-py-0.5 tw-bg-slate-100 tw-rounded tw-border tw-border-slate-200">
-                              TX #{item.walletTransactionId.substring(0, 8)}
+                              TX #{String(item.walletTransactionId).substring(0, 8)}
                             </span>
                           )}
 
@@ -803,15 +803,7 @@ export default function DoctorSettlementsTab() {
                 <div className="tw-p-3.5 tw-bg-amber-50 tw-border tw-border-amber-200 tw-rounded-2xl tw-flex tw-items-start tw-gap-2.5">
                   <AlertCircle size={18} className="tw-text-amber-600 tw-shrink-0 tw-mt-0.5" />
                   <div className="tw-text-xs tw-text-amber-800">
-                    <strong>Hiện không có ca khám nào ở trạng thái Khả Dụng</strong>. Bạn có thể bấm nút{' '}
-                    <button
-                      type="button"
-                      className="tw-font-bold tw-underline tw-text-amber-900 hover:tw-text-amber-950 tw-bg-transparent tw-border-none tw-cursor-pointer tw-p-0"
-                      onClick={handleSeedTestData}
-                    >
-                      "Nạp 20 Ca Mẫu"
-                    </button>{' '}
-                    để tạo dữ liệu đối soát thử nghiệm.
+                    <strong>Hiện không có ca khám nào ở trạng thái Khả Dụng (T+0)</strong> để thực hiện quyết toán. Vui lòng kiểm tra lại sau khi các ca khám được bác sĩ hoàn tất.
                   </div>
                 </div>
               )}
@@ -832,12 +824,10 @@ export default function DoctorSettlementsTab() {
                 {availableCountTotal === 0 ? (
                   <button
                     type="button"
-                    className="tw-px-5 tw-py-2.5 tw-bg-slate-800 hover:tw-bg-slate-900 tw-text-white tw-rounded-xl tw-text-xs tw-font-bold tw-border-none tw-cursor-pointer tw-flex tw-items-center tw-gap-1.5 tw-transition"
-                    onClick={handleSeedTestData}
-                    disabled={seedingData}
+                    className="tw-px-5 tw-py-2.5 tw-bg-slate-200 hover:tw-bg-slate-300 tw-text-slate-700 tw-rounded-xl tw-text-xs tw-font-bold tw-border-none tw-cursor-pointer tw-transition"
+                    onClick={() => setConfirmRunModalOpen(false)}
                   >
-                    <Database size={14} className={seedingData ? 'tw-animate-spin' : ''} />
-                    <span>{seedingData ? 'Đang nạp...' : 'Nạp 20 Ca Mẫu Trước'}</span>
+                    <span>Đóng</span>
                   </button>
                 ) : (
                   <button
