@@ -1,0 +1,733 @@
+// src/containers/System/Doctor/PastEncounterDetailModal.scss
+// Thiết kế Giao diện Xem Lại Phiên Khám Quá Khứ chuẩn EMR Dark Mode Workstation
+
+.past-encounter-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: pemFadeIn 0.2s ease-out;
+}
+
+@keyframes pemFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.past-encounter-modal {
+  background: #0b1120;
+  color: #f1f5f9;
+  width: 100%;
+  max-width: 1320px;
+  max-height: 94vh;
+  border-radius: 16px;
+  border: 1px solid #1e293b;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: pemSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes pemSlideUp {
+  from {
+    transform: translateY(20px) scale(0.98);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+// ── Header ──
+.pem-header {
+  background: #0f172a;
+  padding: 16px 24px;
+  border-bottom: 1px solid #1e293b;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+
+  &__left {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .pem-badge-archive {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    padding: 3px 10px;
+    border-radius: 6px;
+    width: fit-content;
+  }
+
+  &__meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+
+    .code-pill {
+      background: #1e293b;
+      color: #94a3b8;
+      font-family: monospace;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid #334155;
+    }
+
+    .status-pill {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.75rem;
+
+      &--completed {
+        background: rgba(16, 185, 129, 0.15);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+      }
+    }
+
+    .date-pill,
+    .time-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: #cbd5e1;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.78rem;
+
+      strong {
+        color: #ffffff;
+      }
+    }
+  }
+
+  &__title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 4px 0 0 0;
+
+    .patient-sub {
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: #94a3b8;
+    }
+  }
+
+  &__right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .btn-pem-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid #334155;
+      background: #1e293b;
+      color: #cbd5e1;
+      transition: all 0.15s ease;
+
+      &:hover {
+        background: #334155;
+        color: #ffffff;
+        border-color: #475569;
+      }
+    }
+
+    .btn-pem-close {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+
+      &:hover {
+        background: rgba(239, 68, 68, 0.15);
+        color: #ef4444;
+      }
+    }
+  }
+}
+
+// ── Banner Bác sĩ & Thao tác ──
+.pem-doctor-banner {
+  background: #111c33;
+  border-bottom: 1px solid #1e293b;
+  padding: 12px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  .doctor-identity {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .avatar-box {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .doctor-name {
+      font-size: 0.95rem;
+      color: #e2e8f0;
+
+      strong {
+        color: #38bdf8;
+      }
+    }
+
+    .doctor-sub {
+      font-size: 0.78rem;
+      color: #94a3b8;
+      margin-top: 1px;
+
+      strong {
+        color: #cbd5e1;
+      }
+
+      .address-text {
+        color: #64748b;
+      }
+    }
+  }
+
+  .pem-inherit-quick-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .btn-quick-inherit {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+
+      &.inherit-dx {
+        background: rgba(16, 185, 129, 0.15);
+        color: #34d399;
+        border-color: rgba(16, 185, 129, 0.35);
+
+        &:hover {
+          background: #10b981;
+          color: #ffffff;
+        }
+      }
+
+      &.inherit-rx {
+        background: rgba(245, 158, 11, 0.15);
+        color: #fbbf24;
+        border-color: rgba(245, 158, 11, 0.35);
+
+        &:hover {
+          background: #f59e0b;
+          color: #ffffff;
+        }
+      }
+    }
+  }
+}
+
+// ── Body & 2 Columns ──
+.pem-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 4px;
+  }
+}
+
+.pem-clinical-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 24px;
+  align-items: start;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ── Cột chính (70%) ──
+.pem-column-main {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pem-section {
+  background: #131c2e;
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  padding: 18px 20px;
+
+  &.highlight-dx {
+    background: #0f2438;
+    border-color: rgba(56, 189, 248, 0.3);
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+
+    .num-pill {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #0284c7;
+      color: #ffffff;
+      font-size: 0.75rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    h3 {
+      font-size: 0.88rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #e2e8f0;
+      margin: 0;
+    }
+
+    .count-pill {
+      font-size: 0.72rem;
+      background: #1e293b;
+      color: #94a3b8;
+      padding: 1px 8px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+
+    .btn-inherit-text {
+      background: transparent;
+      border: none;
+      color: #38bdf8;
+      font-size: 0.75rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  .text-box {
+    background: #090e17;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: #cbd5e1;
+
+    p {
+      margin: 0;
+    }
+
+    .text-muted {
+      color: #64748b;
+      font-style: italic;
+    }
+  }
+
+  .dx-result-box {
+    background: #071526;
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    border-radius: 8px;
+    padding: 16px;
+
+    .dx-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.1rem;
+      color: #38bdf8;
+      margin-bottom: 6px;
+    }
+
+    .dx-icd10 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+
+      .icd-badge {
+        background: rgba(56, 189, 248, 0.15);
+        color: #38bdf8;
+        border: 1px solid rgba(56, 189, 248, 0.3);
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.76rem;
+        font-weight: 700;
+      }
+
+      .icd-desc {
+        font-size: 0.82rem;
+        color: #94a3b8;
+      }
+    }
+  }
+
+  .empty-rx-box,
+  .empty-files-box {
+    background: #090e17;
+    border: 1px dashed #334155;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    color: #64748b;
+    font-size: 0.82rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .followup-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    color: #e2e8f0;
+
+    strong {
+      color: #38bdf8;
+    }
+  }
+}
+
+// ── Bảng Đơn thuốc ──
+.pem-table-rx {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+
+  th {
+    background: #0f172a;
+    color: #94a3b8;
+    font-weight: 700;
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid #1e293b;
+    font-size: 0.76rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #1e293b;
+    color: #cbd5e1;
+    vertical-align: middle;
+  }
+
+  tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .med-name {
+    color: #f1f5f9;
+    font-size: 0.88rem;
+    display: block;
+  }
+
+  .med-ing {
+    font-size: 0.75rem;
+    color: #94a3b8;
+  }
+
+  .med-qty {
+    font-weight: 800;
+    color: #38bdf8;
+  }
+
+  .med-dosage {
+    color: #e2e8f0;
+    font-weight: 500;
+  }
+
+  .med-note {
+    font-size: 0.78rem;
+    color: #94a3b8;
+  }
+}
+
+// ── Grid Tài liệu ──
+.pem-attachments-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+
+  .att-card {
+    background: #090e17;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .att-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: rgba(56, 189, 248, 0.1);
+      color: #38bdf8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .att-info {
+      flex: 1;
+      overflow: hidden;
+
+      .att-name {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #f1f5f9;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .att-meta {
+        font-size: 0.74rem;
+        color: #64748b;
+        margin-top: 2px;
+
+        .att-cat {
+          color: #38bdf8;
+        }
+      }
+    }
+
+    .btn-download-att {
+      color: #94a3b8;
+      padding: 6px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      &:hover {
+        background: #1e293b;
+        color: #ffffff;
+      }
+    }
+  }
+}
+
+// ── Cột phụ (30%) ──
+.pem-column-side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pem-side-card {
+  background: #131c2e;
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  padding: 18px 20px;
+
+  .side-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid #1e293b;
+    padding-bottom: 10px;
+
+    h4 {
+      margin: 0;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+  }
+
+  .side-info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+      gap: 12px;
+
+      .label {
+        color: #94a3b8;
+        flex-shrink: 0;
+      }
+
+      .val {
+        color: #e2e8f0;
+        text-align: right;
+      }
+
+      .badge-done {
+        background: rgba(16, 185, 129, 0.15);
+        color: #34d399;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.74rem;
+        font-weight: 700;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+      }
+    }
+  }
+
+  &.pem-action-card {
+    background: #0f1c2e;
+    border-color: rgba(56, 189, 248, 0.25);
+
+    .side-hint {
+      font-size: 0.78rem;
+      color: #94a3b8;
+      line-height: 1.5;
+      margin: 0 0 14px 0;
+    }
+
+    .side-actions-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      .btn-side-act {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        cursor: pointer;
+        background: #0284c7;
+        color: #ffffff;
+        border: none;
+        transition: all 0.15s ease;
+
+        &:hover {
+          background: #0369a1;
+        }
+
+        &.secondary {
+          background: #1e293b;
+          color: #cbd5e1;
+          border: 1px solid #334155;
+
+          &:hover {
+            background: #334155;
+            color: #ffffff;
+          }
+        }
+      }
+    }
+  }
+}
+
+// ── Footer ──
+.pem-footer {
+  background: #0f172a;
+  border-top: 1px solid #1e293b;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  .footer-left {
+    font-size: 0.76rem;
+    color: #64748b;
+  }
+
+  .btn-footer-close {
+    background: #1e293b;
+    color: #ffffff;
+    border: 1px solid #334155;
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover {
+      background: #334155;
+    }
+  }
+}
+

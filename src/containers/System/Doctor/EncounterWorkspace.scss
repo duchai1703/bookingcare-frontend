@@ -1815,8 +1815,33 @@
   }
 
   // History detail modal
+  // History detail modal (Tóm tắt ca khám cũ)
   .ew-modal--history-detail {
-    max-width: 520px;
+    max-width: 660px;
+    width: 92%;
+    background: #0f172a;
+    color: #f1f5f9;
+    border: 1px solid #1e293b;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+
+    .ew-modal__header {
+      border-bottom: 1px solid #1e293b;
+      background: #0f172a;
+
+      h3 {
+        color: #ffffff;
+      }
+    }
+
+    .ew-modal__body {
+      background: #0b1120;
+    }
+
+    .ew-modal__footer {
+      border-top: 1px solid #1e293b;
+      background: #0f172a;
+    }
+
 
     .history-detail-grid {
       display: flex;
@@ -1832,7 +1857,7 @@
           margin-bottom: 2px;
         }
 
-        span, p {
+        span, p { color: #e2e8f0 !important;
           margin: 0;
           font-size: 0.9rem;
           color: #1e293b;

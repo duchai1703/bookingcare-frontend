@@ -53,6 +53,7 @@ import SmartMedicalSearch from './SmartMedicalSearch';
 import ClinicalSnippetToolbar from './ClinicalSnippetToolbar';
 import SmartShorthandInput from './SmartShorthandInput';
 import SmartShorthandTextarea from './SmartShorthandTextarea';
+import PastEncounterDetailModal from './PastEncounterDetailModal';
 import './EncounterWorkspace.scss';
 
 const DOCUMENT_CATEGORIES = [
@@ -131,6 +132,7 @@ const EncounterWorkspace = () => {
   const [showQrModal, setShowQrModal] = useState(false);
   const [previewAttachment, setPreviewAttachment] = useState(null);
   const [viewHistoryItem, setViewHistoryItem] = useState(null);
+  const [fullPastEncounterItem, setFullPastEncounterItem] = useState(null);
 
   // Upload modal state
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -1387,6 +1389,15 @@ const EncounterWorkspace = () => {
 
                       {/* Quick Inherit Bar */}
                       <div className="node-inherit-actions" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          className="btn-inherit-dx"
+                          style={{ background: '#1e293b', color: '#38bdf8', borderColor: '#334155' }}
+                          onClick={() => setFullPastEncounterItem(hist)}
+                          title="Xem toàn bộ giao diện phiên khám lúc bác sĩ khám trong quá khứ"
+                        >
+                          <Eye size={11} /> Chi tiết ca cũ
+                        </button>
                         {hist.diagnosis && (
                           <button
                             type="button"
@@ -1866,7 +1877,19 @@ const EncounterWorkspace = () => {
         <div className="ew-modal-backdrop" onClick={() => setViewHistoryItem(null)}>
           <div className="ew-modal ew-modal--history-detail" onClick={(e) => e.stopPropagation()}>
             <div className="ew-modal__header">
-              <h3>Chi tiết ca khám cũ: Ngày {viewHistoryItem.date}</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 800, padding: '2px 8px', borderRadius: 4, background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
+                    {viewHistoryItem.bookingCode || `#BK-${viewHistoryItem.id}`}
+                  </span>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 700, padding: '2px 8px', borderRadius: 4, background: 'rgba(16, 185, 129, 0.15)', color: '#34d399' }}>
+                    🟢 Đã hoàn tất
+                  </span>
+                </div>
+                <h3 style={{ margin: 0, fontSize: '1.05rem', color: '#ffffff' }}>
+                  Tóm tắt ca khám cũ — Ngày {formatDateDisplay(viewHistoryItem.date)}
+                </h3>
+              </div>
               <button type="button" className="btn-modal-close" onClick={() => setViewHistoryItem(null)}>
                 ✕
               </button>
@@ -1880,7 +1903,7 @@ const EncounterWorkspace = () => {
                 </div>
                 <div className="hd-item">
                   <label>Khung giờ khám:</label>
-                  <span>{viewHistoryItem.timeType}</span>
+                  <span>{formatDateDisplay(viewHistoryItem.date)} · {viewHistoryItem.timeType || 'Theo lịch hẹn'}</span>
                 </div>
                 <div className="hd-item hd-item--full">
                   <label>Triệu chứng đã ghi nhận:</label>
@@ -1900,6 +1923,62 @@ const EncounterWorkspace = () => {
             </div>
 
             <div className="ew-modal__footer">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  style={{
+                    background: '#0284c7',
+                    color: '#ffffff',
+                    border: 'none',
+                    padding: '8px 14px',
+                    borderRadius: 6,
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 6px rgba(2, 132, 199, 0.4)'
+                  }}
+                  onClick={() => {
+                    const item = viewHistoryItem;
+                    setViewHistoryItem(null);
+                    setFullPastEncounterItem(item);
+                  }}
+                  title="Mở giao diện phiên khám đầy đủ lúc bác sĩ khám trong quá khứ"
+                >
+                  <Eye size={14} />
+                  <span>Xem chi tiết ca khám cũ (Giao diện phiên khám)</span>
+                </button>
+
+                {viewHistoryItem.diagnosis && (
+                  <button
+                    type="button"
+                    style={{
+                      background: 'rgba(16, 185, 129, 0.15)',
+                      color: '#34d399',
+                      border: '1px solid rgba(16, 185, 129, 0.35)',
+                      padding: '8px 12px',
+                      borderRadius: 6,
+                      fontSize: '0.78rem',
+                      fontWeight: 600,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => {
+                      handleInheritDiagnosis(viewHistoryItem.diagnosis);
+                      setViewHistoryItem(null);
+                    }}
+                    title="Kế thừa chẩn đoán vào phiên khám hiện tại"
+                  >
+                    <Copy size={13} />
+                    <span>Kế thừa CĐ</span>
+                  </button>
+                )}
+              </div>
+
               <button type="button" className="btn-modal-primary" onClick={() => setViewHistoryItem(null)}>
                 Đóng
               </button>
@@ -1909,6 +1988,23 @@ const EncounterWorkspace = () => {
       )}
 
       {/* ──────────────────────────────────────────────────────── */}
+      {/* ──────────────────────────────────────────────────────── */}
+      {/* MODAL 5B: FULL PAST ENCOUNTER WORKSPACE (EMR ARCHIVE VIEW) */}
+      {/* ──────────────────────────────────────────────────────── */}
+      <PastEncounterDetailModal
+        isOpen={!!fullPastEncounterItem}
+        encounterItem={fullPastEncounterItem}
+        patientInfo={{
+          patientName,
+          patientAge: patientAgeDisplay,
+          patientGender,
+          patientCode: encounter.patientCode || `#PT-${encounter.patientId}`
+        }}
+        onClose={() => setFullPastEncounterItem(null)}
+        onInheritDiagnosis={handleInheritDiagnosis}
+        onInheritMedicines={handleInheritMedicines}
+      />
+
       {/* MODAL 6: QUICK ADD MEDICINE TO CATALOG                   */}
       {/* ──────────────────────────────────────────────────────── */}
       {showQuickAddMedicineModal && (
