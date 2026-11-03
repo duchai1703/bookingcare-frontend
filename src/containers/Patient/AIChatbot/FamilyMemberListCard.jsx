@@ -8,6 +8,7 @@ import React, { memo, useState, useCallback } from 'react';
 import {
   Users,
   User,
+  UserPlus,
   Phone,
   Calendar,
   HeartPulse,
@@ -44,7 +45,7 @@ const GENDER_MAP = {
   FEMALE: 'Nữ',
 };
 
-const FamilyMemberListCard = memo(({ familyList, onSelectMember, onBookForMember, onViewHistory }) => {
+const FamilyMemberListCard = memo(({ familyList, onSelectMember, onBookForMember, onViewHistory, onAddMember }) => {
   const [clickedMemberId, setClickedMemberId] = useState(null);
 
   const handleBook = useCallback((member) => {
@@ -57,6 +58,14 @@ const FamilyMemberListCard = memo(({ familyList, onSelectMember, onBookForMember
       setClickedMemberId(null);
     }, 2000);
   }, [clickedMemberId, onBookForMember]);
+
+  const handleAddMember = useCallback(() => {
+    if (onAddMember) {
+      onAddMember();
+    } else {
+      window.location.href = '/patient/family?action=add';
+    }
+  }, [onAddMember]);
 
   if (!familyList || typeof familyList !== 'object') return null;
 
@@ -75,6 +84,15 @@ const FamilyMemberListCard = memo(({ familyList, onSelectMember, onBookForMember
           <span>Sổ y bạ gia đình</span>
           <span className="count-badge">{total} thành viên</span>
         </div>
+        <button
+          type="button"
+          className="btn-add-family-member"
+          onClick={handleAddMember}
+          title="Thêm hồ sơ người thân vào Sổ y bạ"
+        >
+          <UserPlus size={13} />
+          <span>+ Thêm người thân</span>
+        </button>
       </div>
 
       {/* Body */}
@@ -83,6 +101,14 @@ const FamilyMemberListCard = memo(({ familyList, onSelectMember, onBookForMember
           <div className="family-empty-state">
             <AlertCircle size={22} className="empty-icon" />
             <p className="empty-text">Bạn hiện chưa có hồ sơ người thân nào trong sổ y bạ.</p>
+            <button
+              type="button"
+              className="btn-family-action btn-add-first-member"
+              onClick={handleAddMember}
+            >
+              <UserPlus size={14} />
+              <span>Thêm người thân ngay</span>
+            </button>
           </div>
         ) : (
           <div className="family-items-grid">
@@ -115,7 +141,9 @@ const FamilyMemberListCard = memo(({ familyList, onSelectMember, onBookForMember
                     {birthday && (
                       <div className="detail-row">
                         <Calendar size={12} className="row-icon" />
-                        <span>{birthday}</span>
+                        <span>
+                          {/^\d{4}$/.test(String(birthday).trim()) ? `Sinh năm ${String(birthday).trim()}` : birthday}
+                        </span>
                       </div>
                     )}
                     <div className="detail-row">

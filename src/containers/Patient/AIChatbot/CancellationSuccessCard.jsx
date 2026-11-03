@@ -85,7 +85,7 @@ const CancellationSuccessCard = memo(({ result }) => {
           <div className="row-content">
             <div className="status-pill-row">
               <span className="status-label">Trạng thái:</span>
-              <span className="status-badge status-s4">Đã hủy (S4)</span>
+              <span className="status-badge status-s4">Đã hủy</span>
             </div>
           </div>
         </div>

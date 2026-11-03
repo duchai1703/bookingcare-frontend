@@ -553,7 +553,7 @@ const AppointmentHistory = () => {
           </span>
         );
       default:
-        return <span className="appt-badge appt-badge--default">{statusId}</span>;
+        return <span className="appt-badge appt-badge--default">Đang xử lý</span>;
     }
   };
 
@@ -855,22 +855,12 @@ const AppointmentHistory = () => {
                     </button>
                   )}
 
-                  {/* [Phase 2] Nút đổi lịch khám thông minh: Hiện khi Bác sĩ báo bận */}
-                  {b.statusId === 'S4' && (b.cancellationType === 'DOCTOR' || b.cancellationType === 'ADMIN') && (
-                    b.rescheduledToBookingId ? (
-                      <span className="rescheduled-link-badge">
-                        <i className="fas fa-check-double text-teal me-1" />
-                        Đã đổi #BK-{b.rescheduledToBookingId}
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        className="btn-card-action btn-card-reschedule"
-                        onClick={() => setRescheduleModal({ isOpen: true, bookingId: b.id, booking: b })}
-                      >
-                        <i className="fas fa-calendar-check me-1" /> Đổi lịch khám
-                      </button>
-                    )
+                  {/* [Phase 2] Nhãn lịch đã đổi trong quá khứ */}
+                  {b.statusId === 'S4' && b.rescheduledToBookingId && (
+                    <span className="rescheduled-link-badge">
+                      <i className="fas fa-check-double text-teal me-1" />
+                      Đã đổi #BK-{b.rescheduledToBookingId}
+                    </span>
                   )}
 
                   {/* Nút đánh giá & Nhắn tin: chỉ hiện khi S3 */}
@@ -969,21 +959,10 @@ const AppointmentHistory = () => {
                           Hủy
                         </button>
                       )}
-                      {b.statusId === 'S4' && (b.cancellationType === 'DOCTOR' || b.cancellationType === 'ADMIN') && (
-                        b.rescheduledToBookingId ? (
-                          <span className="tbl-rescheduled-badge">
-                            Đã đổi #{b.rescheduledToBookingId}
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            className="btn-tbl-reschedule"
-                            onClick={() => setRescheduleModal({ isOpen: true, bookingId: b.id, booking: b })}
-                            title="Đổi lịch khám thông minh"
-                          >
-                            Đổi lịch
-                          </button>
-                        )
+                      {b.statusId === 'S4' && b.rescheduledToBookingId && (
+                        <span className="tbl-rescheduled-badge">
+                          Đã đổi #{b.rescheduledToBookingId}
+                        </span>
                       )}
                       {b.statusId === 'S3' && !b.isReviewed && (
                         <button
@@ -1482,25 +1461,11 @@ const AppointmentHistory = () => {
                   <i className="fas fa-ban" /> Hủy lịch hẹn này
                 </button>
               )}
-              {detailBooking.statusId === 'S4' && (detailBooking.cancellationType === 'DOCTOR' || detailBooking.cancellationType === 'ADMIN') && (
-                detailBooking.rescheduledToBookingId ? (
-                  <span className="rescheduled-link-badge">
-                    <i className="fas fa-check-double text-teal me-1" />
-                    Đã đổi sang ca #{detailBooking.rescheduledToBookingId}
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    className="btn-footer-reschedule"
-                    onClick={() => {
-                      const target = detailBooking;
-                      setDetailBooking(null);
-                      setRescheduleModal({ isOpen: true, bookingId: target.id, booking: target });
-                    }}
-                  >
-                    <i className="fas fa-calendar-plus me-1" /> Đổi lịch khám thông minh
-                  </button>
-                )
+              {detailBooking.statusId === 'S4' && detailBooking.rescheduledToBookingId && (
+                <span className="rescheduled-link-badge">
+                  <i className="fas fa-check-double text-teal me-1" />
+                  Đã đổi sang ca #{detailBooking.rescheduledToBookingId}
+                </span>
               )}
               <button
                 type="button"

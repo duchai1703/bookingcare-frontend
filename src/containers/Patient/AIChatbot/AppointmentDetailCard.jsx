@@ -74,7 +74,7 @@ const AppointmentDetailCard = memo(({ appointmentDetail }) => {
   const statusInfo = isNoShow
     ? { label: 'Vắng mặt (No-Show)', className: 'status-s4' }
     : (STATUS_MAP[statusCode] || {
-        label: data.statusLabel || data.bookingStatus?.statusLabel || data.appointmentStatus?.statusLabel || data.status?.statusLabel || data.status?.label || (statusCode ? `Trạng thái: ${statusCode}` : 'Không xác định'),
+        label: data.statusLabel || data.bookingStatus?.statusLabel || data.appointmentStatus?.statusLabel || data.status?.statusLabel || data.status?.label || (STATUS_MAP[statusCode]?.label || 'Đang xử lý'),
         className: 'status-unknown',
       });
 

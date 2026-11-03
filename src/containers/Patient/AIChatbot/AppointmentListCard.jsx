@@ -96,8 +96,9 @@ const AppointmentListCard = memo(({
                   });
 
               const isActive = ['S1', 'S1.5', 'S2'].includes(statusCode);
-              const isPaid = booking.isPaid || booking.paymentStatus === 'paid' || statusCode === 'S2' || statusCode === 'S3';
-              const isRefunded = booking.isRefunded || booking.refundStatus === 'completed' || booking.paymentStatus === 'refunded' || (statusCode === 'S4' && Number(booking.refundAmount) > 0);
+              const payStatus = booking.paymentStatus;
+              const isPaid = payStatus === 'paid';
+              const isRefunded = booking.isRefunded || booking.refundStatus === 'completed' || payStatus === 'refunded' || (statusCode === 'S4' && Number(booking.refundAmount) > 0);
               const isProcessingRefund = booking.refundStatus === 'processing' || booking.refundStatus === 'pending';
 
               return (
@@ -168,8 +169,18 @@ const AppointmentListCard = memo(({
                         <span className="badge-paid-sm">
                           <CheckCircle2 size={11} /> Đã thanh toán
                         </span>
-                      ) : (
+                      ) : payStatus === 'pending' ? (
+                        <span className="badge-unpaid-sm" style={{ background: '#e0f2fe', color: '#0369a1' }}>
+                          <Clock size={11} /> Đang chờ xử lý
+                        </span>
+                      ) : payStatus === 'failed' ? (
+                        <span className="badge-cancelled-sm">
+                          <XCircle size={11} /> Thanh toán thất bại
+                        </span>
+                      ) : payStatus === 'unpaid' ? (
                         <span className="badge-unpaid-sm">Chưa thanh toán</span>
+                      ) : (
+                        <span className="badge-unpaid-sm" style={{ background: '#fef3c7', color: '#92400e' }}>Chưa xác minh</span>
                       )}
                     </div>
                   </div>
@@ -187,37 +198,14 @@ const AppointmentListCard = memo(({
                     </button>
 
                     {isActive && (
-                      <>
-                        <button
-                          type="button"
-                          className="btn-action btn-reschedule"
-                          onClick={() => onReschedule && onReschedule(bookingId)}
-                          title="Đổi lịch hẹn khám này"
-                        >
-                          <RotateCcw size={12} />
-                          <span>Đổi lịch</span>
-                        </button>
-                        <button
-                          type="button"
-                          className="btn-action btn-cancel"
-                          onClick={() => onCancel && onCancel(bookingId)}
-                          title="Hủy lịch hẹn khám này"
-                        >
-                          <XCircle size={12} />
-                          <span>Hủy lịch</span>
-                        </button>
-                      </>
-                    )}
-
-                    {(statusCode === 'S3' || statusCode === 'S4' || isNoShow) && (
                       <button
                         type="button"
-                        className="btn-action btn-reschedule"
-                        onClick={() => onReschedule && onReschedule(bookingId)}
-                        title="Đặt lại lịch khám này"
+                        className="btn-action btn-cancel"
+                        onClick={() => onCancel && onCancel(bookingId)}
+                        title="Hủy lịch hẹn khám này"
                       >
-                        <RotateCcw size={12} />
-                        <span>Đặt lại lịch</span>
+                        <XCircle size={12} />
+                        <span>Hủy lịch</span>
                       </button>
                     )}
                   </div>

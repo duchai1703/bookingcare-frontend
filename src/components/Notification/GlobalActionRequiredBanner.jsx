@@ -80,13 +80,14 @@ const GlobalActionRequiredBanner = () => {
 
           alerts.push({
             id: alertId,
-            type: 'SMART_RESCHEDULE',
+            type: 'LINK',
+            link: '/doctors',
             severity: 'warning',
             icon: 'fas fa-exclamation-triangle',
-            badge: 'LỊCH KHÁM BỊ HỦY · CẦN XỬ LÝ GẤP',
+            badge: 'LỊCH KHÁM BỊ HỦY · CẦN XỬ LÝ',
             title: `Lịch hẹn #${latestCancelled.id} với BS. ${doctorName || 'phụ trách'} đã bị hủy`,
-            message: `Lịch khám lúc ${timeStr} ngày ${dateStr} bị hủy do bác sĩ có lịch bận đột xuất. Vui lòng chọn bác sĩ tương đương hoặc khung giờ mới để không bị gián đoạn quá trình khám.`,
-            ctaText: 'Đổi lịch thông minh ngay',
+            message: `Lịch khám lúc ${timeStr} ngày ${dateStr} bị hủy do bác sĩ có lịch bận đột xuất. Tiền khám đã được xử lý hoàn trả theo quy định. Quý khách có thể tiến hành đặt lịch mới với bác sĩ khác.`,
+            ctaText: 'Đặt lịch mới',
             bookingId: latestCancelled.id,
           });
         }

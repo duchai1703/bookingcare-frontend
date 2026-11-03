@@ -21,7 +21,7 @@ const CancellationErrorCard = memo(({ error, onViewBookings }) => {
   if (errorCode === 'booking_not_cancellable') {
     friendlyDesc = 'Lịch hẹn ở trạng thái hiện tại không thể hủy qua trợ lý AI. Vui lòng liên hệ trực tiếp phòng khám hoặc quản trị viên.';
   } else if (errorCode === 'consultation_completed') {
-    friendlyDesc = 'Lịch hẹn này đã hoàn tất buổi khám (S3), do đó không thể hủy.';
+    friendlyDesc = 'Lịch hẹn này đã hoàn tất buổi khám, do đó không thể hủy.';
   } else if (errorCode === 'unauthorized_booking') {
     friendlyDesc = 'Bạn không có quyền thực hiện thao tác trên lịch hẹn này.';
   } else if (errorCode === 'draft_expired' || errorCode === 'invalid_token') {

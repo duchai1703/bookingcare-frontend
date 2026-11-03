@@ -112,8 +112,10 @@ const PatientOverview = () => {
           badge: 'Lịch khám bị hủy · Cần xử lý',
           time: moment(latestCancelled.updatedAt || latestCancelled.createdAt).fromNow(),
           title: `Lịch hẹn #${latestCancelled.id} đã bị hủy (BS. ${latestCancelled.doctorBookingData?.lastName || ''} ${latestCancelled.doctorBookingData?.firstName || ''})`,
-          message: `Lịch hẹn lúc ${timeStr} ngày ${dateStr} đã bị hủy. Bạn có thể sử dụng tính năng Đổi lịch thông minh để chọn bác sĩ tương đương hoặc khung giờ mới ngay lập tức.`,
-          actionType: 'SMART_RESCHEDULE',
+          message: `Lịch hẹn lúc ${timeStr} ngày ${dateStr} đã bị hủy. Tiền khám đã được xử lý hoàn trả theo chính sách. Bạn có thể tiến hành đặt lịch khám mới phù hợp.`,
+          actionType: 'LINK',
+          actionLink: '/doctors',
+          actionText: 'Đặt lịch mới',
           bookingId: latestCancelled.id,
         });
       }
@@ -299,15 +301,7 @@ const PatientOverview = () => {
                   <p className="po-action-card__message">{alert.message}</p>
                 </div>
                 <div className="po-action-card__ctas">
-                  {alert.actionType === 'SMART_RESCHEDULE' ? (
-                    <button
-                      type="button"
-                      className="po-cta-btn po-cta-btn--warning"
-                      onClick={() => setRescheduleModal({ isOpen: true, bookingId: alert.bookingId })}
-                    >
-                      <i className="fas fa-calendar-alt tw-mr-1.5" /> Đổi lịch thông minh ngay
-                    </button>
-                  ) : alert.actionType === 'LINK' ? (
+                  {alert.actionType === 'LINK' ? (
                     <Link to={alert.actionLink} className="po-cta-btn po-cta-btn--primary">
                       {alert.actionText} <i className="fas fa-arrow-right tw-ml-1" />
                     </Link>

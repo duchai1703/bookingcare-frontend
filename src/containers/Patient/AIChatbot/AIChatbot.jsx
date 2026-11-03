@@ -432,6 +432,7 @@ const AIChatbot = memo(() => {
           if (done) break;
 
           buffer += decoder.decode(value, { stream: true });
+          buffer = buffer.replace(/\r\n/g, '\n');
 
           // [Buffer Safe Slice — Max Buffer 100KB]
           if (buffer.length > 100000) {
@@ -444,8 +445,9 @@ const AIChatbot = memo(() => {
             const line = buffer.slice(0, boundary);
             buffer = buffer.slice(boundary + 2);
 
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6);
+            const trimmedLine = line.trim();
+            if (trimmedLine.startsWith('data:')) {
+              const data = trimmedLine.replace(/^data:\s*/, '');
 
               // ═══ [ĐỒNG BỘ TIMEOUT CHÉO BE ↔ FE] ═══
               if (data === '[DONE]' || data === '[TIMEOUT]') break;
@@ -1057,7 +1059,7 @@ const AIChatbot = memo(() => {
                 ...m,
                 bookingDraft: null,
                 bookingResult: resData.data,
-                text: '🎉 Đặt lịch khám và thanh toán thành công! Lịch khám của bạn đã được xác nhận (S2). Bạn có thể xem chi tiết trong mục Lịch hẹn của tôi.',
+                text: '🎉 Đặt lịch khám và thanh toán thành công! Lịch khám của bạn đã được xác nhận. Bạn có thể xem chi tiết trong mục Lịch hẹn của tôi.',
               };
             }
             return m;
@@ -1391,6 +1393,10 @@ const AIChatbot = memo(() => {
     });
   }, [handleSubmit]);
 
+  const handleAddMember = useCallback(() => {
+    window.location.href = '/patient/family?action=add';
+  }, []);
+
   // Lắng nghe event click "Tư vấn AI" từ doctor card
   useEffect(() => {
     const handleOpenChat = (e) => {
@@ -1532,6 +1538,7 @@ const AIChatbot = memo(() => {
                       onCancelBookingItem={handleCancelBookingItem}
                       onBookForMember={handleBookForMember}
                       onViewHistory={handleViewHistory}
+                      onAddMember={handleAddMember}
                     />
                   ))}
 

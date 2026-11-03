@@ -71,7 +71,7 @@ const PatientChatModal = ({ isOpen, onClose, booking, guardianName }) => {
     }
 
     if (booking.statusId !== 'S3') {
-      setErrorMsg('Chức năng nhắn tin chỉ khả dụng cho các lịch khám đã hoàn tất (S3).');
+      setErrorMsg('Chức năng nhắn tin chỉ khả dụng cho các lịch khám đã hoàn tất.');
       return;
     }
 

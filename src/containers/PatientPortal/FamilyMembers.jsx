@@ -1,5 +1,6 @@
 // src/containers/PatientPortal/FamilyMembers.jsx
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import moment from 'moment';
 import {
@@ -10,6 +11,24 @@ import {
 } from '../../services/familyMemberService';
 import './FamilyMembers.scss';
 
+export const getGenderLabel = (g) => {
+  if (!g) return '—';
+  const val = String(g).trim().toUpperCase();
+  if (['G1', 'MALE', 'M', 'NAM'].includes(val)) return 'Nam';
+  if (['G2', 'FEMALE', 'F', 'NỮ', 'NU'].includes(val)) return 'Nữ';
+  if (['G3', 'OTHER', 'KHÁC', 'KHAC'].includes(val)) return 'Khác';
+  return g;
+};
+
+export const normalizeGenderForSelect = (g) => {
+  if (!g) return '';
+  const val = String(g).trim().toUpperCase();
+  if (['G1', 'MALE', 'M', 'NAM'].includes(val)) return 'MALE';
+  if (['G2', 'FEMALE', 'F', 'NỮ', 'NU'].includes(val)) return 'FEMALE';
+  if (['G3', 'OTHER', 'KHÁC', 'KHAC'].includes(val)) return 'OTHER';
+  return '';
+};
+
 const RELATIONSHIP_OPTIONS = [
   { value: 'CHILD', label: 'Con cái', icon: 'fas fa-child', color: '#0284c7' },
   { value: 'PARENT', label: 'Bố / Mẹ', icon: 'fas fa-user-friends', color: '#0d9488' },
@@ -18,6 +37,7 @@ const RELATIONSHIP_OPTIONS = [
 ];
 
 const GENDER_OPTIONS = [
+  { value: '', label: '-- Chưa chọn giới tính --' },
   { value: 'MALE', label: 'Nam' },
   { value: 'FEMALE', label: 'Nữ' },
   { value: 'OTHER', label: 'Khác' },
@@ -37,7 +57,7 @@ const FamilyMembers = () => {
   const [formData, setFormData] = useState({
     fullName: '',
     relationship: 'CHILD',
-    gender: 'MALE',
+    gender: '',
     birthday: '',
     phoneNumber: '',
     address: '',
@@ -47,10 +67,15 @@ const FamilyMembers = () => {
   });
 
   const [formErrors, setFormErrors] = useState({});
+  const location = useLocation();
 
   useEffect(() => {
     fetchFamilyMembers();
-  }, []);
+    const searchParams = new URLSearchParams(location.search);
+    if (searchParams.get('action') === 'add') {
+      handleOpenAddModal();
+    }
+  }, [location.search]);
 
   const fetchFamilyMembers = async () => {
     setIsLoading(true);
@@ -74,7 +99,7 @@ const FamilyMembers = () => {
     setFormData({
       fullName: '',
       relationship: 'CHILD',
-      gender: 'MALE',
+      gender: '',
       birthday: '',
       phoneNumber: '',
       address: '',
@@ -89,11 +114,12 @@ const FamilyMembers = () => {
   const handleOpenEditModal = (member) => {
     setIsEditing(true);
     setCurrentMemberId(member.id);
+    const rawBirth = member.birthday ? String(member.birthday).trim() : '';
     setFormData({
       fullName: member.fullName || '',
       relationship: member.relationship || 'CHILD',
-      gender: member.gender || 'MALE',
-      birthday: member.birthday ? moment(member.birthday).format('YYYY-MM-DD') : '',
+      gender: normalizeGenderForSelect(member.gender),
+      birthday: rawBirth && !/^\d{4}$/.test(rawBirth) && moment(rawBirth).isValid() ? moment(rawBirth).format('YYYY-MM-DD') : rawBirth,
       phoneNumber: member.phoneNumber || '',
       address: member.address || '',
       nationalId: member.nationalId || '',
@@ -108,6 +134,9 @@ const FamilyMembers = () => {
     const errors = {};
     if (!formData.fullName || formData.fullName.trim().length < 2) {
       errors.fullName = 'Họ và tên tối thiểu 2 ký tự!';
+    }
+    if (!formData.gender) {
+      errors.gender = 'Vui lòng chọn giới tính!';
     }
     if (formData.phoneNumber) {
       const phoneRegex = /^[0-9]{10,11}$/;
@@ -169,9 +198,15 @@ const FamilyMembers = () => {
 
   const calculateAge = (birthday) => {
     if (!birthday) return null;
-    const diff = moment().diff(moment(birthday), 'years');
+    const str = String(birthday).trim();
+    // Khi người thân chỉ có năm sinh (4 chữ số), không tự tạo ngày 01/01 và không hiển thị tuổi chính xác
+    if (/^\d{4}$/.test(str)) {
+      return null;
+    }
+    if (!moment(str).isValid()) return null;
+    const diff = moment().diff(moment(str), 'years');
     if (diff === 0) {
-      const months = moment().diff(moment(birthday), 'months');
+      const months = moment().diff(moment(str), 'months');
       return months > 0 ? `${months} tháng tuổi` : 'Dưới 1 tháng tuổi';
     }
     return `${diff} tuổi`;
@@ -289,7 +324,7 @@ const FamilyMembers = () => {
                   <div className="detail-item">
                     <span className="detail-label"><i className="fas fa-venus-mars" /> Giới tính:</span>
                     <span className="detail-val">
-                      {member.gender === 'MALE' ? 'Nam' : member.gender === 'FEMALE' ? 'Nữ' : 'Khác'}
+                      {getGenderLabel(member.gender)}
                     </span>
                   </div>
 
@@ -298,7 +333,9 @@ const FamilyMembers = () => {
                     <span className="detail-val">
                       {member.birthday ? (
                         <>
-                          {moment(member.birthday).format('DD/MM/YYYY')}{' '}
+                          {/^\d{4}$/.test(String(member.birthday).trim())
+                            ? `Sinh năm ${member.birthday}`
+                            : (moment(member.birthday).isValid() ? moment(member.birthday).format('DD/MM/YYYY') : member.birthday)}{' '}
                           {ageStr && <span className="age-tag">({ageStr})</span>}
                         </>
                       ) : (

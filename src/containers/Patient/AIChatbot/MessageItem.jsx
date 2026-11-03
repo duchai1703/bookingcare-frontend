@@ -71,6 +71,7 @@ const MessageItem = memo(({
   onCancelBookingItem,
   onBookForMember,
   onViewHistory,
+  onAddMember,
   onOptionSelect,
 }) => {
   const [copied, setCopied] = useState(false);
@@ -424,6 +425,7 @@ const MessageItem = memo(({
               familyList={msg.familyList}
               onBookForMember={onBookForMember}
               onViewHistory={onViewHistory}
+              onAddMember={onAddMember}
             />
           </div>
         )}

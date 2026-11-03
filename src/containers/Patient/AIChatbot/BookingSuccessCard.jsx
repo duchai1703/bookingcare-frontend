@@ -26,18 +26,36 @@ const BookingSuccessCard = memo(({ bookingResult }) => {
   const schedule = data.schedule || {};
   const patient = data.patient || {};
   const price = data.price || {};
-  const isWalletPaid = data.paymentMethod === 'WALLET' || bookingStatus === 'S2';
-  const message = data.message || (isWalletPaid
-    ? 'Đặt lịch khám và thanh toán bằng Ví BookingCare thành công!'
-    : 'Đặt lịch thành công! Vui lòng kiểm tra email để xác nhận lịch hẹn.');
-  const nextStep = data.nextStep || (isWalletPaid
-    ? 'Lịch khám của bạn đã được thanh toán và xác nhận thành công (S2). Vui lòng đến đúng giờ hẹn tại cơ sở y tế.'
-    : 'Kiểm tra hộp thư email của bạn để xác nhận lịch hẹn chính thức.');
+  const isPaid = data.paymentStatus === 'paid';
+  const paymentMethod = data.paymentMethod || (data.vnpayTransactionNo ? 'VNPAY' : null);
+  const isWalletPaid = paymentMethod === 'WALLET' && isPaid;
+  const isVnpayPaid = (paymentMethod === 'VNPAY' || Boolean(data.vnpayTransactionNo)) && isPaid;
 
-  // Map actual domain status
-  const statusLabel = isWalletPaid
-    ? 'Đã xác nhận & Thanh toán Ví BookingCare (S2)'
-    : 'Chờ xác nhận qua Email (S1)';
+  const getBookingStatusText = (status) => {
+    switch (status) {
+      case 'S1': return 'Chờ xác nhận';
+      case 'S1.5': return 'Chờ thanh toán';
+      case 'S2': return 'Đã xác nhận';
+      case 'S3': return 'Đã khám xong';
+      case 'S4': return 'Đã hủy';
+      default: return status || 'Đang xử lý';
+    }
+  };
+
+  const statusLabel = getBookingStatusText(bookingStatus);
+  const paymentMethodLabel = isWalletPaid
+    ? 'Thanh toán qua Ví BookingCare'
+    : (isVnpayPaid ? 'Thanh toán qua Cổng VNPay' : (paymentMethod ? `Thanh toán qua ${paymentMethod}` : (isPaid ? 'Đã thanh toán' : 'Chưa thanh toán')));
+
+  const message = data.message || (isPaid
+    ? (isWalletPaid ? 'Đặt lịch khám và thanh toán bằng Ví BookingCare thành công!' : 'Đặt lịch khám và thanh toán thành công!')
+    : 'Đặt lịch thành công! Vui lòng kiểm tra email để xác nhận lịch hẹn.');
+
+  const nextStep = (data.nextStep && !data.nextStep.includes('(S2)'))
+    ? data.nextStep
+    : (isPaid
+        ? 'Lịch khám của bạn đã được thanh toán và xác nhận thành công. Vui lòng đến đúng giờ hẹn tại cơ sở y tế.'
+        : 'Kiểm tra hộp thư email của bạn để xác nhận lịch hẹn chính thức.');
 
   return (
     <div className="ai-booking-success-card" role="region" aria-label="Kết quả đặt lịch thành công">
@@ -95,9 +113,14 @@ const BookingSuccessCard = memo(({ bookingResult }) => {
           <div className="row-content">
             <div className="status-pill-row">
               <span className="status-label">Trạng thái:</span>
-              <span className={`status-badge ${isWalletPaid ? 'status-s2' : 'status-s1'}`}>
+              <span className={`status-badge ${bookingStatus === 'S2' ? 'status-s2' : 'status-s1'}`}>
                 {statusLabel}
               </span>
+              {isPaid && (
+                <span className="payment-method-pill" style={{ marginLeft: 8, fontSize: '0.78rem', background: '#dcfce7', color: '#166534', padding: '2px 8px', borderRadius: 4, fontWeight: 500 }}>
+                  {paymentMethodLabel}
+                </span>
+              )}
             </div>
             {price.formatted && (
               <span className="price-tag">Chi phí: {price.formatted}</span>
