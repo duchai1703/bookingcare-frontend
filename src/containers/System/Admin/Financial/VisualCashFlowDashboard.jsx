@@ -47,6 +47,7 @@ import {
 } from '../../../../services/walletService';
 import VaultDetailDrawer from './VaultDetailDrawer';
 import TransactionLifecycleDrawer from './TransactionLifecycleDrawer';
+import DualLayerDigitalTwinCanvas from './DualLayerDigitalTwinCanvas';
 import './VisualCashFlowDashboard.scss';
 
 const formatCurrencyVND = (num) => {
@@ -80,11 +81,14 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
     setIsLineageDrawerOpen(true);
   };
 
-  // Tải dữ liệu từ Backend
-  const loadMetrics = useCallback(async () => {
+  // Tải dữ liệu từ Backend (hỗ trợ bộ lọc thời gian và phân rã)
+  const [filterParams, setFilterParams] = useState({ timeRange: 'all', sort: 'newest' });
+
+  const loadMetrics = useCallback(async (customParams) => {
     setLoading(true);
     try {
-      const res = await getVisualCashflowMetrics();
+      const query = customParams || filterParams;
+      const res = await getVisualCashflowMetrics(query);
       if (res && res.errCode === 0) {
         setData(res.data);
       } else {
@@ -96,7 +100,13 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [filterParams]);
+
+  const handleFilterChange = (newFilters) => {
+    const updated = { ...filterParams, ...newFilters };
+    setFilterParams(updated);
+    loadMetrics(updated);
+  };
 
   useEffect(() => {
     loadMetrics();
@@ -216,383 +226,26 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* 2. BẢNG PHÂN BỔ NGUỒN VỐN SÀN (THE 5 VAULT ACCOUNTS LEDGER) */}
-      {/* Thay thế 4 thẻ to bằng Bảng danh mục tài khoản vốn chuẩn CFO */}
+      {/* 1.5. DUAL-LAYER DIGITAL TWIN CANVAS (TÁI HIỆN SƠ ĐỒ BẢNG TRẮNG 2 TẦNG) */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      <div className="ramp-vaults-section">
-        <div className="section-header">
-          <div className="title-group">
-            <h3>Danh Mục 5 Ngăn Vốn Sàn (Treasury Vaults Allocation)</h3>
-            <p>Trực quan hóa cấu trúc dòng tiền giữa Ngân hàng thật và các ví ảo trên ứng dụng</p>
-          </div>
-          <span className="ramp-pill success">
-            <CheckCircle2 size={12} />
-            Hoạt động ổn định
-          </span>
-        </div>
-
-        <div className="ramp-vaults-table-container">
-          <table className="ramp-vaults-table">
-            <thead>
-              <tr>
-                <th>Tài Khoản Vốn / Ngăn Tiền</th>
-                <th>Bản Chất Dòng Tiền</th>
-                <th className="text-right">Số Dư Hiện Hữu</th>
-                <th>Cơ Cấu / Phân Bổ</th>
-                <th>Trạng Thái Bảo Chứng</th>
-                <th className="text-right">Thao Tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* KHỐI 1: TÀI KHOẢN THẬT VCB */}
-              <tr className="vault-row" onClick={() => setSelectedVault('realBank')}>
-                <td>
-                  <div className="account-identity">
-                    <div className="vault-icon-box real-bank">
-                      <Landmark size={18} />
-                    </div>
-                    <div className="vault-text">
-                      <div className="vault-name">Tài Khoản Thật (VCB Công Ty)</div>
-                      <div className="vault-sub">
-                        {vaults?.realBank?.bankName} • STK: {vaults?.realBank?.accountNumber}
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <span className="ramp-pill neutral">Tiền mặt thực tế tại ngân hàng</span>
-                </td>
-                <td className="text-right">
-                  <div className="vault-amount">
-                    {formatCurrencyVND(vaults?.realBank?.currentBalance)}
-                  </div>
-                </td>
-                <td>
-                  <span className="tw-text-xs tw-text-slate-500">
-                    Nạp VNPay: +{(vaults?.realBank?.totalInflowVNPay || 0).toLocaleString('vi-VN')} đ
-                  </span>
-                </td>
-                <td>
-                  <span className="ramp-pill success">● 100% Tiền thật</span>
-                </td>
-                <td className="text-right">
-                  <button type="button" className="ramp-btn-ghost">
-                    Sao kê VCB
-                  </button>
-                </td>
-              </tr>
-
-              {/* KHỐI 2: TỔNG VÍ BỆNH NHÂN */}
-              <tr className="vault-row" onClick={() => setSelectedVault('patientWallets')}>
-                <td>
-                  <div className="account-identity">
-                    <div className="vault-icon-box patient-wallets">
-                      <Wallet size={18} />
-                    </div>
-                    <div className="vault-text">
-                      <div className="vault-name">Tổng Ví Ảo Bệnh Nhân (BN App)</div>
-                      <div className="vault-sub">
-                        {vaults?.patientWallets?.count || 0} tài khoản ví bệnh nhân
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <span className="ramp-pill neutral">Số dư nạp trước chưa khám hoặc còn dư</span>
-                </td>
-                <td className="text-right">
-                  <div className="vault-amount">
-                    {formatCurrencyVND(vaults?.patientWallets?.total)}
-                  </div>
-                </td>
-                <td>
-                  <span className="tw-text-xs tw-text-slate-500">
-                    Khả dụng: {(vaults?.patientWallets?.available || 0).toLocaleString('vi-VN')} đ
-                  </span>
-                </td>
-                <td>
-                  <span className="ramp-pill success">● Bảo chứng đầy đủ</span>
-                </td>
-                <td className="text-right">
-                  <button type="button" className="ramp-btn-ghost">
-                    DS Ví BN
-                  </button>
-                </td>
-              </tr>
-
-              {/* KHỐI 3: TÀI KHOẢN TẠM GIỮ ESCROW */}
-              <tr className="vault-row" onClick={() => setSelectedVault('escrowPool')}>
-                <td>
-                  <div className="account-identity">
-                    <div className="vault-icon-box escrow-pool">
-                      <Lock size={18} />
-                    </div>
-                    <div className="vault-text">
-                      <div className="vault-name">Tài Khoản Trung Gian (Escrow Pool)</div>
-                      <div className="vault-sub">
-                        {vaults?.escrowPool?.activeCount || 0} ca khám đang giữ chỗ chờ khám
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <span className="ramp-pill warning">Ký quỹ giữ cọc (Chưa chuyển cho BS)</span>
-                </td>
-                <td className="text-right">
-                  <div className="vault-amount">
-                    {formatCurrencyVND(vaults?.escrowPool?.total)}
-                  </div>
-                </td>
-                <td>
-                  <div className="escrow-compartments-tag">
-                    <span className="comp-doc">
-                      BS (90%): {(vaults?.escrowPool?.doctorShare || 0).toLocaleString('vi-VN')} đ
-                    </span>
-                    <span className="comp-fee">
-                      Sàn (10%): {(vaults?.escrowPool?.platformShare || 0).toLocaleString('vi-VN')} đ
-                    </span>
-                  </div>
-                </td>
-                <td>
-                  <span className="ramp-pill success">● Tạm giữ an toàn</span>
-                </td>
-                <td className="text-right">
-                  <button type="button" className="ramp-btn-ghost">
-                    Chi tiết cọc
-                  </button>
-                </td>
-              </tr>
-
-              {/* KHỐI 4: TỔNG VÍ BÁC SĨ */}
-              <tr className="vault-row" onClick={() => setSelectedVault('doctorWallets')}>
-                <td>
-                  <div className="account-identity">
-                    <div className="vault-icon-box doctor-wallets">
-                      <Coins size={18} />
-                    </div>
-                    <div className="vault-text">
-                      <div className="vault-name">Tổng Ví Ảo Bác Sĩ (BS App)</div>
-                      <div className="vault-sub">
-                        {vaults?.doctorWallets?.count || 0} tài khoản bác sĩ nhận thù lao
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <span className="ramp-pill neutral">Thù lao ca khám đã hoàn tất (Chờ rút)</span>
-                </td>
-                <td className="text-right">
-                  <div className="vault-amount">
-                    {formatCurrencyVND(vaults?.doctorWallets?.total)}
-                  </div>
-                </td>
-                <td>
-                  <span className="tw-text-xs tw-text-slate-500">
-                    Khả dụng rút: {(vaults?.doctorWallets?.available || 0).toLocaleString('vi-VN')} đ
-                  </span>
-                </td>
-                <td>
-                  <span className="ramp-pill success">● Đã quyết toán</span>
-                </td>
-                <td className="text-right">
-                  <button type="button" className="ramp-btn-ghost">
-                    DS Ví BS
-                  </button>
-                </td>
-              </tr>
-
-              {/* KHỐI 5: TIỀN LỜI CÔNG TY */}
-              <tr className="vault-row" onClick={() => setSelectedVault('platformProfit')}>
-                <td>
-                  <div className="account-identity">
-                    <div className="vault-icon-box platform-profit">
-                      <DollarSign size={18} />
-                    </div>
-                    <div className="vault-text">
-                      <div className="vault-name">Tiền Lời Công Ty (Platform Profit)</div>
-                      <div className="vault-sub">Doanh thu hoa hồng dịch vụ sàn tích lũy</div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <span className="ramp-pill neutral">Lợi nhuận thuần có thể kết chuyển / rút</span>
-                </td>
-                <td className="text-right">
-                  <div className="vault-amount" style={{ color: '#854D0E' }}>
-                    {formatCurrencyVND(vaults?.platformProfit?.spendable)}
-                  </div>
-                </td>
-                <td>
-                  <span className="tw-text-xs tw-text-slate-500">
-                    Đã kết chuyển / rút: {(vaults?.platformProfit?.withdrawnByAdmin || 0).toLocaleString('vi-VN')} đ
-                  </span>
-                </td>
-                <td>
-                  <span className="ramp-pill success">● Khả dụng chi tiêu</span>
-                </td>
-                <td className="text-right">
-                  <button
-                    type="button"
-                    className="ramp-btn-primary"
-                    style={{ padding: '4px 10px', fontSize: '11px' }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsWithdrawModalOpen(true);
-                    }}
-                  >
-                    Rút tiền lời
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <DualLayerDigitalTwinCanvas
+        vaults={vaults}
+        flows={data?.flows}
+        constituents={data?.constituents}
+        filters={data?.filters || filterParams}
+        reconciliation={reconciliation}
+        stepBreakdown={stepBreakdown}
+        recentTransactions={recentTransactions}
+        onOpenVault={(vaultKey) => setSelectedVault(vaultKey)}
+        onOpenLineage={handleOpenLineage}
+        onWithdrawProfit={() => setIsWithdrawModalOpen(true)}
+        onFilterChange={handleFilterChange}
+        onRefresh={() => loadMetrics(filterParams)}
+        loading={loading}
+      />
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* 3. SƠ ĐỒ LUỒNG TIỀN ĐỒ HỌA TƯƠNG TÁC (TÁI HIỆN BẢN VẼ TAY 3 BƯỚC) */}
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      <div className="ramp-flow-canvas-section">
-        <div className="canvas-header">
-          <div className="canvas-title-group">
-            <h3>Sơ Đồ Dòng Tiền Luân Chuyển Thực Tế (B1 ➔ B2 ➔ B3)</h3>
-            <p>Mô phỏng chính xác đường nét đứt (Tiền thật VCB) và đường nét liền (Ví ảo App)</p>
-          </div>
-
-          <div className="flow-legend">
-            <button
-              type="button"
-              className="ramp-btn-secondary"
-              style={{ padding: '5px 12px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px', marginRight: '8px' }}
-              onClick={() => handleOpenLineage(stepBreakdown?.step2?.bookingId)}
-            >
-              <GitCommit size={13} />
-              <span>Truy Vết Vòng Đời Ca Khám Này</span>
-            </button>
-            <div className="legend-item">
-              <span className="legend-line real-cash" />
-              <span>Tiền mặt thật (VCB)</span>
-            </div>
-            <div className="legend-item">
-              <span className="legend-line virtual-app" />
-              <span>Số dư ảo nội bộ (App)</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flow-steps-grid">
-          {/* BƯỚC 1: NẠP TIỀN */}
-          <div className="flow-step-card">
-            <div className="step-header">
-              <span className="step-tag">BƯỚC 1: NẠP TIỀN VÀO VÍ</span>
-              <span className="step-amount">
-                +{(stepBreakdown?.step1?.amount || 0).toLocaleString('vi-VN')} đ
-              </span>
-            </div>
-            <div className="step-body">
-              <div className="step-name">Bệnh Nhân Nạp VNPay</div>
-              <p className="step-desc">
-                Bệnh nhân nạp tiền từ ngân hàng cá nhân vào ví app. Tiền thật chảy vào VCB Công ty, đồng thời ví ảo BN cộng số dư tương ứng.
-              </p>
-              <div className="step-meta-box">
-                <div className="meta-row">
-                  <span className="meta-label">Người nạp:</span>
-                  <span className="meta-val">{stepBreakdown?.step1?.patientName}</span>
-                </div>
-                <div className="meta-row">
-                  <span className="meta-label">Mã GD VNPay:</span>
-                  <span className="meta-val">{stepBreakdown?.step1?.vnpayTxCode}</span>
-                </div>
-                <div className="meta-row">
-                  <span className="meta-label">Vào VCB Cty:</span>
-                  <span className="meta-val" style={{ color: '#1D4ED8' }}>
-                    +{(stepBreakdown?.step1?.amount || 0).toLocaleString('vi-VN')} đ
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* DẤU MŨI TÊN CHUYỂN BƯỚC */}
-          <div className="flow-arrow-separator">
-            <ArrowRight size={24} />
-          </div>
-
-          {/* BƯỚC 2: ĐẶT LỊCH KHÁM (ESCROW HOLD) */}
-          <div className="flow-step-card">
-            <div className="step-header">
-              <span className="step-tag">BƯỚC 2: ĐẶT LỊCH & TẠM GIỮ</span>
-              <span className="step-amount">
-                -{(stepBreakdown?.step2?.amount || 0).toLocaleString('vi-VN')} đ
-              </span>
-            </div>
-            <div className="step-body">
-              <div className="step-name">Ký Quỹ Ngăn Escrow 2 Tầng</div>
-              <p className="step-desc">
-                Ví BN bị trừ tiền đặt cọc. Tiền mặt VCB giữ nguyên không đổi. Khoản tạm giữ được phân bổ thành 2 ngăn chờ khám: 90% thù lao Bác sĩ & 10% hoa hồng sàn.
-              </p>
-              <div className="step-meta-box">
-                <div className="meta-row">
-                  <span className="meta-label">Ca khám:</span>
-                  <span className="meta-val">#{stepBreakdown?.step2?.bookingId}</span>
-                </div>
-                <div className="meta-row">
-                  <span className="meta-label">Ngăn BS (90%):</span>
-                  <span className="meta-val" style={{ color: '#047857' }}>
-                    {(stepBreakdown?.step2?.doctorShare || 0).toLocaleString('vi-VN')} đ
-                  </span>
-                </div>
-                <div className="meta-row">
-                  <span className="meta-label">Ngăn Sàn (10%):</span>
-                  <span className="meta-val" style={{ color: '#B45309' }}>
-                    {(stepBreakdown?.step2?.platformShare || 0).toLocaleString('vi-VN')} đ
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* DẤU MŨI TÊN CHUYỂN BƯỚC */}
-          <div className="flow-arrow-separator">
-            <ArrowRight size={24} />
-          </div>
-
-          {/* BƯỚC 3: HOÀN TẤT & RÚT TIỀN */}
-          <div className="flow-step-card">
-            <div className="step-header">
-              <span className="step-tag">BƯỚC 3: GIẢI NGÂN & RÚT TIỀN</span>
-              <span className="step-amount">
-                -{(stepBreakdown?.step3?.amount || 0).toLocaleString('vi-VN')} đ
-              </span>
-            </div>
-            <div className="step-body">
-              <div className="step-name">Bác Sĩ Rút Về Ngân Hàng</div>
-              <p className="step-desc">
-                Khám xong: Quyết toán 90% thù lao ví BS và 10% doanh thu sàn. Khi BS rút tiền, ví ảo khấu trừ và VCB Công ty chuyển khoản thực tế qua ngân hàng.
-              </p>
-              <div className="step-meta-box">
-                <div className="meta-row">
-                  <span className="meta-label">Người thụ hưởng:</span>
-                  <span className="meta-val">{stepBreakdown?.step3?.recipientName}</span>
-                </div>
-                <div className="meta-row">
-                  <span className="meta-label">Mã GD VCB:</span>
-                  <span className="meta-val">{stepBreakdown?.step3?.bankRef}</span>
-                </div>
-                <div className="meta-row">
-                  <span className="meta-label">Trừ VCB Cty:</span>
-                  <span className="meta-val" style={{ color: '#DC2626' }}>
-                    -{(stepBreakdown?.step3?.amount || 0).toLocaleString('vi-VN')} đ
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* 4. HỆ THỐNG 4 BIỂU ĐỒ RECHARTS CHUYÊN SÂU */}
+      {/* 2. HỆ THỐNG 4 BIỂU ĐỒ RECHARTS CHUYÊN SÂU */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
       <div className="tw-grid tw-grid-cols-1 lg:tw-grid-cols-2 tw-gap-6 tw-mb-8">
         {/* BIỂU ĐỒ 1: CÂN ĐỐI ĐỐI SOÁT TIỀN THẬT VS VÍ ẢO */}

@@ -360,8 +360,8 @@ export const runAutoDoctorPayoutCycle = (data = {}) => {
  * [PHASE 1 - CASH FLOW ARCHITECTURE & RAMP FINTECH ENGINE]
  * Lấy toàn bộ dữ liệu 5 Khối Vốn Lõi, Đối soát Bất biến & 4 Biểu đồ Recharts
  */
-export const getVisualCashflowMetrics = () => {
-  return axiosInstance.get('/api/v1/admin/financial/visual-cashflow');
+export const getVisualCashflowMetrics = (params) => {
+  return axiosInstance.get('/api/v1/admin/financial/visual-cashflow', { params });
 };
 
 /**

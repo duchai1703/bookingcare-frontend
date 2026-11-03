@@ -1,0 +1,254 @@
+# HỆ THỐNG THIẾT KẾ CHUẨN MỰC THEO PHONG CÁCH RAMP FINTECH (RAMP-INSPIRED DESIGN SYSTEM SPECIFICATION)
+
+> **Cảm hứng & Chuẩn mực**: 100% học tập từ ngôn ngữ thiết kế của **Ramp** ?" Nền tảng FinTech & Quản trị Chi tiêu Doanh nghiệp hàng đầu thế giới (dựa trên 4 ảnh chụp thực tế người dùng cung cấp).  
+> **Tôn chỉ cốt lõi**: **Chấm dứt phong cách thiết kế "công nghiệp, rập khuôn"** (như việc lúc nào cũng đóng khung 4 thẻ to tướng màu mè ở đầu trang). Thay thế bằng phong cách **Thanh lịch - Tối giản - Đẳng cấp - Tiện dụng tối đa**.
+
+---
+
+## 📷 THƯ VIỆN ẢNH MẪU THỰC TẾ TỪ RAMP (VISUAL REFERENCES)
+
+````carousel
+![Ramp UI 1: Bảng danh sách & Dropdown Quick Actions](C:/Users/hi/.gemini/antigravity/brain/9ee36478-212d-4928-8e99-05e8e6d86b07/ramp_ui_1.png)
+<!-- slide -->
+![Ramp UI 2: Bảng Bill Pay với Inline Warning Row & Nút Vàng Chanh](C:/Users/hi/.gemini/antigravity/brain/9ee36478-212d-4928-8e99-05e8e6d86b07/ramp_ui_2.png)
+<!-- slide -->
+![Ramp UI 3: Split-View Workspace 2 Cột (Chứng từ bên trái, Duyệt bên phải)](C:/Users/hi/.gemini/antigravity/brain/9ee36478-212d-4928-8e99-05e8e6d86b07/ramp_ui_3.png)
+<!-- slide -->
+![Ramp UI 4: Popover Contextual Form với Nút Save & Apply Vàng Chanh](C:/Users/hi/.gemini/antigravity/brain/9ee36478-212d-4928-8e99-05e8e6d86b07/ramp_ui_4.png)
+````
+
+---
+
+## PHẦN I: TỔNG QUAN TRIẾT LÝ THIẾT KẾ (DESIGN PHILOSOPHY)
+
+### 1. Tại sao bỏ "4 thẻ to ở đầu trang"?
+* **Vấn đề của 4 thẻ to**: Chiếm tới 30-40% diện tích màn hình quý giá chỉ để hiển thị vài con số tĩnh, tạo cảm giác nhàm chán, nặng nề, giống hệt hàng ngàn template bootstrap miễn phí trên mạng.
+* **Cách tiếp cận của Ramp**:
+  * Chuyển các chỉ số tổng quan thành **Thanh thông số nội dòng (Inline Stat Strip)** hoặc **Capsule gắn liền với tiêu đề trang**, giải phóng toàn bộ không gian cho **dòng chảy công việc chính (Workflow)**.
+  * Khi cần trực quan hóa 5 ngăn tiền (VCB Thật, Ví BN, Escrow 2 ngăn, Ví BS, Lãi sàn), Ramp sử dụng **Sơ đồ Dòng Tiền Tương tác (Interactive Flow Canvas)** hoặc **Thanh Đối Soát Kế Toán (Reconciliation Bar)** thanh mảnh, sắc sảo.
+
+### 2. Ba Trụ Cột của Phong cách Ramp FinTech
+1. **Warm Paper Palette**: Không dùng màu trắng tinh chói lóa (`#FFFFFF`) hay xám rẻ tiền (`#F8F9FA`), Ramp dùng tông nền **giấy ngà ấm (Warm Ivory/Paper `#FAF9F5`)**, mang lại cảm giác tài chính cao cấp, thư thái cho mắt.
+2. **Electric Lime Signature (`#D4FF00`)**: Nút hành động chính (Primary Action) mang sắc vàng chanh neon rực rỡ, chữ đen tuyền tương phản tuyệt đối, cực kỳ cuốn hút và dứt khoát.
+3. **Data Density & Hairline Elegance**: Đường viền 1px siêu mỏng (`#E8E7E1`), font chữ số `tabular-nums` thẳng hàng tăm tắp, các hàng bảng thoáng đãng với icon logo thương hiệu rõ nét.
+
+---
+
+## PHẦN II: HỆ THỐNG MÀU SẮC & TOKENS (COLOR SYSTEM)
+
+```scss
+// ==========================================
+// RAMP FINTECH DESIGN TOKENS (SCSS)
+// ==========================================
+
+// 1. Canvas & Nền (Warm Paper & Off-white)
+$ramp-bg-canvas:        #FAF9F5; // Nền chính toàn trang (Màu giấy ấm cao cấp)
+$ramp-bg-sidebar:       #F4F3EE; // Nền sidebar thanh thoát
+$ramp-bg-surface:       #FFFFFF; // Nền card, bảng và modal
+$ramp-bg-surface-hover: #F2F1EC; // Hover nhẹ nhàng cho row, menu
+$ramp-bg-subtle:        #ECEBE4; // Phân vùng phụ, ô tìm kiếm
+
+// 2. Màu Nhấn Chính (Ramp Electric Lime)
+$ramp-lime-primary:     #D4FF00; // Vàng chanh neon biểu tượng của Ramp
+$ramp-lime-hover:       #C4ED00; // Hover đậm hơn một chút
+$ramp-lime-text:        #111111; // Chữ đen đậm trên nền vàng chanh
+
+// 3. Mực & Văn bản (Ink Hierarchy)
+$ramp-ink-primary:      #141413; // Chữ tiêu đề, số tiền chính (Đen than sâu)
+$ramp-ink-body:         #2B2A27; // Chữ nội dung thường
+$ramp-ink-muted:        #73726C; // Chữ phụ, nhãn cột, ngày giờ
+$ramp-ink-faint:        #A3A29B; // Placeholder, icon không hoạt động
+
+// 4. Đường Viền & Chia cắt (Hairline Borders)
+$ramp-border-subtle:    #EBEAE5; // Viền bảng, viền card 1px
+$ramp-border-strong:    #D5D4CD; // Viền input khi focus hoặc viền button
+$ramp-border-dark:      #2B2A27; // Gạch chân tab active
+
+// 5. Trạng thái Nghiệp vụ (Status Pills & Alerts)
+$ramp-status-warning-bg:   #FEF9C3; // Vàng ấm cho "Missing info" / Chờ xử lý
+$ramp-status-warning-ink:  #854D0E;
+$ramp-status-success-bg:   #DCFCE7; // Xanh lá dịu cho "Ready for review" / Thành công
+$ramp-status-success-ink:  #166534;
+$ramp-status-danger-bg:    #FEE2E2; // Đỏ dịu cho "Duplicate" / Lỗi lệch quỹ
+$ramp-status-danger-ink:   #991B1B;
+$ramp-status-info-bg:      #F1F5F9; // Xám xanh cho thông tin chung
+$ramp-status-info-ink:     #334155;
+
+// 6. Đổ bóng (Soft Elevation)
+$ramp-shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.04);
+$ramp-shadow-md:  0 4px 12px rgba(0, 0, 0, 0.06);
+$ramp-shadow-lg:  0 12px 32px rgba(0, 0, 0, 0.08); // Cho popover, drawer
+$ramp-shadow-pop: 0 20px 48px rgba(0, 0, 0, 0.12);
+```
+
+---
+
+## PHẦN III: QUY CHUẨN THIẾT KẾ TỪNG THÀNH PHẦN (COMPONENT SPECS)
+
+### 1. Nút Bấm (Button Architecture) ?" Chuẩn Ramp
+
+```
+[ Primary Button ]      [ Secondary Button ]      [ Ghost Action ]
+┌─────────────────┐    ┌────────────────────┐    ┌──────────────┐
+│  New bill    ▾  │    │  Recurring bills 1 │    │ Review    →  │
+└─────────────────┘    └────────────────────┘    └──────────────┘
+(Vàng chanh #D4FF00,   (Nền trắng viền 1px,       (Không viền,
+ Chữ đen tuyền đậm)     Bo góc 8px thanh lịch)    Chữ đậm, icon mũi tên)
+```
+
+* **Primary (`.ramp-btn-primary`)**:
+  * Background: `$ramp-lime-primary` (`#D4FF00`).
+  * Text: `$ramp-lime-text` (`#111111`), `font-weight: 600`, `font-size: 13px`.
+  * Padding: `8px 16px`, bo góc nhẹ `border-radius: 8px`.
+  * Hiệu ứng: Dropdown caret `▾` khi có nhiều hành động đi kèm; hover sáng nhẹ, active hơi co lại `scale(0.98)`.
+* **Secondary (`.ramp-btn-secondary`)**:
+  * Background: `#FFFFFF`, viền `$ramp-border-subtle` (`#EBEAE5`).
+  * Text: `$ramp-ink-primary`, hover chuyển nền `$ramp-bg-surface-hover`.
+* **Ghost / Review Button (`.ramp-btn-ghost`)**:
+  * Dùng trong cột cuối của Table: Nền trắng, viền mảnh, chữ đậm, nhỏ gọn (`padding: 4px 12px`, `height: 32px`).
+
+---
+
+### 2. Thanh Điều Hướng Tab (Minimalist Underline Tabs)
+> **Bỏ hẳn kiểu tab nút bấm đóng hộp thô cứng!** Ramp sử dụng phong cách Tab tối giản:
+
+```
+Overview      Drafts      For approval      For payment      History      Bills due this month
+           ─────────────
+           (Gạch chân đen)
+```
+
+* Tab đang chọn (`active`): Chữ đen đậm mực (`#141413`), có một **đường gạch chân đen mảnh 2px** sát mép đáy.
+* Tab không chọn: Chữ xám thanh (`#73726C`), không viền, hover chuyển màu đen nhạt.
+* Khoảng cách giữa các tab: `24px - 32px` rộng rãi, thoáng mắt.
+* Số lượng badge kèm theo: Hiển thị dạng số nhỏ trong ngoặc hoặc badge tròn màu xám nhẹ, không gây phân tâm.
+
+---
+
+### 3. Thanh Tìm Kiếm & Lọc (Filter Toolbar)
+* **Ô tìm kiếm toàn năng (`⌘ K Search or add filter...`)**:
+  * Thiết kế hình chữ nhật bo góc 8px, viền 1px mỏng, nền `#FFFFFF`.
+  * Có biểu tượng phím tắt `⌘ K` (hoặc `Ctrl K`) tinh tế ở đầu.
+* **Filter Chips dạng Pill**:
+  * Nhỏ gọn, bo tròn hoàn toàn (`border-radius: 9999px`), nền trắng hoặc xám nhạt (`#F2F1EC`).
+  * Bấm vào chip sẽ bật ngay popover lựa chọn tại chỗ mà không cần reload trang.
+* **View Switcher bên phải**:
+  * Các icon nhỏ (`Table`, `Grid`, `Options ▾`) giúp chuyển đổi góc nhìn dữ liệu nhanh chóng.
+
+---
+
+### 4. Bảng Dữ Liệu & Hàng Cảnh Báo Nội Dòng (The Ramp Table & Inline Anomaly Rows)
+
+Bảng của Ramp là đỉnh cao của sự tinh gọn:
+
+```
+┌──┬──────────────────────┬─────────────────┬─────────────┬──────────────┬────────────┬───────────┐
+│☐ │ Vendor / Submitter   │ Status          │ Amount      │ Method       │ Due Date   │ Actions   │
+├──┼──────────────────────┼─────────────────┼─────────────┼──────────────┼────────────┼───────────┤
+│☐ │ [🎨] Figma           │ [⚠ Missing info]│ $150,042.75 │ —            │ Oct 16     │ [Review] ⠇│
+│  │     David • Oct 2    │                 │             │              │            │           │
+├──┼──────────────────────┼─────────────────┼─────────────┼──────────────┼────────────┼───────────┤
+│☐ │ [🏢] Action Inc      │ [⚠ Missing info]│ $3,375.00   │ [🏦 ACH]     │ Oct 10     │ [Review] ⠇│
+├──┴──┴──────────────────────┴─────────────────┴─────────────┴──────────────┴────────────┴───────────┤
+│  ↳ ⚠️ This bill might be fraudulent. We don't recognize the vendor. [View bill]                      │
+│     (Hàng cảnh báo nội dòng màu vàng nhạt trải dài toàn bộ chiều rộng bảng)                           │
+├──┬──────────────────────┬─────────────────┬─────────────┬──────────────┬────────────┬───────────┤
+│☐ │ [📦] WB Mason        │ [✓ Ready review]│ $6,442.46   │ [🏦 ACH]     │ Oct 13     │ [Review] ⠇│
+└──┴──────────────────────┴─────────────────┴─────────────┴──────────────┴────────────┴───────────┘
+```
+
+* **Đặc trưng số 1 - Cột đầu tiên**: Checkbox tối giản để chọn hàng loạt.
+* **Đặc trưng số 2 - Entity Identity**: Logo đối tác/bác sĩ/phòng khám hình tròn hoặc vuông bo góc 8px đi kèm tên in đậm và thông tin phụ (ngày giờ, người tạo) chữ nhỏ màu xám.
+* **Đặc trưng số 3 - Số tiền Tabular (`tabular-nums`)**: Font chữ số đều tăm tắp, căn phải, định dạng rõ ràng dấu phẩy hàng nghìn.
+* **Đặc trưng số 4 - HÀNG CẢNH BÁO NỘI DÒNG (INLINE ANOMALY ROW) [ĐỘT PHÁ]**:
+  * Khi có giao dịch nghi vấn (ví dụ: ca khám khiếu nại, lệnh rút tiền bất thường, số dư lệch đối soát):
+  * **Thay vì bật alert toàn màn hình**, Ramp chèn một dòng phụ ngay dưới hàng đó, nền vàng nhạt (`#FEFCE8`) hoặc cam nhạt, có biểu tượng mũi tên quẹo `↳` và thông điệp giải thích ngắn gọn kèm link hành động `[Xem chi tiết]`.
+
+---
+
+### 5. Cửa Sổ Làm Việc 2 Cột (Split-View Workspace Window) ?" Hình ảnh 3 & 4
+
+Khi Admin bấm vào một giao dịch cần duyệt chi hoặc kiểm tra đối soát, thay vì modal nhỏ thông thường, hệ thống mở **Không gian làm việc 2 cột chuẩn Ramp**:
+
+```
+┌───────────────────────────────────────────────┬─────────────────────────────────────────────────┐
+│ 📄 PANE TRÁI: CHỨNG TỪ & SAO KÊ GỐC           │ 📋 PANE PHẢI: BÓC TÁCH DÒNG TIỀN & PHÊ DUYỆT   │
+├───────────────────────────────────────────────┼─────────────────────────────────────────────────┤
+│ [ Invoice ]  [ Documents ]                    │ [ Overview ]  [ Activity ]                      │
+│                                               │                                                 │
+│  ┌─────────────────────────────────────────┐  │ ┌─────────────────────────────────────────────┐ │
+│  │ SAO KÊ / ỦY NHIỆM CHI NGÂN HÀNG         │  │ │ ⚠️ MAKE SURE THIS WITHDRAWAL IS SAFE        │ │
+│  │                                         │  │ │ • Tiền mặt VCB: 230.000.000 đ               │ │
+│  │ Số GD: VCB-982173                       │  │ │ • Số tiền bác sĩ rút: 270.000 đ             │ │
+│  │ Người nhận: BS. Trần Văn B              │  │ └─────────────────────────────────────────────┘ │
+│  │ Số tiền: 270.000 VND                    │  │                                                 │
+│  │ Nội dung: Quyet toan ca kham #102       │  │ Bác sĩ thụ hưởng:                               │
+│  │                                         │  │ [👨‍⚕️] BS. Trần Văn B (Chuyên khoa Tim mạch)   │
+│  │                                         │  │                                                 │
+│  │                                         │  │ Bóc tách ca khám liên quan:                     │
+│  │                                         │  │ • Tổng tiền ca: 300.000 đ                       │
+│  │                                         │  │ • Thù lao BS (90%): 270.000 đ                  │
+│  │                                         │  │ • Hoa hồng sàn (10%): 30.000 đ                 │
+│  │                                         │  │                                                 │
+│  │ [🔍+] [🔍-] [⟳ Zoom]                    │  │ Nhập Mã GD Ngân Hàng Thật:                      │
+│  │                                         │  │ [ VCB-FT2630591823                            ] │
+├───────────────────────────────────────────────┴─────────────────────────────────────────────────┤
+│ 🔗 STICKY FOOTER:                                                                               │
+│ [💾 Lưu nháp kiểm tra]                          [ Hủy bỏ ]   [ Phê duyệt & Khóa tiền -> ] (Vàng)│
+└─────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+* **Pane Trái**: Hiển thị ảnh chụp ủy nhiệm chi ngân hàng, mã QR hóa đơn hoặc sao kê đối ứng. Có thanh công cụ phóng to/thu nhỏ.
+* **Pane Phải**: Bóc tách chi tiết luồng tiền, kiểm tra an toàn quỹ, cảnh báo vi phạm.
+* **Sticky Footer**: Nút hành động chính màu vàng chanh neon (`[ Phê duyệt & Khóa tiền -> ]`) luôn ghim chắc chắn ở góc phải dưới, không bị che khuất khi cuộn trang.
+
+---
+
+### 6. Popover Contextual Form (Hộp Thoại Nhỏ Gọn) ?" Hình ảnh 4
+* Dùng cho thao tác nhanh (như rút tiền lời công ty "-30k xài", đổi ghi chú, gán mã ngân hàng).
+* Xuất hiện ngay cạnh vị trí click, không làm tối mờ toàn bộ màn hình.
+* Có tiêu đề rõ ràng, các dropdown gọn gàng và 2 nút: `Cancel` (ghost) và `Save & apply` (vàng chanh neon).
+
+---
+
+## PHẦN IV: CÁCH TRÌNH BÀY 5 NGĂN TIỀN THEO PHONG CÁCH RAMP (THAY VÌ 4 THẺ TO)
+
+Để giải quyết triệt để sự "nhàm chán, công nghiệp" mà bạn đã chỉ ra, chúng ta sẽ **KHÔNG dùng 4-5 chiếc card to đùng nằm chắn ngang màn hình nữa**. Thay vào đó, chúng ta áp dụng cách bài trí của Ramp:
+
+### 1. Hàng Thước Đo Đối Soát Nội Dòng (Inline Solvency & Balance Banner)
+Một dải thông tin thanh lịch đặt ngay dưới tiêu đề `Quản trị Dòng tiền (Treasury & Cash Flow)`:
+```
+[ 🛡️ SỔ CÁI BẢO CHỨNG 100% TIỀN MẶT ]  •  VCB Thật: 230.000.000 đ  =  Ví BN: 200 Tr + Escrow: 0 đ + Lãi Sàn: 30 Tr  •  [Xem công thức đối soát ▾]
+```
+* Rất nhỏ gọn (chỉ cao ~42px), nền ngà ấm với viền hairline mỏng, chấm xanh lá nhỏ phát sáng biểu thị trạng thái an toàn.
+
+### 2. Bảng Phân Bổ Nguồn Vốn Dạng Hóa Đơn (Vault Accounts Allocation Table)
+Thay vì đóng thẻ card, Ramp trình bày 5 tài khoản vốn dưới dạng **Danh mục Vốn Sàn (Treasury Accounts Ledger)** cực kỳ tinh tế:
+
+| Tài khoản Vốn | Bản chất dòng tiền | Số dư hiện hữu | Tỷ trọng | Trạng thái bảo chứng | Thao tác nhanh |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **🏦 Tài khoản Thật (VCB Cty)** | Tiền mặt thực tế tại ngân hàng | **230.000.000 đ** | **100% Tiền thật** | `● Đầy đủ thanh khoản` | `[Sao kê VCB]` |
+| **👥 Tổng Ví Bệnh nhân** | Tiền BN nạp chưa khám hoặc còn dư | **200.000.000 đ** | 86.9% | `● Bảo chứng 100%` | `[DS 1.250 Ví]` |
+| **⏳ Tài khoản Tạm giữ (Escrow)** | Ca khám đang chờ (BS 90% / Sàn 10%) | **0 đ** | 0% | `● Không có nợ đọng` | `[Xem ca giữ chỗ]` |
+| **🩺 Tổng Ví Bác sĩ** | Thù lao khám xong chờ rút | **0 đ** | 0% | `● Đã giải ngân hết` | `[DS 185 Ví BS]` |
+| **💰 Tiền lời Công ty** | Doanh thu ròng tích lũy từ hoa hồng | **30.000.000 đ** | 13.1% | `● Khả dụng chi dùng` | `[Rút 30k xài]` *(Nút Vàng Chanh)* |
+
+> **Ưu điểm vượt trội**:
+> 1. Trông như một báo cáo tài chính chuyên nghiệp của CFO, không hề có cảm giác "template học sinh làm bài tập".
+> 2. Đầy đủ 100% thành phần trong bản vẽ tay của bạn.
+> 3. Bấm vào nút thao tác nào thì mở ngay **Split-View Workspace chuẩn Ramp** để xử lý.
+
+---
+
+## PHẦN V: QUY TẮC CỐT LÕI KHI VIẾT CODE FRONTEND (DEVELOPER CHEATSHEET)
+
+Mọi lập trình viên khi code phân hệ này phải tuân thủ nghiêm ngặt 5 điều răn thiết kế:
+1. **Không bao giờ dùng gradient sặc sỡ** (Xanh tím gradient, đỏ cam gradient $\rightarrow$ CẤM). Chỉ dùng màu phẳng tinh tế (Warm paper, Charcoal ink, Lime accent).
+2. **Không bo góc quá đà** (Không dùng `rounded-3xl` 24px-32px giống app hoạt hình). Chỉ dùng `rounded-lg` (8px) hoặc `rounded-md` (6px) chuẩn doanh nghiệp.
+3. **Mọi con số tiền tệ bắt buộc có `font-variant-numeric: tabular-nums`** để thẳng hàng cột.
+4. **Tất cả các nút hành động chính (Primary Call-to-Action) dùng màu Vàng Chanh Ramp (`#D4FF00`) chữ đen**.
+5. **Cảnh báo lỗi/bất thường phải dùng Inline Anomaly Row** ngay trong bảng, không spam popup giật cục.
+
+---
+
+*Tài liệu này là chuẩn mực thiết kế chính thức (Design System SOT) cho toàn bộ các màn hình Quản trị Dòng tiền & Ngân quỹ BookingCare.*

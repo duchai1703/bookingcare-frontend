@@ -1,0 +1,1357 @@
+// src/containers/System/Admin/Financial/DualLayerDigitalTwinCanvas.scss
+// [RAMP FINTECH DESIGN SYSTEM SPECIFICATION]
+// 100% học tập ngôn ngữ thiết kế tối giản, thanh lịch, sang trọng của RAMP FinTech
+// Warm Paper White canvas (#FAF9F5), Electric Lime (#D4FF00), Hairline borders (#EBEAE5), Tabular numbers.
+
+@import '../../../../styles/rampDesignTokens.scss';
+
+.dual-layer-twin-canvas {
+  margin-bottom: 28px;
+  background-color: $ramp-bg-surface;
+  border: 1px solid $ramp-border-subtle;
+  border-radius: 12px;
+  box-shadow: $ramp-shadow-sm;
+  overflow: hidden;
+  transition: all 0.25s ease;
+
+  // ═══════════════════════════════════════════════════════════════════
+  // 1. HEADER & EVENT FILTERS (Thanh Điều Hành Chuẩn Ramp)
+  // ═══════════════════════════════════════════════════════════════════
+  .twin-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background-color: $ramp-bg-canvas;
+    border-bottom: 1px solid $ramp-border-subtle;
+    flex-wrap: wrap;
+    gap: 12px;
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .brand-twin-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        background-color: $ramp-ink-primary;
+        color: #ffffff;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+
+      .title-block {
+        .main-title {
+          margin: 0;
+          font-size: 15px;
+          font-weight: 700;
+          color: $ramp-ink-primary;
+          letter-spacing: -0.01em;
+        }
+
+        .sub-title {
+          margin: 2px 0 0 0;
+          font-size: 12px;
+          color: $ramp-ink-muted;
+        }
+      }
+    }
+
+    .time-filter-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+
+      .filter-presets-group {
+        display: flex;
+        align-items: center;
+        background: $ramp-bg-surface;
+        border: 1px solid $ramp-border-subtle;
+        border-radius: 8px;
+        padding: 2px;
+        gap: 2px;
+
+        .btn-time-pill {
+          background: transparent;
+          border: none;
+          padding: 4px 10px;
+          border-radius: 6px;
+          font-size: 11px;
+          font-weight: 600;
+          color: $ramp-ink-muted;
+          cursor: pointer;
+          transition: all 0.15s ease;
+
+          &:hover {
+            color: $ramp-ink-primary;
+            background: $ramp-bg-surface-hover;
+          }
+
+          &.active {
+            background: $ramp-ink-primary;
+            color: #ffffff;
+          }
+        }
+      }
+
+      .date-range-picker-inline {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: $ramp-bg-surface;
+        border: 1px solid $ramp-border-subtle;
+        border-radius: 8px;
+        padding: 3px 8px;
+
+        .input-date-subtle {
+          border: none;
+          background: transparent;
+          font-size: 11px;
+          color: $ramp-ink-primary;
+          outline: none;
+          font-family: inherit;
+        }
+
+        .date-sep {
+          font-size: 10px;
+          color: $ramp-ink-faint;
+        }
+
+        .btn-apply-dates {
+          background: $ramp-lime-primary;
+          color: $ramp-lime-text;
+          border: 1px solid $ramp-lime-hover;
+          padding: 2px 8px;
+          border-radius: 4px;
+          font-size: 10.5px;
+          font-weight: 700;
+          cursor: pointer;
+
+          &:hover {
+            background: $ramp-lime-hover;
+          }
+        }
+      }
+
+      .sort-dropdown-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        background: $ramp-bg-surface;
+        border: 1px solid $ramp-border-subtle;
+        border-radius: 8px;
+        padding: 4px 8px;
+
+        .select-sort-subtle {
+          border: none;
+          background: transparent;
+          font-size: 11px;
+          font-weight: 600;
+          color: $ramp-ink-primary;
+          outline: none;
+          cursor: pointer;
+        }
+      }
+
+      .btn-refresh-metrics {
+        background: $ramp-bg-surface;
+        border: 1px solid $ramp-border-subtle;
+        border-radius: 8px;
+        padding: 6px 8px;
+        color: $ramp-ink-muted;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s ease;
+
+        &:hover {
+          background: $ramp-bg-surface-hover;
+          color: $ramp-ink-primary;
+          border-color: $ramp-border-strong;
+        }
+      }
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // 1.1 THANH ĐIỀU HƯỚNG LUỒNG NGHIỆP VỤ BẢNG TRẮNG
+  // ═══════════════════════════════════════════════════════════════════
+  .workflow-sub-bar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 8px 20px;
+    background: #F4F3EE;
+    border-bottom: 1px solid $ramp-border-subtle;
+    gap: 12px;
+    flex-wrap: wrap;
+
+    .workflow-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 600;
+      color: $ramp-ink-muted;
+    }
+
+    .workflow-pills {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+
+      .btn-wf-pill {
+        background: $ramp-bg-surface;
+        border: 1px solid $ramp-border-subtle;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        color: $ramp-ink-body;
+        cursor: pointer;
+        transition: all 0.15s ease;
+
+        &:hover {
+          background: $ramp-bg-surface-hover;
+          color: $ramp-ink-primary;
+        }
+
+        &.active {
+          background: $ramp-ink-primary;
+          border-color: $ramp-ink-primary;
+          color: #ffffff;
+        }
+      }
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // 2. CANVAS VIEWPORT (THE 2 PARALLEL LAYERS) — Tinh Gọn Không Neon
+  // ═══════════════════════════════════════════════════════════════════
+  .twin-canvas-viewport {
+    padding: 24px 20px;
+    background: $ramp-bg-canvas;
+    overflow-x: auto;
+
+    // ── Common Layer Block ──
+    .layer-block {
+      border-radius: 12px;
+      padding: 16px 18px;
+      position: relative;
+      transition: all 0.25s ease;
+      background: $ramp-bg-surface;
+      border: 1px solid $ramp-border-subtle;
+
+      &.layer-app {
+        box-shadow: $ramp-shadow-sm;
+      }
+
+      &.layer-bank {
+        box-shadow: $ramp-shadow-sm;
+      }
+
+      .layer-label-tag {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+
+        .label-left {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          .layer-index {
+            background: $ramp-ink-primary;
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 4px;
+          }
+
+          .layer-name {
+            font-size: 12px;
+            font-weight: 700;
+            color: $ramp-ink-primary;
+            letter-spacing: 0.02em;
+          }
+        }
+
+        .layer-nature {
+          font-size: 10px;
+          font-weight: 700;
+          padding: 3px 8px;
+          border-radius: 9999px;
+
+          &.virtual {
+            background: #F3E8FF;
+            color: #6B21A8;
+            border: 1px solid #E9D5FF;
+          }
+
+          &.real {
+            background: #DCFCE7;
+            color: #166534;
+            border: 1px solid #BBF7D0;
+          }
+        }
+      }
+
+      .layer-nodes-row {
+        display: grid;
+        grid-template-columns: 240px 100px 260px 110px 240px;
+        align-items: center;
+        gap: 0;
+
+        @media (max-width: 1280px) {
+          min-width: 1050px;
+        }
+      }
+    }
+
+    // ── Common Twin Node (Thẻ Khối Dòng Tiền Ramp) ──
+    .twin-node {
+      background: #ffffff;
+      border: 1px solid $ramp-border-subtle;
+      border-radius: 10px;
+      padding: 12px 14px;
+      box-shadow: $ramp-shadow-sm;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: $ramp-shadow-md;
+        border-color: $ramp-border-strong;
+      }
+
+      &.is-dimmed {
+        opacity: 0.25;
+        filter: grayscale(60%);
+        pointer-events: none;
+      }
+
+      &.is-selected {
+        border-color: $ramp-ink-primary !important;
+        box-shadow: 0 0 0 2px rgba(20, 20, 19, 0.15), $ramp-shadow-md !important;
+        transform: translateY(-2px);
+        z-index: 20;
+      }
+
+      .node-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+
+        .node-icon {
+          width: 28px;
+          height: 28px;
+          border-radius: 6px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          &.bg-purple { background: #FAF5FF; color: #7E22CE; }
+          &.bg-amber { background: #FFFBEB; color: #B45309; }
+          &.bg-emerald { background: #ECFDF5; color: #047857; }
+          &.bg-gold { background: #FEFCE8; color: #A16207; }
+          &.bg-vcb { background: #EFF6FF; color: #1D4ED8; }
+          &.bg-slate { background: #F1F5F9; color: #475569; }
+          &.bg-rose { background: #FFF1F2; color: #BE123C; }
+          &.bg-blue { background: #EFF6FF; color: #2563EB; }
+        }
+
+        .node-meta {
+          .node-tag {
+            font-size: 8.5px;
+            font-weight: 700;
+            color: $ramp-ink-muted;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+          }
+
+          .node-title {
+            margin: 1px 0 0 0;
+            font-size: 12px;
+            font-weight: 700;
+            color: $ramp-ink-primary;
+          }
+        }
+
+        .count-pill {
+          margin-left: auto;
+          font-size: 10px;
+          font-weight: 700;
+          padding: 2px 6px;
+          border-radius: 9999px;
+
+          &.amber-pill {
+            background: #FEF9C3;
+            color: #854D0E;
+            border: 1px solid #FEF08A;
+          }
+        }
+      }
+
+      .node-body {
+        .node-primary-val {
+          font-size: 16px;
+          font-weight: 700;
+          letter-spacing: -0.02em;
+          font-variant-numeric: tabular-nums;
+          margin-bottom: 2px;
+          color: $ramp-ink-primary;
+
+          &.text-purple { color: #6B21A8; }
+          &.text-amber { color: #B45309; }
+          &.text-gold { color: #854D0E; }
+          &.text-emerald { color: #166534; }
+          &.text-vcb { color: #1E40AF; }
+          &.text-slate { color: #334155; }
+          &.text-rose { color: #991B1B; }
+          &.text-blue { color: #1D4ED8; }
+        }
+
+        .node-sub-stat {
+          font-size: 10.5px;
+          color: $ramp-ink-muted;
+          line-height: 1.3;
+
+          strong {
+            color: $ramp-ink-primary;
+            font-weight: 600;
+          }
+        }
+
+        .node-breakdown-mini {
+          margin-top: 4px;
+          font-size: 10px;
+          color: $ramp-ink-muted;
+
+          .text-amber {
+            color: #B45309;
+            font-weight: 600;
+          }
+        }
+
+        .vcb-holding-note {
+          margin-top: 6px;
+          padding: 5px 8px;
+          background: #F8FAFC;
+          border-radius: 6px;
+          border: 1px solid #E2E8F0;
+          font-size: 9.5px;
+          color: #1E3A8A;
+
+          .vcb-breakdown-tags {
+            display: flex;
+            gap: 4px;
+            margin-top: 3px;
+            flex-wrap: wrap;
+
+            .tag-remain,
+            .tag-escrow {
+              background: #ffffff;
+              border: 1px solid #E2E8F0;
+              padding: 1px 4px;
+              border-radius: 3px;
+              font-weight: 600;
+              font-size: 9px;
+              font-variant-numeric: tabular-nums;
+            }
+          }
+        }
+
+        .escrow-two-compartments {
+          display: flex;
+          align-items: center;
+          margin-top: 8px;
+          background: #FAF9F5;
+          border: 1px dashed $ramp-border-strong;
+          border-radius: 6px;
+          padding: 5px 8px;
+
+          .comp-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+
+            .comp-name {
+              font-size: 8.5px;
+              color: $ramp-ink-muted;
+            }
+
+            .comp-num {
+              font-size: 11px;
+              font-variant-numeric: tabular-nums;
+              font-weight: 700;
+
+              &.text-emerald { color: #166534; }
+              &.text-gold { color: #854D0E; }
+            }
+          }
+
+          .comp-sep {
+            width: 1px;
+            height: 20px;
+            background: $ramp-border-subtle;
+            margin: 0 6px;
+          }
+        }
+      }
+
+      // ── ACTION BAR TRÊN TỪNG NODE (Chuẩn Ramp: Primary & Secondary Buttons) ──
+      .node-action-bar {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 10px;
+        padding-top: 8px;
+        border-top: 1px solid #F2F1EC;
+
+        .btn-node-primary-ramp {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          background: $ramp-lime-primary;
+          color: $ramp-lime-text;
+          border: 1px solid $ramp-lime-hover;
+          border-radius: 6px;
+          padding: 4px 9px;
+          font-size: 11px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.15s ease;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+          &:hover {
+            background: $ramp-lime-hover;
+            transform: translateY(-1px);
+          }
+
+          &:active {
+            transform: scale(0.97);
+          }
+        }
+
+        .btn-node-secondary-ramp {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          background: #FFFFFF;
+          color: $ramp-ink-primary;
+          border: 1px solid $ramp-border-subtle;
+          border-radius: 6px;
+          padding: 4px 9px;
+          font-size: 11px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.15s ease;
+
+          &:hover {
+            background: $ramp-bg-surface-hover;
+            border-color: $ramp-border-strong;
+          }
+        }
+
+        .btn-node-subtle {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          background: $ramp-bg-canvas;
+          color: $ramp-ink-body;
+          border: 1px solid $ramp-border-subtle;
+          border-radius: 6px;
+          padding: 3px 8px;
+          font-size: 10.5px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.15s ease;
+
+          &:hover {
+            background: $ramp-bg-surface-hover;
+            color: $ramp-ink-primary;
+            border-color: $ramp-border-strong;
+          }
+        }
+
+        .btn-node-ghost-link {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 22px;
+          height: 22px;
+          background: transparent;
+          color: $ramp-ink-muted;
+          border: 1px solid transparent;
+          border-radius: 4px;
+          padding: 0;
+          cursor: pointer;
+          transition: all 0.15s ease;
+
+          &:hover {
+            background: $ramp-bg-surface-hover;
+            color: $ramp-ink-primary;
+            border-color: $ramp-border-subtle;
+          }
+        }
+      }
+    }
+
+    // ── Destination Stack Column ──
+    .destination-stack-col {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    // ── Horizontal Flow Connectors ──
+    .flow-connector {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 0 6px;
+
+      &.is-dimmed {
+        opacity: 0.2;
+      }
+
+      .flow-path-line {
+        width: 100%;
+        height: 2px;
+        border-radius: 1px;
+
+        &.animate-dash-purple {
+          background: repeating-linear-gradient(90deg, #A855F7 0px, #A855F7 6px, rgba(168, 85, 247, 0.2) 6px, rgba(168, 85, 247, 0.2) 12px);
+          background-size: 24px 100%;
+          animation: moveDashed 1.6s linear infinite;
+        }
+
+        &.animate-dash-gold {
+          background: repeating-linear-gradient(90deg, #EAB308 0px, #EAB308 6px, rgba(234, 179, 8, 0.2) 6px, rgba(234, 179, 8, 0.2) 12px);
+          background-size: 24px 100%;
+          animation: moveDashed 1.6s linear infinite;
+        }
+
+        &.animate-dash-emerald {
+          background: repeating-linear-gradient(90deg, #10B981 0px, #10B981 6px, rgba(16, 185, 129, 0.2) 6px, rgba(16, 185, 129, 0.2) 12px);
+          background-size: 24px 100%;
+          animation: moveDashed 1.6s linear infinite;
+        }
+
+        &.animate-dash-blue {
+          background: repeating-linear-gradient(90deg, #3B82F6 0px, #3B82F6 6px, rgba(59, 130, 246, 0.2) 6px, rgba(59, 130, 246, 0.2) 12px);
+          background-size: 24px 100%;
+          animation: moveDashed 1.6s linear infinite;
+        }
+
+        &.animate-dash-rose {
+          background: repeating-linear-gradient(90deg, #F43F5E 0px, #F43F5E 6px, rgba(244, 63, 94, 0.2) 6px, rgba(244, 63, 94, 0.2) 12px);
+          background-size: 24px 100%;
+          animation: moveDashed 1.6s linear infinite;
+        }
+      }
+
+      .flow-label-badge {
+        position: absolute;
+        top: -18px;
+        font-size: 9px;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 4px;
+        white-space: nowrap;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        &.purple-badge {
+          background: #FAF5FF;
+          color: #7E22CE;
+          border: 1px solid #E9D5FF;
+        }
+
+        &.blue-badge {
+          background: #EFF6FF;
+          color: #1D4ED8;
+          border: 1px solid #BFDBFE;
+        }
+      }
+
+      &.conn-split {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+        padding: 6px;
+
+        .split-upper-line,
+        .split-lower-line {
+          position: relative;
+          width: 100%;
+          display: flex;
+          align-items: center;
+
+          .split-badge {
+            position: absolute;
+            font-size: 8.5px;
+            font-weight: 700;
+            padding: 1px 5px;
+            border-radius: 4px;
+            white-space: nowrap;
+            cursor: pointer;
+
+            &.gold-badge {
+              top: -16px;
+              background: #FEFCE8;
+              color: #A16207;
+              border: 1px solid #FEF08A;
+            }
+
+            &.emerald-badge {
+              bottom: -16px;
+              background: #ECFDF5;
+              color: #047857;
+              border: 1px solid #A7F3D0;
+            }
+
+            &.rose-badge {
+              top: -16px;
+              background: #FFF1F2;
+              color: #BE123C;
+              border: 1px solid #FECDD3;
+            }
+
+            &.blue-badge {
+              bottom: -16px;
+              background: #EFF6FF;
+              color: #1D4ED8;
+              border: 1px solid #BFDBFE;
+            }
+          }
+        }
+      }
+    }
+
+    // ── Cầu nối đối chiếu thời gian thực (Reconciliation Bridge Zone) ──
+    .reconciliation-bridge-zone {
+      margin: 16px 0;
+      padding: 10px 16px;
+      background: #F4F3EE;
+      border: 1px solid $ramp-border-subtle;
+      border-radius: 8px;
+
+      .bridge-zone-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+
+        .bridge-zone-title {
+          font-size: 10px;
+          font-weight: 700;
+          color: $ramp-ink-muted;
+          letter-spacing: 0.05em;
+        }
+
+        .bridge-legend-inline {
+          font-size: 10px;
+          color: $ramp-ink-muted;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+
+          .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
+
+            &.dot-green { background: #10B981; }
+            &.dot-blue { background: #3B82F6; }
+          }
+        }
+      }
+
+      .bridges-grid {
+        display: grid;
+        grid-template-columns: 240px 100px 260px 110px 240px;
+        align-items: center;
+
+        @media (max-width: 1280px) {
+          min-width: 1050px;
+        }
+
+        .vertical-bridge {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 4px;
+
+          &.is-dimmed {
+            opacity: 0.2;
+          }
+
+          .bridge-line-track {
+            width: 2px;
+            height: 14px;
+            background: $ramp-border-strong;
+            position: relative;
+            overflow: hidden;
+
+            .bridge-flow-particle {
+              width: 100%;
+              height: 6px;
+              background: $ramp-ink-primary;
+              position: absolute;
+
+              &.animate-flow-down {
+                animation: flowDown 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+              }
+
+              &.animate-pulse-bidirectional {
+                animation: pulseGlow 1.2s infinite alternate;
+              }
+            }
+          }
+
+          .bridge-pill-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 9.5px;
+            font-weight: 600;
+            padding: 3px 7px;
+            border-radius: 4px;
+            cursor: pointer;
+
+            &.tag-blue {
+              background: #EFF6FF;
+              color: #1D4ED8;
+              border: 1px solid #BFDBFE;
+            }
+
+            &.tag-amber {
+              background: #FFFBEB;
+              color: #B45309;
+              border: 1px solid #FDE68A;
+            }
+
+            &.tag-emerald {
+              background: #ECFDF5;
+              color: #047857;
+              border: 1px solid #A7F3D0;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // 3. BẢNG MỔ XẺ THÀNH PHẦN CẤU TẠO (THE RAMP CONSTITUENT TABLE)
+  // ═══════════════════════════════════════════════════════════════════
+  .twin-constituent-inspector {
+    background: #FFFFFF;
+    border-top: 1px solid $ramp-border-subtle;
+    padding: 18px 20px;
+
+    .inspector-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      gap: 12px;
+
+      .inspector-title-group {
+        .inspector-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 10.5px;
+          font-weight: 700;
+          letter-spacing: 0.05em;
+          color: $ramp-ink-muted;
+          margin-bottom: 3px;
+
+          .text-cyan {
+            color: $ramp-ink-primary;
+          }
+        }
+
+        .inspector-title {
+          margin: 0;
+          font-size: 14px;
+          font-weight: 700;
+          color: $ramp-ink-primary;
+          font-variant-numeric: tabular-nums;
+        }
+      }
+
+      .inspector-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        .search-box-subtle {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          background: #FFFFFF;
+          border: 1px solid $ramp-border-subtle;
+          border-radius: 8px;
+          padding: 5px 10px;
+          width: 250px;
+
+          input {
+            border: none;
+            background: transparent;
+            font-size: 11.5px;
+            color: $ramp-ink-primary;
+            outline: none;
+            width: 100%;
+          }
+
+          .btn-clear-search {
+            border: none;
+            background: transparent;
+            color: $ramp-ink-faint;
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+          }
+        }
+
+        // Nút Ramp Primary Vàng Chanh Biểu Tượng
+        .btn-quick-trace-featured {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          background: $ramp-lime-primary;
+          color: $ramp-lime-text;
+          border: 1px solid $ramp-lime-hover;
+          padding: 6px 14px;
+          border-radius: 8px;
+          font-size: 11.5px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.15s ease;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+
+          &:hover {
+            background: $ramp-lime-hover;
+            transform: translateY(-1px);
+          }
+
+          &:active {
+            transform: scale(0.98);
+          }
+        }
+      }
+    }
+
+    .table-responsive-wrapper {
+      overflow-x: auto;
+    }
+
+    .constituent-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+
+      th {
+        background: $ramp-bg-canvas;
+        padding: 9px 12px;
+        text-align: left;
+        font-size: 10.5px;
+        font-weight: 700;
+        color: $ramp-ink-muted;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        border-bottom: 1px solid $ramp-border-subtle;
+      }
+
+      td {
+        padding: 10px 12px;
+        border-bottom: 1px solid #F4F3EE;
+        color: $ramp-ink-primary;
+        vertical-align: middle;
+      }
+
+      tr:hover td {
+        background: $ramp-bg-surface-hover;
+      }
+
+      .code-pill {
+        display: inline-block;
+        background: #F4F3EE;
+        border: 1px solid $ramp-border-subtle;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: monospace;
+        font-weight: 600;
+        font-size: 11px;
+        color: $ramp-ink-primary;
+      }
+
+      .cell-patient, .cell-doctor, .cell-time {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .status-badge {
+        display: inline-flex;
+        padding: 2px 7px;
+        border-radius: 9999px;
+        font-size: 10px;
+        font-weight: 600;
+
+        &.s2 {
+          background: #FEF9C3;
+          color: #854D0E;
+          border: 1px solid #FEF08A;
+        }
+      }
+
+      .note-text {
+        max-width: 250px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: inline-block;
+        color: $ramp-ink-muted;
+        font-size: 11px;
+      }
+
+      .btn-lineage-trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: #FFFFFF;
+        color: $ramp-ink-primary;
+        border: 1px solid $ramp-border-subtle;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s ease;
+
+        &:hover {
+          background: $ramp-bg-surface-hover;
+          border-color: $ramp-border-strong;
+        }
+      }
+    }
+
+    .vcb-solvency-matrix {
+      .matrix-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-bottom: 14px;
+
+        .matrix-card {
+          padding: 12px 14px;
+          border-radius: 8px;
+          background: $ramp-bg-canvas;
+          border: 1px solid $ramp-border-subtle;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+
+          .card-lbl {
+            font-size: 10.5px;
+            font-weight: 700;
+            color: $ramp-ink-muted;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+          }
+
+          .card-val {
+            font-size: 16px;
+            font-weight: 700;
+            color: $ramp-ink-primary;
+            font-variant-numeric: tabular-nums;
+          }
+
+          .card-sub {
+            font-size: 10.5px;
+            color: $ramp-ink-muted;
+          }
+
+          &.card-purple { border-left: 3px solid #8B5CF6; }
+          &.card-amber { border-left: 3px solid #F59E0B; }
+          &.card-emerald { border-left: 3px solid #10B981; }
+          &.card-gold { border-left: 3px solid #EAB308; }
+        }
+      }
+
+      .solvency-conclusion-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px;
+        background: #DCFCE7;
+        border: 1px solid #BBF7D0;
+        border-radius: 8px;
+
+        .conclusion-left {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 12px;
+          color: #166534;
+          font-weight: 600;
+        }
+
+        .btn-open-vault-detail {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          background: #166534;
+          color: #ffffff;
+          border: none;
+          padding: 5px 12px;
+          border-radius: 6px;
+          font-size: 11px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.15s ease;
+
+          &:hover {
+            background: #14532D;
+          }
+        }
+      }
+    }
+
+    .generic-constituent-panel {
+      .panel-summary-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        background: $ramp-bg-canvas;
+        border-radius: 8px;
+        border: 1px solid $ramp-border-subtle;
+
+        .sum-item {
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+
+          span {
+            font-size: 10.5px;
+            color: $ramp-ink-muted;
+          }
+
+          strong {
+            font-size: 13px;
+            color: $ramp-ink-primary;
+            font-variant-numeric: tabular-nums;
+          }
+        }
+
+        .btn-generic-action {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          background: #ffffff;
+          border: 1px solid $ramp-border-subtle;
+          padding: 6px 12px;
+          border-radius: 6px;
+          font-size: 11px;
+          font-weight: 600;
+          color: $ramp-ink-primary;
+          cursor: pointer;
+          transition: all 0.15s ease;
+
+          &:hover {
+            border-color: $ramp-border-strong;
+            background: $ramp-bg-surface-hover;
+          }
+        }
+      }
+    }
+
+    .empty-constituent-state {
+      padding: 30px;
+      text-align: center;
+      color: $ramp-ink-muted;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+    }
+  }
+
+  // Phân trang danh sách
+  .constituent-pagination-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px 4px 14px;
+    border-top: 1px solid $ramp-border-subtle;
+    flex-wrap: wrap;
+    gap: 10px;
+
+    .pagination-info {
+      font-size: 11px;
+      color: $ramp-ink-muted;
+    }
+
+    .pagination-buttons {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .btn-page-nav {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: #ffffff;
+        border: 1px solid $ramp-border-subtle;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        color: $ramp-ink-body;
+        cursor: pointer;
+        transition: all 0.15s ease;
+
+        &:hover:not(:disabled) {
+          background: $ramp-bg-surface-hover;
+          border-color: $ramp-border-strong;
+          color: $ramp-ink-primary;
+        }
+
+        &:disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
+        }
+      }
+
+      .page-current-indicator {
+        font-size: 11px;
+        font-weight: 700;
+        color: $ramp-ink-primary;
+      }
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // 4. THANH ĐỐI SOÁT CÂN BẰNG BẤT BIẾN CFO (REAL-TIME SOLVENCY FOOTER)
+  // ═══════════════════════════════════════════════════════════════════
+  .twin-solvency-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: $ramp-ink-primary;
+    color: #FAF9F5;
+    flex-wrap: wrap;
+    gap: 12px;
+
+    .solvency-status-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+
+      &.success {
+        color: $ramp-lime-primary;
+      }
+    }
+
+    .solvency-formula {
+      font-size: 11.5px;
+      font-variant-numeric: tabular-nums;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+
+      .term-vcb {
+        color: #93C5FD;
+        font-weight: 700;
+      }
+
+      .term-app {
+        color: #E2E8F0;
+      }
+
+      .op {
+        color: $ramp-ink-faint;
+        font-weight: 700;
+      }
+    }
+
+    .solvency-audit-action {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .diff-zero {
+        font-size: 11px;
+        color: $ramp-lime-primary;
+        font-weight: 600;
+      }
+
+      .btn-trace-lineage {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #FAF9F5;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.2);
+          border-color: $ramp-lime-primary;
+          color: $ramp-lime-primary;
+        }
+      }
+    }
+  }
+}
+
+// ── Keyframe Animations ──
+@keyframes moveDashed {
+  0% { background-position: 0 0; }
+  100% { background-position: -24px 0; }
+}
+
+@keyframes flowDown {
+  0% { top: -6px; opacity: 0; }
+  50% { opacity: 1; }
+  100% { top: 16px; opacity: 0; }
+}
+
+@keyframes pulseGlow {
+  0% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
