@@ -117,6 +117,9 @@ deploy_staging:
       -l "traefik.http.routers.bookingcare-frontend-test.priority=50" 
       -l "traefik.http.services.bookingcare-frontend-test-service.loadbalancer.server.port=8080" 
       $CONTAINER_RELEASE_IMAGE
+    - sleep 3
+    - echo "=== FRONTEND STATUS ==="
+    - docker ps -a -f name=$CONTAINER_NAME
     - docker logout $CI_REGISTRY
   dependencies:
     - release
@@ -156,6 +159,10 @@ deploy_production:
       -l "traefik.http.routers.bookingcare-frontend.priority=50" 
       -l "traefik.http.services.bookingcare-frontend-service.loadbalancer.server.port=8080" 
       $CONTAINER_RELEASE_IMAGE
+    - sleep 3
+    - echo "=== FRONTEND STATUS ==="
+    - docker ps -a -f name=$CONTAINER_NAME
+    - docker logs --tail 20 $CONTAINER_NAME
     - docker logout $CI_REGISTRY
   dependencies:
     - release
