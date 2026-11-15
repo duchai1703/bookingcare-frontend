@@ -5,9 +5,21 @@ import axios from 'axios';
 import { store, persistor } from '../redux/store';
 import { processLogout } from '../redux/slices/userSlice';
 
-// Tạo instance với baseURL từ .env
+// [SRE PRODUCTION FIX] Tự động chọn baseURL phù hợp:
+// Khi chạy trên domain production (không phải localhost), dùng relative path "" để Nginx Gateway proxy /api/ thẳng vào backend
+const getBaseURL = () => {
+  if (typeof window !== 'undefined') {
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (!isLocalhost) {
+      return ''; // Relative path: gọi trực tiếp /api/ trên cùng domain đang truy cập
+    }
+  }
+  return import.meta.env.VITE_BACKEND_URL || '';
+};
+
+// Tạo instance với baseURL tương thích cả dev và production
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL,
+  baseURL: getBaseURL(),
   headers: {
     'Content-Type': 'application/json',
   },
