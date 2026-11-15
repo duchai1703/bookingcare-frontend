@@ -103,9 +103,7 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
   }, [filterParams]);
 
   const handleFilterChange = (newFilters) => {
-    const updated = { ...filterParams, ...newFilters };
-    setFilterParams(updated);
-    loadMetrics(updated);
+    setFilterParams((prev) => ({ ...prev, ...newFilters }));
   };
 
   useEffect(() => {
@@ -173,7 +171,7 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
           <button
             type="button"
             className="ramp-btn-secondary"
-            onClick={loadMetrics}
+            onClick={() => loadMetrics()}
             disabled={loading}
           >
             <RotateCw size={14} className={loading ? 'tw-animate-spin' : ''} />
@@ -200,7 +198,7 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
           <div className={`status-capsule ${reconciliation?.isBalanced ? 'healthy' : 'warning'}`}>
             <ShieldCheck size={15} />
             <span>
-              {reconciliation?.isBalanced ? 'BẢO CHỨNG TIỀN MẶT 100%' : 'CẢNH BÁO LỆCH SỔ CÁI'}
+              {reconciliation?.isBalanced ? 'BẢO CHỨNG TIỀN MẶT ≥ 100%' : 'CẢNH BÁO THIẾU HỤT SỔ CÁI'}
             </span>
           </div>
           <div className="formula-text">
@@ -212,7 +210,7 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
         <div className="banner-right">
           <div className="coverage-stat">
             Tỷ lệ an toàn thanh khoản:
-            <strong>{reconciliation?.coveragePercent || 100}%</strong>
+            <strong>{reconciliation?.coveragePercent ?? 0}%</strong>
           </div>
           <button
             type="button"
@@ -333,10 +331,15 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
                 3. Xu Hướng Dòng Tiền Nạp (Inflow) vs Chi Trả (Outflow)
               </h4>
               <p className="tw-text-xs tw-text-slate-500 tw-m-0 tw-mt-0.5">
-                Theo dõi lượng tiền nạp qua VNPay và rút tiền về ngân hàng 7 ngày qua
+                Theo dõi lượng tiền vào VNPay và rút tiền về ngân hàng theo bộ lọc thời gian
               </p>
             </div>
-            <span className="ramp-pill neutral">7 Ngày qua</span>
+            <span className="ramp-pill neutral">
+              {filterParams.timeRange === 'today' ? 'Hôm nay' :
+               filterParams.timeRange === '7d' ? '7 Ngày qua' :
+               filterParams.timeRange === 'mtd' ? 'Tháng này' :
+               filterParams.timeRange === 'custom' ? 'Khoảng tùy chọn' : '7 Ngày gần nhất'}
+            </span>
           </div>
 
           <div style={{ width: '100%', height: 260 }}>
@@ -352,7 +355,7 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
                   formatter={(val) => [formatCurrencyVND(val), '']}
                   contentStyle={{ backgroundColor: '#FFFFFF', borderRadius: 8, border: '1px solid #EBEAE5' }}
                 />
-                <Area type="monotone" dataKey="inflow" name="Tiền nạp VNPay" stroke="#10B981" fill="#DCFCE7" fillOpacity={0.6} />
+                <Area type="monotone" dataKey="inflow" name="Tiền vào VNPay" stroke="#10B981" fill="#DCFCE7" fillOpacity={0.6} />
                 <Area type="monotone" dataKey="outflow" name="Rút về ngân hàng" stroke="#EF4444" fill="#FEE2E2" fillOpacity={0.5} />
               </AreaChart>
             </ResponsiveContainer>
@@ -367,10 +370,12 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
                 4. Tỷ Lệ Phân Bổ Doanh Thu Ca Khám (Commission Split)
               </h4>
               <p className="tw-text-xs tw-text-slate-500 tw-m-0 tw-mt-0.5">
-                Tỷ lệ ăn chia thực tế: 90% thù lao Bác sĩ nhận và 10% hoa hồng sàn giữ lại
+                Tỷ lệ ăn chia thực tế: {charts?.commissionSplit?.[0]?.percent ?? 85}% thù lao Bác sĩ nhận và {charts?.commissionSplit?.[1]?.percent ?? 15}% hoa hồng sàn
               </p>
             </div>
-            <span className="ramp-pill success">Tỷ lệ 90 / 10</span>
+            <span className="ramp-pill success">
+              Tỷ lệ {charts?.commissionSplit?.[0]?.percent ?? 85} / {charts?.commissionSplit?.[1]?.percent ?? 15}
+            </span>
           </div>
 
           <div style={{ width: '100%', height: 260 }}>
@@ -514,8 +519,8 @@ export default function VisualCashFlowDashboard({ onNavigateTab }) {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={8} className="tw-text-center tw-py-8 tw-text-slate-400">
-                    Chưa có giao dịch sổ cái nào được ghi nhận.
+                  <td colSpan={9} className="tw-text-center tw-py-8 tw-text-slate-400">
+                    Chưa có giao dịch sổ cái nào được ghi nhận trong kỳ lọc.
                   </td>
                 </tr>
               )}

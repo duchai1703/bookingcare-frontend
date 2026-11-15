@@ -60,11 +60,19 @@ export default function VaultDetailDrawer({ vaultKey, data, onClose, onOpenWithd
                 </span>
               </div>
               <div className="meta-data-item">
-                <span className="item-label">Tổng chuyển khoản chi trả Bác sĩ qua VCB:</span>
+                <span className="item-label">Tổng chuyển khoản chi trả Bác sĩ (Lệnh UNC):</span>
                 <span className="item-value" style={{ color: '#DC2626' }}>
                   -{formatCurrencyVND(item?.doctorPayouts)}
                 </span>
               </div>
+              {(item?.legacyDoctorPayouts || 0) > 0 && (
+                <div className="meta-data-item">
+                  <span className="item-label">Đã chuyển khoản Bác sĩ (Đợt đối soát cũ):</span>
+                  <span className="item-value" style={{ color: '#DC2626' }}>
+                    -{formatCurrencyVND(item?.legacyDoctorPayouts)}
+                  </span>
+                </div>
+              )}
               <div className="meta-data-item">
                 <span className="item-label">Tổng chuyển khoản hoàn/rút Bệnh nhân:</span>
                 <span className="item-value" style={{ color: '#DC2626' }}>
@@ -77,6 +85,14 @@ export default function VaultDetailDrawer({ vaultKey, data, onClose, onOpenWithd
                   -{formatCurrencyVND(item?.adminProfitWithdrawn)}
                 </span>
               </div>
+              {(item?.floatAllocatedAmount || 0) > 0 && (
+                <div className="meta-data-item">
+                  <span className="item-label">Vốn nhàn rỗi đang điều chuyển (Float):</span>
+                  <span className="item-value" style={{ color: '#4338CA' }}>
+                    -{formatCurrencyVND(item?.floatAllocatedAmount)}
+                  </span>
+                </div>
+              )}
               {item?.platformReserveFund > 0 && (
                 <div className="meta-data-item">
                   <span className="item-label">Vốn đối ứng bảo chứng sàn:</span>
@@ -141,29 +157,41 @@ export default function VaultDetailDrawer({ vaultKey, data, onClose, onOpenWithd
                 {formatCurrencyVND(item?.total)}
               </div>
               <div className="summary-subtext">
-                Gồm <strong>{item?.activeCount || 0} ca khám</strong> đang trong trạng thái giữ chỗ (Chưa hoàn thành khám).
+                Gồm <strong>{item?.activeCount || 0} ca khám</strong> đang giữ chỗ chờ khám ({item?.walletHoldCount ?? 0} ca Ví BN + {item?.directVnpayCount ?? 0} ca VNPay trả trước).
               </div>
             </div>
 
             <div className="drawer-section-title">
-              <span>Bóc tách 2 ngăn theo mô hình bảng vẽ</span>
+              <span>Cơ cấu nguồn tiền & Bóc tách 2 ngăn</span>
             </div>
             <div className="meta-data-list">
               <div className="meta-data-item">
-                <span className="item-label">Ngăn 1 - Thù lao Bác sĩ (90%):</span>
-                <span className="item-value" style={{ color: '#047857' }}>
-                  {formatCurrencyVND(item?.doctorShare)} ({item?.doctorSharePercent || 90}%)
+                <span className="item-label">Nguồn 1 - Ký quỹ từ Ví Bệnh nhân (Wallet Hold):</span>
+                <span className="item-value" style={{ color: '#6D28D9' }}>
+                  {formatCurrencyVND(item?.walletHoldTotal)} ({item?.walletHoldCount ?? 0} ca)
                 </span>
               </div>
               <div className="meta-data-item">
-                <span className="item-label">Ngăn 2 - Phí dịch vụ sàn (10%):</span>
+                <span className="item-label">Nguồn 2 - Thanh toán VNPay trực tiếp chờ khám:</span>
+                <span className="item-value" style={{ color: '#0369A1' }}>
+                  {formatCurrencyVND(item?.directVnpayTotal)} ({item?.directVnpayCount ?? 0} ca)
+                </span>
+              </div>
+              <div className="meta-data-item">
+                <span className="item-label">Ngăn 1 - Thù lao Bác sĩ ({item?.doctorSharePercent ?? 85}%):</span>
+                <span className="item-value" style={{ color: '#047857' }}>
+                  {formatCurrencyVND(item?.doctorShare)} ({item?.doctorSharePercent ?? 85}%)
+                </span>
+              </div>
+              <div className="meta-data-item">
+                <span className="item-label">Ngăn 2 - Phí dịch vụ sàn ({item?.platformSharePercent ?? 15}%):</span>
                 <span className="item-value" style={{ color: '#854D0E' }}>
-                  {formatCurrencyVND(item?.platformShare)} ({item?.platformSharePercent || 10}%)
+                  {formatCurrencyVND(item?.platformShare)} ({item?.platformSharePercent ?? 15}%)
                 </span>
               </div>
               <div className="meta-data-item">
                 <span className="item-label">Thời điểm giải ngân vào ví Bác sĩ:</span>
-                <span className="item-value">Ngay sau khi Bác sĩ hoàn tất khám (S3)</span>
+                <span className="item-value">Khi hoàn tất khám (S3) & chạy kỳ quyết toán (PAID)</span>
               </div>
             </div>
           </>
@@ -202,7 +230,7 @@ export default function VaultDetailDrawer({ vaultKey, data, onClose, onOpenWithd
               </div>
               <div className="meta-data-item">
                 <span className="item-label">Quy trình rút tiền:</span>
-                <span className="item-value">BS tạo lệnh ➔ Admin duyệt & CK VCB (-270k)</span>
+                <span className="item-value">BS tạo lệnh ➔ Admin duyệt & chuyển khoản ngân hàng</span>
               </div>
             </div>
           </>
@@ -219,7 +247,7 @@ export default function VaultDetailDrawer({ vaultKey, data, onClose, onOpenWithd
                 {formatCurrencyVND(item?.spendable)}
               </div>
               <div className="summary-subtext">
-                Doanh thu ròng từ 10% hoa hồng các ca khám đã hoàn tất.
+                Doanh thu ròng từ phí dịch vụ nền tảng trên các ca khám đã ghi nhận.
               </div>
             </div>
 
@@ -242,7 +270,7 @@ export default function VaultDetailDrawer({ vaultKey, data, onClose, onOpenWithd
               <div className="meta-data-item">
                 <span className="item-label">Tỷ lệ tiền lời còn lại khả dụng:</span>
                 <span className="item-value" style={{ color: '#854D0E' }}>
-                  {item?.spendablePercent || 100}%
+                  {item?.spendablePercent ?? 100}%
                 </span>
               </div>
             </div>

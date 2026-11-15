@@ -308,12 +308,12 @@
 
       .layer-nodes-row {
         display: grid;
-        grid-template-columns: 240px 100px 260px 110px 240px;
+        grid-template-columns: minmax(215px, 1fr) minmax(145px, 0.78fr) minmax(245px, 1.12fr) minmax(165px, 0.88fr) minmax(245px, 1.12fr);
         align-items: center;
         gap: 0;
 
-        @media (max-width: 1280px) {
-          min-width: 1050px;
+        @media (max-width: 1360px) {
+          min-width: 1015px;
         }
       }
     }
@@ -327,6 +327,7 @@
       box-shadow: $ramp-shadow-sm;
       cursor: pointer;
       position: relative;
+      min-width: 0;
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
       &:hover {
@@ -519,6 +520,7 @@
         margin-top: 10px;
         padding-top: 8px;
         border-top: 1px solid #F2F1EC;
+        flex-wrap: nowrap;
 
         .btn-node-primary-ramp {
           display: inline-flex;
@@ -528,12 +530,14 @@
           color: $ramp-lime-text;
           border: 1px solid $ramp-lime-hover;
           border-radius: 6px;
-          padding: 4px 9px;
-          font-size: 11px;
+          padding: 4px 8px;
+          font-size: 10.5px;
           font-weight: 700;
           cursor: pointer;
           transition: all 0.15s ease;
           box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+          white-space: nowrap;
+          flex-shrink: 0;
 
           &:hover {
             background: $ramp-lime-hover;
@@ -553,11 +557,13 @@
           color: $ramp-ink-primary;
           border: 1px solid $ramp-border-subtle;
           border-radius: 6px;
-          padding: 4px 9px;
-          font-size: 11px;
+          padding: 4px 8px;
+          font-size: 10.5px;
           font-weight: 600;
           cursor: pointer;
           transition: all 0.15s ease;
+          white-space: nowrap;
+          flex-shrink: 0;
 
           &:hover {
             background: $ramp-bg-surface-hover;
@@ -573,11 +579,13 @@
           color: $ramp-ink-body;
           border: 1px solid $ramp-border-subtle;
           border-radius: 6px;
-          padding: 3px 8px;
+          padding: 4px 8px;
           font-size: 10.5px;
           font-weight: 600;
           cursor: pointer;
           transition: all 0.15s ease;
+          white-space: nowrap;
+          flex-shrink: 0;
 
           &:hover {
             background: $ramp-bg-surface-hover;
@@ -667,15 +675,19 @@
 
       .flow-label-badge {
         position: absolute;
-        top: -18px;
+        top: -28px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 5;
         font-size: 9px;
         font-weight: 700;
-        padding: 2px 6px;
-        border-radius: 4px;
+        padding: 3px 7px;
+        border-radius: 6px;
         white-space: nowrap;
         display: flex;
         flex-direction: column;
         align-items: center;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 
         &.purple-badge {
           background: #FAF5FF;
@@ -695,7 +707,7 @@
         display: flex;
         flex-direction: column;
         justify-content: space-around;
-        padding: 6px;
+        padding: 6px 8px;
 
         .split-upper-line,
         .split-lower-line {
@@ -706,36 +718,40 @@
 
           .split-badge {
             position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 5;
             font-size: 8.5px;
             font-weight: 700;
-            padding: 1px 5px;
-            border-radius: 4px;
+            padding: 2px 6px;
+            border-radius: 5px;
             white-space: nowrap;
             cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 
             &.gold-badge {
-              top: -16px;
+              top: -20px;
               background: #FEFCE8;
               color: #A16207;
               border: 1px solid #FEF08A;
             }
 
             &.emerald-badge {
-              bottom: -16px;
+              bottom: -20px;
               background: #ECFDF5;
               color: #047857;
               border: 1px solid #A7F3D0;
             }
 
             &.rose-badge {
-              top: -16px;
+              top: -20px;
               background: #FFF1F2;
               color: #BE123C;
               border: 1px solid #FECDD3;
             }
 
             &.blue-badge {
-              bottom: -16px;
+              bottom: -20px;
               background: #EFF6FF;
               color: #1D4ED8;
               border: 1px solid #BFDBFE;
@@ -748,7 +764,7 @@
     // ── Cầu nối đối chiếu thời gian thực (Reconciliation Bridge Zone) ──
     .reconciliation-bridge-zone {
       margin: 16px 0;
-      padding: 10px 16px;
+      padding: 10px 18px;
       background: #F4F3EE;
       border: 1px solid $ramp-border-subtle;
       border-radius: 8px;
@@ -758,6 +774,8 @@
         align-items: center;
         justify-content: space-between;
         margin-bottom: 8px;
+        flex-wrap: wrap;
+        gap: 8px;
 
         .bridge-zone-title {
           font-size: 10px;
@@ -788,11 +806,11 @@
 
       .bridges-grid {
         display: grid;
-        grid-template-columns: 240px 100px 260px 110px 240px;
+        grid-template-columns: minmax(215px, 1fr) minmax(145px, 0.78fr) minmax(245px, 1.12fr) minmax(165px, 0.88fr) minmax(245px, 1.12fr);
         align-items: center;
 
-        @media (max-width: 1280px) {
-          min-width: 1050px;
+        @media (max-width: 1360px) {
+          min-width: 1015px;
         }
 
         .vertical-bridge {
@@ -800,6 +818,18 @@
           flex-direction: column;
           align-items: center;
           gap: 4px;
+
+          &.bridge-deposit {
+            grid-column: 1;
+          }
+
+          &.bridge-escrow {
+            grid-column: 3;
+          }
+
+          &.bridge-payout {
+            grid-column: 5;
+          }
 
           &.is-dimmed {
             opacity: 0.2;
@@ -834,9 +864,10 @@
             gap: 4px;
             font-size: 9.5px;
             font-weight: 600;
-            padding: 3px 7px;
-            border-radius: 4px;
+            padding: 3px 8px;
+            border-radius: 5px;
             cursor: pointer;
+            white-space: nowrap;
 
             &.tag-blue {
               background: #EFF6FF;
@@ -1020,11 +1051,24 @@
         border-radius: 9999px;
         font-size: 10px;
         font-weight: 600;
+        white-space: nowrap;
 
         &.s2 {
           background: #FEF9C3;
           color: #854D0E;
           border: 1px solid #FEF08A;
+        }
+
+        &.info {
+          background: #E0F2FE;
+          color: #0369A1;
+          border: 1px solid #BAE6FD;
+        }
+
+        &.success {
+          background: #DCFCE7;
+          color: #166534;
+          border: 1px solid #BBF7D0;
         }
       }
 
@@ -1038,7 +1082,8 @@
         font-size: 11px;
       }
 
-      .btn-lineage-trigger {
+      .btn-lineage-trigger,
+      .btn-view-wallet-subtle {
         display: inline-flex;
         align-items: center;
         gap: 4px;
@@ -1280,6 +1325,10 @@
       &.success {
         color: $ramp-lime-primary;
       }
+
+      &.warning {
+        color: #FBBF24;
+      }
     }
 
     .solvency-formula {
@@ -1287,6 +1336,7 @@
       font-variant-numeric: tabular-nums;
       display: flex;
       align-items: center;
+      flex-wrap: wrap;
       gap: 5px;
 
       .term-vcb {

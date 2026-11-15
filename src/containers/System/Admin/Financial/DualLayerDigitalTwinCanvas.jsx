@@ -2,7 +2,7 @@
 // [DUAL-LAYER DIGITAL TWIN CANVAS — RAMP FINTECH ENGINE]
 // Tái hiện chính xác sơ đồ bảng trắng: Đối chiếu dòng số dư nội bộ (App Ledger) và tiền mặt thật tại ngân hàng (Fiat/Bank)
 // 100% Số liệu thực tế từ DB, Tích hợp Bộ lọc thời gian & Bảng mổ xẻ cấu tạo minh chứng rõ ràng cho TỪNG MỤC
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import moment from 'moment';
 import {
   Landmark,
@@ -77,59 +77,93 @@ export default function DualLayerDigitalTwinCanvas({
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
-  // Số liệu tài chính thực tế từ Database
-  const realBankTotal = Number(vaults?.realBank?.currentBalance || 736800000);
-  const patientTotal = Number(vaults?.patientWallets?.total || 311175000);
-  const patientAvailable = Number(vaults?.patientWallets?.available || 310975000);
-  const patientReserved = Number(vaults?.patientWallets?.reserved || 200000);
-  const patientWalletCount = Number(vaults?.patientWallets?.count || constituents?.patientWalletsList?.length || 121);
+  useEffect(() => {
+    if (filters?.timeRange) setTimePreset(filters.timeRange);
+    if (filters?.sort) setSortOrder(filters.sort);
+    if (filters?.timeRange !== 'custom') {
+      setCustomFromDate('');
+      setCustomToDate('');
+    } else {
+      setCustomFromDate(filters?.fromDate || '');
+      setCustomToDate(filters?.toDate || '');
+    }
+  }, [filters?.timeRange, filters?.fromDate, filters?.toDate, filters?.sort]);
 
-  const escrowTotal = Number(vaults?.escrowPool?.total || 200000);
-  const escrowDoctor = Number(vaults?.escrowPool?.doctorShare || 180000);
-  const escrowPlatform = Number(vaults?.escrowPool?.platformShare || 20000);
-  const escrowActiveCount = Number(vaults?.escrowPool?.activeCount || constituents?.escrowBookings?.length || 2);
+  // Số liệu tài chính thực tế từ Database (KHÔNG hardcode fallback)
+  const realBankTotal = Number(vaults?.realBank?.currentBalance ?? 0);
+  const realBankReserveFund = Number(vaults?.realBank?.platformReserveFund ?? 0);
+  const realBankSurplus = Number(vaults?.realBank?.reserveSurplus ?? reconciliation?.reserveSurplus ?? 0);
+  const realBankAccountLabel = vaults?.realBank?.accountNumber
+    ? `STK: ${vaults.realBank.accountNumber} • ${vaults.realBank.bankName || 'Vietcombank'}`
+    : 'Tài khoản doanh nghiệp';
 
-  const doctorTotal = Number(vaults?.doctorWallets?.total || 425000000);
-  const doctorAvailable = Number(vaults?.doctorWallets?.available || 425000000);
-  const doctorWalletCount = Number(vaults?.doctorWallets?.count || constituents?.doctorWalletsList?.length || 50);
+  const patientTotal = Number(vaults?.patientWallets?.total ?? 0);
+  const patientAvailable = Number(vaults?.patientWallets?.available ?? 0);
+  const patientReserved = Number(vaults?.patientWallets?.reserved ?? 0);
+  const patientWalletCount = Number(vaults?.patientWallets?.count ?? constituents?.patientWalletsList?.length ?? 0);
 
-  const platformProfit = Number(vaults?.platformProfit?.spendable || 425000);
-  const platformWithdrawn = Number(vaults?.platformProfit?.withdrawnByAdmin || 30000);
-  const platformTotalEarned = Number(vaults?.platformProfit?.totalEarned || 455000);
+  const escrowTotal = Number(vaults?.escrowPool?.total ?? 0);
+  const escrowWalletHoldTotal = Number(vaults?.escrowPool?.walletHoldTotal ?? escrowTotal);
+  const escrowWalletHoldCount = Number(vaults?.escrowPool?.walletHoldCount ?? 0);
+  const escrowDirectVnpayTotal = Number(vaults?.escrowPool?.directVnpayTotal ?? 0);
+  const escrowDirectVnpayCount = Number(vaults?.escrowPool?.directVnpayCount ?? 0);
+  const escrowDoctor = Number(vaults?.escrowPool?.doctorShare ?? 0);
+  const escrowPlatform = Number(vaults?.escrowPool?.platformShare ?? 0);
+  const escrowDoctorPercent = Number(vaults?.escrowPool?.doctorSharePercent ?? 85);
+  const escrowPlatformPercent = Number(vaults?.escrowPool?.platformSharePercent ?? 15);
+  const escrowActiveCount = Number(vaults?.escrowPool?.activeCount ?? 0);
 
-  // Số liệu lưu lượng dòng tiền (Flows) thực tế trong kỳ
-  const flowDepositInflow = Number(flows?.depositInflow || 5000000);
-  const flowHeldBooking = Number(flows?.heldBooking || escrowTotal);
-  const flowDoctorSettled = Number(flows?.doctorSettled || 1870000);
-  const flowPlatformCommission = Number(flows?.platformCommission || 455000);
-  const flowBankTransferred = Number(flows?.bankTransferred || 2000000);
+  const doctorTotal = Number(vaults?.doctorWallets?.total ?? 0);
+  const doctorAvailable = Number(vaults?.doctorWallets?.available ?? 0);
+  const doctorWalletCount = Number(vaults?.doctorWallets?.count ?? constituents?.doctorWalletsList?.length ?? 0);
+  const doctorPendingSettlement = Number(vaults?.doctorWallets?.pendingSettlementTotal ?? flows?.doctorSettledPendingPayout ?? 0);
+
+  const platformProfit = Number(vaults?.platformProfit?.spendable ?? 0);
+  const platformWithdrawn = Number(vaults?.platformProfit?.withdrawnByAdmin ?? 0);
+  const platformTotalEarned = Number(vaults?.platformProfit?.totalEarned ?? 0);
+  const totalSystemLiabilities = Number(
+    reconciliation?.totalSystemLiabilities ?? (patientAvailable + escrowTotal + doctorTotal + platformProfit)
+  );
+  const coveragePercent = Number(reconciliation?.coveragePercent ?? 100);
+
+  // Số liệu lưu lượng dòng tiền (Flows) thực tế trong kỳ lọc (dùng ?? 0 để giữ nguyên giá trị 0)
+  const flowDepositInflow = Number(flows?.depositInflow ?? 0);
+  const flowDirectBookingInflow = Number(flows?.directBookingInflow ?? 0);
+  const flowTotalVnpayInflow = Number(flows?.totalVnpayInflow ?? (flowDepositInflow + flowDirectBookingInflow));
+  const flowHeldBooking = Number(flows?.heldBooking ?? 0);
+  const flowHeldCount = Number(flows?.heldCount ?? 0);
+  const flowHeldWalletBooking = Number(flows?.heldWalletBooking ?? 0);
+  const flowHeldWalletCount = Number(flows?.heldWalletCount ?? 0);
+  const flowHeldDirectVnpayBooking = Number(flows?.heldDirectVnpayBooking ?? 0);
+  const flowHeldDirectVnpayCount = Number(flows?.heldDirectVnpayCount ?? 0);
+  const flowDoctorSettled = Number(flows?.doctorSettled ?? 0);
+  const flowPlatformCommission = Number(flows?.platformCommission ?? 0);
+  const flowDoctorSharePercent = Number(flows?.doctorSharePercent ?? escrowDoctorPercent);
+  const flowPlatformSharePercent = Number(flows?.platformSharePercent ?? escrowPlatformPercent);
+  const flowBankTransferred = Number(flows?.bankTransferred ?? 0);
+  const flowDoctorBankTransferred = Number(flows?.doctorBankTransferred ?? flowBankTransferred);
+  const flowProfitWithdrawn = Number(flows?.profitWithdrawn ?? 0);
+  const pendingWithdrawalsCount = Number(flows?.pendingWithdrawalsCount ?? 0);
+  const pendingWithdrawalsAmount = Number(flows?.pendingWithdrawalsAmount ?? 0);
 
   // Danh sách các thành phần cấu tạo thực tế từ Backend
-  const escrowBookings = constituents?.escrowBookings || [];
-  const patientWalletsList = constituents?.patientWalletsList || [];
-  const doctorWalletsList = constituents?.doctorWalletsList || [];
-  const platformFeeItemsList = constituents?.platformFeeItemsList || [];
-  const doctorPayoutsList = constituents?.doctorPayoutsList || [];
-  const recentDeposits = constituents?.recentDeposits || [];
-  const companyWithdrawalsList = constituents?.companyWithdrawalsList || [
-    {
-      id: 1,
-      amount: platformWithdrawn,
-      recipient: 'CONG TY CP CONG NGHE BOOKINGCARE',
-      bankName: 'Vietcombank',
-      accountNumber: '9988-1703-8888',
-      reason: 'Rút lợi nhuận hoa hồng sàn ra tài khoản công ty phục vụ chi phí vận hành',
-      transferredAt: new Date().toISOString(),
-      status: 'TRANSFERRED',
-    }
-  ];
+  const escrowBookings = constituents?.escrowBookings ?? [];
+  const patientWalletsList = constituents?.patientWalletsList ?? [];
+  const doctorWalletsList = constituents?.doctorWalletsList ?? [];
+  const platformFeeItemsList = constituents?.platformFeeItemsList ?? [];
+  const doctorPayoutsList = constituents?.doctorPayoutsList ?? [];
+  const recentDeposits = constituents?.recentDeposits ?? [];
+  const vnpayInflowsList = constituents?.vnpayInflowsList ?? recentDeposits;
+  const recentSettlements = constituents?.recentSettlements ?? [];
+  const companyWithdrawalsList = constituents?.companyWithdrawalsList ?? [];
 
-  // Ca khám tiêu biểu nhất để truy vết nhanh
-  const featuredBookingId = escrowBookings[0]?.bookingId || stepBreakdown?.step2?.bookingId || 486;
+  // Ca khám tiêu biểu nhất trong kỳ để truy vết nhanh
+  const featuredBookingId = escrowBookings[0]?.bookingId || recentSettlements[0]?.bookingId || stepBreakdown?.step2?.bookingId || null;
 
   // Xử lý thay đổi preset thời gian
   const handleSelectTimePreset = (preset) => {
     setTimePreset(preset);
+    setCurrentPage(1);
     if (preset !== 'custom') {
       setCustomFromDate('');
       setCustomToDate('');
@@ -140,10 +174,11 @@ export default function DualLayerDigitalTwinCanvas({
   // Áp dụng khoảng ngày tùy chọn
   const handleApplyCustomDates = () => {
     if (!customFromDate && !customToDate) return;
+    setCurrentPage(1);
     onFilterChange && onFilterChange({
       timeRange: 'custom',
-      fromDate: customFromDate,
-      toDate: customToDate,
+      fromDate: customFromDate || null,
+      toDate: customToDate || null,
       sort: sortOrder,
     });
   };
@@ -152,10 +187,11 @@ export default function DualLayerDigitalTwinCanvas({
   const handleSortChange = (e) => {
     const newSort = e.target.value;
     setSortOrder(newSort);
+    setCurrentPage(1);
     onFilterChange && onFilterChange({
       timeRange: timePreset,
-      fromDate: customFromDate || null,
-      toDate: customToDate || null,
+      fromDate: timePreset === 'custom' ? (customFromDate || null) : null,
+      toDate: timePreset === 'custom' ? (customToDate || null) : null,
       sort: newSort,
     });
   };
@@ -214,7 +250,19 @@ export default function DualLayerDigitalTwinCanvas({
       return escrowBookings.filter(
         b => String(b.bookingId).includes(term) ||
              b.patientName?.toLowerCase().includes(term) ||
-             b.doctorName?.toLowerCase().includes(term)
+             b.doctorName?.toLowerCase().includes(term) ||
+             b.paymentSourceLabel?.toLowerCase().includes(term) ||
+             b.paymentSource?.toLowerCase().includes(term)
+      );
+    }
+
+    if (selectedConstituentNode === 'SETTLEMENT') {
+      if (!term) return recentSettlements;
+      return recentSettlements.filter(
+        s => String(s.bookingId).includes(term) ||
+             s.doctorName?.toLowerCase().includes(term) ||
+             s.note?.toLowerCase().includes(term) ||
+             s.status?.toLowerCase().includes(term)
       );
     }
 
@@ -228,11 +276,13 @@ export default function DualLayerDigitalTwinCanvas({
     }
 
     if (selectedConstituentNode === 'BN_BANK') {
-      if (!term) return recentDeposits;
-      return recentDeposits.filter(
+      if (!term) return vnpayInflowsList;
+      return vnpayInflowsList.filter(
         d => String(d.id).includes(term) ||
+             String(d.bookingId || '').includes(term) ||
              d.patientName?.toLowerCase().includes(term) ||
-             d.txnRef?.toLowerCase().includes(term)
+             d.txnRef?.toLowerCase().includes(term) ||
+             d.inflowTypeLabel?.toLowerCase().includes(term)
       );
     }
 
@@ -241,6 +291,7 @@ export default function DualLayerDigitalTwinCanvas({
       return doctorPayoutsList.filter(
         p => String(p.id).includes(term) ||
              p.accountHolderName?.toLowerCase().includes(term) ||
+             p.bankName?.toLowerCase().includes(term) ||
              p.bankTransactionRef?.toLowerCase().includes(term)
       );
     }
@@ -261,8 +312,9 @@ export default function DualLayerDigitalTwinCanvas({
     patientWalletsList,
     doctorWalletsList,
     escrowBookings,
+    recentSettlements,
     platformFeeItemsList,
-    recentDeposits,
+    vnpayInflowsList,
     doctorPayoutsList,
     companyWithdrawalsList,
   ]);
@@ -398,29 +450,32 @@ export default function DualLayerDigitalTwinCanvas({
             type="button"
             className={`btn-wf-pill ${activeWorkflow === 'DEPOSIT' ? 'active' : ''}`}
             onClick={() => setActiveWorkflow('DEPOSIT')}
+            title={`Nạp ví VNPay: +${formatVND(flowDepositInflow)} | Đặt khám VNPay trực tiếp: +${formatVND(flowDirectBookingInflow)}`}
           >
-            1. Nạp ví (+{formatVND(flowDepositInflow)})
+            1. Tiền vào VNPay (+{formatVND(flowTotalVnpayInflow)})
           </button>
           <button
             type="button"
             className={`btn-wf-pill ${activeWorkflow === 'HOLD' ? 'active' : ''}`}
             onClick={() => setActiveWorkflow('HOLD')}
+            title={`Từ Ví BN: ${formatVND(flowHeldWalletBooking)} (${flowHeldWalletCount} ca) | VNPay trả trước chờ khám: ${formatVND(flowHeldDirectVnpayBooking)} (${flowHeldDirectVnpayCount} ca)`}
           >
-            2. Đặt khám (Hold {formatVND(flowHeldBooking)})
+            2. Đặt khám chờ khám ({flowHeldCount} ca • {formatVND(flowHeldBooking)})
           </button>
           <button
             type="button"
             className={`btn-wf-pill ${activeWorkflow === 'SETTLEMENT' ? 'active' : ''}`}
             onClick={() => setActiveWorkflow('SETTLEMENT')}
+            title={`Thù lao BS: +${formatVND(flowDoctorSettled)} (${flowDoctorSharePercent}%) | Phí sàn: +${formatVND(flowPlatformCommission)} (${flowPlatformSharePercent}%)`}
           >
-            3. Khám xong (BS 90% / Sàn 10%)
+            3. Khám xong (BS {flowDoctorSharePercent}% / Sàn {flowPlatformSharePercent}%)
           </button>
           <button
             type="button"
             className={`btn-wf-pill ${activeWorkflow === 'WITHDRAW' ? 'active' : ''}`}
             onClick={() => setActiveWorkflow('WITHDRAW')}
           >
-            4. Rút tiền ({formatVND(flowBankTransferred)}) & Chi tiêu ({formatVND(platformWithdrawn)})
+            4. Rút tiền ({formatVND(flowBankTransferred)}) & Chi tiêu ({formatVND(flowProfitWithdrawn)})
           </button>
         </div>
       </div>
@@ -445,7 +500,7 @@ export default function DualLayerDigitalTwinCanvas({
             <div
               className={`twin-node node-patient ${selectedConstituentNode === 'BN_APP' ? 'is-selected' : ''} ${isNodeDimmed('BN_APP') ? 'is-dimmed' : ''}`}
               onClick={() => handleSelectNode('BN_APP')}
-              title="Nhấp để hiển thị danh sách 121 ví bệnh nhân cấu thành 311.175.000 ₫"
+              title={`Nhấp để hiển thị danh sách ${patientWalletCount} ví bệnh nhân cấu thành ${formatVND(patientTotal)}`}
             >
               <div className="node-head">
                 <div className="node-icon bg-purple">
@@ -459,13 +514,13 @@ export default function DualLayerDigitalTwinCanvas({
 
               <div className="node-body">
                 <div className="node-primary-val text-purple">
-                  {formatVND(patientTotal)}
+                  {formatVND(patientAvailable)}
                 </div>
                 <div className="node-sub-stat">
-                  <span>Khả dụng: <strong>{formatVND(patientAvailable)}</strong></span>
+                  <span>Khả dụng rảnh • Tổng ví: <strong>{formatVND(patientTotal)}</strong></span>
                 </div>
                 <div className="node-breakdown-mini">
-                  <span>Đang cọc giữ chỗ: <strong className="text-amber">{formatVND(patientReserved)}</strong></span>
+                  <span>Đã khóa sang Escrow: <strong className="text-amber">{formatVND(patientReserved)}</strong></span>
                 </div>
               </div>
 
@@ -478,7 +533,7 @@ export default function DualLayerDigitalTwinCanvas({
                     handleSelectNode('BN_APP');
                   }}
                 >
-                  <span>Mổ xẻ 121 Ví BN</span>
+                  <span>Mổ xẻ {patientWalletCount} Ví BN</span>
                   <ChevronDown size={11} />
                 </button>
                 <button
@@ -499,20 +554,20 @@ export default function DualLayerDigitalTwinCanvas({
             <div
               className={`flow-connector conn-hold ${selectedConstituentNode === 'ESCROW' ? 'is-selected' : ''} ${isNodeDimmed('ESCROW') ? 'is-dimmed' : ''}`}
               onClick={() => handleSelectNode('ESCROW')}
-              title="Nhấp để xem các ca khám đang giữ cọc"
+              title={`Trong kỳ: Từ Ví BN -${formatVND(flowHeldWalletBooking)} (${flowHeldWalletCount} ca) | VNPay trả trước ${formatVND(flowHeldDirectVnpayBooking)} (${flowHeldDirectVnpayCount} ca)`}
             >
               <div className="flow-path-line animate-dash-purple" />
               <div className="flow-label-badge purple-badge">
-                <span className="badge-subtitle">Đặt khám ký quỹ ({escrowActiveCount} ca)</span>
-                <strong className="badge-value">-{formatVND(flowHeldBooking)}</strong>
+                <span className="badge-subtitle">Ký quỹ ({flowHeldCount} ca)</span>
+                <strong className="badge-value">{formatVND(flowHeldBooking)}</strong>
               </div>
             </div>
 
-            {/* NODE 2: ESCROW POOL (2 NGĂN TÁCH BIỆT) */}
+            {/* NODE 2: ESCROW POOL (2 NGĂN TÁCH BIỆT THEO POLICY SNAPSHOT) */}
             <div
               className={`twin-node node-escrow ${selectedConstituentNode === 'ESCROW' ? 'is-selected' : ''} ${isNodeDimmed('ESCROW') ? 'is-dimmed' : ''}`}
               onClick={() => handleSelectNode('ESCROW')}
-              title="Nhấp để mổ xẻ danh sách ca khám đang ký quỹ trong Escrow"
+              title="Nhấp để mổ xẻ danh sách ca khám đang tạm giữ trong Escrow (gồm cả Ví BN HELD và VNPay trả trước chưa khám)"
             >
               <div className="node-head">
                 <div className="node-icon bg-amber">
@@ -530,18 +585,18 @@ export default function DualLayerDigitalTwinCanvas({
                   {formatVND(escrowTotal)}
                 </div>
                 <div className="node-sub-stat">
-                  <span>Tạm giữ bảo chứng từ tiền nạp bệnh nhân</span>
+                  <span>Ví BN: <strong>{formatVND(escrowWalletHoldTotal)}</strong> ({escrowWalletHoldCount}) • VNPay: <strong>{formatVND(escrowDirectVnpayTotal)}</strong> ({escrowDirectVnpayCount})</span>
                 </div>
 
-                {/* 2 Ngăn bóc tách rõ ràng theo bảng trắng: 90% BS vs 10% Sàn */}
+                {/* 2 Ngăn bóc tách theo Policy Snapshot thực tế trên Booking */}
                 <div className="escrow-two-compartments">
                   <div className="comp-item comp-doc">
-                    <span className="comp-name">Ngăn BS (90%)</span>
+                    <span className="comp-name">Ngăn BS ({escrowDoctorPercent}%)</span>
                     <strong className="comp-num text-emerald">{formatVND(escrowDoctor)}</strong>
                   </div>
                   <div className="comp-sep" />
                   <div className="comp-item comp-platform">
-                    <span className="comp-name">Ngăn Sàn (10%)</span>
+                    <span className="comp-name">Ngăn Sàn ({escrowPlatformPercent}%)</span>
                     <strong className="comp-num text-gold">{formatVND(escrowPlatform)}</strong>
                   </div>
                 </div>
@@ -556,7 +611,7 @@ export default function DualLayerDigitalTwinCanvas({
                     handleSelectNode('ESCROW');
                   }}
                 >
-                  <span>Chi tiết cọc ({escrowActiveCount} ca)</span>
+                  <span>Chi tiết cọc ({flowHeldCount} ca)</span>
                   <ChevronDown size={11} />
                 </button>
                 <button
@@ -575,20 +630,20 @@ export default function DualLayerDigitalTwinCanvas({
 
             {/* MŨI TÊN DÒNG CHẢY 2: PHÂN TÁCH KHI KHÁM XONG (FLOW_SPLIT) */}
             <div
-              className={`flow-connector conn-split ${selectedConstituentNode === 'DOCTOR_APP' ? 'is-selected' : ''} ${isNodeDimmed('DOCTOR_APP') ? 'is-dimmed' : ''}`}
-              onClick={() => handleSelectNode('DOCTOR_APP')}
-              title="Nhấp để xem chi tiết các khoản phân bổ thù lao và hoa hồng"
+              className={`flow-connector conn-split ${selectedConstituentNode === 'SETTLEMENT' ? 'is-selected' : ''} ${isNodeDimmed('DOCTOR_APP') ? 'is-dimmed' : ''}`}
+              onClick={() => handleSelectNode('SETTLEMENT')}
+              title="Nhấp để xem chi tiết từng ca khám đã quyết toán phân bổ thù lao & hoa hồng"
             >
               <div className="split-upper-line">
                 <div className="flow-path-line animate-dash-gold" />
                 <span className="split-badge gold-badge">
-                  Trích 10% Phí sàn (+{formatVND(flowPlatformCommission)})
+                  Phí sàn {flowPlatformSharePercent}% (+{formatVND(flowPlatformCommission)})
                 </span>
               </div>
               <div className="split-lower-line">
                 <div className="flow-path-line animate-dash-emerald" />
                 <span className="split-badge emerald-badge">
-                  Khám xong: +90% Thù lao (+{formatVND(flowDoctorSettled)})
+                  Thù lao {flowDoctorSharePercent}% (+{formatVND(flowDoctorSettled)})
                 </span>
               </div>
             </div>
@@ -599,7 +654,7 @@ export default function DualLayerDigitalTwinCanvas({
               <div
                 className={`twin-node node-profit ${selectedConstituentNode === 'PROFIT_APP' ? 'is-selected' : ''} ${isNodeDimmed('PROFIT_APP') ? 'is-dimmed' : ''}`}
                 onClick={() => handleSelectNode('PROFIT_APP')}
-                title="Nhấp để xem từng khoản phí sàn 10% thu được từ từng ca khám"
+                title="Nhấp để xem từng khoản phí sàn thu được từ các ca khám"
               >
                 <div className="node-head">
                   <div className="node-icon bg-gold">
@@ -615,7 +670,7 @@ export default function DualLayerDigitalTwinCanvas({
                     {formatVND(platformProfit)}
                   </div>
                   <div className="node-sub-stat">
-                    <span>Tổng lũy kế thu: <strong>{formatVND(platformTotalEarned)}</strong></span>
+                    <span>Lũy kế thu: <strong>{formatVND(platformTotalEarned)}</strong> • Đã rút: <strong>{formatVND(platformWithdrawn)}</strong></span>
                   </div>
                 </div>
 
@@ -629,8 +684,8 @@ export default function DualLayerDigitalTwinCanvas({
                     }}
                     title="Mở form rút lợi nhuận nền tảng về tài khoản công ty"
                   >
-                    <DollarSign size={12} />
-                    <span>Rút tiền lời ▾</span>
+                    <DollarSign size={11} />
+                    <span>Rút tiền lời</span>
                   </button>
                   <button
                     type="button"
@@ -640,7 +695,7 @@ export default function DualLayerDigitalTwinCanvas({
                       handleSelectNode('PROFIT_APP');
                     }}
                   >
-                    <span>Mổ xẻ hoa hồng</span>
+                    <span>Hoa hồng</span>
                     <ChevronDown size={11} />
                   </button>
                 </div>
@@ -650,7 +705,7 @@ export default function DualLayerDigitalTwinCanvas({
               <div
                 className={`twin-node node-doctor ${selectedConstituentNode === 'DOCTOR_APP' ? 'is-selected' : ''} ${isNodeDimmed('DOCTOR_APP') ? 'is-dimmed' : ''}`}
                 onClick={() => handleSelectNode('DOCTOR_APP')}
-                title="Nhấp để hiển thị danh sách 50 ví bác sĩ cấu thành 425.000.000 ₫"
+                title={`Nhấp để hiển thị danh sách ${doctorWalletCount} ví bác sĩ cấu thành ${formatVND(doctorTotal)}`}
               >
                 <div className="node-head">
                   <div className="node-icon bg-emerald">
@@ -666,8 +721,13 @@ export default function DualLayerDigitalTwinCanvas({
                     {formatVND(doctorTotal)}
                   </div>
                   <div className="node-sub-stat">
-                    <span>Đã quyết toán chờ rút: <strong>{formatVND(doctorAvailable)}</strong></span>
+                    <span>Khả dụng rút: <strong>{formatVND(doctorAvailable)}</strong></span>
                   </div>
+                  {doctorPendingSettlement > 0 && (
+                    <div className="node-breakdown-mini">
+                      <span>Chờ quyết toán vào ví: <strong className="text-amber">{formatVND(doctorPendingSettlement)}</strong></span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="node-action-bar">
@@ -679,7 +739,7 @@ export default function DualLayerDigitalTwinCanvas({
                       handleSelectNode('DOCTOR_APP');
                     }}
                   >
-                    <span>Mổ xẻ 50 Ví BS</span>
+                    <span>Mổ xẻ {doctorWalletCount} Ví BS</span>
                     <ChevronDown size={11} />
                   </button>
                   <button
@@ -712,29 +772,29 @@ export default function DualLayerDigitalTwinCanvas({
           </div>
 
           <div className="bridges-grid">
-            {/* CẦU NỐI 1: BN NẠP TIỀN */}
+            {/* CẦU NỐI 1 (CỘT 1): BN NẠP / THANH TOÁN VNPAY */}
             <div className={`vertical-bridge bridge-deposit ${isNodeDimmed('BN_APP') ? 'is-dimmed' : ''}`}>
               <div className="bridge-line-track">
                 <div className="bridge-flow-particle animate-flow-down" />
               </div>
               <div className="bridge-pill-tag tag-blue" onClick={() => handleSelectNode('BN_BANK')}>
                 <CheckCircle2 size={11} />
-                <span>Khớp Nạp Cổng VNPay (+{formatVND(flowDepositInflow)})</span>
+                <span>Khớp Cổng VNPay (+{formatVND(flowTotalVnpayInflow)})</span>
               </div>
             </div>
 
-            {/* CẦU NỐI 2: BẢO CHỨNG ESCROW TRONG VCB */}
+            {/* CẦU NỐI 2 (CỘT 3): BẢO CHỨNG ESCROW TRONG VCB */}
             <div className={`vertical-bridge bridge-escrow ${isNodeDimmed('ESCROW') ? 'is-dimmed' : ''}`}>
               <div className="bridge-line-track">
                 <div className="bridge-flow-particle animate-pulse-bidirectional" />
               </div>
               <div className="bridge-pill-tag tag-amber" onClick={() => handleSelectNode('ESCROW')}>
                 <Lock size={11} />
-                <span>Bảo chứng Escrow: {formatVND(escrowTotal)} trong VCB</span>
+                <span>Bảo chứng Escrow: {formatVND(escrowTotal)}</span>
               </div>
             </div>
 
-            {/* CẦU NỐI 3: BÁC SĨ RÚT TIỀN VỀ VCB CÁ NHÂN */}
+            {/* CẦU NỐI 3 (CỘT 5): BÁC SĨ RÚT TIỀN VỀ VCB CÁ NHÂN */}
             <div className={`vertical-bridge bridge-payout ${isNodeDimmed('DOCTOR_APP') ? 'is-dimmed' : ''}`}>
               <div className="bridge-line-track">
                 <div className="bridge-flow-particle animate-flow-down" />
@@ -754,7 +814,7 @@ export default function DualLayerDigitalTwinCanvas({
               <span className="layer-index">TẦNG 2</span>
               <span className="layer-name">NGÂN HÀNG THỰC TẾ (FIAT / BANK)</span>
             </div>
-            <span className="layer-nature real">TIỀN MẶT THẬT 100%</span>
+            <span className="layer-nature real">TIỀN MẶT THẬT ({coveragePercent}% BẢO CHỨNG)</span>
           </div>
 
           <div className="layer-nodes-row">
@@ -776,10 +836,10 @@ export default function DualLayerDigitalTwinCanvas({
 
               <div className="node-body">
                 <div className="node-primary-val text-slate">
-                  -{formatVND(flowDepositInflow)}
+                  -{formatVND(flowTotalVnpayInflow)}
                 </div>
                 <div className="node-sub-stat">
-                  <span>Trừ tài khoản cá nhân chuyển qua cổng VNPay</span>
+                  <span>Nạp ví: <strong>{formatVND(flowDepositInflow)}</strong> • Đặt khám VNPay: <strong>{formatVND(flowDirectBookingInflow)}</strong></span>
                 </div>
               </div>
 
@@ -802,8 +862,8 @@ export default function DualLayerDigitalTwinCanvas({
             <div className={`flow-connector conn-bank-inflow ${isNodeDimmed('BN_BANK') ? 'is-dimmed' : ''}`}>
               <div className="flow-path-line animate-dash-blue" />
               <div className="flow-label-badge blue-badge">
-                <span className="badge-subtitle">Chuyển khoản thực tế</span>
-                <strong className="badge-value">+{formatVND(flowDepositInflow)}</strong>
+                <span className="badge-subtitle">Cổng VNPay vào VCB</span>
+                <strong className="badge-value">+{formatVND(flowTotalVnpayInflow)}</strong>
               </div>
             </div>
 
@@ -828,13 +888,13 @@ export default function DualLayerDigitalTwinCanvas({
                   {formatVND(realBankTotal)}
                 </div>
                 <div className="node-sub-stat">
-                  <span>STK: 9988-1703-8888 • Vietcombank Hội Sở</span>
+                  <span>{realBankAccountLabel}</span>
                 </div>
 
                 <div className="vcb-holding-note">
-                  <span>Bảo chứng 100% 4 ngăn vốn nội bộ:</span>
+                  <span>Bảo chứng Sổ cái ({formatVND(totalSystemLiabilities)}) + Dự trữ ({formatVND(realBankSurplus)}):</span>
                   <div className="vcb-breakdown-tags">
-                    <span className="tag-remain">Ví BN: {formatVND(patientTotal)}</span>
+                    <span className="tag-remain">Ví BN rảnh: {formatVND(patientAvailable)}</span>
                     <span className="tag-escrow">Escrow: {formatVND(escrowTotal)}</span>
                     <span className="tag-remain">Ví BS: {formatVND(doctorTotal)}</span>
                     <span className="tag-escrow">Sàn: {formatVND(platformProfit)}</span>
@@ -853,7 +913,7 @@ export default function DualLayerDigitalTwinCanvas({
                   title="Mở sao kê biến động tài khoản ngân hàng thật Vietcombank"
                 >
                   <Landmark size={12} />
-                  <span>Sao kê VCB ➔</span>
+                  <span>Sao kê VCB</span>
                 </button>
                 <button
                   type="button"
@@ -863,7 +923,7 @@ export default function DualLayerDigitalTwinCanvas({
                     handleSelectNode('VCB_MASTER');
                   }}
                 >
-                  <span>Mổ xẻ bảo chứng</span>
+                  <span>Bảo chứng</span>
                   <ChevronDown size={11} />
                 </button>
               </div>
@@ -874,13 +934,13 @@ export default function DualLayerDigitalTwinCanvas({
               <div className="split-upper-line">
                 <div className="flow-path-line animate-dash-rose" />
                 <span className="split-badge rose-badge" onClick={() => handleSelectNode('CORP_EXPENSE')}>
-                  Rút lợi nhuận xài: -{formatVND(platformWithdrawn)}
+                  Rút lợi nhuận: -{formatVND(flowProfitWithdrawn)}
                 </span>
               </div>
               <div className="split-lower-line">
                 <div className="flow-path-line animate-dash-blue" />
                 <span className="split-badge blue-badge" onClick={() => handleSelectNode('DOCTOR_BANK')}>
-                  UNC VCB Bác sĩ: -{formatVND(flowBankTransferred)}
+                  UNC Bác sĩ: -{formatVND(flowDoctorBankTransferred)}
                 </span>
               </div>
             </div>
@@ -904,10 +964,10 @@ export default function DualLayerDigitalTwinCanvas({
                 </div>
                 <div className="node-body">
                   <div className="node-primary-val text-rose">
-                    -{formatVND(platformWithdrawn)}
+                    -{formatVND(flowProfitWithdrawn)}
                   </div>
                   <div className="node-sub-stat">
-                    <span>Đã rút từ lợi nhuận hoa hồng sàn</span>
+                    <span>Trong kỳ • Lũy kế đã rút: <strong>{formatVND(platformWithdrawn)}</strong></span>
                   </div>
                 </div>
 
@@ -920,7 +980,7 @@ export default function DualLayerDigitalTwinCanvas({
                       handleSelectNode('CORP_EXPENSE');
                     }}
                   >
-                    <span>Lịch sử rút chi phí</span>
+                    <span>Lịch sử rút ({companyWithdrawalsList.length})</span>
                     <ChevronDown size={11} />
                   </button>
                 </div>
@@ -930,24 +990,29 @@ export default function DualLayerDigitalTwinCanvas({
               <div
                 className={`twin-node node-doctor-bank ${selectedConstituentNode === 'DOCTOR_BANK' ? 'is-selected' : ''} ${isNodeDimmed('DOCTOR_BANK') ? 'is-dimmed' : ''}`}
                 onClick={() => handleSelectNode('DOCTOR_BANK')}
-                title="Nhấp để xem danh sách các lệnh Ủy Nhiệm Chi (UNC VCB) cho bác sĩ"
+                title="Nhấp để xem danh sách các lệnh Ủy Nhiệm Chi (UNC VCB) đã giải ngân cho bác sĩ"
               >
                 <div className="node-head">
                   <div className="node-icon bg-blue">
                     <Building size={15} />
                   </div>
                   <div className="node-meta">
-                    <span className="node-tag">NGÂN HÀNG BÁC SĨ (UNC VCB)</span>
+                    <span className="node-tag">NGÂN HÀNG BÁC SĨ (UNC)</span>
                     <h4 className="node-title">TK VCB Bác Sĩ</h4>
                   </div>
                 </div>
                 <div className="node-body">
                   <div className="node-primary-val text-blue">
-                    +{formatVND(flowBankTransferred)}
+                    +{formatVND(flowDoctorBankTransferred)}
                   </div>
                   <div className="node-sub-stat">
-                    <span>BS nhận tiền mặt thực tế qua lệnh chi VCB</span>
+                    <span>Đã giải ngân trong kỳ ({doctorPayoutsList.length} lệnh)</span>
                   </div>
+                  {pendingWithdrawalsCount > 0 && (
+                    <div className="node-breakdown-mini">
+                      <span>Chờ duyệt chi: <strong className="text-amber">{pendingWithdrawalsCount} lệnh ({formatVND(pendingWithdrawalsAmount)})</strong></span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="node-action-bar">
@@ -959,7 +1024,7 @@ export default function DualLayerDigitalTwinCanvas({
                       handleSelectNode('DOCTOR_BANK');
                     }}
                   >
-                    <span>Lệnh UNC VCB</span>
+                    <span>Lệnh UNC ({doctorPayoutsList.length})</span>
                     <ChevronDown size={11} />
                   </button>
                 </div>
@@ -988,22 +1053,25 @@ export default function DualLayerDigitalTwinCanvas({
                 <>Danh Sách Ví Bác Sĩ Cấu Thành Thù Lao — {formatVND(doctorTotal)} ({doctorWalletCount} ví bác sĩ)</>
               )}
               {selectedConstituentNode === 'ESCROW' && (
-                <>Khoang Ký Quỹ Escrow — Đang giữ {formatVND(escrowTotal)} ({escrowBookings.length} ca khám chờ khám)</>
+                <>Khoang Ký Quỹ Escrow — Đang giữ {formatVND(escrowTotal)} ({escrowBookings.length} ca trong kỳ: {flowHeldWalletCount} Ví + {flowHeldDirectVnpayCount} VNPay)</>
+              )}
+              {selectedConstituentNode === 'SETTLEMENT' && (
+                <>Quyết Toán Ca Khám Đã Chia Tỷ Lệ — {recentSettlements.length} ca trong kỳ: Thù lao BS +{formatVND(flowDoctorSettled)} ({flowDoctorSharePercent}%) • Phí sàn +{formatVND(flowPlatformCommission)} ({flowPlatformSharePercent}%)</>
               )}
               {selectedConstituentNode === 'PROFIT_APP' && (
-                <>Chi Tiết Doanh Thu Phí Sàn Thu Được — {formatVND(platformProfit)} ({platformFeeItemsList.length} ca khám đóng góp)</>
+                <>Chi Tiết Doanh Thu Phí Sàn Thu Được — Khả dụng {formatVND(platformProfit)} ({platformFeeItemsList.length} ca đóng góp trong kỳ lọc)</>
               )}
               {selectedConstituentNode === 'VCB_MASTER' && (
-                <>Tài Khoản VCB Công Ty — Tiền mặt bảo chứng 100% ({formatVND(realBankTotal)})</>
+                <>Tài Khoản VCB Công Ty — Tiền mặt thực tế {formatVND(realBankTotal)} (Bảo chứng {coveragePercent}%)</>
               )}
               {selectedConstituentNode === 'BN_BANK' && (
-                <>Cổng Thanh Toán VNPay — Chi tiết các khoản nạp tiền thành công ({formatVND(flowDepositInflow)})</>
+                <>Cổng Thanh Toán VNPay — Tổng vào {formatVND(flowTotalVnpayInflow)} (Nạp ví {formatVND(flowDepositInflow)} + Đặt khám {formatVND(flowDirectBookingInflow)} • hiển thị {vnpayInflowsList.length} GD)</>
               )}
               {selectedConstituentNode === 'DOCTOR_BANK' && (
-                <>Ủy Nhiệm Chi Vietcombank (UNC VCB) — Chi trả tiền mặt thực tế cho bác sĩ ({formatVND(flowBankTransferred)})</>
+                <>Ủy Nhiệm Chi Vietcombank (UNC) — Đã giải ngân cho bác sĩ trong kỳ: {formatVND(flowDoctorBankTransferred)} ({doctorPayoutsList.length} lệnh)</>
               )}
               {selectedConstituentNode === 'CORP_EXPENSE' && (
-                <>Lịch Sử Rút Doanh Thu Hoa Hồng Sàn Chi Tiêu Công Ty — -{formatVND(platformWithdrawn)}</>
+                <>Lịch Sử Rút Doanh Thu Hoa Hồng Sàn Chi Tiêu Công Ty — Trong kỳ: -{formatVND(flowProfitWithdrawn)} ({companyWithdrawalsList.length} lệnh)</>
               )}
             </h4>
           </div>
@@ -1017,7 +1085,9 @@ export default function DualLayerDigitalTwinCanvas({
                   selectedConstituentNode === 'BN_APP' ? 'Tìm tên BN, SĐT, Email, Ví #...' :
                   selectedConstituentNode === 'DOCTOR_APP' ? 'Tìm tên BS, SĐT, Email, Ví #...' :
                   selectedConstituentNode === 'ESCROW' ? 'Tìm mã ca #BK-xxx, BN, BS...' :
+                  selectedConstituentNode === 'SETTLEMENT' ? 'Tìm mã ca, Bác sĩ, trạng thái...' :
                   selectedConstituentNode === 'PROFIT_APP' ? 'Tìm mã ca, BS, ghi chú...' :
+                  selectedConstituentNode === 'BN_BANK' ? 'Tìm mã GD, tên BN, nguồn VNPay...' :
                   'Tìm kiếm theo từ khóa...'
                 }
                 value={searchTerm}
@@ -1033,15 +1103,17 @@ export default function DualLayerDigitalTwinCanvas({
               )}
             </div>
 
-            <button
-              type="button"
-              className="btn-quick-trace-featured"
-              onClick={() => onOpenLineage && onOpenLineage(featuredBookingId)}
-              title="1-Click mở ngay Drawer Vòng Đời Dòng Tiền 4 Bước"
-            >
-              <GitCommit size={13} />
-              <span>1-Click Vòng Đời Ca #{featuredBookingId}</span>
-            </button>
+            {featuredBookingId && (
+              <button
+                type="button"
+                className="btn-quick-trace-featured"
+                onClick={() => onOpenLineage && onOpenLineage(featuredBookingId)}
+                title="1-Click mở ngay Drawer Vòng Đời Dòng Tiền 4 Bước"
+              >
+                <GitCommit size={13} />
+                <span>1-Click Vòng Đời Ca #{featuredBookingId}</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -1108,7 +1180,7 @@ export default function DualLayerDigitalTwinCanvas({
                           <span className="text-slate-400 text-xs">{moment(w.updatedAt).format('DD/MM/YYYY HH:mm')}</span>
                         </td>
                         <td className="text-right">
-                          {w.reservedBalance > 0 ? (
+                          {w.reservedBalance > 0 && featuredBookingId ? (
                             <button
                               type="button"
                               className="btn-lineage-trigger"
@@ -1117,6 +1189,16 @@ export default function DualLayerDigitalTwinCanvas({
                             >
                               <GitCommit size={13} />
                               <span>Vòng đời ca #{featuredBookingId} ➔</span>
+                            </button>
+                          ) : w.reservedBalance > 0 ? (
+                            <button
+                              type="button"
+                              className="btn-lineage-trigger"
+                              onClick={() => onOpenLineage && onOpenLineage(w.walletId)}
+                              title="Truy vết giao dịch gần nhất của ví này"
+                            >
+                              <GitCommit size={13} />
+                              <span>Truy vết ví #{w.walletId} ➔</span>
                             </button>
                           ) : (
                             <button
@@ -1229,10 +1311,10 @@ export default function DualLayerDigitalTwinCanvas({
                       <th>BỆNH NHÂN ĐẶT</th>
                       <th>BÁC SĨ TIẾP NHẬN</th>
                       <th>GIÁ KHÁM</th>
-                      <th>NGĂN BS (90%)</th>
-                      <th>NGĂN SÀN (10%)</th>
+                      <th>NGĂN BS</th>
+                      <th>NGĂN SÀN</th>
                       <th>LỊCH HẸN / TẠO LÚC</th>
-                      <th>TRẠNG THÁI</th>
+                      <th>NGUỒN / TRẠNG THÁI</th>
                       <th className="text-right">TRUY VẾT VÒNG ĐỜI</th>
                     </tr>
                   </thead>
@@ -1258,10 +1340,14 @@ export default function DualLayerDigitalTwinCanvas({
                           <strong className="text-amber">{formatVND(item.bookingPrice)}</strong>
                         </td>
                         <td>
-                          <span className="text-emerald font-semibold">{formatVND(item.doctorShare)}</span>
+                          <span className="text-emerald font-semibold">
+                            {formatVND(item.doctorShare)} ({item.doctorSharePercent ?? escrowDoctorPercent}%)
+                          </span>
                         </td>
                         <td>
-                          <span className="text-gold font-semibold">{formatVND(item.platformShare)}</span>
+                          <span className="text-gold font-semibold">
+                            {formatVND(item.platformShare)} ({item.platformSharePercent ?? escrowPlatformPercent}%)
+                          </span>
                         </td>
                         <td>
                           <div className="cell-time">
@@ -1270,7 +1356,9 @@ export default function DualLayerDigitalTwinCanvas({
                           </div>
                         </td>
                         <td>
-                          <span className="status-badge s2">Đang ký quỹ giữ chỗ</span>
+                          <span className={`status-badge ${item.paymentSource === 'WALLET' ? 's2' : 'info'}`}>
+                            {item.paymentSourceLabel || (item.paymentSource === 'WALLET' ? 'Ví nội bộ (HELD)' : 'VNPay trực tiếp')}
+                          </span>
                         </td>
                         <td className="text-right">
                           <button
@@ -1291,6 +1379,86 @@ export default function DualLayerDigitalTwinCanvas({
                 <div className="empty-constituent-state">
                   <Info size={24} className="text-slate-400" />
                   <p>Không có ca khám ký quỹ nào phù hợp</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* MỤC 3B: QUYẾT TOÁN ĐÃ CHIA TỶ LỆ (SETTLEMENT)                  */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {selectedConstituentNode === 'SETTLEMENT' && (
+            <div className="table-responsive-wrapper">
+              {paginatedList.length > 0 ? (
+                <table className="constituent-table">
+                  <thead>
+                    <tr>
+                      <th>MÃ QUYẾT TOÁN</th>
+                      <th>MÃ CA KHÁM</th>
+                      <th>BÁC SĨ THỤ HƯỞNG</th>
+                      <th>DOANH THU GỘP</th>
+                      <th>THÙ LAO BÁC SĨ</th>
+                      <th>PHÍ SÀN TRÍCH</th>
+                      <th>TRẠNG THÁI</th>
+                      <th>NGÀY QUYẾT TOÁN</th>
+                      <th className="text-right">TRUY VẾT</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedList.map((item) => (
+                      <tr key={item.id}>
+                        <td>
+                          <span className="code-pill">#SET-{item.id}</span>
+                        </td>
+                        <td>
+                          <span className="code-pill">#BK-{item.bookingId}</span>
+                        </td>
+                        <td>
+                          <div className="cell-doctor">
+                            <Building size={13} className="text-emerald-500" />
+                            <strong>{item.doctorName}</strong>
+                          </div>
+                        </td>
+                        <td>
+                          <strong>{formatVND(item.grossAmount)}</strong>
+                        </td>
+                        <td>
+                          <strong className="text-emerald">
+                            +{formatVND(item.netAmount)} ({Math.max(0, 100 - Number(item.platformFeeRate || 15))}%)
+                          </strong>
+                        </td>
+                        <td>
+                          <span className="text-gold font-semibold">
+                            +{formatVND(item.platformFee)} ({item.platformFeeRate ?? 15}%)
+                          </span>
+                        </td>
+                        <td>
+                          <span className={`status-badge ${item.status === 'PAID' ? 'success' : 's2'}`}>
+                            {item.status === 'PAID' ? 'Đã vào Ví BS' : item.status === 'AVAILABLE' ? 'Chờ kết chuyển ví' : item.status}
+                          </span>
+                        </td>
+                        <td>
+                          <span className="text-slate-400 text-xs">{moment(item.earnedAt).format('DD/MM/YYYY HH:mm')}</span>
+                        </td>
+                        <td className="text-right">
+                          <button
+                            type="button"
+                            className="btn-lineage-trigger"
+                            onClick={() => onOpenLineage && onOpenLineage(item.bookingId)}
+                            title="Truy vết vòng đời ca khám quyết toán này"
+                          >
+                            <GitCommit size={13} />
+                            <span>Vòng đời ca #{item.bookingId} ➔</span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="empty-constituent-state">
+                  <Info size={24} className="text-slate-400" />
+                  <p>Không có khoản quyết toán nào trong kỳ lọc</p>
                 </div>
               )}
             </div>
@@ -1372,19 +1540,19 @@ export default function DualLayerDigitalTwinCanvas({
             <div className="vcb-solvency-matrix">
               <div className="matrix-cards-grid">
                 <div className="matrix-card card-purple" onClick={() => handleSelectNode('BN_APP')} style={{ cursor: 'pointer' }}>
-                  <span className="card-lbl">1. NGHĨA VỤ VÍ BỆNH NHÂN (Nhấp để xem)</span>
-                  <strong className="card-val text-purple">{formatVND(patientTotal)}</strong>
-                  <span className="card-sub">{patientWalletCount} tài khoản ví khách hàng</span>
+                  <span className="card-lbl">1. VÍ BN KHẢ DỤNG (Nhấp để xem)</span>
+                  <strong className="card-val text-purple">{formatVND(patientAvailable)}</strong>
+                  <span className="card-sub">Tổng ví {formatVND(patientTotal)} (đã trừ {formatVND(patientReserved)} Escrow)</span>
                 </div>
                 <div className="matrix-card card-amber" onClick={() => handleSelectNode('ESCROW')} style={{ cursor: 'pointer' }}>
                   <span className="card-lbl">2. QUỸ KÝ QUỸ ESCROW (Nhấp để xem)</span>
                   <strong className="card-val text-amber">{formatVND(escrowTotal)}</strong>
-                  <span className="card-sub">{escrowActiveCount} ca khám đang giữ chỗ chờ khám</span>
+                  <span className="card-sub">{escrowActiveCount} ca ({escrowWalletHoldCount} Ví + {escrowDirectVnpayCount} VNPay)</span>
                 </div>
                 <div className="matrix-card card-emerald" onClick={() => handleSelectNode('DOCTOR_APP')} style={{ cursor: 'pointer' }}>
                   <span className="card-lbl">3. NGHĨA VỤ VÍ BÁC SĨ (Nhấp để xem)</span>
                   <strong className="card-val text-emerald">{formatVND(doctorTotal)}</strong>
-                  <span className="card-sub">{doctorWalletCount} bác sĩ đã hoàn tất khám</span>
+                  <span className="card-sub">{doctorWalletCount} tài khoản ví bác sĩ</span>
                 </div>
                 <div className="matrix-card card-gold" onClick={() => handleSelectNode('PROFIT_APP')} style={{ cursor: 'pointer' }}>
                   <span className="card-lbl">4. LỢI NHUẬN THUẦN SÀN (Nhấp để xem)</span>
@@ -1397,7 +1565,7 @@ export default function DualLayerDigitalTwinCanvas({
                 <div className="conclusion-left">
                   <CheckCircle2 size={18} className="text-emerald" />
                   <span>
-                    Tổng nguồn vốn bảo chứng: <strong>{formatVND(patientTotal + escrowTotal + doctorTotal + platformProfit)}</strong> ≡ Đúng 100% số dư thực tế tại Vietcombank Hội Sở ({formatVND(realBankTotal)})
+                    Tổng nghĩa vụ sổ cái: <strong>{formatVND(totalSystemLiabilities)}</strong> + Dự trữ VCB: <strong>{formatVND(realBankSurplus)}</strong> (Vốn đối ứng sàn: {formatVND(realBankReserveFund)}) = Số dư VCB Thật: <strong>{formatVND(realBankTotal)}</strong>
                   </span>
                 </div>
                 <button
@@ -1422,57 +1590,67 @@ export default function DualLayerDigitalTwinCanvas({
                   <thead>
                     <tr>
                       <th>MÃ GIAO DỊCH</th>
-                      <th>NGƯỜI BỆNH NẠP TIỀN</th>
+                      <th>LOẠI DÒNG TIỀN</th>
+                      <th>NGƯỜI BỆNH THANH TOÁN</th>
                       <th>CỔNG THANH TOÁN</th>
-                      <th>SỐ TIỀN NẠP</th>
-                      <th>MÃ THAM CHIẾU CỔNG (TXN REF)</th>
+                      <th>SỐ TIỀN VÀO VCB</th>
+                      <th>MÃ THAM CHIẾU (TXN REF)</th>
                       <th>TRẠNG THÁI</th>
                       <th>THỜI GIAN GIAO DỊCH</th>
                       <th className="text-right">TRUY VẾT</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {paginatedList.map((item) => (
-                      <tr key={item.id}>
-                        <td>
-                          <span className="code-pill">#PAY-{item.id}</span>
-                        </td>
-                        <td>
-                          <strong>{item.patientName}</strong>
-                        </td>
-                        <td>
-                          <span className="status-badge s2">{item.paymentMethod || 'VNPAY'}</span>
-                        </td>
-                        <td>
-                          <strong className="text-emerald">+{formatVND(item.amount)}</strong>
-                        </td>
-                        <td>
-                          <span className="font-mono text-xs text-slate-600">{item.txnRef}</span>
-                        </td>
-                        <td>
-                          <span className="status-badge success">Nạp thành công</span>
-                        </td>
-                        <td>
-                          <span className="text-slate-400 text-xs">{moment(item.createdAt).format('DD/MM/YYYY HH:mm')}</span>
-                        </td>
-                        <td className="text-right">
-                          <button
-                            type="button"
-                            className="btn-lineage-trigger"
-                            onClick={() => onOpenLineage && onOpenLineage(featuredBookingId)}
-                          >
-                            <GitCommit size={13} />
-                            <span>Vòng đời nạp ➔</span>
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {paginatedList.map((item) => {
+                      const isDirect = item.inflowType === 'DIRECT_BOOKING';
+                      return (
+                        <tr key={item.recordKey || `${item.inflowType || 'PAY'}-${item.id}`}>
+                          <td>
+                            <span className="code-pill">{isDirect ? `#BK-${item.bookingId || item.id}` : `#PAY-${item.id}`}</span>
+                          </td>
+                          <td>
+                            <span className={`status-badge ${isDirect ? 'info' : 's2'}`}>
+                              {item.inflowTypeLabel || (isDirect ? 'Đặt khám VNPay trực tiếp' : 'Nạp ví VNPay')}
+                            </span>
+                          </td>
+                          <td>
+                            <strong>{item.patientName}</strong>
+                          </td>
+                          <td>
+                            <span className="status-badge s2">{item.paymentMethod || 'VNPAY'}</span>
+                          </td>
+                          <td>
+                            <strong className="text-emerald">+{formatVND(item.amount)}</strong>
+                          </td>
+                          <td>
+                            <span className="font-mono text-xs text-slate-600">{item.txnRef}</span>
+                          </td>
+                          <td>
+                            <span className="status-badge success">{isDirect ? 'Đã thu VNPay' : 'Nạp thành công'}</span>
+                          </td>
+                          <td>
+                            <span className="text-slate-400 text-xs">{moment(item.createdAt).format('DD/MM/YYYY HH:mm')}</span>
+                          </td>
+                          <td className="text-right">
+                            <button
+                              type="button"
+                              className="btn-lineage-trigger"
+                              onClick={() => onOpenLineage && onOpenLineage(isDirect ? (item.bookingId || item.id) : (item.id ? `PAY-${item.id}` : item.txnRef))}
+                              title="Truy vết giao dịch VNPay này"
+                            >
+                              <GitCommit size={13} />
+                              <span>{isDirect ? `Vòng đời ca #${item.bookingId || item.id} ➔` : 'Vòng đời nạp ➔'}</span>
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               ) : (
                 <div className="empty-constituent-state">
                   <Info size={24} className="text-slate-400" />
-                  <p>Không tìm thấy giao dịch nạp VNPay nào</p>
+                  <p>Không tìm thấy giao dịch VNPay nào</p>
                 </div>
               )}
             </div>
@@ -1500,9 +1678,9 @@ export default function DualLayerDigitalTwinCanvas({
                   </thead>
                   <tbody>
                     {paginatedList.map((item) => (
-                      <tr key={item.id}>
+                      <tr key={item.recordKey || item.id}>
                         <td>
-                          <span className="code-pill">#UNC-{item.id}</span>
+                          <span className="code-pill">{String(item.id).startsWith('DS-') ? `#${item.id}` : `#UNC-${item.id}`}</span>
                         </td>
                         <td>
                           <strong>{item.accountHolderName}</strong>
@@ -1510,20 +1688,22 @@ export default function DualLayerDigitalTwinCanvas({
                         <td>
                           <div className="cell-doctor">
                             <Landmark size={13} className="text-blue-500" />
-                            <span>{item.bankName || 'Vietcombank'}</span>
+                            <span>{item.bankName || '--'}</span>
                           </div>
                         </td>
                         <td>
-                          <span className="font-mono text-xs">{item.bankAccountNumber || '998817038888'}</span>
+                          <span className="font-mono text-xs">{item.accountNumber || item.bankAccountNumber || '--'}</span>
                         </td>
                         <td>
                           <strong className="text-blue">{formatVND(item.amount)}</strong>
                         </td>
                         <td>
-                          <span className="code-pill">{item.bankTransactionRef || 'VCB-FT982173'}</span>
+                          <span className="code-pill">{item.bankTransactionRef || '--'}</span>
                         </td>
                         <td>
-                          <span className="status-badge success">Đã giải ngân UNC</span>
+                          <span className="status-badge success">
+                            {item.status === 'TRANSFERRED' ? 'Đã giải ngân UNC' : item.status}
+                          </span>
                         </td>
                         <td>
                           <span className="text-slate-400 text-xs">{moment(item.transferredAt || item.createdAt).format('DD/MM/YYYY HH:mm')}</span>
@@ -1556,57 +1736,64 @@ export default function DualLayerDigitalTwinCanvas({
           {/* ═══════════════════════════════════════════════════════════════ */}
           {selectedConstituentNode === 'CORP_EXPENSE' && (
             <div className="table-responsive-wrapper">
-              <table className="constituent-table">
-                <thead>
-                  <tr>
-                    <th>MÃ LỆNH</th>
-                    <th>ĐƠN VỊ THỤ HƯỞNG</th>
-                    <th>TÀI KHOẢN NGÂN HÀNG</th>
-                    <th>SỐ TIỀN RÚT</th>
-                    <th>MỤC ĐÍCH CHI DÙNG</th>
-                    <th>TRẠNG THÁI</th>
-                    <th>THỜI GIAN RÚT</th>
-                    <th className="text-right">MINH CHỨNG</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {companyWithdrawalsList.map((item) => (
-                    <tr key={item.id}>
-                      <td>
-                        <span className="code-pill">#EXPENSE-{item.id}</span>
-                      </td>
-                      <td>
-                        <strong>{item.recipient}</strong>
-                      </td>
-                      <td>
-                        <span className="font-mono text-xs">{item.bankName} • {item.accountNumber}</span>
-                      </td>
-                      <td>
-                        <strong className="text-rose">-{formatVND(item.amount)}</strong>
-                      </td>
-                      <td>
-                        <span className="text-slate-600 text-xs">{item.reason}</span>
-                      </td>
-                      <td>
-                        <span className="status-badge success">Hoàn tất</span>
-                      </td>
-                      <td>
-                        <span className="text-slate-400 text-xs">{moment(item.transferredAt).format('DD/MM/YYYY HH:mm')}</span>
-                      </td>
-                      <td className="text-right">
-                        <button
-                          type="button"
-                          className="btn-lineage-trigger"
-                          onClick={() => onOpenVault && onOpenVault('platformProfit')}
-                        >
-                          <Eye size={12} />
-                          <span>Sổ lợi nhuận ➔</span>
-                        </button>
-                      </td>
+              {paginatedList.length > 0 ? (
+                <table className="constituent-table">
+                  <thead>
+                    <tr>
+                      <th>MÃ LỆNH</th>
+                      <th>ĐƠN VỊ / TÀI KHOẢN NHẬN</th>
+                      <th>NGÂN HÀNG</th>
+                      <th>SỐ TIỀN RÚT</th>
+                      <th>MỤC ĐÍCH CHI DÙNG</th>
+                      <th>TRẠNG THÁI</th>
+                      <th>THỜI GIAN RÚT</th>
+                      <th className="text-right">MINH CHỨNG</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {paginatedList.map((item) => (
+                      <tr key={item.id}>
+                        <td>
+                          <span className="code-pill">{item.batchCode || `#EXPENSE-${item.id}`}</span>
+                        </td>
+                        <td>
+                          <strong>{item.recipient}</strong>
+                        </td>
+                        <td>
+                          <span className="font-mono text-xs">{item.accountNumber || item.bankName}</span>
+                        </td>
+                        <td>
+                          <strong className="text-rose">-{formatVND(item.amount)}</strong>
+                        </td>
+                        <td>
+                          <span className="text-slate-600 text-xs">{item.reason}</span>
+                        </td>
+                        <td>
+                          <span className="status-badge success">Hoàn tất</span>
+                        </td>
+                        <td>
+                          <span className="text-slate-400 text-xs">{moment(item.transferredAt).format('DD/MM/YYYY HH:mm')}</span>
+                        </td>
+                        <td className="text-right">
+                          <button
+                            type="button"
+                            className="btn-lineage-trigger"
+                            onClick={() => onOpenVault && onOpenVault('platformProfit')}
+                          >
+                            <Eye size={12} />
+                            <span>Sổ lợi nhuận ➔</span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="empty-constituent-state">
+                  <Info size={24} className="text-slate-400" />
+                  <p>Không có lệnh rút lợi nhuận sàn nào trong kỳ lọc</p>
+                </div>
+              )}
             </div>
           )}
 
@@ -1649,34 +1836,46 @@ export default function DualLayerDigitalTwinCanvas({
       {/* 4. THANH ĐỐI SOÁT CÂN BẰNG BẤT BIẾN CFO (REAL-TIME SOLVENCY FOOTER)   */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
       <div className="twin-solvency-footer">
-        <div className="solvency-status-badge success">
+        <div className={`solvency-status-badge ${reconciliation?.isBalanced !== false ? 'success' : 'warning'}`}>
           <ShieldCheck size={16} />
-          <span>ĐỐI SOÁT CÂN BẰNG BẤT BIẾN: 100% BẢO CHỨNG THỰC TẾ</span>
+          <span>
+            {reconciliation?.isBalanced !== false
+              ? `ĐỐI SOÁT THANH KHOẢN: BẢO CHỨNG ${coveragePercent}%`
+              : 'CẢNH BÁO THIẾU HỤT THANH KHOẢN VCB'}
+          </span>
         </div>
 
         <div className="solvency-formula">
           <span className="term-vcb">VCB Thật ({formatVND(realBankTotal)})</span>
           <span className="op">=</span>
-          <span className="term-app">Ví BN ({formatVND(patientTotal)})</span>
+          <span className="term-app">Ví BN rảnh ({formatVND(patientAvailable)})</span>
           <span className="op">+</span>
           <span className="term-app">Escrow ({formatVND(escrowTotal)})</span>
           <span className="op">+</span>
           <span className="term-app">Ví BS ({formatVND(doctorTotal)})</span>
           <span className="op">+</span>
-          <span className="term-app">Lợi nhuận sàn ({formatVND(platformProfit)})</span>
+          <span className="term-app">Lợi nhuận ({formatVND(platformProfit)})</span>
+          <span className="op">+</span>
+          <span className="term-app">Dự trữ ({formatVND(realBankSurplus)})</span>
         </div>
 
         <div className="solvency-audit-action">
-          <span className="diff-zero">Chênh lệch: 0 ₫</span>
-          <button
-            type="button"
-            className="btn-trace-lineage"
-            onClick={() => onOpenLineage && onOpenLineage(featuredBookingId)}
-            title={`Truy vết toàn vẹn vòng đời dòng tiền ca khám #${featuredBookingId}`}
-          >
-            <GitCommit size={13} />
-            <span>Truy vết ca khám #{featuredBookingId}</span>
-          </button>
+          <span className="diff-zero">
+            {realBankSurplus > 0
+              ? `Dự trữ thanh khoản: +${formatVND(realBankSurplus)}`
+              : `Chênh lệch: ${formatVND(reconciliation?.discrepancyAmount ?? 0)}`}
+          </span>
+          {featuredBookingId && (
+            <button
+              type="button"
+              className="btn-trace-lineage"
+              onClick={() => onOpenLineage && onOpenLineage(featuredBookingId)}
+              title={`Truy vết toàn vẹn vòng đời dòng tiền ca khám #${featuredBookingId}`}
+            >
+              <GitCommit size={13} />
+              <span>Truy vết ca khám #{featuredBookingId}</span>
+            </button>
+          )}
         </div>
       </div>
     </div>

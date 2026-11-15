@@ -85,7 +85,7 @@ export default function UnifiedLedgerHub() {
   const [inputReserveRatio, setInputReserveRatio] = useState(40);
   const [inputMinWithdraw, setInputMinWithdraw] = useState(50000);
   const [inputSlaHours, setInputSlaHours] = useState(24);
-  const [inputDoctorShare, setInputDoctorShare] = useState(90);
+  const [inputDoctorShare, setInputDoctorShare] = useState(85);
   const [isSavingConfigs, setIsSavingConfigs] = useState(false);
   const [loadingConfigs, setLoadingConfigs] = useState(false);
 
@@ -118,6 +118,7 @@ export default function UnifiedLedgerHub() {
       const res = await getAdminWalletsList({
         page: walletsPage,
         limit: walletsLimit,
+        walletType: walletTypeFilter,
         status: walletStatusFilter !== 'ALL' ? walletStatusFilter : undefined,
         search: walletSearch.trim() || undefined,
       });
@@ -130,7 +131,7 @@ export default function UnifiedLedgerHub() {
     } finally {
       setLoadingWallets(false);
     }
-  }, [walletsPage, walletsLimit, walletStatusFilter, walletSearch]);
+  }, [walletsPage, walletsLimit, walletTypeFilter, walletStatusFilter, walletSearch]);
 
   // Tải cấu hình tham số
   const loadConfigs = useCallback(async () => {
@@ -139,10 +140,10 @@ export default function UnifiedLedgerHub() {
       const res = await getFinancialConfigs();
       if (res && res.errCode === 0 && res.data) {
         setConfigs(res.data);
-        setInputReserveRatio(res.data.mandatoryReserveRatio || 40);
-        setInputMinWithdraw(res.data.minWithdrawalAmount || 50000);
-        setInputSlaHours(res.data.withdrawalSlaHours || 24);
-        setInputDoctorShare(res.data.doctorRevenueSharePercent || 90);
+        setInputReserveRatio(res.data.reserveRatioTarget ?? res.data.mandatoryReserveRatio ?? 40);
+        setInputMinWithdraw(res.data.minWithdrawalAmount ?? 50000);
+        setInputSlaHours(res.data.withdrawalSlaHours ?? 24);
+        setInputDoctorShare(res.data.doctorRevenueSharePercent ?? 85);
       }
     } catch (err) {
       toast.error('Lỗi khi tải cấu hình tham số');
@@ -463,6 +464,19 @@ export default function UnifiedLedgerHub() {
             <div className="filters-right">
               <select
                 className="ramp-select"
+                value={walletTypeFilter}
+                onChange={(e) => {
+                  setWalletTypeFilter(e.target.value);
+                  setWalletsPage(1);
+                }}
+              >
+                <option value="ALL">Tất cả loại ví</option>
+                <option value="PATIENT">Ví Bệnh nhân (PATIENT)</option>
+                <option value="DOCTOR">Ví Bác sĩ (DOCTOR)</option>
+              </select>
+
+              <select
+                className="ramp-select"
                 value={walletStatusFilter}
                 onChange={(e) => {
                   setWalletStatusFilter(e.target.value);
@@ -677,7 +691,7 @@ export default function UnifiedLedgerHub() {
                   <div>
                     <h3 className="card-title">Tỷ Lệ Thù Lao Bác Sĩ (Platform Split)</h3>
                     <p className="card-desc">
-                      Tỷ lệ phân chia mặc định khi ca khám hoàn tất (Hiện tại: 90% thù lao Bác sĩ / 10% Tiền lời sàn tích lũy).
+                      Tỷ lệ phân chia mặc định khi ca khám hoàn tất (Đang cấu hình: {inputDoctorShare}% thù lao Bác sĩ / {Math.max(0, 100 - Number(inputDoctorShare || 0))}% Phí dịch vụ sàn).
                     </p>
                   </div>
                 </div>

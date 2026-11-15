@@ -669,26 +669,40 @@ export default function UnifiedSettlementHub() {
             </div>
 
             <div className="popover-body">
-              <div className="settlement-breakdown-card">
-                <div className="card-item">
-                  <span>Bác sĩ thụ hưởng:</span>
-                  <strong>{selectedSettlement.doctor?.lastName} {selectedSettlement.doctor?.firstName}</strong>
-                </div>
-                <div className="card-item">
-                  <span>Mã ca khám:</span>
-                  <span className="font-mono">#{selectedSettlement.bookingId || selectedSettlement.id}</span>
-                </div>
-                <div className="card-item highlight-split">
-                  <span>Thù lao bác sĩ nhận (90%):</span>
-                  <strong className="text-emerald ramp-tabular-num">
-                    {formatMoney(selectedSettlement.netAmount || selectedSettlement.amount)}
-                  </strong>
-                </div>
-                <div className="card-item sub">
-                  <span>Hoa hồng sàn giữ lại (10%):</span>
-                  <span className="ramp-tabular-num">{formatMoney((selectedSettlement.amount || 0) * 0.1)}</span>
-                </div>
-              </div>
+              {(() => {
+                const netAmt = Number(selectedSettlement.netAmount ?? selectedSettlement.amount ?? 0);
+                const grossAmt = Number(selectedSettlement.grossAmount ?? (netAmt + Number(selectedSettlement.platformFee || 0)));
+                const feeAmt = selectedSettlement.platformFee != null
+                  ? Number(selectedSettlement.platformFee)
+                  : Math.max(0, grossAmt - netAmt);
+                const feeRate = selectedSettlement.platformFeeRate != null
+                  ? Number(selectedSettlement.platformFeeRate)
+                  : (grossAmt > 0 ? Math.round((feeAmt / grossAmt) * 100) : 15);
+                const docRate = Math.max(0, 100 - feeRate);
+
+                return (
+                  <div className="settlement-breakdown-card">
+                    <div className="card-item">
+                      <span>Bác sĩ thụ hưởng:</span>
+                      <strong>{selectedSettlement.doctor?.lastName} {selectedSettlement.doctor?.firstName}</strong>
+                    </div>
+                    <div className="card-item">
+                      <span>Mã ca khám:</span>
+                      <span className="font-mono">#{selectedSettlement.bookingId || selectedSettlement.id}</span>
+                    </div>
+                    <div className="card-item highlight-split">
+                      <span>Thù lao bác sĩ nhận ({docRate}%):</span>
+                      <strong className="text-emerald ramp-tabular-num">
+                        {formatMoney(netAmt)}
+                      </strong>
+                    </div>
+                    <div className="card-item sub">
+                      <span>Hoa hồng sàn giữ lại ({feeRate}%):</span>
+                      <span className="ramp-tabular-num">{formatMoney(feeAmt)}</span>
+                    </div>
+                  </div>
+                );
+              })()}
 
               <p className="popover-desc">
                 Hệ thống sẽ kết chuyển số tiền trên từ ngăn <strong>Escrow Tạm giữ</strong> vào <strong>Ví điện tử khả dụng của Bác sĩ</strong>. Bác sĩ có thể bấm rút về Vietcombank bất kỳ lúc nào.
